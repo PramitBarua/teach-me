@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – ALB vs. NLB</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 05
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Application Load Balancer vs. Network Load Balancer</h1>
+    <p class="lesson-meta">Lesson 05 of 12 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html" target="_blank">Application Load Balancers</a> · <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html" target="_blank">What Is a Network Load Balancer?</a></p>
+  </div>
+
+  <p>This is the decision the exam tests most directly in this module: given a scenario, pick <strong>ALB or NLB</strong>. The reliable approach — memorize the handful of situations that <em>demand</em> an NLB, and default to ALB for everything else.</p>
+
+  <h2>Application Load Balancer: True Layer 7</h2>
+  <p>ALBs listen only on <strong>HTTP or HTTPS</strong> — never raw TCP, UDP, or TLS directly — and because they're genuinely Layer 7, they can see and act on everything inside those protocols: content type, cookies, custom headers, and more.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">HTTPS on an ALB always terminates there</div>
+    Every HTTPS connection to an ALB is <strong>decrypted (terminated) on the load balancer</strong> — there's no way to pass an unbroken encrypted connection straight through to the instances. The ALB needs its own SSL certificate, and a fresh connection is made from the ALB to the instance. If a security team requires <strong>unbroken end-to-end encryption</strong> from client to instance, an ALB cannot deliver that — only an NLB with a TCP or TLS-passthrough listener can.
+  </div>
+
+  <p>Because ALBs process more of the networking stack, they're <strong>slower</strong> than NLBs — but in exchange they can evaluate <strong>application-layer health checks</strong> (an actual HTTP request to a specific path), not just a network-level check.</p>
+
+  <h2>Rules: Conditions and Actions</h2>
+  <p>ALB <strong>listeners</strong> hold <strong>rules</strong>, evaluated in priority order, ending in a catch-all default rule. Each rule pairs a <strong>condition</strong> with an <strong>action</strong>:</p>
+  <ul>
+    <li><strong>Conditions</strong> — host header, HTTP header, HTTP method, path pattern, query string, source IP.</li>
+    <li><strong>Actions</strong> — forward to a target group, redirect elsewhere, return a fixed HTTP response, or authenticate via OpenID/Cognito.</li>
+  </ul>
+  <p>This is what lets one ALB serve multiple domains (host-based routing), give one specific corporate client's IP a different back end than everyone else, or redirect one domain to another — all from a single load balancer.</p>
+
+  <h2>Network Load Balancer: Layer 4, Built for Speed</h2>
+  <p>NLBs operate at Layer 4 — TCP, TLS, and UDP — with <strong>zero visibility into HTTP</strong>: no headers, no cookies, no HTTP-level session stickiness. In exchange, they're extremely fast: <strong>millions of requests per second</strong>, at roughly <strong>25% of the latency</strong> of an ALB, because there's no upper-stack processing to do.</p>
+
+  <table>
+    <thead><tr><th>NLB-only capability</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Static IP addresses</strong></td><td>Corporate clients can whitelist a fixed IP through their firewall</td></tr>
+      <tr><td><strong>Unbroken TCP/TLS pass-through</strong></td><td>The only way to deliver true end-to-end encryption from client to instance</td></tr>
+      <tr><td><strong>PrivateLink</strong></td><td>NLBs are the mechanism used to expose a service to other VPCs via PrivateLink</td></tr>
+      <tr><td><strong>Non-HTTP protocols</strong></td><td>SMTP, SSH, custom game protocols, financial protocols — anything that isn't HTTP/HTTPS</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">The trade-off: dumb health checks</div>
+    Because NLBs have no Layer 7 visibility, their health checks are limited to <strong>ICMP and basic TCP handshaking</strong> — they cannot verify that an application is actually functioning correctly, only that something is listening on the port.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: memorize the NLB triggers, default to ALB</div>
+    Pick <strong>NLB</strong> only if the scenario needs: unbroken end-to-end encryption, static IPs for whitelisting, absolute maximum performance (millions of req/s, lowest latency), a non-HTTP/HTTPS protocol, or PrivateLink. For <strong>everything else</strong> — anything HTTP/HTTPS where you want rich, application-aware routing — default to <strong>ALB</strong>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A security team requires an unbroken, encrypted connection all the way from the client to the EC2 instance, with no decryption at any intermediate device. Which load balancer type and listener satisfy this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An ALB always terminates HTTPS/SSL on the load balancer itself before re-encrypting a separate connection to the instance — it can never provide truly unbroken end-to-end encryption."> An ALB with an HTTPS listener and bridging enabled</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Only a Network Load Balancer with a TCP or TLS pass-through listener can forward the encrypted connection straight through to the instance without terminating it at the load balancer."> An NLB with a TCP or TLS pass-through listener</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Gateway Load Balancer is designed for routing traffic through third-party security appliances, not for preserving unbroken client-to-instance encryption on a standard application."> A Gateway Load Balancer configured with Geneve encapsulation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Classic Load Balancer still terminates SSL on the load balancer in its standard configuration — it doesn't provide unbroken end-to-end encryption either."> A Classic Load Balancer using its default SSL termination mode</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A corporate client wants to whitelist your load balancer's IP address through their strict outbound firewall, so it must never change. Which load balancer type supports this natively?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="ALB nodes don't offer static, whitelist-friendly IP addresses — their addressing is managed by AWS and isn't guaranteed fixed the way NLB's is."> Application Load Balancer, using Elastic IPs on each node</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Network Load Balancers can be allocated static IP addresses, which is exactly the feature that supports firewall whitelisting for corporate clients."> Network Load Balancer, which supports static IP addresses</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Gateway Load Balancers are for appliance scaling behind GWLB endpoints, not for exposing a stable whitelistable IP to external corporate clients."> Gateway Load Balancer, since it forwards unaltered packets</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Classic Load Balancers don't offer static IP allocation as a supported feature — this is specifically an NLB capability among ELB types."> Classic Load Balancer, using its legacy static addressing mode</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An application load-balances SSH connections for a fleet of bastion-style servers — not HTTP or HTTPS traffic. Which load balancer type should be used?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ALBs only support HTTP, HTTPS, and WebSocket listeners — SSH is not an HTTP-family protocol and can't be handled by an ALB."> Application Load Balancer, configured with a custom listener</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. SSH is a non-HTTP/HTTPS protocol running over TCP, which is exactly the class of traffic Network Load Balancers are designed to handle."> Network Load Balancer, listening on the TCP protocol</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Gateway Load Balancers exist to scale third-party security appliances, not to load balance general application protocols like SSH."> Gateway Load Balancer, since SSH requires deep packet inspection</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Classic Load Balancers should be avoided by default today regardless of protocol, and version 2 types are the recommended choice for any new deployment."> Classic Load Balancer, since it predates HTTP-only restrictions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-elb-architecture-part2.html">← Previous: ELB Architecture, Part 2</a>
+      <a href="0006-launch-configurations-and-templates.html">Next: Launch Configurations and Templates →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

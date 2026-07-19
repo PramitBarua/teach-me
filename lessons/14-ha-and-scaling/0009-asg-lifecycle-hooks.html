@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – ASG Lifecycle Hooks</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 09
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Auto Scaling Group Lifecycle Hooks</h1>
+    <p class="lesson-meta">Lesson 09 of 12 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html" target="_blank">Amazon EC2 Auto Scaling Lifecycle Hooks</a></p>
+  </div>
+
+  <p>Normally, when an ASG decides to launch or terminate an instance, that happens with no opportunity for you to intervene. <strong>Lifecycle hooks</strong> insert a pause into that process — at launch, at termination, or both — giving you a window to run custom logic before the instance continues on its way.</p>
+
+  <h2>The Extra States</h2>
+  <table>
+    <thead><tr><th>Transition</th><th>Normal flow</th><th>With a lifecycle hook</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Launch</strong></td><td>Pending → InService</td><td>Pending → <strong>Pending:Wait</strong> → Pending:Proceed → InService</td></tr>
+      <tr><td><strong>Terminate</strong></td><td>Terminating → Terminated</td><td>Terminating → <strong>Terminating:Wait</strong> → Terminating:Proceed → Terminated</td></tr>
+    </tbody>
+  </table>
+
+  <p>An instance sits in the <strong>:Wait</strong> state until one of two things happens: a configurable timeout expires (<strong>3,600 seconds by default</strong>), or you explicitly call <strong>CompleteLifecycleAction</strong> once your custom logic has finished. On launch, a common use is loading or indexing data before the instance goes live. On termination, a common use is backing up logs or data before the instance disappears for good.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Lifecycle hooks integrate with <strong>EventBridge</strong> or <strong>SNS</strong> for transition notifications, enabling fully event-driven processing around instance launch and termination — this integration point is the detail most likely to appear as a specific exam answer option.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An ASG has an instance-launch lifecycle hook configured. A newly launched instance needs to index a large dataset before serving traffic. What state does it sit in while that indexing runs?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="InService means the instance is already live and receiving traffic — the whole point of the hook is to delay reaching this state until the custom action finishes."> InService, since the ASG considers it already running</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A launch lifecycle hook moves the instance into Pending:Wait, where it stays until the timeout expires or CompleteLifecycleAction is called, before proceeding to InService."> Pending:Wait, until the timeout expires or it's explicitly completed</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Terminating:Wait is the pause state for the termination transition, not the launch transition being described here."> Terminating:Wait, since it hasn't finished configuring yet</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There's no 'Suspended' lifecycle state for individual instances during a hook — the correct state name for a paused launch is Pending:Wait."> Suspended, until an administrator manually resumes it</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An instance is stuck in Terminating:Wait and nobody calls CompleteLifecycleAction. What eventually happens, assuming default settings?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Lifecycle hooks have a default timeout (3,600 seconds) after which the instance proceeds automatically — it isn't stuck there forever without one."> It remains in that state indefinitely with no timeout</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The default timeout for a lifecycle hook is 3,600 seconds (1 hour), after which the instance automatically proceeds to the next state (Terminating:Proceed, then Terminated) without needing an explicit call."> After 3,600 seconds by default, it proceeds automatically</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A stalled lifecycle hook doesn't cause the ASG to relaunch a duplicate instance — the existing instance simply proceeds once its timeout expires."> The ASG launches a duplicate replacement instance immediately</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EventBridge is an optional notification integration for lifecycle hook transitions — it doesn't automatically force a stuck hook to complete on its own."> EventBridge automatically forces the hook to complete after 60 seconds</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You want other systems to react in an event-driven way whenever an ASG lifecycle hook transition occurs, without polling. What should you integrate with?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Lifecycle hooks aren't configured to write directly to CloudWatch Logs as their notification mechanism — EventBridge or SNS are the integration points described for this."> CloudWatch Logs, polling for new log entries every minute</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Lifecycle hooks integrate with EventBridge (or SNS) for transition notifications, enabling event-driven processing without polling."> EventBridge or SNS, which lifecycle hooks natively integrate with</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Parameter Store is for configuration and secrets storage — it isn't the notification integration point lifecycle hooks use for transition events."> SSM Parameter Store, checked periodically by a script</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Lifecycle hooks don't have a direct native integration with CloudTrail for transition notifications — EventBridge or SNS are the documented integration points."> AWS CloudTrail, filtered for lifecycle hook API calls</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-asg-scaling-policies.html">← Previous: ASG Scaling Policies</a>
+      <a href="0010-asg-health-check-comparison.html">Next: ASG Health Check Comparison →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

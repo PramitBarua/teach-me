@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – Auto Scaling Groups</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 07
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Auto Scaling Groups</h1>
+    <p class="lesson-meta">Lesson 07 of 12 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html" target="_blank">Auto Scaling Groups</a></p>
+  </div>
+
+  <p>An Auto Scaling group (ASG) has exactly one job: <strong>keep the number of running instances equal to the desired capacity</strong>, provisioning or terminating instances as needed. Along the way it can also deliver self-healing and, combined with a load balancer, true elastic architecture.</p>
+
+  <h2>Min, Desired, Max</h2>
+  <p>Every ASG has three core values, often written as a triple like <strong>1, 2, 4</strong> (min, desired, max):</p>
+  <ul>
+    <li><strong>Minimum size</strong> — the floor; the ASG never lets running instance count drop below this.</li>
+    <li><strong>Desired capacity</strong> — the target the ASG actively maintains, always between min and max.</li>
+    <li><strong>Maximum size</strong> — the ceiling; the ASG never exceeds this.</li>
+  </ul>
+  <p>If desired capacity is 2 but only 1 instance is running, the ASG provisions one more. If desired capacity is 2 but 3 are running, it terminates one. This reconciliation is the ASG's entire reason for existing.</p>
+
+  <h2>Where Instances Land</h2>
+  <p>An ASG is linked to a VPC and a set of <strong>subnets</strong> within it — instances are provisioned into whichever subnets are configured, and AWS tries to keep the instance count <strong>even across Availability Zones</strong> where possible.</p>
+
+  <h2>Scaling Methods</h2>
+  <table>
+    <thead><tr><th>Method</th><th>How it works</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Manual</strong></td><td>You directly adjust min/desired/max; no automation at all — useful for testing, urgent situations, or holding a fixed instance count as a cost-control measure</td></tr>
+      <tr><td><strong>Scheduled scaling</strong></td><td>Adjusts desired capacity on a schedule — ideal for known traffic patterns (sale events, off-hours scale-in)</td></tr>
+      <tr><td><strong>Dynamic scaling</strong></td><td>Reacts to a live metric (CPU, memory, an SQS queue length, a custom app metric) — covered in depth next lesson</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Self-Healing</h2>
+  <p>ASGs monitor instance health (EC2 status checks by default) and automatically <strong>terminate and replace</strong> any unhealthy instance — the same happens if you terminate an instance manually. This works even in isolation from scaling.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the cheapest possible HA pattern</div>
+    An ASG with <strong>min = desired = max = 1</strong>, spanning multiple subnets across multiple AZs, gives you simple, cheap, effective self-healing: if the single instance fails, it's automatically relaunched — potentially in a <em>different</em> AZ if the original one is unavailable. No load balancer, no complexity, just automatic recovery.
+  </div>
+
+  <h2>Integration with Load Balancers</h2>
+  <p>Rather than statically registering instances with a target group, an ASG can be configured to <strong>automatically register newly launched instances</strong> with a load balancer's target group, and deregister them on termination. This is what actually delivers <strong>elasticity</strong>: a metric drives the ASG's desired capacity, the ASG adds or removes instances, and the load balancer transparently absorbs the change — customers, connecting only via the load balancer, never notice.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Health check source matters</div>
+    An ASG can use <strong>EC2 status checks</strong> (the default) or switch to <strong>load balancer health checks</strong>, which are far richer for HTTP/HTTPS applications since they can check a specific page's response. But be deliberate about what the health check actually tests: a check against a static page won't catch a broken application, while a check that depends on a database will fail (and trigger mass instance replacement) if the database — not the instances — is the actual problem.
+  </div>
+
+  <h2>Scaling Processes: Suspend and Resume</h2>
+  <p>Individual ASG behaviors can be independently suspended: <strong>Launch</strong>, <strong>Terminate</strong>, <strong>Add to Load Balancer</strong>, <strong>Alarm Notification</strong>, <strong>AZ Rebalance</strong>, <strong>Health Check</strong>, <strong>Replace Unhealthy</strong>, and <strong>Scheduled Actions</strong>. A single instance can also be set to <strong>Standby</strong>, exempting it from all ASG activity — useful for performing maintenance on one instance without the ASG interfering.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: cost control</div>
+    Auto Scaling groups themselves are <strong>free</strong> — you only pay for the resources they provision. A <strong>cooldown period</strong> (seconds after a scaling action before another can occur) prevents chaotic thrashing. Preferring <strong>more, smaller instances</strong> over fewer, larger ones gives finer-grained, more cost-effective scaling steps.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An ASG is configured with min=2, desired=2, max=6, and currently has 2 running instances. One instance fails a health check and is terminated by the ASG. What happens next?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The ASG's job is to keep running instances equal to desired capacity (2) — dropping to 1 instance falls below that, so it will provision a replacement."> Nothing; the ASG stays at 1 running instance</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. With desired capacity at 2 and only 1 instance now running, the ASG provisions a replacement to bring the count back to the desired value — this is self-healing."> A new instance is provisioned to restore the count to 2</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Terminating an unhealthy instance to fall below the minimum doesn't cause the ASG to lower its own minimum — min stays at 2, and the ASG replaces the lost instance instead."> The minimum size is automatically lowered to 1</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A single unhealthy instance doesn't trigger scale-out to the maximum — the ASG simply restores desired capacity, not the ceiling value."> The ASG scales all the way up to the maximum of 6</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You want the cheapest, simplest way to guarantee a single critical EC2 instance is automatically relaunched if it fails, potentially in a different AZ. What should you configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EC2 auto recovery works within the same host/hardware and doesn't provide the ASG's ability to relaunch into a different AZ across multiple subnets."> EC2 status check auto recovery only, no ASG involved</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. An ASG with min=desired=max=1 spanning multiple AZ subnets is the cheap, simple self-healing pattern — a failed instance is automatically relaunched, potentially into a different AZ."> An ASG with min, desired, and max all set to 1, across multiple AZs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A load balancer alone doesn't relaunch a failed instance — it only distributes traffic among whatever instances are registered and healthy."> A load balancer alone, with one instance registered as a target</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A scheduled scaling action changes capacity at specific times — it doesn't provide reactive self-healing when an instance unexpectedly fails."> A scheduled scaling action that runs once per day</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An ASG uses a load balancer health check that requests a page requiring live database access. The database goes down, and every instance starts failing the check. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A health check failing due to a downstream database issue doesn't cause the ASG to pause and investigate the root cause — it just acts on what the health check reports."> The ASG detects the database is the real cause and pauses replacement</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The ASG only sees a failing health check — it can't distinguish 'the instance is broken' from 'a downstream dependency is broken' — so it terminates and replaces every instance, none of which fixes the actual database problem."> Every instance is marked unhealthy and gets replaced, without fixing the real issue</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The ASG doesn't have a mechanism to silently switch to EC2 status checks mid-incident based on detecting a shared failure pattern."> The ASG automatically switches to EC2 status checks instead</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A cooldown period limits the frequency of scaling actions, but it doesn't stop unhealthy-instance replacement from being triggered by the failing health check in the first place."> Nothing; the cooldown period prevents any replacement action</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-launch-configurations-and-templates.html">← Previous: Launch Configurations and Templates</a>
+      <a href="0008-asg-scaling-policies.html">Next: ASG Scaling Policies →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

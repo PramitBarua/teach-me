@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Elastic Load Balancer Architecture, Part 2</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 04
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Elastic Load Balancer Architecture, Part 2</h1>
+    <p class="lesson-meta">Lesson 04 of 12 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html" target="_blank">How Elastic Load Balancing Works</a></p>
+  </div>
+
+  <p>Continuing directly from Part 1: a full multi-tier worked example, then the single most commonly tested ELB architecture detail — <strong>cross-zone load balancing</strong>.</p>
+
+  <h2>Decoupling Tiers with Load Balancers</h2>
+  <p>Picture a three-tier app: web tier (Auto Scaling group behind an internet-facing ALB), application tier (Auto Scaling group behind an <strong>internal</strong> ALB), and a database tier. Without load balancers between tiers, everything is <strong>tightly coupled</strong> — a customer connects to one specific web instance, which talks to one specific application instance; if either fails or the tier scales, something breaks or has to be reconfigured.</p>
+
+  <p>Putting a load balancer between each tier <strong>loosens that coupling</strong>: the web tier only ever talks to the internal load balancer's DNS name, with zero awareness of how many application instances exist or which one it's actually reaching. This is what lets each tier <strong>scale independently</strong> — the application tier can grow from 2 to 4 instances under load with no reconfiguration required anywhere else in the stack.</p>
+
+  <h2>Cross-Zone Load Balancing</h2>
+  <p>Each AZ a load balancer uses gets its own node(s), and the DNS name spreads incoming requests <strong>evenly across nodes</strong> — with 2 nodes, each gets 50% of incoming connections, regardless of how many instances sit behind each node.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The historic problem</div>
+    Originally, a load balancer node could only forward connections to instances <strong>in its own AZ</strong>. Picture 4 instances in AZ-A and 1 instance in AZ-B: the AZ-A node splits its 50% of traffic four ways (12.5% per instance), while the AZ-B node sends its entire 50% to the single instance there. That one instance ends up absorbing <strong>4× the load</strong> of any instance in AZ-A — a badly uneven distribution, caused purely by uneven instance counts across AZs.
+  </div>
+
+  <p><strong>Cross-zone load balancing</strong> fixes this: every node can distribute connections to <strong>registered instances in any AZ</strong>, not just its own. With it enabled, that same 4-instances-in-A / 1-instance-in-B layout gets evenly split across all 5 instances, regardless of which node a connection initially landed on.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Cross-zone load balancing is <strong>enabled by default</strong> for Application Load Balancers today, but it was <strong>not enabled by default historically</strong>, and it's a very common way for exam questions to describe "uneven load distribution across instances" — the fix is enabling cross-zone load balancing, not adding more load balancers.
+  </div>
+
+  <h2>Architecture Recap</h2>
+  <ul>
+    <li>One load balancer <strong>object</strong> = multiple <strong>nodes</strong>, one (or more) per configured AZ subnet.</li>
+    <li>One <strong>DNS A record</strong> resolves to every active node, spreading load evenly <em>across nodes</em>.</li>
+    <li><strong>Internet-facing vs. internal</strong> only changes node IP addressing (public+private vs. private-only) — nothing else.</li>
+    <li>An internet-facing load balancer can forward to <strong>public or private</strong> back-end instances — no public IP requirement on targets.</li>
+    <li>Minimum <strong>8 free IPs</strong> per subnet (<code>/28</code> technically works; AWS recommends <code>/27</code> for scaling headroom).</li>
+    <li><strong>Cross-zone load balancing</strong> (default-on for ALBs) spreads load evenly across <em>instances</em>, regardless of which AZ a node lives in.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A load balancer has 2 AZs: AZ-A with 6 registered instances, AZ-B with 2 registered instances. Cross-zone load balancing is disabled. How is incoming load distributed?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Without cross-zone load balancing, each node can only forward to instances in its own AZ — instance counts across AZs aren't automatically equalized."> Evenly across all 8 instances regardless of AZ</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Without cross-zone load balancing, each node only distributes within its own AZ — the AZ-A node splits 50% six ways (~8.3% each), while the AZ-B node splits its 50% two ways (25% each) — a much heavier per-instance load in AZ-B."> Unevenly; AZ-B's 2 instances get a much larger share each than AZ-A's 6</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Cross-zone load balancing being disabled doesn't cause an outright failure — connections are still distributed, just unevenly across the AZs' differing instance counts."> The load balancer fails to route any traffic at all</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Nodes without cross-zone load balancing don't preferentially favor the AZ with more instances — each node is confined to distributing only within its own AZ."> All traffic goes to AZ-A since it has more instances</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team notices wildly uneven CPU load between instances behind their ALB, correlating with which AZ each instance is in and how many instances that AZ has. What's the most likely fix?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Adding more load balancer nodes doesn't fix uneven distribution caused by disabled cross-zone load balancing — the nodes would still be restricted to their own AZ's instances."> Add more load balancer nodes to each Availability Zone</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. This is the classic symptom of cross-zone load balancing being disabled — enabling it lets every node distribute across instances in every AZ, evening out the load regardless of per-AZ instance counts."> Enable cross-zone load balancing on the load balancer</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Switching to internal doesn't change how traffic is distributed across AZs or instances — that setting only affects node IP addressing."> Switch the load balancer from internet-facing to internal</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Resizing the subnet doesn't address how traffic is distributed across AZs — cross-zone load balancing controls that, not subnet CIDR size."> Increase the subnet size from /27 to /24 in each AZ</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In a three-tier architecture with an internal load balancer between the web and application tiers, what does the web tier know about the application tier's instances?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The whole point of the internal load balancer is abstraction — the web tier doesn't need or have this level of detail about the application tier."> The exact number and identity of every application instance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The web tier only ever communicates with the internal load balancer's DNS name — it has no awareness of how many application instances exist or which one handles any given request, which is exactly what allows independent scaling."> Only the internal load balancer's DNS name — nothing about instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The web tier doesn't need direct private IP addresses of application instances — that would defeat the abstraction the internal load balancer provides."> The private IP addresses of each application instance directly</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Health check status of individual instances is something the load balancer tracks internally — it isn't surfaced to the web tier, which only sees the load balancer's single DNS endpoint."> The health check status of each individual application instance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-elb-architecture-part1.html">← Previous: ELB Architecture, Part 1</a>
+      <a href="0005-alb-vs-nlb.html">Next: ALB vs. NLB →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

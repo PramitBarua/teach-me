@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – Elastic Load Balancer Architecture, Part 1</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 03
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Elastic Load Balancer Architecture, Part 1</h1>
+    <p class="lesson-meta">Lesson 03 of 12 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html" target="_blank">How Elastic Load Balancing Works</a></p>
+  </div>
+
+  <p>A load balancer's job: accept connections from customers, distribute them across registered back-end compute, and abstract customers away from that infrastructure entirely — so it can scale, fail, and heal without customers ever noticing.</p>
+
+  <h2>What You Provision vs. What Actually Runs</h2>
+  <p>When you create a load balancer, you pick <strong>one subnet in each of two or more Availability Zones</strong>. What looks like a single object is actually a set of <strong>load balancer nodes</strong> — one or more per AZ, living in the subnets you chose. A single <strong>DNS A record</strong> is created for the load balancer, and that record resolves to <em>every</em> node — so connections via the DNS name are distributed evenly across all of them.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: this is why load balancers self-heal and self-scale</div>
+    The nodes are managed entirely by AWS. If a node fails, it's replaced. If incoming load increases, more nodes are provisioned inside the chosen subnets automatically. You never manage this directly — you just pick the AZs (via subnets) up front.
+  </div>
+
+  <h2>Internet-Facing vs. Internal</h2>
+  <p>This choice controls <strong>only IP addressing</strong> on the nodes — nothing else about the architecture changes:</p>
+
+  <table>
+    <thead><tr><th>Type</th><th>Node IP addressing</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Internet-facing</strong></td><td>Public <em>and</em> private IPs</td></tr>
+      <tr><td><strong>Internal</strong></td><td>Private IPs only</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the classic trap</div>
+    An <strong>internet-facing</strong> load balancer can forward to <strong>both public and private</strong> EC2 instances — the back-end instances never need public IPs of their own. The only requirement is that load balancer nodes can reach the instances. If an exam question implies an internet-facing load balancer requires public back-end instances, that's the trap — it doesn't.
+  </div>
+
+  <h2>Subnet Sizing</h2>
+  <p>Load balancers need at least <strong>8 free IP addresses</strong> in each subnet they're deployed into. A <code>/28</code> subnet technically provides this (16 addresses, minus 5 AWS reserves, leaves 11 free) — but AWS's own guidance recommends a <strong>/27 or larger</strong> so the load balancer has room to scale its node count as load increases.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Both answers can be "correct" depending on the question</div>
+    Strictly, <code>/28</code> meets the bare 8-free-IP minimum. AWS's documented recommendation is <code>/27</code>. If an exam question offers both a <code>/27</code> and a <code>/28</code> option, <code>/27</code> is almost always the intended answer — but if <code>/27</code> isn't offered and <code>/28</code> is, treat <code>/28</code> as valid too.
+  </div>
+
+  <h2>Multi-Tier Abstraction</h2>
+  <p>Load balancers aren't only for the public-facing edge. An <strong>internal</strong> load balancer can sit between two internal tiers — e.g. a web tier talking to an application tier — abstracting each tier from the other's physical layout, and letting each tier scale independently without the other needing to know or care.</p>
+
+  <p>Part 2 continues directly into cross-zone load balancing and a full multi-tier worked example.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. You provision an ALB into two Availability Zones. What does the load balancer's DNS A record actually resolve to?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A load balancer isn't a single physical device with one IP — it's implemented as multiple nodes, and the DNS record reflects that."> A single IP address representing the whole load balancer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A load balancer is made up of multiple nodes — one or more per configured AZ — and the DNS A record resolves to all of them, spreading incoming connections evenly."> Every load balancer node across all configured Availability Zones</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The DNS record doesn't point at backend EC2 instances directly — clients connect to load balancer nodes, which then forward to registered targets."> The IP addresses of the registered back-end EC2 instances</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Only one AZ's nodes being resolvable would defeat the purpose of spanning multiple AZs for availability — all configured AZs' nodes are included."> Only the node in whichever AZ was configured first</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team designs an internet-facing ALB forwarding to EC2 instances that only have private IP addresses (no public IPs). Will this work?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. An internet-facing load balancer's nodes have public IPs, but the back-end instances themselves never need public addressing — the load balancer just needs network reachability to them."> Yes; internet-facing load balancers can forward to private-only instances</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Internet-facing status is purely about the load balancer nodes' own IP addressing — it has no requirement that back-end targets also carry public IPs."> No; internet-facing load balancers require public back-end instances</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Switching to internal wouldn't help here either — and it isn't necessary, since internet-facing load balancers already support private-only back-end instances."> No; the load balancer must be switched to internal mode</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This scenario doesn't require a NAT Gateway — reachability between load balancer nodes and back-end instances happens over the VPC's internal networking, not through NAT."> Yes; but only if a NAT Gateway is added to the architecture</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. AWS documentation recommends a /27 subnet for load balancer deployment, but a strict /28 also meets the minimum free-IP requirement. Why does AWS still recommend /27?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A /28 does meet the bare 8-free-IP minimum after AWS's 5 reserved addresses — the recommendation for /27 isn't about /28 failing the minimum requirement outright."> A /28 subnet doesn't provide the required 8 free IPs at all</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A /27 gives the load balancer more headroom to add nodes as load increases, beyond the bare minimum a /28 provides."> A /27 gives more room for the load balancer to scale its nodes</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Subnet size doesn't affect whether a load balancer is internet-facing or internal — that's a separate, independent configuration choice."> A /27 is required to make a load balancer internet-facing</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Subnet CIDR size isn't tied to cross-zone load balancing being enabled or not — those are unrelated settings."> A /27 is needed to enable cross-zone load balancing</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-evolution-of-elastic-load-balancers.html">← Previous: Evolution of the Elastic Load Balancer</a>
+      <a href="0004-elb-architecture-part2.html">Next: ELB Architecture, Part 2 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

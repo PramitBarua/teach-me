@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HA & Scaling – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › HA & Scaling</div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>HA & Scaling</h1>
+    <p class="lesson-meta">12 lessons · ~89 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html" target="_blank">Elastic Load Balancing User Guide</a> · <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html" target="_blank">Amazon EC2 Auto Scaling User Guide</a></p>
+  </div>
+
+  <p>This module covers how AWS architectures scale and stay available: the regional/global mental model, all three Elastic Load Balancer types and when to pick each, and Auto Scaling groups end to end — launch configuration, scaling policies, lifecycle hooks, and health checks. This is one of the densest, most scenario-tested parts of the exam.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td><a href="0001-regional-and-global-architecture.html">Regional and Global AWS Architecture</a></td>
+        <td>Global layer (Route 53, CloudFront) vs. regional tiers (web/compute/storage/database/caching/app services)</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td><a href="0002-evolution-of-elastic-load-balancers.html">Evolution of the Elastic Load Balancer</a></td>
+        <td>CLB (avoid) vs. version 2: ALB, NLB, GWLB</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td><a href="0003-elb-architecture-part1.html">ELB Architecture, Part 1</a></td>
+        <td>Nodes per AZ, one DNS record for all nodes, internet-facing vs. internal, subnet sizing</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td><a href="0004-elb-architecture-part2.html">ELB Architecture, Part 2</a></td>
+        <td>Multi-tier decoupling with internal load balancers; cross-zone load balancing</td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td><a href="0005-alb-vs-nlb.html">ALB vs. NLB</a></td>
+        <td>Layer 7 rules/conditions/actions vs. Layer 4 raw speed, static IPs, and pass-through encryption</td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td><a href="0006-launch-configurations-and-templates.html">Launch Configurations and Launch Templates</a></td>
+        <td>The "what" instances launch with — templates are now the only option, launch configs are deprecated</td>
+      </tr>
+      <tr>
+        <td>07</td>
+        <td><a href="0007-auto-scaling-groups.html">Auto Scaling Groups</a></td>
+        <td>Min/desired/max, self-healing, integration with load balancer target groups</td>
+      </tr>
+      <tr>
+        <td>08</td>
+        <td><a href="0008-asg-scaling-policies.html">ASG Scaling Policies</a></td>
+        <td>Simple vs. step vs. target tracking dynamic scaling; cooldowns</td>
+      </tr>
+      <tr>
+        <td>09</td>
+        <td><a href="0009-asg-lifecycle-hooks.html">ASG Lifecycle Hooks</a></td>
+        <td>Pending:Wait / Terminating:Wait states, custom actions before launch/terminate completes</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td><a href="0010-asg-health-check-comparison.html">ASG Health Checks: EC2 vs. ELB</a></td>
+        <td>EC2 status checks vs. application-aware ELB checks; the health check grace period</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td><a href="0011-ssl-offload-and-session-stickiness.html">SSL Offload & Session Stickiness</a></td>
+        <td>Bridging vs. pass-through vs. offload; sticky session cookies and their trade-offs</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td><a href="0012-gateway-load-balancer.html">Gateway Load Balancer</a></td>
+        <td>Scaling third-party security appliances transparently, using Geneve encapsulation</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The highest-yield cluster is <strong>picking ALB vs. NLB</strong> from a scenario (Lesson 05) — memorize the short list of things that force NLB (unbroken encryption, static IPs, raw performance, non-HTTP protocols, PrivateLink) and default to ALB otherwise. Close behind: the <strong>health check grace period</strong> replacement-loop trap (Lesson 10), <strong>cross-zone load balancing</strong> as the fix for uneven per-instance load (Lesson 04), and knowing that <strong>launch configurations are now deprecated</strong> in favor of launch templates (Lesson 06).
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-regional-and-global-architecture.html">Start: Regional and Global AWS Architecture →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – Evolution of the Elastic Load Balancer</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 02
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Evolution of the Elastic Load Balancer</h1>
+    <p class="lesson-meta">Lesson 02 of 12 · ~4 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html" target="_blank">What Is Elastic Load Balancing?</a></p>
+  </div>
+
+  <p>"ELB" (Elastic Load Balancing) refers to a <strong>family</strong> of three products, split across two generations. This orientation lesson sets up everything the rest of this module covers in depth.</p>
+
+  <table>
+    <thead><tr><th>Generation</th><th>Type</th><th>Introduced</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Version 1</strong></td><td>Classic Load Balancer (CLB)</td><td>2009</td></tr>
+      <tr><td rowspan="3"><strong>Version 2</strong></td><td>Application Load Balancer (ALB)</td><td>Layer 7 — HTTP/HTTPS/WebSocket</td></tr>
+      <tr><td>Network Load Balancer (NLB)</td><td>Layer 4 — TCP/TLS/UDP</td></tr>
+      <tr><td>Gateway Load Balancer (GWLB)</td><td>Layer 3/4 — third-party appliance scaling</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Never pick the Classic Load Balancer</div>
+    CLBs load balance HTTP/HTTPS and lower-level protocols, but they aren't true Layer 7 devices — they can't interpret HTTP content or make decisions based on it. They also support only <strong>one SSL certificate per load balancer</strong>, meaning a business with hundreds of HTTPS applications could need hundreds of CLBs. There is no scenario, exam or real-world, where a Classic Load Balancer is the right choice over a version 2 type today.
+  </div>
+
+  <h2>The Two Version 2 Types, at a Glance</h2>
+  <p><strong>Application Load Balancers</strong> are true Layer 7 devices — they understand HTTP, HTTPS, and WebSocket, and can route based on anything visible at the application layer. <strong>Network Load Balancers</strong> handle TCP, TLS, and UDP — anything that isn't HTTP/HTTPS, like email servers, SSH, or custom game protocols. Both support <strong>target groups</strong> and <strong>rules</strong>, letting one load balancer serve multiple applications or route differently depending on the client — something CLBs can't do at all. The next three lessons build out the full architecture and the ALB-vs-NLB decision in detail.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A business currently runs 50 separate HTTPS applications, each behind its own Classic Load Balancer, because CLBs only support one SSL certificate each. What migration addresses this directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Network Load Balancer operates at Layer 4 and has no concept of HTTPS listener rules or SSL certificate-per-domain routing — it can't consolidate HTTPS apps by host header."> Migrating to Network Load Balancers, one per application still</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. An Application Load Balancer supports multiple listener rules, each with its own SSL certificate, letting many HTTPS applications be consolidated behind a single ALB."> Consolidating onto Application Load Balancers with host-based rules</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Gateway Load Balancers are for scaling third-party security appliances — they aren't designed to consolidate multiple HTTPS web applications behind one certificate-serving front end."> Consolidating onto a single Gateway Load Balancer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Staying on Classic Load Balancers doesn't solve the one-certificate-per-CLB limitation — the whole point of the migration is to move away from CLBs."> Keeping Classic Load Balancers, since they're proven and stable</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application uses a custom TCP-based game protocol that isn't HTTP or HTTPS. Which load balancer type is designed for this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An Application Load Balancer only understands HTTP, HTTPS, and WebSocket — a custom, non-HTTP TCP protocol falls outside what it can interpret or route."> Application Load Balancer, since it works with any protocol</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Network Load Balancers handle TCP, TLS, and UDP — exactly the class of non-HTTP protocols a custom game protocol falls into."> Network Load Balancer, which handles TCP, TLS, and UDP</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Gateway Load Balancers are purpose-built for distributing traffic across third-party security appliances, not for general-purpose custom protocol load balancing."> Gateway Load Balancer, for custom protocol inspection</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Classic Load Balancers should never be the default choice today regardless of protocol, given their certificate and Layer 7 limitations."> Classic Load Balancer, since it predates HTTP-specific restrictions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Why can't a Classic Load Balancer make routing decisions based on an HTTP request's path or headers?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CLBs can be configured with HTTP/HTTPS listeners — the limitation isn't that they refuse HTTP traffic, it's that they don't truly understand or act on Layer 7 content."> CLBs cannot be configured to accept HTTP traffic at all</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Classic Load Balancers aren't true Layer 7 devices — despite handling HTTP/HTTPS traffic, they can't interpret application-layer content to make routing decisions the way ALBs can."> CLBs aren't true Layer 7 devices, unlike Application Load Balancers</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Missing target groups isn't the root issue here — CLBs' core limitation is their lack of true Layer 7 (application-content) awareness, which target groups alone wouldn't fix."> CLBs lack target groups, which ALBs also lack</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CLBs support far fewer, not more, SSL certificates than ALBs — one per load balancer, versus many via ALB listener rules."> CLBs support too many SSL certificates to route consistently</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-regional-and-global-architecture.html">← Previous: Regional and Global AWS Architecture</a>
+      <a href="0003-elb-architecture-part1.html">Next: ELB Architecture, Part 1 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

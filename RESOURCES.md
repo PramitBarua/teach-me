@@ -79,3 +79,15 @@
 | R73 | How Route 53 Checks the Health of Your Resources | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/welcome-health-checks.html | Health check types, 18% healthy threshold |
 | R74 | Geoproximity Routing | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-geoproximity.html | Distance-based routing with bias |
 | R75 | Configuring DNSSEC Signing in Amazon Route 53 | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec.html | KSK/ZSK architecture, chain of trust, DS records |
+| R76 | How Elastic Load Balancing Works | https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html | ELB nodes, cross-zone balancing, subnet requirements |
+| R77 | Application Load Balancers | https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html | ALB architecture, subnets, listeners/rules |
+| R78 | What Is a Network Load Balancer? | https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html | NLB architecture, TLS listeners, static IPs |
+| R79 | What Is a Gateway Load Balancer? | https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/introduction.html | GWLB architecture, Geneve encapsulation |
+| R80 | Sticky Sessions for Your Application Load Balancer | https://docs.aws.amazon.com/elasticloadbalancing/latest/application/sticky-sessions.html | Duration-based vs. application-based cookies |
+| R81 | Auto Scaling Launch Templates | https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-templates.html | Versioning, mixed instances, current recommended approach |
+| R82 | Auto Scaling Launch Configurations | https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-configurations.html | Legacy; deprecated for new accounts since Oct 2024 |
+| R83 | Auto Scaling Groups | https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html | Min/desired/max, AZ balancing |
+| R84 | Dynamic Scaling for Amazon EC2 Auto Scaling | https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scale-based-on-demand.html | Simple/step/target tracking overview |
+| R85 | Target Tracking Scaling Policies | https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-target-tracking.html | Supported metrics, recommended default |
+| R86 | Amazon EC2 Auto Scaling Lifecycle Hooks | https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html | Pending/terminating wait states, EventBridge/SNS |
+| R87 | Health Checks for Instances in an Auto Scaling Group | https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-health-checks.html | EC2 vs. ELB vs. custom checks, grace period |

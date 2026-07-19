@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – ASG Health Checks: EC2 vs. ELB</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 10
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>ASG Health Checks: EC2 vs. ELB vs. Custom</h1>
+    <p class="lesson-meta">Lesson 10 of 12 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-health-checks.html" target="_blank">Health Checks for Instances in an Auto Scaling Group</a></p>
+  </div>
+
+  <p>An ASG replaces any instance its health checks mark unhealthy. Which check it uses changes what "unhealthy" actually means.</p>
+
+  <table>
+    <thead><tr><th>Type</th><th>What counts as unhealthy</th></tr></thead>
+    <tbody>
+      <tr><td><strong>EC2</strong> (default)</td><td>Anything other than <code>running</code> — stopping, stopped, terminated, shutting down, or <strong>impaired</strong> (failing status checks)</td></tr>
+      <tr><td><strong>ELB</strong></td><td>Instance must be both <code>running</code> <em>and</em> passing the load balancer's own health check</td></tr>
+      <tr><td><strong>Custom</strong></td><td>An external system explicitly marks instances healthy or unhealthy</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: why ELB checks matter</div>
+    Application Load Balancer health checks are <strong>application-aware</strong> — they can request a specific page and pattern-match the response, not just confirm the instance is powered on. Switching an ASG from EC2 checks to ELB checks is how you catch an instance that's technically running but whose application has actually crashed.
+  </div>
+
+  <h2>The Health Check Grace Period</h2>
+  <p>A configurable window — <strong>300 seconds (5 minutes) by default</strong> — that must elapse after an instance launches before health checks start affecting it. This gives an instance time to boot, run its bootstrapping (user data, cfn-init, etc.), and start the application before it's judged.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">A very real exam scenario: the replacement loop</div>
+    If the grace period is <strong>too short</strong> for how long your instances actually take to bootstrap, health checks start failing before the application is even ready — the ASG terminates the "unhealthy" instance and launches a replacement, which fails the same check for the same reason, on repeat, indefinitely. Set the grace period to match (or exceed) your instance's real launch-to-ready time.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EC2 instance in an ASG using default health checks is running normally, but its web application process has crashed and stopped responding. Does the ASG replace it?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EC2 status checks only assess whether the instance itself is running and passing system/instance status checks — they have no visibility into whether the application process inside it has crashed."> Yes, EC2 status checks detect the crashed application process</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. With default EC2 health checks, the instance is still considered healthy as long as it's in the running state — a crashed application inside it isn't detected unless ELB or custom health checks are used instead."> No, EC2 checks only see that the instance is still running</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EC2 checks have no application-layer visibility at all, whether the crash is immediate or delayed — the underlying limitation is the same regardless of timing."> Yes, but only after a 24-hour delay for confirmation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Custom health checks require an external system to explicitly report status — the ASG doesn't spontaneously invoke one just because the default EC2 check would miss the issue."> No, but a custom health check is automatically triggered instead</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Instances in an ASG take about 8 minutes to bootstrap and start serving traffic, but the health check grace period is set to the 300-second default. What's the likely symptom?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A too-short grace period doesn't cause instances to sit idle — it causes health checks to start too early and mark still-booting instances as unhealthy."> Instances sit idle for 8 minutes without being used at all</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. With a grace period shorter than actual boot time, health checks start failing on instances that are still bootstrapping, causing the ASG to terminate and replace them repeatedly — a classic infinite replacement loop."> A repeating cycle of instances being marked unhealthy and replaced</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A short grace period doesn't cause the ASG to extend it automatically — this must be configured manually to match actual bootstrap time."> The ASG automatically extends the grace period to 8 minutes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A mismatched grace period doesn't disable health checks outright — it causes them to apply too early, not to stop functioning."> Health checks are disabled entirely until manually reconfigured</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An ASG uses ELB health checks. For an instance to be considered healthy, what must be true?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ELB health checks require more than just the running state — the instance must also actually pass the load balancer's own health check."> Only that the instance is in the running state</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. With ELB health checks, an instance must be both running and passing the load balancer's own health check (which can be application-aware) to be considered healthy."> The instance is running AND passing the load balancer's health check</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ELB health checks don't require a custom external system reporting status — that describes the separate 'custom' health check type."> An external system must separately report it as healthy</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ELB health checks don't require passing EC2 status checks specifically — they replace that check with the load balancer's own (potentially application-aware) check."> The instance must pass two consecutive EC2 status checks</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-asg-lifecycle-hooks.html">← Previous: ASG Lifecycle Hooks</a>
+      <a href="0011-ssl-offload-and-session-stickiness.html">Next: SSL Offload & Session Stickiness →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

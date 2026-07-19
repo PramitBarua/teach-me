@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – SSL Offload and Session Stickiness</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 11
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>SSL Offload and Session Stickiness</h1>
+    <p class="lesson-meta">Lesson 11 of 12 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/sticky-sessions.html" target="_blank">Sticky Sessions for Your Application Load Balancer</a></p>
+  </div>
+
+  <p>Two independent features, both frequently tested: how a load balancer handles <strong>encrypted connections</strong>, and how it can keep one user pinned to <strong>one back-end instance</strong>.</p>
+
+  <h2>Three Ways to Handle SSL/TLS</h2>
+  <table>
+    <thead><tr><th>Mode</th><th>Certificate location</th><th>Load balancer sees plaintext HTTP?</th><th>Instance CPU overhead?</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Bridging</strong> (ALB default)</td><td>Load balancer <em>and</em> instances</td><td>Yes — decrypted, then re-encrypted to the instance</td><td>Yes — instances do crypto too</td></tr>
+      <tr><td><strong>Pass-through</strong> (NLB, TCP listener)</td><td>Instances only</td><td>No — encryption is never touched</td><td>Yes — instances do all crypto</td></tr>
+      <tr><td><strong>SSL offload</strong> (ALB/NLB, HTTP to instances)</td><td>Load balancer only</td><td>Yes — instances only ever see HTTP</td><td>No — instances do no crypto</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>Bridging</strong> is the ALB's default mode: the client's HTTPS connection terminates on the load balancer (requiring a certificate there matching the app's domain), and the load balancer opens a <em>new</em>, separately-encrypted connection to the instance (which needs its own matching certificate too). The payoff is that the load balancer can see and act on plaintext HTTP — headers, cookies, paths — which is the entire reason ALBs default to this mode.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Bridging's real cost</div>
+    Every back-end instance in bridging mode has to <strong>store a certificate and perform cryptographic operations</strong> — real CPU overhead at scale, plus the operational burden of keeping certificates in sync across every instance.
+  </div>
+
+  <p><strong>SSL pass-through</strong> is NLB-only: the load balancer (using a TCP listener) never decrypts anything — it just routes based on source/destination IP and port, leaving one unbroken encrypted tunnel from client all the way to the instance. AWS never sees the certificate at all here — you retain full control (even a CloudHSM appliance is an option). The cost: the load balancer can't make any decision based on HTTP content, since it never sees it.</p>
+
+  <p><strong>SSL offload</strong> gets you the best of both administrative worlds for many use cases: HTTPS terminates on the load balancer (so it needs a certificate), but the connection <em>to</em> the instance is plain HTTP — no certificate, no crypto overhead, on any instance. The trade-off is that traffic between the load balancer and instances travels unencrypted across AWS's internal network.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: match the mode to the requirement</div>
+    Need the load balancer to inspect/act on HTTP content? → <strong>Bridging</strong>. Need truly unbroken end-to-end encryption with zero AWS visibility into the certificate? → <strong>Pass-through</strong> (NLB only). Want to remove crypto overhead from instances and don't mind plaintext inside AWS's network? → <strong>SSL offload</strong>.
+  </div>
+
+  <h2>Session Stickiness</h2>
+  <p>Without stickiness, connections are load balanced fairly across all instances — fine for stateless apps (session state held externally, e.g. in DynamoDB), but a problem if session state lives <em>on</em> a specific instance: every time a user lands on a different instance, they'd appear logged out, cart emptied, etc.</p>
+
+  <p><strong>Session stickiness</strong>, enabled per <strong>target group</strong> on an ALB, fixes this: on a user's first request, the load balancer issues a cookie (<strong>AWSALB</strong>) with a duration you set, anywhere from <strong>1 second to 7 days</strong>. While that cookie is valid, every request from that user goes to the <strong>same back-end instance</strong>.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Two ways stickiness ends</div>
+    A sticky session moves a user to a different instance only when the <strong>cookie expires</strong>, or the <strong>pinned instance fails</strong> — either way, they get a fresh cookie and a new instance assignment.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: stickiness has a cost</div>
+    Stickiness can cause <strong>uneven load</strong> — one heavy user is permanently pinned to one instance, regardless of that instance's actual load. The architecturally preferable fix is to make instances <strong>stateless</strong> (session data stored externally), which removes the need for stickiness entirely and lets the load balancer distribute fairly.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A security team requires that AWS never has access to the SSL certificate used for a public HTTPS application, with full encryption maintained from client to instance. Which SSL handling mode fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Bridging mode requires the certificate to be installed on the load balancer, which AWS operates — this doesn't satisfy a requirement that AWS never have certificate access."> Bridging mode on an Application Load Balancer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. SSL pass-through (NLB with a TCP listener) never terminates the connection at the load balancer — the certificate lives only on the instances, and AWS never sees it."> SSL pass-through on a Network Load Balancer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SSL offload terminates HTTPS on the load balancer, which requires the certificate to be installed there — AWS would have access to it."> SSL offload on an Application Load Balancer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Session stickiness is unrelated to SSL/TLS handling — it controls which back-end instance a user's requests are routed to, not certificate handling."> Session stickiness enabled on the target group</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants to remove the CPU overhead of SSL/TLS processing from their EC2 instances entirely, while still terminating HTTPS at the edge for customers. Which mode achieves this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Bridging mode still requires every back-end instance to hold a certificate and perform cryptographic operations for the re-encrypted connection — it doesn't remove instance-side crypto overhead."> Bridging mode, since the load balancer handles most of the work</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Pass-through never decrypts anything at the load balancer — the instances themselves still have to handle all the cryptographic operations for the unbroken encrypted tunnel."> SSL pass-through, since encryption is never processed at all</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. SSL offload terminates HTTPS at the load balancer and forwards plain HTTP to instances — instances handle zero cryptographic overhead, while HTTPS is still presented to customers."> SSL offload, terminating HTTPS at the load balancer only</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Session stickiness pins users to instances by cookie — it has no effect on SSL/TLS processing overhead."> Session stickiness, to reduce per-instance connection overhead</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An application stores each user's shopping cart in memory on whichever EC2 instance first handled their session, and has session stickiness enabled. The instance holding a particular user's cart fails. What happens to that user?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Stickiness pins a session to an instance only while that instance is available — an instance failure is one of the two triggers (along with cookie expiry) that moves the user elsewhere."> They remain pinned to the failed instance until it recovers</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Instance failure is one of the two events that ends stickiness — the user is moved to a different (healthy) instance and issued a new cookie, and in this scenario their in-memory cart state on the old instance is lost."> They're moved to a different instance with a new cookie; cart data is lost</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Sticky sessions on an ALB don't replicate in-memory application state between instances — that would require an external session store, which this scenario doesn't use."> Their cart data is automatically replicated to the new instance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A failed instance being unavailable doesn't cause the load balancer to return no response indefinitely — the user is simply rerouted to another healthy instance."> The load balancer returns no response until a fix is applied</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-asg-health-check-comparison.html">← Previous: ASG Health Check Comparison</a>
+      <a href="0012-gateway-load-balancer.html">Next: Gateway Load Balancer →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

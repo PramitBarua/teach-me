@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – Gateway Load Balancer</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 12
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Gateway Load Balancer</h1>
+    <p class="lesson-meta">Lesson 12 of 12 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/introduction.html" target="_blank">What Is a Gateway Load Balancer?</a></p>
+  </div>
+
+  <p>The last member of the ELB family, and the most narrowly scoped: <strong>Gateway Load Balancer (GWLB)</strong> exists to run and scale <strong>third-party security appliances</strong> — firewalls, IDS/IPS, deep packet inspection — in front of your traffic, transparently.</p>
+
+  <h2>The Problem It Solves</h2>
+  <p>A single security appliance sitting inline with traffic works fine — until your application scales. Growing or shrinking application capacity means you need a matching number of security appliances, and manually keeping application and security capacity in lockstep is complex, fragile, and gets worse in multi-tenant setups. GWLB decouples the two: your application scales independently, and the security appliance fleet scales independently, with GWLB gluing them together.</p>
+
+  <h2>The Two Components</h2>
+  <ul>
+    <li><strong>GWLB endpoints</strong> — live in the VPC where traffic originates/is destined (e.g. your application VPC). Architecturally similar to a VPC interface endpoint, but with one critical extra capability: it can be the <strong>target of a route table entry</strong>, letting it sit directly in a traffic flow.</li>
+    <li><strong>The Gateway Load Balancer itself</strong> — a Layer 3/4 device (like an NLB) that distributes packets across a fleet of EC2 instances running the actual security software.</li>
+  </ul>
+
+  <h2>Geneve: Keeping Packets Intact</h2>
+  <p>The security appliances need to inspect packets <strong>exactly as sent</strong> — same source/destination IP and port — but the appliance fleet might live in an entirely different VPC with a conflicting IP range. GWLB solves this with <strong>Geneve</strong>, a tunneling protocol: original packets are <strong>encapsulated unaltered</strong> and sent through a tunnel to the appliance, inspected, and returned the same way. From the appliance's perspective it sees the true original packet; from the network's perspective, nothing about addressing had to change.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the one-word answer</div>
+    If an exam question describes running third-party firewalls/IDS/IPS <strong>at scale</strong>, decoupled from application scaling, transparently in-line — that's a <strong>Gateway Load Balancer</strong> question. "Geneve" is the tunneling protocol keyword to associate with GWLB specifically.
+  </div>
+
+  <h2>What This Buys You</h2>
+  <ul>
+    <li><strong>Horizontal scaling</strong> of the security appliance fleet, independent of the application.</li>
+    <li><strong>Flow stickiness</strong> — one flow of traffic always uses the same appliance instance, which matters for appliances that track connection state.</li>
+    <li><strong>Resilience</strong> — if one appliance instance fails, traffic simply moves to another.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Traffic flow, end to end</div>
+    Client → Internet Gateway → (route table sends traffic matching the app's subnet to) → GWLB endpoint → GWLB (in the security VPC) → traffic Geneve-encapsulated, unaltered → security appliance inspects it → returned encapsulated → de-encapsulated at the GWLB → back through the endpoint → onward to the actual destination (e.g. an ALB, then the application). The return path retraces the same route in reverse. Despite all these hops, source/destination IP and port are preserved throughout — that's the entire point of Geneve encapsulation.
+  </div>
+
+  <p>Architecturally, GWLB shares elements with NLB and ALB — including <strong>target groups</strong> — but its purpose is singular: scalable, resilient, transparent network security appliance placement.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team runs a fleet of third-party IDS/IPS appliances inline with application traffic, and finds that scaling the application up or down requires manually adding or removing a matching number of appliances. What AWS product decouples these two scaling processes?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Network Load Balancer distributes Layer 4 traffic to targets, but it doesn't provide the Geneve encapsulation and endpoint-as-route-target mechanism that decouples appliance scaling from application scaling."> A Network Load Balancer placed in front of the appliances</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Gateway Load Balancer is built exactly for this: it lets a fleet of third-party security appliances scale independently of the application, using GWLB endpoints and Geneve encapsulation."> A Gateway Load Balancer fronting the security appliance fleet</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An Application Load Balancer is a Layer 7 device for HTTP/HTTPS applications — it isn't designed to front a fleet of third-party network security appliances."> An Application Load Balancer with host-based routing rules</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A larger Auto Scaling group for the appliances alone doesn't solve the coupling problem — the appliances still need to be reachable transparently in the traffic path, which is what GWLB endpoints provide."> A bigger Auto Scaling group sized to match peak application load</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why does a Gateway Load Balancer use the Geneve protocol to send packets to security appliances, rather than just routing them directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Geneve encapsulation isn't primarily about encryption — its role is preserving the original packet's addressing while tunneling it across potentially conflicting IP address spaces."> To encrypt the traffic between the GWLB and the appliances</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Geneve encapsulates the original packet unaltered, letting it be tunneled to a security VPC that may have a completely different (even conflicting) IP address range, while preserving the original source/destination for the appliance to inspect."> To preserve original packet addressing across potentially conflicting VPC ranges</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Geneve encapsulation doesn't compress packets for bandwidth savings — in fact it adds overhead (a Geneve header) to each packet, not less data."> To compress packets and reduce bandwidth between VPCs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Geneve isn't used for load-balancer health checking — GWLB health checks work similarly to other Elastic Load Balancing products, separate from the Geneve tunneling mechanism."> To perform health checks on the security appliance instances</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What makes a Gateway Load Balancer endpoint different from a standard VPC interface endpoint?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Both interface endpoints and GWLB endpoints are placed inside a VPC's subnets — that isn't the distinguishing feature between them."> It can only be placed in a subnet, unlike interface endpoints</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A GWLB endpoint's key difference is that it can be set as the target of a route table entry, letting it sit directly in a traffic flow — a capability standard VPC interface endpoints don't have."> It can be set as the target of a route table entry</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="GWLB endpoints don't provide direct DNS resolution to public internet hostnames — that's not the distinguishing capability described for this endpoint type."> It provides direct DNS resolution for public internet hostnames</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="GWLB endpoints don't function as certificate authorities — that's unrelated to their actual distinguishing feature of being usable as a route table target."> It acts as a certificate authority for TLS termination</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-ssl-offload-and-session-stickiness.html">← Previous: SSL Offload & Session Stickiness</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the HA & Scaling module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

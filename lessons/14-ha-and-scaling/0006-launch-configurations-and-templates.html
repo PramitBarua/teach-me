@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – Launch Configurations and Launch Templates</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 06
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Launch Configurations and Launch Templates</h1>
+    <p class="lesson-meta">Lesson 06 of 12 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-templates.html" target="_blank">Auto Scaling Launch Templates</a> · <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-configurations.html" target="_blank">Auto Scaling Launch Configurations</a></p>
+  </div>
+
+  <p>Before an Auto Scaling group (next lesson) can launch anything, it needs a definition of <em>what</em> to launch: AMI, instance type/size, storage, key pair, networking and security groups, user data, and IAM role — everything you'd normally specify when launching an instance by hand. That definition lives in either a <strong>launch configuration</strong> or a <strong>launch template</strong>.</p>
+
+  <table>
+    <thead><tr><th></th><th>Launch Configuration</th><th>Launch Template</th></tr></thead>
+    <tbody>
+      <tr><td>Editable after creation?</td><td>No</td><td>No, but supports <strong>versions</strong></td></tr>
+      <tr><td>Can be used to launch instances directly (console/CLI)?</td><td>No — ASG only</td><td>Yes</td></tr>
+      <tr><td>Supports mixed instance types / Spot+On-Demand in one ASG?</td><td>No</td><td>Yes</td></tr>
+      <tr><td>Supports newer features (T2/T3 Unlimited, placement groups, capacity reservations, Elastic Graphics)?</td><td>No</td><td>Yes</td></tr>
+    </tbody>
+  </table>
+
+  <p>Neither is editable once created — if you need a different configuration, you create a new one (or, for launch templates, a new <strong>version</strong>) and point the Auto Scaling group at it.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Current AWS state: launch configurations are being phased out</div>
+    This lesson's source material presents launch templates as simply the newer, richer option. As of when this lesson was written, AWS has gone further: accounts created on or after <strong>June 1, 2023</strong> can no longer create launch configurations via the console, and accounts created on or after <strong>October 1, 2024</strong> cannot create them at all — console, API, CLI, or CloudFormation. <strong>Launch templates are now the only path for new work.</strong> See <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-configurations.html" target="_blank">Auto Scaling launch configurations</a> for the current deprecation status. You may still see launch configurations referenced in exam questions describing legacy environments, so it's worth knowing they exist — just don't expect to create one in a modern account.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Launch configurations/templates control the <strong>what</strong> — the instance definition. The Auto Scaling group (next lesson) controls the <strong>when</strong> and <strong>where</strong> — when instances launch, and which subnets they go into. Keep that split clean; it's an easy way to eliminate wrong answers quickly.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An Auto Scaling group needs to launch a mix of Spot and On-Demand instances, across several different instance types. What must back this ASG?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Launch configurations don't support mixing instance types or purchase options within one Auto Scaling group — that capability is specific to launch templates."> A launch configuration, since it supports all instance purchase types</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Mixed instance types and mixed Spot/On-Demand purchase options within one Auto Scaling group specifically require a launch template — launch configurations don't support this."> A launch template, which supports mixed instances and purchase options</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AMIs define the base image for an instance — they don't control mixing instance types or purchase options across an Auto Scaling group."> A custom AMI configured with multiple instance type tags</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A CreationPolicy governs CloudFormation resource-completion signaling — it has no bearing on instance type or purchase option mixing in an ASG."> A CloudFormation CreationPolicy attached to the ASG resource</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Your AWS account was created in 2025. You need to define an EC2 configuration for a new Auto Scaling group. What are you able to create?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Accounts created on or after October 1, 2024 cannot create launch configurations at all, through any method — console, API, CLI, or CloudFormation."> Either a launch configuration or a launch template, your choice</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. For accounts created on or after October 1, 2024, launch configurations cannot be created through any method — a launch template is the only option."> Only a launch template; launch configurations can't be created at all</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This restriction runs the opposite direction — launch configurations are the one being phased out, not launch templates."> Only a launch configuration; launch templates are being deprecated</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Launch configurations can't be created via any interface for accounts this new — the console-only restriction applied to accounts created from mid-2023 onward, and the full restriction applies from October 2024 onward."> A launch configuration via the CLI, though not via the console</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What's the fundamental difference in role between a launch template and an Auto Scaling group, in terms of what each one controls?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The launch template/configuration defines what gets launched (AMI, instance type, config); the Auto Scaling group controls when instances launch and which subnets they go into."> The template defines what launches; the ASG controls when and where</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This has the roles reversed — the ASG governs launch timing and subnet placement, while the template defines the instance configuration itself."> The template controls when and where; the ASG defines what launches</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Both are involved in provisioning — the template isn't billing-only, and the ASG isn't scaling-only without also controlling placement and timing."> The template only affects billing; the ASG only affects scaling</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Launch templates and Auto Scaling groups have distinct, complementary roles — they aren't fully interchangeable with identical responsibilities."> They perform identical roles and are fully interchangeable</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-alb-vs-nlb.html">← Previous: ALB vs. NLB</a>
+      <a href="0007-auto-scaling-groups.html">Next: Auto Scaling Groups →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

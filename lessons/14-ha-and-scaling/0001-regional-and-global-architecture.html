@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Regional and Global AWS Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">HA & Scaling</a> › Lesson 01
+    </div>
+    <div class="module-tag">HA & Scaling</div>
+    <h1>Regional and Global AWS Architecture</h1>
+    <p class="lesson-meta">Lesson 01 of 12 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/whitepapers/latest/aws-overview/global-infrastructure.html" target="_blank">AWS Global Infrastructure Overview</a></p>
+  </div>
+
+  <p>A truly global application — think Netflix — isn't one giant system. It's a <strong>global layer</strong> that gets customers to the right place, wrapped around many independent <strong>regional applications</strong>, each a complete, self-contained deployment. This lesson introduces the mental model this whole module builds on: separate the <strong>global</strong> concerns from the <strong>regional</strong> ones, because almost every AWS service you'll study lives on one side of that line or the other.</p>
+
+  <h2>Three Scales of Architecture</h2>
+  <ul>
+    <li><strong>Single-Region</strong> — everything lives in one Region, no DR story.</li>
+    <li><strong>Single-Region with DR</strong> — normal operation in one Region, with failover to a secondary Region if it fails.</li>
+    <li><strong>Multi-Region, active everywhere</strong> — the application runs in multiple Regions simultaneously and needs to keep working through the failure of any one of them.</li>
+  </ul>
+
+  <h2>The Global Layer</h2>
+  <p>Three jobs happen above any single Region:</p>
+  <ul>
+    <li><strong>Global service location and discovery</strong> — how a customer's device finds which Region to talk to. In AWS, this is <strong>Route 53</strong>: DNS with health checks, capable of directing customers to a primary Region, failing over to a secondary, or routing to whichever Region is closest/fastest.</li>
+    <li><strong>Content delivery</strong> — getting content physically close to customers everywhere, rather than serving everything from one origin. In AWS, this is <strong>CloudFront</strong>, which can pull content from an origin like S3 and cache it at edge locations worldwide.</li>
+    <li><strong>Global health checks and failover</strong> — detecting when infrastructure in one location is unhealthy and moving customers elsewhere — the mechanism that makes Route 53's failover/latency/geoproximity routing policies actually work at a global scale.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Very few AWS services are actually <strong>global</strong> — Route 53 and CloudFront are the standout examples in this architecture. Almost everything else you study from this point forward is <strong>regional</strong>, and the rest of this module (load balancers, Auto Scaling) operates entirely at that regional layer.
+  </div>
+
+  <h2>The Regional Layer: Tiers</h2>
+  <p>Once traffic lands in a Region, think of the architecture as a stack of <strong>tiers</strong> — logical groupings of functionality:</p>
+
+  <table>
+    <thead><tr><th>Tier</th><th>Typical AWS services</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Web tier</strong></td><td>Application Load Balancer, API Gateway — the regional entry point, abstracting customers from the infrastructure behind it</td></tr>
+      <tr><td><strong>Compute tier</strong></td><td>EC2, Lambda, ECS — does the actual work behind the web tier</td></tr>
+      <tr><td><strong>Storage tier</strong></td><td>EBS, EFS, S3 — used by the compute tier; S3 also frequently serves as a CloudFront origin</td></tr>
+      <tr><td><strong>Database tier</strong></td><td>RDS, Aurora, DynamoDB, Redshift</td></tr>
+      <tr><td><strong>Caching layer</strong></td><td>ElastiCache, DynamoDB Accelerator (DAX) — sits in front of the database tier so reads hit cheap, fast in-memory storage before ever reaching the (comparatively expensive) database</td></tr>
+      <tr><td><strong>Application services</strong></td><td>Kinesis, Step Functions, SQS, SNS — decoupling, messaging, and workflow features layered on top of the other tiers</td></tr>
+    </tbody>
+  </table>
+
+  <p>Every tier can consume services from any other tier — that's the whole point of separating them. The web tier abstracts customers from the compute tier, so the compute tier can scale or fail without customers noticing; the caching layer sits between compute and the database tier so the (expensive, byte-for-byte) database is only consulted on a cache miss.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A global streaming app wants customers automatically directed to their nearest healthy Region, with failover if that Region goes down. Which AWS service provides this global service-discovery layer?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFront caches and delivers content close to users, but it doesn't perform the initial DNS-based decision of which Region a customer's traffic should be directed to."> CloudFront, since it operates at edge locations globally</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Route 53 is the global DNS service, and with health checks plus routing policies like latency or geoproximity, it directs customers to the right Region and fails over automatically."> Route 53, using health checks and a routing policy</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An Application Load Balancer is a regional service — it distributes traffic within one Region, not across Regions globally."> An Application Load Balancer, since it distributes traffic</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Auto Scaling groups manage EC2 capacity within a Region — they have no role in global, cross-Region customer routing."> An Auto Scaling group spanning multiple Regions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application's compute tier reads frequently-accessed data directly from RDS on every single request, and the team wants to reduce both database load and cost. What architectural addition addresses this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Adding more RDS read replicas still means paying for and querying a comparatively expensive database service for data that doesn't need to hit a database at all on every read."> More RDS read replicas to spread out the read load</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A caching layer like ElastiCache sits between the compute and database tiers — reads are served from cheap, fast in-memory cache first, only falling back to the database on a cache miss."> A caching layer such as ElastiCache in front of the database</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFront caches content at global edge locations for delivery to end users — it isn't the layer used between an application's compute tier and its own database."> CloudFront configured with the database as its origin</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Application services like SQS and SNS handle decoupling and messaging — they don't provide a caching layer for reducing direct database read load."> An SQS queue placed between compute and the database</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which of these AWS services is genuinely global rather than regional, matching this lesson's global-vs-regional model?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EC2 is a regional compute service — instances run within a specific Region and Availability Zone."> EC2, since it can run in any Availability Zone</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Route 53 is one of the small set of genuinely global AWS services, alongside CloudFront — most other services, including compute, storage, and databases, are regional."> Route 53, providing DNS-based global service discovery</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="RDS is a regional database service — a given RDS instance lives in one Region (Aurora Global Database extends this, but RDS itself is regional)."> RDS, since databases must scale across every Region</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Auto Scaling groups are scoped to a Region and its Availability Zones — they aren't a global service."> Auto Scaling groups, since they manage global fleets</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-evolution-of-elastic-load-balancers.html">Next: Evolution of the Elastic Load Balancer →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
