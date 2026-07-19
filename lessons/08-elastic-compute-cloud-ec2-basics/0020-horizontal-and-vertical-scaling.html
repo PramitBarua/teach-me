@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>20 – Horizontal & Vertical Scaling</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 20
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Horizontal & Vertical Scaling</h1>
+    <p class="lesson-meta">Lesson 20 of 21 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html" target="_blank">Amazon EC2 Auto Scaling</a></p>
+  </div>
+
+  <p>Scaling is what happens when a system needs to grow or shrink to match changing customer load. There are two fundamentally different ways to add capacity to a system built on EC2: make each instance bigger (vertical), or add more instances (horizontal). Both solve the same problem, but they carry very different trade-offs — and this distinction underpins almost everything you'll learn about high availability and Auto Scaling later in the course.</p>
+
+  <h2>Vertical scaling: a bigger server</h2>
+  <p>Vertical scaling resizes an existing instance to a larger (or smaller) type — a <code>t3.large</code> becomes a <code>t3.xlarge</code>, then a <code>t3.2xlarge</code>, each step roughly doubling vCPU and memory. It's conceptually simple and needs no application changes: if an application runs on an instance, it runs on a bigger one too, which makes vertical scaling viable even for monolithic applications that can't easily be split across machines.</p>
+
+  <p>But it comes with real constraints:</p>
+
+  <ul>
+    <li><strong>Downtime</strong> — resizing an instance typically requires a stop/start, so scaling usually has to happen inside a pre-agreed outage window rather than instantly in response to load.</li>
+    <li><strong>A hard ceiling</strong> — there is always a largest available instance size. Once you're at the top, vertical scaling has nowhere left to go.</li>
+    <li><strong>Non-linear cost</strong> — larger instance sizes often carry a price premium, so cost doesn't scale proportionally as you go bigger.</li>
+  </ul>
+
+  <h2>Horizontal scaling: more servers</h2>
+  <p>Horizontal scaling leaves individual instances alone and instead changes <em>how many</em> of them are running — one instance becomes two, then eight, as load demands. Because there's no per-instance size cap, horizontal scaling has effectively no upper limit, and because you're typically using smaller, commodity-priced instances, it's often the cheaper path to a given amount of total capacity. It also allows much finer-grained scaling steps — adding one instance to a fleet of five is roughly a 20% capacity increase, versus the near-doubling that a single vertical resize typically produces.</p>
+
+  <p>The catch is that horizontal scaling needs the application to support it. With multiple instances splitting incoming traffic — normally via a <strong>load balancer</strong> — a given customer's requests can land on any instance in the fleet, not always the same one.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Horizontal scaling requires <strong>off-host (external) session storage</strong>. If session state is kept only on the instance that first handled a customer, that customer effectively gets logged out — or loses their cart, or their place in a video — every time a later request lands on a different instance. Externalizing sessions to a shared store makes instances <strong>stateless</strong>, so it genuinely doesn't matter which instance answers which request.
+  </div>
+
+  <table>
+    <thead><tr><th>Attribute</th><th>Vertical scaling</th><th>Horizontal scaling</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Mechanism</strong></td><td>Resize one instance to a bigger type</td><td>Add or remove instances</td></tr>
+      <tr><td><strong>Application changes</strong></td><td>None required</td><td>Needs off-host sessions / statelessness</td></tr>
+      <tr><td><strong>Downtime</strong></td><td>Usually yes, during resize</td><td>None — existing instances unaffected</td></tr>
+      <tr><td><strong>Upper limit</strong></td><td>Capped by largest instance size</td><td>No practical limit</td></tr>
+      <tr><td><strong>Cost profile</strong></td><td>Non-linear; premium at larger sizes</td><td>Often cheaper; commodity-sized instances</td></tr>
+      <tr><td><strong>Scaling granularity</strong></td><td>Coarse — roughly doubles per step</td><td>Fine — add/remove one instance at a time</td></tr>
+      <tr><td><strong>Works well with</strong></td><td>Monolithic applications</td><td>Load balancers, Auto Scaling Groups</td></tr>
+    </tbody>
+  </table>
+
+  <p>Horizontal scaling is the pattern behind <strong>Amazon EC2 Auto Scaling</strong>, which automatically launches and terminates instances in response to demand, generally paired with a load balancer distributing traffic across them. That combination — covered in depth later in the high availability and scaling section of the course — is what gives horizontally-scaled architectures both elasticity and resilience. See the <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html" target="_blank">Amazon EC2 Auto Scaling</a> guide for how the service fits together.</p>
+
+  <div class="callout">
+    A memorable way to keep the two straight: vertical scaling turns a small server into a medium, then a large one — but there's always a biggest size available. Horizontal scaling just keeps adding more servers side by side, with no real limit on how many you can have.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Which limitation applies specifically to vertical scaling but not horizontal scaling?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Vertical scaling is capped by the largest available instance size; horizontal scaling has no such ceiling."> A hard instance size ceiling</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Horizontal scaling is the one that requires off-host session storage, not vertical scaling."> Needing off-host session data</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A load balancer is used with horizontal scaling to distribute traffic, not required by vertical scaling."> Requiring a load balancer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Application code changes are more of a horizontal scaling concern, since instances must become stateless."> Needing app code changes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why does horizontal scaling require externalized (off-host) session storage?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cost isn't the reason external sessions are needed — request routing across instances is."> To reduce per-instance storage cost</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Requests can land on any instance in the fleet, so session state must live outside any single instance to remain accessible."> Requests can hit any instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Vertical scaling doesn't add instances at all, so this isn't related to why external sessions matter."> To support vertical resizing</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instance size limits aren't the reason for off-host sessions — request distribution across instances is."> Because of instance size limits</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team resizes a monolithic app's single EC2 instance from large to 2XL during a scheduled maintenance window. What kind of scaling is this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Resizing a single instance to a bigger type is the definition of vertical scaling."> Vertical scaling</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="No additional instances are being added here, so this isn't horizontal scaling."> Horizontal scaling</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Spot Instances relate to purchase pricing, not to the scaling method being used."> Spot-based scaling</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This scenario involves one instance being resized, not a load-balanced fleet."> Load-balanced scaling</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0019-instance-status-checks-and-auto-recovery.html">← Previous: Instance Status Checks & Auto Recovery</a>
+      <a href="0021-instance-metadata.html">Next: Instance Metadata (IMDS) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

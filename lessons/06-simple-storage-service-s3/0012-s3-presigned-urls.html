@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – S3 Pre-Signed URLs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 12</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Pre-Signed URLs</h1>
+    <p class="lesson-meta">Lesson 12 of 16 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html" target="_blank">S3 Pre-Signed URL Docs</a></p>
+  </div>
+
+  <h2>What is a Pre-Signed URL?</h2>
+  <p>A pre-signed URL encodes <strong>your AWS credentials and permissions</strong> into a time-limited URL. Anyone who receives the URL can access the S3 object — as if they were you — for the duration of the URL's validity.</p>
+
+  <p>This lets you share access to private objects without making them public and without creating IAM users for external parties.</p>
+
+  <h2>How Permissions Work</h2>
+  <p>The URL holder's effective permissions are <strong>those of the identity that generated the URL at the moment the URL is used</strong>, not at the moment it was created. Two important consequences:</p>
+  <ul>
+    <li>If the generating identity <strong>loses access</strong> to the object (policy change, role revoked), the URL stops working — even if it hasn't expired.</li>
+    <li>You <em>can</em> generate a pre-signed URL for an object you don't currently have access to. The URL is technically valid but will return <code>Access Denied</code> when used.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Don't generate pre-signed URLs from IAM roles</div>
+    IAM role temporary credentials have a maximum validity period that is typically shorter than the pre-signed URL's intended lifetime. If the role credentials expire before the URL does, the URL stops working. Use a long-lived IAM user identity instead.
+  </div>
+
+  <h2>Validity Period</h2>
+  <p>Pre-signed URLs can have a <strong>much longer validity period</strong> than the temporary credentials of an IAM role — making them suitable for scenarios like sharing a large file download link that a user might not click immediately.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Pre-signed URL scenarios to recognise: (1) "share a private S3 object with an external user without making it public" → pre-signed URL; (2) "provide temporary, time-limited upload access to a bucket" → pre-signed URL with PUT permission.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A pre-signed URL is generated for an object. The generating IAM user is then removed from the group that grants S3 access. What happens when the URL is used?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The URL does not remain valid after the generating identity loses access. Pre-signed URL permissions are evaluated at use time."> The URL still works until its expiry time</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Pre-signed URL permissions are evaluated at the time of use based on the current permissions of the generating identity. If that identity has lost access, the URL returns Access Denied."> The URL returns Access Denied immediately</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 does not revoke the URL cryptographically. It evaluates permissions live when the URL is used and denies if the identity no longer has access."> The URL is automatically revoked and invalidated</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 does not redirect to a login page. It simply returns an Access Denied HTTP error."> The URL redirects to the AWS sign-in page</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application uses an IAM role to generate a pre-signed URL with a 7-day expiry. The role's temporary credentials expire after 1 hour. What happens after 1 hour?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The URL does not automatically refresh itself. When role credentials expire, the URL that was generated using those credentials will also stop working."> The URL continues working for the full 7 days</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. The pre-signed URL's effective lifetime is limited by the generating credentials. When the role's temporary credentials expire after 1 hour, the URL stops working even though it was issued with a 7-day expiry."> The URL stops working when the role credentials expire</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS does not automatically extend role session tokens to match the pre-signed URL expiry."> AWS extends the role credentials to match the 7 days</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The URL doesn't revert to requiring direct IAM login. It simply becomes invalid once the role credentials expire."> The URL reverts to requiring direct IAM credentials</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company needs to allow an external contractor to upload a single file to a private S3 bucket without granting them AWS credentials. What is the best approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Making the bucket public allows anyone to upload or read, which violates least-privilege and is a security risk."> Make the bucket publicly writable for the upload</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Creating an IAM user gives the contractor permanent AWS credentials, which is more access and complexity than needed for a one-time upload."> Create a temporary IAM user for the contractor</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. A pre-signed URL with PUT permission gives the contractor time-limited upload access to a specific object path without any AWS credentials."> Generate a pre-signed URL with PUT permission for upload</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="An access point doesn't solve the no-credentials requirement. The contractor would still need AWS credentials to call the access point endpoint."> Create an S3 Access Point for the contractor's bucket</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-s3-replication.html">← Lesson 11: S3 Replication</a>
+      <a href="0013-s3-select-glacier-select.html">Next: S3 Select →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

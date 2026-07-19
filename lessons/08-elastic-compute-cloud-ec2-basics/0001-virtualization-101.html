@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Virtualization 101</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 01
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Virtualization 101</h1>
+    <p class="lesson-meta">Lesson 01 of 21 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://aws.amazon.com/ec2/nitro/" target="_blank">AWS Nitro System</a></p>
+  </div>
+
+  <p>EC2 is virtualization delivered as a service — an Infrastructure as a Service (IaaS) product. Before you can reason about why EC2 features work the way they do (enhanced networking, instance types, the Nitro hypervisor), you need the fundamentals of virtualization itself. This lesson builds that foundation.</p>
+
+  <h2>Life without virtualization</h2>
+  <p>A physical server has resources — CPU, memory, network cards, storage. On top of that runs an operating system, and a small part of it, the <strong>kernel</strong>, runs in <strong>privileged mode</strong>. The kernel is the only software allowed to talk to hardware directly. Everything else — applications — runs in <strong>user mode</strong> and must go through the OS via a system call to touch hardware. If any non-privileged software attempts a privileged operation directly, the hardware detects it and the system (or at least the application) crashes.</p>
+  <p>That model assumes one operating system owns the hardware. A CPU, at least historically, can only have one thing running in privileged mode at a time. Virtualization exists to break that assumption safely.</p>
+
+  <h2>Three eras of virtualization</h2>
+  <p>Running several unmodified guest operating systems on one physical server creates a conflict: every guest still believes it alone owns the hardware and will attempt privileged instructions. Three approaches solved this, each less wasteful than the last.</p>
+
+  <h3>1. Emulated (software) virtualization</h3>
+  <p>A host OS runs a <strong>hypervisor</strong> in privileged mode. Guest operating systems run inside virtual machines with virtualized CPU, memory, and devices — all fake, but convincing enough that the guest OS installs normal drivers and believes it's talking to real hardware. When a guest attempts a privileged instruction, the hypervisor intercepts it and performs <strong>binary translation</strong> — rewriting the instruction on the fly in software. Guests need zero modification, but binary translation is slow: it can halve guest performance or worse.</p>
+
+  <h3>2. Para-virtualization</h3>
+  <p>Instead of translating privileged calls after the fact, the guest OS source code is modified in advance. Areas that would make privileged hardware calls are rewritten to issue <strong>hypercalls</strong> — direct calls to the hypervisor — using para-virtual drivers for devices like network cards and storage. This makes the guest OS "virtualization aware" and meaningfully faster than emulation, but it only works for operating systems that can be modified, and those modifications are tied to a specific hypervisor vendor.</p>
+
+  <h3>3. Hardware-assisted virtualization</h3>
+  <p>The real breakthrough: the CPU itself becomes virtualization-aware. It contains instructions the hypervisor can configure so that when a guest attempts a privileged instruction, the CPU traps it and redirects it to the hypervisor — without crashing the system and without needing the guest OS to be modified. This gets CPU performance very close to bare metal.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    You won't be quizzed on binary translation internals, but you should recognize the progression — emulated → para-virtualized → hardware-assisted — and know that modern EC2 relies on hardware-assisted virtualization plus SR-IOV, not the older, slower techniques.
+  </div>
+
+  <h2>The remaining bottleneck: I/O</h2>
+  <p>Hardware-assisted virtualization fixes CPU-bound privileged instructions, but what usually matters most for a VM's real-world performance is <strong>I/O</strong> — network throughput and disk operations. A guest's "network card" is really a logical device backed by a driver that shares one physical card on the host. Unless there's a dedicated physical card per VM, software has to sit in the path, and that consumes host CPU cycles and adds latency under heavy I/O.</p>
+
+  <h2>SR-IOV and EC2 enhanced networking</h2>
+  <p>The final piece is making the <em>device itself</em> virtualization-aware. <strong>SR-IOV</strong> (Single Root I/O Virtualization) lets a physical network card present itself as multiple independent virtual cards in hardware. Each guest OS gets what looks like a dedicated card with direct, unmediated access — no hypervisor translation required on the data path.</p>
+  <p>In EC2, this is exposed as <strong>enhanced networking</strong>: higher throughput, lower and more consistent latency (even under load), and reduced CPU overhead on the host. Many advanced EC2 capabilities you'll meet later in this course trace back to AWS applying industry virtualization techniques like this at scale, underpinned by AWS's own hypervisor platform, the <a href="https://aws.amazon.com/ec2/nitro/" target="_blank">Nitro System</a>.</p>
+
+  <table>
+    <thead><tr><th>Technique</th><th>How privileged calls are handled</th><th>Guest OS modified?</th><th>Performance</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Emulated</strong></td><td>Binary translation by hypervisor (software)</td><td>No</td><td>Poor — up to 50%+ overhead</td></tr>
+      <tr><td><strong>Para-virtualized</strong></td><td>Guest issues hypercalls directly</td><td>Yes, vendor-specific</td><td>Better, but still software-mediated</td></tr>
+      <tr><td><strong>Hardware-assisted</strong></td><td>CPU traps and redirects to hypervisor</td><td>No</td><td>Near-native CPU performance</td></tr>
+      <tr><td><strong>SR-IOV (I/O)</strong></td><td>Device presents isolated virtual instances in hardware</td><td>No</td><td>Near-native I/O performance</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. With emulated (software) virtualization, how does the hypervisor handle a guest OS attempting a privileged instruction?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="That's hardware-assisted virtualization — the CPU itself traps and redirects, no software translation needed."> The CPU traps and redirects the call</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Binary translation rewrites privileged instructions on the fly in software, which is why emulation is slow."> It performs binary translation in software</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Hypercalls are how para-virtualization works — the guest OS source is modified to call the hypervisor directly."> The guest issues a hypercall instead</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SR-IOV lets a physical device present as multiple cards; it doesn't apply to generic privileged CPU calls."> An SR-IOV device intercepts it</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. What is the defining limitation of para-virtualization compared to hardware-assisted virtualization?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Para-virtualization actually avoids binary translation by using hypercalls instead — that's its advantage over emulation."> It relies entirely on binary translation</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Para-virtualization requires modifying the guest OS source code for a specific hypervisor vendor, so unmodifiable or closed OSes can't use it."> It requires modifying the guest OS source code</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Para-virtualization predates and does not require CPU-level virtualization support."> It only runs on CPUs with SR-IOV support</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Para-virtualization actually improves performance over emulation by avoiding binary translation for privileged calls."> It cannot improve on emulated performance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In EC2, what does SR-IOV enable that AWS exposes as "enhanced networking"?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Storage classes are a separate topic — SR-IOV is about network (and other device) virtualization, not EBS volume types."> Automatic upgrades of EBS volume types</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. SR-IOV lets a physical NIC present hardware-isolated virtual cards directly to guests, cutting hypervisor mediation and improving throughput, latency, and CPU usage."> Near-native direct access to virtual NICs</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="SR-IOV is unrelated to cross-AZ networking; EC2 networking stays confined to a single AZ regardless."> Cross-availability-zone network attachment</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="SR-IOV is about I/O virtualization for devices like NICs, not CPU privilege modes."> Guest OS kernels running in privileged mode</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-ec2-architecture-and-resilience.html">Next: EC2 Architecture and Resilience →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

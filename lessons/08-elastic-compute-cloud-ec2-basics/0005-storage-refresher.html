@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – Storage Refresher</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 05
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Storage Refresher</h1>
+    <p class="lesson-meta">Lesson 05 of 21 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html" target="_blank">Amazon EBS User Guide</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html" target="_blank">Amazon EC2 Instance Store</a></p>
+  </div>
+
+  <p>Before diving into AWS-specific storage services, this lesson resets the core vocabulary you'll need. The exam consistently tests whether you can match a scenario to the right storage type — this lesson is the foundation for that judgment.</p>
+
+  <h2>Attachment: direct vs. network</h2>
+  <table>
+    <thead><tr><th>Term</th><th>Meaning</th><th>AWS equivalent</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Direct/local attached storage</strong></td><td>Physical disks connected directly to a device</td><td>The EC2 <strong>instance store</strong> — attached directly to the host</td></tr>
+      <tr><td><strong>Network attached storage</strong></td><td>Volumes attached over the network (on-prem: iSCSI/Fibre Channel)</td><td><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html" target="_blank">Elastic Block Store (EBS)</a></td></tr>
+    </tbody>
+  </table>
+  <p>Direct-attached storage is fast because it's physically local, but fragile: a disk failure, host failure, or the instance moving to a different host can all destroy the data. Network-attached storage is decoupled from the compute hardware, so it survives problems that affect the host.</p>
+
+  <h2>Ephemeral vs. persistent</h2>
+  <ul>
+    <li><strong>Ephemeral storage</strong> — temporary; not guaranteed to survive. The <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html" target="_blank">instance store</a> is the canonical example.</li>
+    <li><strong>Persistent storage</strong> — outlives the lifetime of the device it's attached to. EBS is the canonical AWS example.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    "Which storage is ephemeral and which is persistent" is directly testable. Lock in: instance store = ephemeral, EBS = persistent.
+  </div>
+
+  <h2>Three categories of storage</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Structure</th><th>Bootable?</th><th>AWS example</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Block storage</strong></td><td>A raw collection of addressable blocks; no inherent structure — the OS lays a file system on top</td><td>Yes</td><td>EBS volumes, instance store</td></tr>
+      <tr><td><strong>File storage</strong></td><td>A ready-made file system with folders, mounted over the network</td><td>No</td><td>Managed file system services</td></tr>
+      <tr><td><strong>Object storage</strong></td><td>Flat collection of key/value objects with metadata; no folder hierarchy</td><td>No</td><td>S3</td></tr>
+    </tbody>
+  </table>
+  <p>Block storage is the only one of the three you can boot from — most EC2 instances boot from an EBS volume that stores the OS. File storage can typically be mounted into an OS's file system but never used to boot. Object storage is neither mountable in the traditional sense nor bootable, but it scales enormously — suited to workloads needing massive concurrent read/write access to discrete objects.</p>
+
+  <div class="callout">
+    Rule of thumb: need to boot, or need low-level OS disk access? Use block storage. Need a shared folder structure across many clients? Use file storage. Need web-scale storage for arbitrary objects? Use object storage.
+  </div>
+
+  <h2>Measuring storage performance</h2>
+  <p>Three interrelated terms describe storage performance:</p>
+  <ul>
+    <li><strong>I/O (block) size</strong> — the size of each unit of data written/read, in KB or MB.</li>
+    <li><strong>IOPS</strong> — I/O operations per second the storage system can sustain (reads or writes).</li>
+    <li><strong>Throughput</strong> — the rate of data transfer, typically in MB/s.</li>
+  </ul>
+  <p>These aren't independent: <strong>throughput ≈ block size × IOPS</strong>. A storage system delivering 100 IOPS at a 16KB block size yields roughly 1.6 MB/s of throughput; the same 100 IOPS at 4KB chunks yields only 400 KB/s. Simply increasing block size doesn't guarantee proportionally higher throughput either — a system can have its own throughput ceiling, and IOPS achievable can actually drop as block size grows.</p>
+  <p>Performance is also only as good as the weakest link in the full chain: application → OS → storage subsystem → transport (network or local bus) → storage interface → physical drive technology. Any one of these can be the bottleneck.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Expect exam scenarios that specify a required IOPS or throughput level and ask you to pick the storage type that can deliver it. Pay close attention to the specific maximum IOPS and throughput ceilings called out for each AWS storage type in upcoming lessons — those numbers are exam-relevant.
+  </div>
+
+  <p>With this vocabulary in place — direct vs. network attached, ephemeral vs. persistent, block/file/object, and IOPS/block size/throughput — the next lesson moves into the concrete architecture of <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html" target="_blank">EBS</a> itself.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Which pairing of storage type and persistence is correct?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Instance store is ephemeral (lost on host change/failure); EBS is persistent network-attached storage."> Instance store is ephemeral, EBS is persistent</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This reverses the actual pairing — instance store is the ephemeral one, not EBS."> EBS is ephemeral, instance store is persistent</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Instance store is specifically called out as temporary storage that cannot be relied on."> Both instance store and EBS are ephemeral</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Instance store is explicitly ephemeral, not persistent — data is lost when the instance changes host."> Both instance store and EBS are persistent</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You need to boot an EC2 instance's operating system from a volume. Which storage category must you use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Block storage is the only category that supports booting — the OS lays its own file system directly on the raw blocks."> Block storage volumes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="File storage provides a ready-made file system over the network and cannot be used to boot an OS."> File storage volumes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Object storage is a flat key/value store, not mountable at boot time or bootable at all."> Object storage volumes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Neither of the other two categories supports booting, so this option is incorrect."> File or object storage</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A storage system delivers 100 IOPS at a 16KB block size. Approximately what throughput does that yield?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="16KB × 100 IOPS ≈ 1.6 MB/s, not 16 MB/s — check the block-size × IOPS relationship."> About 16 megabytes per second</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Throughput ≈ block size × IOPS: 16KB × 100 = 1,600KB/s ≈ 1.6 MB/s."> About 1.6 megabytes per second</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="100 KB/s is too low — the correct calculation gives roughly 1.6 MB/s, not 100 KB/s."> About 100 kilobytes per second</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Throughput is not fixed regardless of block size — it scales with block size × IOPS up to any system ceiling."> Throughput independent of block size</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-ec2-instance-types-part-2.html">← Previous: EC2 Instance Types (Part 2)</a>
+      <a href="0006-ebs-service-architecture.html">Next: EBS Service Architecture →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Elastic Kubernetes Service (EKS) 101</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Containers &amp; ECS</a> › Lesson 04
+    </div>
+    <div class="module-tag">Containers &amp; ECS</div>
+    <h1>Elastic Kubernetes Service (EKS) 101</h1>
+    <p class="lesson-meta">Lesson 04 of 04 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html" target="_blank">Amazon EKS User Guide</a> · <a href="https://docs.aws.amazon.com/eks/latest/userguide/eks-compute.html" target="_blank">Manage compute resources by using nodes</a></p>
+  </div>
+
+  <p><strong>EKS</strong> (Elastic Kubernetes Service) is AWS's managed implementation of Kubernetes — the same open-source, cloud-agnostic Kubernetes you'd run anywhere, just extended to integrate with AWS. That's the whole pitch: if a team needs to avoid vendor lock-in, or already runs Kubernetes elsewhere, EKS lets them keep using it while AWS manages the hardest operational piece — the control plane.</p>
+
+  <p>This lesson assumes you already know Kubernetes fundamentals — pods, nodes, the control plane, etcd. It stays focused on what EKS specifically adds on top of that as an AWS product, deployed the normal way: <strong>within AWS itself</strong>. (Kubernetes can also run via EKS on Outposts, EKS Anywhere for on-premises clusters, or the fully open-source EKS Distro — worth knowing these exist, but out of scope here.)</p>
+
+  <h2>What AWS Manages</h2>
+  <p>The <strong>control plane</strong> — including <strong>etcd</strong>, Kubernetes' key-value store — is managed by AWS, scales with load, and is distributed across multiple Availability Zones. The product integrates with the rest of AWS the way you'd expect: <strong>ECR</strong> for image storage, <strong>Elastic Load Balancers</strong> wherever Kubernetes needs load-balancer functionality, <strong>IAM</strong> for security, and <strong>VPCs</strong> for networking.</p>
+
+  <h2>Node Types</h2>
+  <p>The control plane is always AWS-managed. What varies is how the <strong>nodes</strong> — where your pods actually run — are provisioned:</p>
+
+  <table>
+    <thead><tr><th>Node type</th><th>Who manages it</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Self-managed nodes</strong></td><td>Plain EC2 instances in an Auto Scaling group; you provision, patch, and scale them, billed at normal EC2 rates</td></tr>
+      <tr><td><strong>Managed node groups</strong></td><td>Still EC2 under the hood, but AWS handles provisioning and lifecycle (creation, updates, termination)</td></tr>
+      <tr><td><strong>Fargate</strong></td><td>No nodes at all — you define Fargate profiles and pods launch directly onto serverless capacity, same idea as ECS Fargate</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Check compatibility before choosing</div>
+    Requirements like <strong>Windows pods, GPU capability, Inferentia, Bottlerocket, Outposts, or Local Zones</strong> aren't supported uniformly across all three node types. Pick the node type based on what the workload actually needs, and verify support first — picking the wrong one has derailed real projects. See <a href="https://docs.aws.amazon.com/eks/latest/userguide/eks-compute.html" target="_blank">Manage compute resources by using nodes</a> for the current capability matrix.
+  </div>
+
+  <h2>Storage</h2>
+  <p>As in any Kubernetes cluster, storage is <strong>ephemeral by default</strong>. For persistent storage, EKS supports <strong>EBS</strong>, <strong>EFS</strong>, and <strong>FSx</strong> as storage providers.</p>
+
+  <h2>Architecture: Two VPCs</h2>
+  <p>A typical EKS deployment involves <strong>two separate VPCs</strong>:</p>
+  <ul>
+    <li>An <strong>AWS-managed VPC</strong>, where the control plane runs, spread across multiple Availability Zones.</li>
+    <li>Your own <strong>customer-managed VPC</strong>, where EC2-based worker nodes are deployed (self-managed or managed node groups).</li>
+  </ul>
+
+  <p>The <code>kubelet</code> running on each worker node talks to the control plane via <strong>elastic network interfaces injected into your VPC</strong> — the same cross-VPC-boundary pattern you saw with ECS Fargate tasks. A <strong>public control plane endpoint</strong> is also available for administration. Anything consuming the services running in the cluster does so via ingress configuration, originating from your own VPC.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If a scenario stresses <strong>avoiding vendor lock-in</strong> or an <strong>existing investment in Kubernetes</strong>, that phrasing points at EKS over plain ECS — even though ECS is the AWS-native option, EKS is the portable one.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What part of an EKS deployment does AWS always manage, regardless of which node type you choose?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Self-managed nodes are, by definition, provisioned and patched by you — AWS doesn't manage them under this node type."> The worker nodes, whenever self-managed nodes are used</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The control plane, including etcd, is always AWS-managed and multi-AZ, no matter which node type backs the workers."> The control plane, including etcd, across multiple AZs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Your customer-managed VPC, where worker nodes live, is created and configured by you, not AWS."> The customer VPC that hosts the worker nodes</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Fargate profiles are configuration you define to control which pods launch onto Fargate — AWS doesn't define these for you."> The Fargate profiles that decide which pods use Fargate</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants to run pods on EKS without provisioning, patching, or scaling any EC2 instances themselves. Which node type fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Self-managed nodes require the team to provision, patch, and scale the underlying EC2 instances themselves — the opposite of what's asked."> Self-managed nodes, since they offer the most flexibility</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Managed node groups still run on EC2 instances — AWS handles their lifecycle, but instances still exist and must be sized."> Managed node groups, since AWS fully replaces EC2 there</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Fargate removes nodes from the picture entirely — pods launch onto serverless capacity via Fargate profiles, with no instances to provision or scale."> Fargate, since pods launch with no nodes to provision at all</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EKS Anywhere is for running EKS on-premises or outside AWS — it doesn't remove node management for an in-AWS deployment."> EKS Anywhere, since it removes on-premises node management</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A workload requires GPU-backed pods. Before picking a node type, what should you do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="GPU support is not uniform across all three node types — assuming it just works has derailed real projects, per the course's own warning."> Assume any node type supports GPUs and proceed</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. GPU capability, like Windows pods or Bottlerocket, isn't supported evenly across self-managed nodes, managed node groups, and Fargate — check the current capability matrix first."> Check which node type currently supports GPU capability</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The control plane runs the same way regardless of node type or GPU requirements — that's not where GPU compatibility is decided."> Switch the control plane to a GPU-optimized configuration</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Storage providers like EBS, EFS, and FSx address persistent storage, not GPU compute capability for pods."> Change the persistent storage provider to EFS instead of EBS</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-elastic-container-registry-ecr.html">← Previous: Elastic Container Registry</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Containers &amp; ECS module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

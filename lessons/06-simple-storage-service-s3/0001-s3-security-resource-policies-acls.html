@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – S3 Security: Resource Policies &amp; ACLs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 01</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Security: Resource Policies &amp; ACLs</h1>
+    <p class="lesson-meta">Lesson 01 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-policy-alternatives-guidelines.html" target="_blank">S3 Access Policy Guidelines</a></p>
+  </div>
+
+  <h2>S3 is Private by Default</h2>
+  <p>When an S3 bucket is created, only the <strong>AWS account root user</strong> and the identity that created the bucket have any access to it. Everything else — other IAM users, other AWS accounts, anonymous users — is implicitly denied until you explicitly grant access.</p>
+
+  <h2>Bucket Policies (Resource Policies)</h2>
+  <p>A <strong>bucket policy</strong> is a resource-based policy attached directly to the bucket. Like any resource policy, it contains a <code>Principal</code> field that specifies <em>who</em> the policy applies to. This is the key structural difference from an identity policy, which never has a <code>Principal</code>.</p>
+
+  <div class="callout">
+    <div class="callout-title">Quick tell: is this a resource policy?</div>
+    If a policy document contains a <code>"Principal"</code> key, it is almost certainly a resource policy (bucket policy, KMS key policy, trust policy, etc.), not an identity policy.
+  </div>
+
+  <p>One bucket can have <strong>one bucket policy</strong>, but that policy can contain <strong>multiple statements</strong> — granting different things to different principals.</p>
+
+  <h2>How Policies Combine</h2>
+  <table>
+    <thead><tr><th>Who is accessing?</th><th>Which policies apply?</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>An IAM identity <strong>in the same AWS account</strong></td>
+        <td>The union of the identity's IAM policies <em>and</em> the bucket policy. Both must allow (or neither must deny).</td>
+      </tr>
+      <tr>
+        <td>An <strong>anonymous</strong> (unauthenticated) user</td>
+        <td>Only the bucket policy — there is no identity policy to consult.</td>
+      </tr>
+      <tr>
+        <td>An IAM identity in a <strong>different AWS account</strong></td>
+        <td>Both the identity's policies in that account and the bucket policy in this account must allow.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Bucket Policy vs Identity Policy — When to Use Each</h2>
+  <table>
+    <thead><tr><th>Situation</th><th>Preferred approach</th></tr></thead>
+    <tbody>
+      <tr><td>Many identities need access to one bucket</td><td>Bucket policy — one place to manage all access</td></tr>
+      <tr><td>One identity needs access to many buckets</td><td>Identity policy — attach once to the user or role</td></tr>
+      <tr><td>Centralised IAM management is a requirement</td><td>Identity policy — everything lives in IAM</td></tr>
+      <tr><td>Anonymous (public) access is needed</td><td>Bucket policy — anonymous requests have no identity to attach a policy to</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Anonymous access <em>requires</em> a resource policy because anonymous requests have no identity — there is nothing to attach an identity policy to.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What distinguishes a bucket policy from an IAM identity policy in its JSON structure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Both policy types use the Effect field for Allow/Deny. That doesn't distinguish them."> It uses the Effect field to allow or deny</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. A resource policy (bucket policy) includes a Principal field naming who the policy applies to. Identity policies never have a Principal field."> It includes a Principal field naming the subject</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Both policy types can have multiple statements. That's not the distinguishing feature."> It can contain multiple Statement blocks</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Both policy types use Action to define permitted operations. That doesn't differentiate them."> It uses the Action field to list API actions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An anonymous user sends a GET request to an S3 object. Which policies are evaluated?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Anonymous users have no identity, so there is no identity policy to evaluate — only the bucket policy matters."> The IAM identity policy and the bucket policy</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Anonymous requests carry no identity, so only the bucket policy (resource policy) is evaluated. If there is no bucket policy allowing the request, it is denied."> Only the bucket policy on the resource itself</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="ACLs are a legacy mechanism. Anonymous access today is controlled by the bucket policy."> Only the S3 ACL attached to the object</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The account root policy is not a concept in this context. For anonymous access only the bucket policy applies."> Only the account root user's policy setting</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company has 200 IAM users who all need read access to one S3 bucket. What is the most operationally efficient approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Attaching the same identity policy to 200 users means 200 separate updates if the policy ever changes. Not efficient."> Attach a read-only IAM policy to each user</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Making the bucket public grants access to everyone, not just the 200 users. That violates least-privilege."> Set the bucket to public read for all users</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. When many identities need access to one bucket, a bucket policy is the most efficient place to manage it — one change covers all 200 users."> Use a bucket policy granting access to all users</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Creating a role per user defeats the purpose of roles and is far more overhead than a single bucket policy."> Create a separate IAM role for every single user</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Module index</a>
+      <a href="0002-s3-static-hosting.html">Next: S3 Static Hosting →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

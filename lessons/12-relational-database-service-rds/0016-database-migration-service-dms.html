@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16 – Database Migration Service (DMS)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 16
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>Database Migration Service (DMS)</h1>
+    <p class="lesson-meta">Lesson 16 of 16 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/dms/latest/userguide/Welcome.html" target="_blank">AWS DMS User Guide</a></p>
+  </div>
+
+  <p>Manually migrating a database means either standing up complex replication yourself, or taking a point-in-time backup and restoring it — leaving the question of how to capture every change made while that migration was in flight. <strong>DMS</strong> automates this entire problem, and it's a tool you'll reach for constantly as a solutions architect, not just on the exam.</p>
+
+  <h2>Core Architecture</h2>
+  <table>
+    <thead><tr><th>Component</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Replication instance</strong></td><td>An EC2 instance running DMS's migration software</td></tr>
+      <tr><td><strong>Replication task</strong></td><td>Defines the migration; a replication instance can run multiple tasks</td></tr>
+      <tr><td><strong>Source / target endpoints</strong></td><td>Connection details for the source and destination databases</td></tr>
+    </tbody>
+  </table>
+
+  <p>Supported engines span MySQL, Aurora, SQL Server, MariaDB, MongoDB, PostgreSQL, Oracle, Azure SQL, and more. The one hard rule: <strong>at least one endpoint must be inside AWS</strong> — DMS can't migrate between two on-premises databases.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If an exam scenario describes a database migration where at least one side is already in AWS, and no exotic unsupported engine is involved, <strong>DMS is almost always the correct default answer</strong> — especially for "zero downtime" migration requirements.
+  </div>
+
+  <h2>Three Task Types</h2>
+  <dl>
+    <dt>Full load</dt>
+    <dd>Migrates existing data only. Simplest option — appropriate if you can tolerate an outage long enough to complete the copy.</dd>
+    <dt>Full load + CDC (Change Data Capture)</dt>
+    <dd>Migrates existing data <em>and</em> captures ongoing changes during the migration. Once changes reach a steady state, cut over: stop the source application, let remaining changes flow through, then point applications at the target.</dd>
+    <dt>CDC only</dt>
+    <dd>Replicates only ongoing changes. Useful when the bulk data load is done through some other, more efficient tool (e.g. Oracle's native export/import), and DMS only needs to pick up changes from that point forward.</dd>
+  </dl>
+
+  <h2>Schema Conversion Tool (SCT)</h2>
+  <p>DMS moves <strong>data</strong>, not schemas. When source and target use <strong>different database engines</strong> — say, on-premises Microsoft SQL Server to RDS MySQL, or on-premises Oracle to Aurora — you need the standalone <strong>Schema Conversion Tool (SCT)</strong> to convert the schema and code objects first.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The rule that matters most</div>
+    SCT is used <strong>only when the database engine changes</strong>. Migrating on-premises MySQL to RDS MySQL? <strong>No SCT needed</strong> — same engine, DMS alone handles it. Migrating on-premises Oracle to Aurora? <strong>SCT is needed</strong> — different engines.
+  </div>
+
+  <h2>DMS + Snowball for Large Migrations</h2>
+  <p>For multi-terabyte migrations where transferring data over the network would take too long or consume too much bandwidth, DMS can combine with the <strong>Snowball</strong> family:</p>
+  <ol>
+    <li><strong>SCT</strong> extracts the data locally and converts it to a generic transferable format.</li>
+    <li>That data is loaded onto a physical <strong>Snowball</strong> device and shipped to AWS.</li>
+    <li>AWS loads the Snowball's contents into an <strong>S3 bucket</strong>.</li>
+    <li><strong>DMS</strong> migrates from S3 into the target database.</li>
+    <li>If CDC is used, ongoing changes since the bulk transfer are captured, staged through S3, and applied by DMS as well.</li>
+  </ol>
+  <p>This still respects the "only when the engine changes" rule for SCT — you're transforming the source into a generic file format for physical transport, which is itself a kind of engine change.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company wants to migrate an on-premises MySQL database to Amazon RDS for MySQL with zero downtime. What tools are needed?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Since the engine doesn't change (MySQL to MySQL), only DMS is needed, using a full load + CDC task to capture ongoing changes until cutover — no SCT required."> DMS alone, using a full load + CDC task — no SCT needed since the engine is unchanged</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SCT is only required when the database engine changes between source and target — here both source and target are MySQL, so SCT isn't needed."> DMS combined with SCT, since any cross-environment migration requires schema conversion</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SCT alone doesn't move data continuously with zero downtime — it converts schemas. DMS is the tool for the actual data migration and CDC."> SCT alone, since it handles both schema and data migration</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Both source and target here are MySQL — Snowball is for large migrations that can't feasibly move over the network, which isn't implied by this scenario."> A Snowball device, since on-premises data must ship physically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A migration moves an on-premises Oracle database to an Aurora PostgreSQL-compatible cluster. Is the Schema Conversion Tool required?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The engine is changing from Oracle to Aurora (PostgreSQL-compatible), so SCT is required to convert the schema and code objects before DMS migrates the data."> Yes, because the database engine is changing from Oracle to PostgreSQL-compatible Aurora</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SCT is required specifically because the engine is changing here — Oracle to PostgreSQL-compatible Aurora is a cross-engine migration."> No, because DMS alone handles all schema differences automatically</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SCT is a standalone tool used alongside DMS, not a replacement for it — DMS still performs the actual data migration."> No, SCT is only used for on-premises to on-premises migrations</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SCT is needed regardless of data volume when the engine changes — it isn't gated by database size."> Yes, but only because Oracle databases are always larger than 1TB</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A 50TB on-premises database needs to move to AWS, but the company's network link is too slow to transfer it in a reasonable time. What DMS-related approach addresses this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CDC-only tasks assume the bulk data is already loaded by some other means — they don't solve the problem of getting the initial 50TB into AWS over a slow link."> Run a CDC-only task, since it transfers less data overall</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. For very large migrations where network transfer is impractical, SCT extracts and stages the data for a physical Snowball device, which is shipped to AWS, loaded into S3, and then migrated into the target by DMS."> Use SCT to stage the data onto a Snowball device, then let DMS migrate from S3 into the target</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DMS doesn't have a special 'large database mode' that bypasses network limitations — the Snowball-based workflow is the actual mechanism for this scenario."> Enable a special large-database mode within the DMS console</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A cross-Region read replica is an RDS/Aurora high-availability feature, unrelated to migrating an on-premises database into AWS over a constrained network link."> Provision a cross-Region read replica to absorb the transfer load</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0015-rds-proxy.html">← Previous: RDS Proxy</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the RDS &amp; Aurora module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

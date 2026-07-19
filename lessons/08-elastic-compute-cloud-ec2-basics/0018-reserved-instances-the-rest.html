@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>18 – Reserved Instances: The Rest</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 18
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Reserved Instances: The Rest</h1>
+    <p class="lesson-meta">Lesson 18 of 21 · ~11 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-reserved-instances.html" target="_blank">EC2 Reserved Instances</a> · <a href="https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html" target="_blank">AWS Savings Plans</a></p>
+  </div>
+
+  <p>Standard Reserved Instances — a fixed one- or three-year commitment for constant, 24/7 usage — are only part of the reservation story. This lesson covers the more situational variants: Scheduled Reserved Instances, capacity reservations, the Reserved Instance Marketplace, and Savings Plans, a more flexible alternative to reserving a specific instance type outright.</p>
+
+  <h2>Scheduled Reserved Instances</h2>
+  <p>A standard reservation assumes 24/7/365 usage. Scheduled Reserved Instances solve for usage that's long-term and known but only needed on a <strong>recurring schedule</strong> — daily batch processing that runs five hours a night, a weekly analysis job every Friday, or a block of hours consumed each month. You specify the frequency, duration, and time window, and get a modest discount versus On-Demand for that window only.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Scheduled Reserved Instances still require a minimum <strong>one-year</strong> commitment and a minimum of roughly <strong>1,200 hours per year</strong> of reserved time, and they don't support every instance type or region. Recognize the pattern — recurring, known, partial-time usage — rather than memorizing exact thresholds.
+  </div>
+
+  <h2>Capacity reservations</h2>
+  <p>During a major regional or AZ failure, AWS satisfies capacity demand in priority order: Reserved commitments first, then On-Demand, then whatever's left for Spot. If a workload absolutely must be able to launch even during a capacity crunch, you need to reserve <strong>capacity</strong>, not just billing — and those are two separate, independently-usable components.</p>
+
+  <table>
+    <thead><tr><th>Option</th><th>Reserves capacity?</th><th>Billing discount?</th><th>Term commitment</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Regional RI</strong></td><td>No — any AZ in the region, no guarantee</td><td>Yes, for matching instances anywhere in the region</td><td>1 or 3 years</td></tr>
+      <tr><td><strong>Zonal RI</strong></td><td>Yes — locked to one specific AZ</td><td>Yes, but only in that one AZ</td><td>1 or 3 years</td></tr>
+      <tr><td><strong>On-Demand Capacity Reservation</strong></td><td>Yes — locked to one specific AZ</td><td>None</td><td>None — cancel anytime</td></tr>
+    </tbody>
+  </table>
+
+  <p>A <strong>Zonal</strong> reservation gets you both the billing discount and a capacity guarantee, but only in the AZ it's pinned to. A <strong>Regional</strong> reservation is more flexible — the discount follows a matching instance into any AZ in the region — but it reserves no capacity anywhere; you launch with the same priority as On-Demand. An <strong>On-Demand Capacity Reservation</strong> is the odd one out: no term commitment and no discount, purely a guarantee that a specific amount of capacity in a specific AZ is available when you need it. You're billed for reserved capacity whether you consume it or not, so oversizing a capacity reservation wastes money exactly like an unused RI does.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    "I need to guarantee I can launch instances during a capacity shortage, but I can't commit to a 1-3 year term" → <strong>On-Demand Capacity Reservation</strong>. "I need the cheapest possible price and a capacity guarantee, and I know exactly which AZ" → <strong>Zonal Reserved Instance</strong>.
+  </div>
+
+  <h2>Reserved Instance Marketplace</h2>
+  <p>If your needs change and a reservation no longer fits — the wrong instance family, the wrong term length remaining — AWS provides the <strong>Reserved Instance Marketplace</strong>, where you can sell your unused Standard RIs to other AWS customers rather than let the commitment go to waste. It's a release valve for the biggest risk of reserving: getting locked into a commitment your business no longer needs.</p>
+
+  <h2>Savings Plans</h2>
+  <p>A Savings Plan works like a Reserved Instance in spirit — a one- or three-year commitment in exchange for a discount — but instead of committing to a specific instance type in a specific AZ or region, you commit to an <strong>hourly dollar spend</strong> (for example, $20/hour). Any usage up to that commitment is billed at the discounted Savings Plan rate; usage beyond it reverts to the normal On-Demand rate.</p>
+
+  <table>
+    <thead><tr><th>Plan type</th><th>Applies to</th><th>Flexibility</th><th>Typical savings</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Compute Savings Plans</strong></td><td>EC2, Fargate, and Lambda</td><td>Any instance family, region, OS, or compute service</td><td>Up to ~66% vs. On-Demand</td></tr>
+      <tr><td><strong>EC2 Instance Savings Plans</strong></td><td>EC2 only, committed to one instance family in one region</td><td>Flexible across instance size, OS, and tenancy within that family</td><td>Up to ~72% vs. On-Demand</td></tr>
+    </tbody>
+  </table>
+
+  <p>Compute Savings Plans are the better fit for an organization actively migrating between compute models — say, moving workloads from EC2 toward Fargate and eventually Lambda — because the same hourly commitment discounts all three as the mix shifts over time. If you know you'll only ever run EC2, an EC2 Instance Savings Plan unlocks a deeper discount in exchange for narrower flexibility. See <a href="https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html" target="_blank">AWS Savings Plans</a> for the current mechanics and rates.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    For the exam, you mainly need to recognize that Savings Plans exist and know the two-type split — <strong>Compute</strong> (broad, multi-service flexibility) vs. <strong>EC2 Instance</strong> (narrower, deeper discount). Don't confuse them with Reserved Instances, which commit to a specific instance type rather than a dollar amount.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team needs a capacity guarantee in one specific AZ but can't commit to a 1-3 year term. What should they use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Regional RIs reserve no capacity at all, and both RI types require a 1-3 year term."> A Regional Reserved Instance</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Zonal RIs do reserve capacity but require a 1-3 year commitment, which the team can't make."> A Zonal Reserved Instance</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. On-Demand Capacity Reservations guarantee capacity in a specific AZ with no term commitment, at the cost of no discount."> An On-Demand Capacity Reservation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Scheduled RIs cover recurring time windows, not a standing capacity guarantee, and still require a term."> A Scheduled Reserved Instance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company's Reserved Instances no longer match their needs after a business change. What lets them recover value from the unused commitment?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS does not issue automatic refunds for RIs that no longer match your needs."> An automatic AWS refund</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The Reserved Instance Marketplace lets you sell unused Standard RIs to other AWS customers."> The Reserved Instance Marketplace</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Savings Plans are a separate purchase, not a way to offload an existing RI commitment."> Converting it to a Savings Plan</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="On-Demand Capacity Reservations are a different product entirely and don't absorb unused RIs."> An On-Demand Capacity Reservation</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An organization plans to migrate gradually from EC2 to Fargate and eventually Lambda. Which savings option keeps discounts flowing through that shift?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EC2 Instance Savings Plans lock the discount to one instance family and won't apply to Fargate or Lambda."> EC2 Instance Savings Plan</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A Compute Savings Plan applies across EC2, Fargate, and Lambda, so the discount follows the migration."> Compute Savings Plan</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard RIs are tied to a specific EC2 instance type and don't extend to Fargate or Lambda at all."> Standard Reserved Instance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Zonal RIs reserve EC2 capacity in one AZ and have no relevance to Fargate or Lambda."> Zonal Reserved Instance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0017-ec2-purchase-options-part-2.html">← Previous: EC2 Purchase Options (Part 2)</a>
+      <a href="0019-instance-status-checks-and-auto-recovery.html">Next: Instance Status Checks & Auto Recovery →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – ACID vs BASE</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 03
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>ACID vs BASE</h1>
+    <p class="lesson-meta">Lesson 03 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a></p>
+  </div>
+
+  <p>Why do relational databases scale differently than NoSQL databases? The answer starts with a computer science theorem, and ends with two competing transaction models: <strong>ACID</strong> and <strong>BASE</strong>.</p>
+
+  <h2>The CAP Theorem</h2>
+  <p>The <strong>CAP theorem</strong> states that a distributed database can only guarantee <strong>two</strong> of these three properties at once:</p>
+
+  <table>
+    <thead><tr><th>Property</th><th>Guarantee</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Consistency</strong></td><td>Every read receives the most recent write, or an error</td></tr>
+      <tr><td><strong>Availability</strong></td><td>Every request receives a non-error response — but not necessarily the latest data</td></tr>
+      <tr><td><strong>Partition tolerance</strong></td><td>The system keeps working even if network messages are dropped between nodes</td></tr>
+    </tbody>
+  </table>
+
+  <p>If nodes in a distributed database can't communicate, you face a choice: cancel the operation (favouring <strong>consistency</strong>) or proceed anyway (favouring <strong>availability</strong>). You cannot always have both. ACID and BASE are two different answers to that trade-off.</p>
+
+  <h2>ACID: Consistency First</h2>
+  <p>ACID governs most relational databases, including RDS. It stands for four guarantees on every transaction:</p>
+
+  <dl>
+    <dt>Atomic</dt>
+    <dd>All parts of a transaction succeed, or none do. A $10 transfer between two accounts either fully completes or fully rolls back — never half-done.</dd>
+    <dt>Consistent</dt>
+    <dd>Every transaction moves the database from one valid state to another — nothing in between is allowed.</dd>
+    <dt>Isolated</dt>
+    <dd>Concurrent transactions don't interfere with each other; the end result is as if they ran sequentially.</dd>
+    <dt>Durable</dt>
+    <dd>Once a transaction is committed, it survives even a system or power failure.</dd>
+  </dl>
+
+  <p>These are strong guarantees — which is exactly why financial systems favour ACID. But rigidly enforcing all four limits how far a database can scale horizontally.</p>
+
+  <h2>BASE: Availability First</h2>
+  <p>BASE is the trade-off many NoSQL databases make instead:</p>
+
+  <dl>
+    <dt>Basically available</dt>
+    <dd>Reads and writes are available as much as possible — but without a consistency guarantee.</dd>
+    <dt>Soft state</dt>
+    <dd>The database doesn't enforce its own consistency; that responsibility shifts to the application.</dd>
+    <dt>Eventually consistent</dt>
+    <dd>Given enough time, a read will eventually reflect the most recent write — but not necessarily immediately.</dd>
+  </dl>
+
+  <p>By relaxing consistency, BASE-modelled databases scale further and perform better under distributed load. DynamoDB defaults to BASE-style behaviour, offering both eventually-consistent and (on request) immediately-consistent reads.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Default exam mappings: <strong>ACID → RDS</strong> (relational). <strong>BASE → NoSQL</strong>. If a question mentions <strong>ACID together with DynamoDB</strong>, it's likely referring to <strong>DynamoDB transactions</strong>, a feature that layers ACID guarantees onto an otherwise BASE-style database.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A network partition splits a distributed database's nodes. According to the CAP theorem, what must the system choose between?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Under a partition, the system must trade off consistency (cancel the operation) against availability (proceed with possibly stale data) — it cannot guarantee both."> Consistency and availability, since both can't be fully guaranteed</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Partition tolerance is assumed as a given in a distributed system — the trade-off is between the other two properties."> Partition tolerance and durability, since one must be dropped</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Atomicity and isolation are ACID properties, not part of the CAP theorem."> Atomicity and isolation, since transactions can't run in parallel</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The CAP theorem doesn't mention encryption at all — it concerns consistency, availability, and partition tolerance."> Encryption and durability, since data integrity is at risk</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A bank transfer moves $10 from Account A to Account B. Midway through, the system crashes after debiting A but before crediting B. Which ACID property prevents this from being the final state?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Atomicity guarantees that either all parts of a transaction succeed, or none do — a half-completed transfer is rolled back entirely."> Atomic, because all parts of a transaction succeed or none do</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Durability concerns whether committed data survives a crash, not whether a transaction completes fully before being considered done."> Durable, because committed data survives a crash</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Isolation concerns concurrent transactions not interfering with each other, not whether a single transaction's steps all complete."> Isolated, because concurrent transactions don't interfere</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Consistency concerns valid database states per schema rules, not the all-or-nothing completion of a transaction's steps."> Consistent, because the database always reaches a valid state</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An exam question describes a NoSQL database where reads might briefly return stale data after a write, but the system always responds and rarely errors. Which model does this describe?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ACID prioritizes strict consistency — a read would either get the latest write or an error, not stale data with a guaranteed response."> ACID, because it always returns the latest write</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. This is a textbook description of BASE: basically available, soft state, and eventually consistent — responses are prioritized over immediate consistency."> BASE, because availability is prioritized over immediate consistency</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Partition tolerance alone doesn't describe this behavior — the scenario is specifically about the consistency/availability trade-off, which is BASE."> Partition tolerance, because the network is unreliable</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Isolation is an ACID property about concurrent transactions, unrelated to eventual consistency of reads after a write."> Isolation, because transactions don't interfere with each other</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-nosql-database-models.html">← Previous: NoSQL Database Models</a>
+      <a href="0004-databases-on-ec2.html">Next: Databases on EC2 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

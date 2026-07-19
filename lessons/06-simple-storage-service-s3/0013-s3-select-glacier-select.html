@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 – S3 Select &amp; Glacier Select</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 13</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Select &amp; Glacier Select</h1>
+    <p class="lesson-meta">Lesson 13 of 16 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html" target="_blank">S3 Select Docs</a></p>
+  </div>
+
+  <h2>The Problem</h2>
+  <p>Without S3 Select, to find anything inside a large object you must first <strong>retrieve the entire object</strong>. A CSV with 5 TB of data requires a 5 TB download just to read 10 rows. This wastes time, bandwidth, and money.</p>
+
+  <h2>What S3 Select and Glacier Select Do</h2>
+  <p>S3 Select and Glacier Select let you run <strong>SQL-like queries</strong> against the <em>content</em> of an object — filtering data <strong>server-side</strong>, inside S3 or Glacier, before the data is returned to you. Only the matching rows or fields are transferred.</p>
+
+  <table>
+    <thead><tr><th></th><th>Without Select</th><th>With Select</th></tr></thead>
+    <tbody>
+      <tr><td>Data transferred</td><td>Full object size</td><td>Only the filtered subset</td></tr>
+      <tr><td>Processing location</td><td>Client (after full download)</td><td>S3/Glacier (before transfer)</td></tr>
+      <tr><td>Cost</td><td>High egress + compute</td><td>Lower egress, some Select query cost</td></tr>
+      <tr><td>Speed</td><td>Proportional to object size</td><td>Proportional to filtered result size</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If a question mentions querying a subset of a <em>very large</em> S3 or Glacier object to reduce cost and time, the answer is S3 Select / Glacier Select. For running SQL across <em>many</em> objects in a bucket, the answer is <strong>Amazon Athena</strong> (a different service).
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What is the key advantage of S3 Select over downloading the full object and filtering client-side?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 Select does not change the storage class of the object. It only filters what is returned."> It automatically moves the object to a cheaper class</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Filtering happens inside S3 before data is sent to you. Only the matching subset is transferred, reducing data transfer cost and time."> Filtering happens in S3, reducing data transferred</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 Select doesn't change encryption. Objects remain encrypted at rest regardless."> It decrypts the object faster than a normal GET</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 Select doesn't replicate the object. It only filters what is returned from the existing object."> It replicates the matching rows to a second bucket</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which service should you use to run SQL queries across thousands of CSV files stored in an S3 bucket?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="S3 Select operates on a single object at a time. It cannot query across many objects simultaneously."> S3 Select targeting all objects in the bucket</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Glacier Select is for filtering within a single Glacier object, not for querying many S3 objects at once."> Glacier Select targeting the S3 bucket directly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Amazon Athena is designed to run SQL queries across many objects in S3, treating the bucket like a database table."> Amazon Athena for serverless multi-object queries</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudWatch Logs Insights queries log groups, not S3 objects."> CloudWatch Logs Insights for S3 data queries</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A 2 TB Glacier archive contains daily transaction logs. A query needs only transactions from one specific day. What does Glacier Select return?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Glacier Select does not return the full 2 TB archive. It filters server-side and returns only the matching data."> The entire 2 TB archive for client-side filtering</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Glacier Select returns the matching data directly, not a pointer to a new object. It doesn't create a copy."> A pointer to a new object containing the results</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Glacier Select filters inside Glacier and returns only the records matching the SQL predicate — a small fraction of the full 2 TB archive."> Only the filtered rows matching the SQL query</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Glacier Select does not move the archive to a different class. It just filters what is returned."> The object moved to Standard-IA for querying</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0012-s3-presigned-urls.html">← Lesson 12: Pre-Signed URLs</a>
+      <a href="0014-s3-events.html">Next: S3 Events →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

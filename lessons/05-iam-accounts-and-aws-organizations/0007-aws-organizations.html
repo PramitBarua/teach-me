@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – AWS Organizations</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 07</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>AWS Organizations</h1>
+    <p class="lesson-meta">Lesson 07 of 11 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html" target="_blank">AWS Organizations Docs</a></p>
+  </div>
+
+  <h2>What is AWS Organizations?</h2>
+  <p><strong>AWS Organizations</strong> lets you manage many AWS accounts centrally. One account becomes the <strong>management account</strong> (sometimes called the master account). All other accounts are <strong>member accounts</strong>.</p>
+
+  <h2>The Hierarchy</h2>
+
+  <table>
+    <thead><tr><th>Concept</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Management Account</strong></td><td>The account that created the org. Handles consolidated billing. Cannot be restricted by SCPs.</td></tr>
+      <tr><td><strong>Member Account</strong></td><td>Any account that has joined or been created inside the org (one management + zero or more members).</td></tr>
+      <tr><td><strong>Org Root</strong></td><td>The top-most container. Policies at the root apply to <em>everything</em> (except the management account).</td></tr>
+      <tr><td><strong>Organizational Unit (OU)</strong></td><td>A sub-container inside the root (or inside another OU). Used to group accounts by team, environment, or function. OUs can be nested.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Inviting vs Creating Accounts</h2>
+  <ul>
+    <li><strong>Invite existing account</strong> – the management account sends an invite; the other account must accept.</li>
+    <li><strong>Create new account</strong> – the management account can create a brand-new AWS account directly inside the org.</li>
+  </ul>
+
+  <h2>Consolidated Billing</h2>
+  <p>All charges across member accounts are consolidated into the management account. This enables <em>volume discounts</em> and a single invoice.</p>
+
+  <h2>Cross-account access pattern</h2>
+  <p>You do not need an IAM user in every account. The recommended pattern is:</p>
+  <ol>
+    <li>Users log in to one account (often a dedicated "jump" or identity account).</li>
+    <li>They assume an <strong>IAM role</strong> in whichever member account they need to work in.</li>
+    <li>The role grants the access; no per-account IAM users required.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Remember: <strong>one and only one</strong> management account per organization; OUs can be nested; the management account is <em>never</em> restricted by SCPs.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. How many management accounts can an AWS Organization have?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There is no per-region concept for the management account."> One per AWS region used</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. An organization has exactly one management account."> Exactly one per organization</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multiple management accounts would mean multiple separate organizations."> One per Organizational Unit in the org</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There is no maximum — organizations can have as many member accounts as needed."> Unlimited, one per member account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Can Organizational Units (OUs) contain other OUs?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="OUs can hold both member accounts and other OUs."> No, OUs can only contain member accounts</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Nesting is allowed and there is no depth restriction defined by AWS."> No, all OUs must be directly under the root</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. OUs can be nested — an OU can contain accounts and/or other OUs."> Yes, OUs can be nested inside other OUs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There is no such restriction — nesting works at all levels."> Yes, but only one level of nesting is allowed</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company wants staff to access multiple AWS accounts without IAM users in each account. What is the recommended approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Sharing one user across accounts is a security risk; individual actions cannot be audited."> Share one IAM user across all accounts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Users log into a central identity account and assume cross-account roles in target accounts — no per-account IAM users needed."> Log in to one account and assume roles in others</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This is needed for network traffic, not identity access."> Connect all accounts with VPC peering</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Merging accounts is not a supported AWS operation."> Merge all accounts into a single account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-service-linked-roles-and-passrole.html">← Lesson 06: Service-linked Roles &amp; PassRole</a>
+      <a href="0008-service-control-policies.html">Next: Service Control Policies →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

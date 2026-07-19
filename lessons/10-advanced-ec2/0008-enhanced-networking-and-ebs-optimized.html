@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Enhanced Networking and EBS-Optimized Instances</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced EC2</a> › Lesson 08
+    </div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>Enhanced Networking and EBS-Optimized Instances</h1>
+    <p class="lesson-meta">Lesson 08 of 08 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html" target="_blank">Enhanced Networking on Amazon EC2</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html" target="_blank">Amazon EBS-Optimized Instances</a></p>
+  </div>
+
+  <p>Two related performance features underpin everything in the previous lesson on placement groups — and matter broadly for EC2 performance in general.</p>
+
+  <h2>Enhanced Networking (SR-IOV)</h2>
+  <p>Without enhanced networking, a physical network interface card on an EC2 host has <strong>no awareness of virtualization</strong>. Every instance's virtual NIC talks back to the host, and the host itself has to mediate access to the single physical card in software — work that consumes host CPU and gets worse the busier the host is, leading to inconsistent latency and bandwidth.</p>
+
+  <p><strong>Enhanced networking</strong> uses <strong>SR-IOV</strong> (Single Root I/O Virtualization) to fix this at the hardware level: the physical NIC itself becomes virtualization-aware, presenting multiple <strong>logical</strong> cards instead of one physical card the host must broker. Each instance gets exclusive access to its own logical card, communicating with it almost as if it had dedicated physical hardware — no host CPU mediation required.</p>
+
+  <table>
+    <thead><tr><th>Benefit</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Higher I/O, lower host CPU</td><td>The host is no longer in the data path brokering access</td></tr>
+      <tr><td>More bandwidth</td><td>Removing the host bottleneck lets networking scale further</td></tr>
+      <tr><td>Higher packets-per-second (PPS)</td><td>Direct virtual-to-logical interface path, no host mediation per packet</td></tr>
+      <tr><td>Consistent low latency</td><td>Host CPU contention no longer introduces variable delay</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Enhanced networking is <strong>free</strong> and enabled by default on most modern instance types — you don't need to know the implementation details for the exam, just that it exists and what it enables. It's also a <strong>prerequisite</strong> for the maximum performance numbers quoted for cluster placement groups.
+  </div>
+
+  <h2>EBS-Optimized Instances</h2>
+  <p>EBS is block storage delivered <strong>over the network</strong>. Historically, that traffic shared the same network stack as an instance's regular data networking — meaning heavy storage I/O and heavy data traffic could contend with and slow down each other.</p>
+
+  <p>An <strong>EBS-optimized</strong> instance gets <strong>dedicated network capacity</strong> just for EBS traffic, separate from general data networking, so neither side starves the other. This matters most for volume types promising high, consistent performance — <strong>gp2/gp3</strong> and <strong>io1/io2</strong> — where the network path itself would otherwise become the bottleneck.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Mostly a non-issue today</div>
+    On modern instance types, EBS optimization is enabled by default at no extra charge, and disabling it has no effect since the dedicated capacity is built into the hardware. Only on some older instance types is it optional and separately charged. Either way, for the exam: know it exists and what it does, not implementation specifics.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Without enhanced networking, why does heavy network load on an EC2 host cause inconsistent latency for its instances?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EBS-optimization addresses storage network contention specifically, not the general data-networking mediation problem enhanced networking solves."> The instances are missing EBS-optimized capacity</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Without SR-IOV, the physical NIC isn't virtualization-aware, so the host must broker access to it in software — consuming host CPU and introducing variable latency as load increases."> The host CPU is brokering access to a non-virtualization-aware physical NIC</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Placement groups affect physical proximity between instances, not the underlying NIC virtualization mechanism that enhanced networking addresses."> The instances are in the wrong type of placement group</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Instance role credential renewal is unrelated to network interface performance or latency."> The instance role credentials haven't been renewed recently</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application needs the maximum, most consistent performance from a Provisioned IOPS (io1) EBS volume. What EC2 setting most directly helps ensure the network path isn't the bottleneck?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Enhanced networking improves general instance-to-instance and instance-to-internet networking, but it's EBS optimization specifically that dedicates capacity to storage traffic."> Enhanced networking, since it improves all networking equally</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. EBS-optimized instances get dedicated network capacity just for EBS traffic, separate from data networking — exactly what's needed to avoid contention for a high-performance io1 volume."> EBS optimization, which dedicates capacity to storage traffic</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cluster placement groups improve instance-to-instance networking within an AZ — they don't provide dedicated bandwidth between an instance and its EBS volume."> A cluster placement group, for faster instance-to-instance speed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Spread placement groups optimize for hardware isolation and resilience, with no effect on storage network bandwidth."> A spread placement group, for isolated storage bandwidth</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You're designing for a cluster placement group that needs to hit the maximum 10 Gbps single-stream transfer rate between instances. What must be true of the instances to achieve this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Dedicated Hosts address licensing visibility into physical hardware — they aren't a prerequisite for cluster placement group networking performance."> They must run on Dedicated Hosts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The transcript is explicit that achieving cluster placement group performance numbers requires instances with high-performance networking and enhanced networking enabled."> They must support and have enhanced networking enabled</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EBS optimization dedicates bandwidth for storage traffic — it has no bearing on instance-to-instance network transfer rates within a placement group."> They must be EBS-optimized instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance roles govern AWS API permissions — they have no effect on achievable network throughput between instances."> They must have an IAM instance role attached</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-ec2-dedicated-hosts.html">← Previous: EC2 Dedicated Hosts</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Advanced EC2 module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 – S3 Events</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 14</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Events</h1>
+    <p class="lesson-meta">Lesson 14 of 16 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/NotificationHowTo.html" target="_blank">S3 Event Notifications Docs</a></p>
+  </div>
+
+  <h2>What are S3 Events?</h2>
+  <p>S3 Event Notifications allow you to <strong>trigger automated reactions</strong> when something happens inside an S3 bucket — for example, when an object is created, deleted, or restored from Glacier.</p>
+
+  <h2>Event Destinations</h2>
+  <p>When an event fires, S3 delivers a notification to one of these targets:</p>
+  <ul>
+    <li><strong>SNS topic</strong> — fan-out to multiple subscribers (email, other queues, etc.)</li>
+    <li><strong>SQS queue</strong> — buffer the event for asynchronous processing</li>
+    <li><strong>Lambda function</strong> — run code in response to the event</li>
+  </ul>
+
+  <h2>S3 Events vs EventBridge</h2>
+  <table>
+    <thead><tr><th></th><th>S3 Event Notifications</th><th>Amazon EventBridge</th></tr></thead>
+    <tbody>
+      <tr><td>Setup location</td><td>Bucket notification configuration</td><td>EventBridge rule consuming S3 events</td></tr>
+      <tr><td>Event types supported</td><td>Limited S3 events only</td><td>All S3 events + many more AWS services</td></tr>
+      <tr><td>Targets</td><td>SNS, SQS, Lambda only</td><td>50+ AWS service targets</td></tr>
+      <tr><td>Advanced filtering</td><td>Prefix/suffix on key name</td><td>Content-based filtering, transformations</td></tr>
+      <tr><td>Recommended for</td><td>Simple, single-destination S3 triggers</td><td>Complex, multi-service event architectures</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    When a question involves reacting to S3 events with multiple downstream targets, cross-service routing, or advanced filtering, prefer <strong>EventBridge</strong>. For simple "upload triggers a Lambda" scenarios, S3 Event Notifications are sufficient.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Which of the following is NOT a valid destination for S3 Event Notifications?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SNS is a valid S3 Event Notification destination."> An Amazon SNS topic subscription</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SQS is a valid S3 Event Notification destination."> An Amazon SQS queue endpoint</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Lambda is a valid S3 Event Notification destination."> An AWS Lambda function trigger</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. S3 Event Notifications only support SNS, SQS, and Lambda as native destinations. For EC2 or other services you would need to use SQS or EventBridge as an intermediary."> An Amazon EC2 instance directly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team needs S3 object creation events to trigger both a Lambda function and a Step Functions workflow, with content-based filtering. What should they use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="S3 Event Notifications support only SNS, SQS, and Lambda as targets. Step Functions is not a native S3 event destination, and content-based filtering is limited."> S3 Event Notifications with prefix filtering only</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. EventBridge supports 50+ AWS service targets including Step Functions, provides content-based filtering, and is the recommended approach for complex multi-target event architectures."> Amazon EventBridge for multi-target event routing</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudWatch Events is now integrated into EventBridge. Using raw CloudWatch Events for S3 still doesn't solve the Step Functions target problem as cleanly as EventBridge."> CloudWatch Events rule on the S3 bucket events</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudTrail logs API calls but is not an event routing service. It cannot trigger Lambda or Step Functions directly."> CloudTrail trail delivering to S3 for processing</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An image processing pipeline starts when a file ending in ".jpg" is uploaded to S3. Which basic feature of S3 Event Notifications supports this filtering?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Bucket tagging is metadata on the bucket level, not a filtering mechanism for event notifications by file extension."> Bucket tags matching the file extension type</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. S3 Event Notifications support filtering by key name prefix and suffix. A suffix filter of '.jpg' will match only objects whose key name ends in '.jpg'."> Key name suffix filter matching the file extension</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Content type header filtering is not a native feature of S3 Event Notifications. That would require EventBridge."> Content-Type header matching in the notification rule</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Storage class does not determine the event filter for S3 Event Notifications. Filtering is based on key name prefix/suffix."> Storage class filter set to Standard class only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0013-s3-select-glacier-select.html">← Lesson 13: S3 Select</a>
+      <a href="0015-s3-access-logs.html">Next: S3 Access Logs →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

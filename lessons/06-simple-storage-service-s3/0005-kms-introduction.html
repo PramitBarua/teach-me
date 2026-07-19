@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – KMS Introduction</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 05</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>Key Management Service (KMS) — Introduction</h1>
+    <p class="lesson-meta">Lesson 05 of 16 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/kms/latest/developerguide/" target="_blank">AWS KMS Docs</a></p>
+  </div>
+
+  <h2>What is KMS?</h2>
+  <p><strong>AWS Key Management Service (KMS)</strong> is a <strong>regional, public</strong> AWS service that creates, stores, and manages cryptographic keys. Keys created in KMS <strong>never leave KMS</strong> in plaintext — all encrypt/decrypt operations happen inside the service. KMS meets the US <strong>FIPS 140-2 (Level 2)</strong> security standard.</p>
+
+  <h2>KMS Keys and the 4 KB Limit</h2>
+  <p>KMS keys can directly encrypt or decrypt up to <strong>4 KB of data</strong>. For anything larger you need <strong>Data Encryption Keys (DEKs)</strong>.</p>
+
+  <h2>Data Encryption Keys (DEKs)</h2>
+  <p>Use the <code>GenerateDataKey</code> operation to create a DEK. KMS returns <strong>two versions</strong> of the DEK:</p>
+
+  <table>
+    <thead><tr><th>Version</th><th>What you do with it</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Plaintext DEK</strong></td>
+        <td>Use immediately to encrypt the data. <strong>Discard it as soon as you're done.</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Ciphertext DEK</strong></td>
+        <td>Store alongside the encrypted data. To decrypt later, pass this ciphertext DEK back to KMS to get the plaintext DEK again.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-title">KMS does NOT store DEKs</div>
+    KMS hands the DEK to you and forgets it. You are responsible for storing the ciphertext version alongside your data. KMS only stores its own master keys (KMS keys), not the derived DEKs.
+  </div>
+
+  <h2>KMS Key Types</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Configurable?</th><th>Rotation</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>AWS-owned keys</td>
+        <td>No control</td>
+        <td>AWS manages rotation fully</td>
+      </tr>
+      <tr>
+        <td>AWS-managed (customer account)</td>
+        <td>Not configurable</td>
+        <td>Managed by AWS; cannot be disabled</td>
+      </tr>
+      <tr>
+        <td>Customer-managed keys (CMK)</td>
+        <td>Fully configurable</td>
+        <td>Customer controls rotation (enabled by default)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>When a key is rotated, AWS keeps the old key material so previously-encrypted data can still be decrypted. You do not need to re-encrypt existing data after rotation.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    KMS enforces <em>role separation</em> through granular permissions: a user can have permission to <code>GenerateDataKey</code> but not to <code>Decrypt</code>. A full S3 admin doesn't automatically get decrypt access unless the key policy allows it. This is the primary reason to choose SSE-KMS over SSE-S3.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What is the maximum size of data that a KMS key can directly encrypt or decrypt?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="1 KB is below the actual 4 KB limit."> 1 KB of data directly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. KMS keys can only directly encrypt/decrypt up to 4 KB. For larger payloads you must use Data Encryption Keys (DEKs)."> 4 KB of data directly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="1 MB is far above the 4 KB limit for direct KMS operations."> 1 MB of data directly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There is no 16 KB direct limit; the actual limit is 4 KB."> 16 KB of data directly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. After using GenerateDataKey, what should you do with the plaintext DEK once the data is encrypted?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Storing the plaintext DEK anywhere is a security risk. KMS never stores it for you and you should not store it either."> Store it in S3 alongside the encrypted object</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Storing the plaintext key in KMS defeats the purpose of DEKs. KMS deliberately does not store DEKs."> Send it back to KMS for long-term storage</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. The plaintext DEK is used immediately and then discarded. Only the ciphertext version is stored alongside the encrypted data."> Discard it immediately after encrypting the data</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The ciphertext DEK (not the plaintext) is what you store with the data. The plaintext must be discarded."> Encrypt it again and store it with the payload</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A security team wants to allow developers to encrypt data but prevent them from ever decrypting it. Which KMS capability makes this possible?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Key rotation controls when keys are replaced, not who can use which operations."> Key rotation configuration for the CMK</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="FIPS 140-2 is a compliance standard, not an access control mechanism for separating encrypt from decrypt."> FIPS 140-2 Level 2 compliance setting</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. KMS permissions are granular — you can grant kms:Encrypt without granting kms:Decrypt, enabling role separation."> Granular key policy granting encrypt but not decrypt</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS-managed keys cannot be configured by customers. You need a customer-managed key to apply custom key policies."> Using AWS-managed keys with default settings</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-s3-performance-optimization.html">← Lesson 04: Performance</a>
+      <a href="0006-s3-object-encryption-cse-sse.html">Next: S3 Object Encryption →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Notes
+
+## Learning structure
+- Source notes are in `../cantrill/` directory (one md file per topic)
+- Each md file gets its own lesson directory under `lessons/`
+- Lessons are numbered per directory, not globally
+
+## User preferences
+- Wants isolated topic directories so each module can be studied independently
+- First module: iam-accounts-and-aws-organizations
+
+## Modules built so far
+- iam-accounts-and-aws-organizations (11 lessons)
+- simple-storage-service-s3 (17 lessons)
+- virtual-private-cloud-vpc-basics (9 lessons)
+- relational-database-service-rds (16 lessons) — source was `cantrill/Relational-Database-Service-RDS/` (16 individual transcript files, one lesson per file per user's explicit request). Covers DB fundamentals, ACID/BASE, RDS architecture/Multi-AZ/backups/replicas/security/Custom, Aurora (architecture/serverless/global/multi-master), RDS Proxy, and DMS. Two figures in the transcript are stale vs current AWS docs and were flagged inline: Aurora max cluster storage (course says 128 TiB, AWS now lists up to 256 TiB) and Aurora Global Database secondary Region limit (course says 5, AWS now allows up to 10).
+- network-storage-and-data-lifecycle (2 lessons) — source was `cantrill/NETWORK-STORAGE-AND-DATA-LIFECYCLE/` (2 individual transcript files, one lesson per file per user's explicit request, same pattern as the RDS module). Covers EFS architecture (mount targets, performance/throughput modes, storage classes) and AWS Backup (plans, vaults, Vault Lock WORM mode).
+- elastic-compute-cloud-ec2-basics (21 lessons) — source was `cantrill/ELASTIC-COMPUTE-CLOUD-EC2-BASICS/` (21 individual raw transcript files, one lesson per file per user's explicit request, same pattern as RDS/EFS). Covers virtualization fundamentals, EC2 architecture/resilience, instance type families, EBS architecture and all volume types (gp2/gp3, io1/io2, st1/sc1), instance store, snapshots/FSR, EBS encryption, ENIs/instance IPs/DNS, AMIs, all EC2 purchase options (On-Demand/Reserved/Spot/Savings Plans/Dedicated Hosts), status checks/auto recovery, horizontal vs vertical scaling, and IMDSv1/v2. Built via 4 parallel subagents (one per ~5-lesson block) against a shared HTML template, then a follow-up fix pass (3 more subagents) after an audit found the correct quiz answer was the longest option 57% of the time — rebalanced to remove that formatting tell.
+- containers-and-ecs (4 lessons) — source was `../cantrill/09-containers-and-ECS/` (4 individual transcript files, one lesson per file, same pattern as RDS/EFS/EC2; note the source lives one level up from this workspace, in `learn-aws-ssa-c03/cantrill/`, not inside `teach-me/`). Covers ECS concepts (container/task/service definitions), EC2 vs Fargate cluster modes, ECR (registries/repos/images/tags, basic vs enhanced scanning), and EKS 101 (control plane, node types, two-VPC architecture). The transcript only mentions a single "task role" — supplemented with the task role vs. task execution role distinction from AWS docs since it's a well-known exam trap the transcript underspecifies. Also flagged the transcript's "cluster mode" terminology as superseded by "launch types / capacity providers" in current AWS docs.
+- advanced-ec2 (8 lessons) — source was `../cantrill/10-ADVANCED-EC2/` (8 individual transcript files, one lesson per file, same pattern as the other Cantrill modules). Covers user data bootstrapping, cfn-init/CreationPolicy, instance roles vs. instance profiles, SSM Parameter Store, the CloudWatch agent for OS-level logging, EC2 placement groups (cluster/spread/partition), Dedicated Hosts, and enhanced networking/EBS-optimized instances. The source folder also had a `00_LEARNINGAIDS/` subfolder of diagram images, and the user asked for content marked with an `exam-prep-icon.png` (flask icon) in those images to be flagged as exam-critical — none of the 13 diagrams actually had that icon overlaid anywhere (checked all of them), and the user said to ignore the learning-aid images entirely and build from the transcripts + AWS docs instead. If a future module points at learning-aid images again, verify the icon is actually present before relying on it.

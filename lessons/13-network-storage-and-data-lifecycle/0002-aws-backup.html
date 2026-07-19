@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – AWS Backup</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Network Storage &amp; Data Lifecycle</a> › Lesson 02
+    </div>
+    <div class="module-tag">Network Storage &amp; Data Lifecycle</div>
+    <h1>AWS Backup</h1>
+    <p class="lesson-meta">Lesson 02 of 02 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html" target="_blank">AWS Backup Developer Guide</a></p>
+  </div>
+
+  <p>Without AWS Backup, protecting data means configuring backups separately for every service: RDS snapshots in one place, DynamoDB backups in another, a script somewhere taking EBS snapshots on a schedule. <strong>AWS Backup</strong> is a fully managed data protection service that consolidates the management and storage of backups across services — and across multiple accounts and Regions — in one place.</p>
+
+  <h2>What It Covers</h2>
+  <p>AWS Backup can centrally manage backups for a wide range of services: compute (EC2, VMware running on AWS), block storage (EBS), file storage (EFS, the FSx family), most of the database products (RDS, Aurora, DynamoDB, Neptune, DocumentDB), and even object storage (S3). For each, it centrally manages both <strong>where</strong> the backup is stored and <strong>how</strong> backup and retention behave.</p>
+
+  <p>Cross-account operation relies on <strong>AWS Organizations</strong> and <strong>Control Tower</strong>. Backups can also be copied between Regions for extra data protection.</p>
+
+  <h2>Core Components</h2>
+  <dl>
+    <dt>Backup Plans</dt>
+    <dd>Where you configure <em>how often</em> backups run — hourly, every 12 hours, daily, weekly, monthly, or via a cron expression for finer control (as frequently as hourly). Weekly plans let you pick specific days; monthly plans let you pick a specific day of the month. Plans also set the <strong>backup window</strong> (start time and duration), the <strong>lifecycle</strong> (when a backup transitions to cold storage and when it expires), which <strong>vault</strong> to use, and optional <strong>cross-Region copy</strong>.</dd>
+    <dt>Backup Resources</dt>
+    <dd>The logical thing being backed up — an S3 bucket, an RDS database, an EBS volume.</dd>
+    <dt>Vaults</dt>
+    <dd>The destination where backup data is stored. At least one vault is required. Vaults are read/write by default, meaning backups inside them can be deleted.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Cold storage transitions have a <strong>90-day minimum</strong> — once a backup moves to cold storage, it must stay there at least 90 days before it can expire or be deleted.
+  </div>
+
+  <h2>Vault Lock: WORM Mode</h2>
+  <p>By default, anyone with permission can delete a backup from a vault. Enabling <strong>AWS Backup Vault Lock</strong> switches a vault to <strong>Write Once Read Many (WORM)</strong> mode. There's a <strong>72-hour cool-off period</strong> after enabling it, but once fully active, <strong>nobody — including AWS itself — can delete anything from the vault</strong>. This is designed for compliance scenarios where backups must be provably tamper-proof. Retention periods you've configured still apply, so backups still age out on schedule; Vault Lock just guarantees nothing can be deleted <em>early</em>.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Don't confuse this</div>
+    AWS Backup Vault Lock is a <strong>separate product concept</strong> from S3 Object Lock and Glacier Vault Lock. All three implement the same WORM idea, but they are distinct features on distinct services — don't assume configuring one configures the others.
+  </div>
+
+  <h2>On-Demand Backups and Point-in-Time Recovery</h2>
+  <p>Backup Plans aren't the only way to create a backup — AWS Backup also supports <strong>on-demand backups</strong> triggered manually, outside of any scheduled plan. Separately, some services (S3 and RDS among them) support <strong>point-in-time recovery</strong>: restoring a resource to its exact state at any moment within the retention window, not just to a specific snapshot.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company runs RDS, DynamoDB, and EBS-backed EC2 instances, and currently manages backups for each with separate tools and scripts. What does AWS Backup offer that addresses this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. AWS Backup's core value is consolidating backup storage and configuration for many AWS services — RDS, DynamoDB, EBS, and more — into one central place."> Centralized management and storage of backups across all of these services in one place</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS Backup doesn't replace the services themselves — it centrally manages their backups, it doesn't migrate data between service types."> Automatic migration of DynamoDB data into RDS for simpler backup handling</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS Backup works with existing services like RDS and DynamoDB directly — it doesn't require replacing them with EC2-hosted databases."> A requirement to move all databases onto self-managed EC2 instances</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS Backup is a data protection and backup consolidation service, not a network connectivity or VPN product."> A managed VPN tunnel between all resources needing backup</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A financial services company must guarantee that backups cannot be deleted by anyone — including their own administrators or AWS — for compliance purposes. What should they configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Vaults are read/write by default — backups can be deleted unless Vault Lock is specifically enabled."> A default read/write vault, since backups are protected automatically</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. AWS Backup Vault Lock enables WORM mode after a 72-hour cool-off period, after which nobody — including AWS — can delete anything from the vault, which fits strict compliance requirements."> AWS Backup Vault Lock, enabling WORM mode on the vault</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A shorter backup window only controls when backups start and how long they run — it has no effect on whether stored backups can be deleted."> A shorter backup window, to reduce the time backups are exposed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cross-Region copy protects against Regional failure, but copied backups in the destination vault remain deletable unless that vault also has Vault Lock enabled."> Cross-Region copy alone, so a second copy always exists</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A backup plan transitions backups to cold storage after 30 days and expires them after 100 days. What must be true about the cold storage transition?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. AWS Backup requires backups to remain in cold storage a minimum of 90 days before they can expire — 30 days to cold storage plus at least 90 more before deletion satisfies this."> The backup must remain in cold storage at least 90 days before it can expire</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="There's no such 30-day minimum before transitioning to cold storage — the constraint AWS Backup enforces is a 90-day minimum stay once in cold storage."> The backup must wait at least 30 days before transitioning to cold storage</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cold storage transition is a lifecycle setting within a Backup Plan and doesn't require Vault Lock to be enabled."> Vault Lock must be enabled before cold storage transitions are allowed</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS Backup lifecycle rules don't impose a maximum retention cap — retention is whatever the plan's expiration setting specifies."> The backup cannot be retained for longer than 90 days in total</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-efs-architecture.html">← Previous: EFS Architecture</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Network Storage &amp; Data Lifecycle module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced EC2 – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Advanced EC2</div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>Advanced EC2</h1>
+    <p class="lesson-meta">8 lessons · ~60 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html" target="_blank">Amazon EC2 User Guide</a></p>
+  </div>
+
+  <p>This module builds on EC2 basics with the automation, security, monitoring, and performance features a solutions architect needs for real deployments: bootstrapping instances at launch, giving them safe AWS permissions, storing their configuration and secrets centrally, capturing their internal logs, and controlling their physical placement and networking performance.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td><a href="0001-ec2-bootstrapping-user-data.html">EC2 Bootstrapping with User Data</a></td>
+        <td>User data runs once at launch, opaque to EC2; boot-time-to-service-time and the bake-vs-bootstrap trade-off</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td><a href="0002-cfn-init-and-creation-policies.html">cfn-init and Creation Policies</a></td>
+        <td>Desired-state config via AWS::CloudFormation::Init; CreationPolicy + cfn-signal for resource completion reporting</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td><a href="0003-ec2-instance-roles-and-profiles.html">EC2 Instance Roles and Profiles</a></td>
+        <td>Instance profile as the wrapper that attaches an IAM role to an instance; auto-renewing metadata credentials</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td><a href="0004-ssm-parameter-store.html">SSM Parameter Store</a></td>
+        <td>String/StringList/SecureString parameters, hierarchical paths, KMS encryption, AWS public parameters</td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td><a href="0005-logging-on-ec2-cloudwatch-agent.html">System and Application Logging on EC2</a></td>
+        <td>CloudWatch agent for OS-level visibility; one log group per log file, one log stream per instance</td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td><a href="0006-ec2-placement-groups.html">EC2 Placement Groups</a></td>
+        <td>Cluster (performance), spread (7-per-AZ isolation), and partition (isolation at scale) strategies</td>
+      </tr>
+      <tr>
+        <td>07</td>
+        <td><a href="0007-ec2-dedicated-hosts.html">EC2 Dedicated Hosts</a></td>
+        <td>Whole-host allocation for per-socket/core licensing; fixed-size vs. Nitro mixed-size hosts</td>
+      </tr>
+      <tr>
+        <td>08</td>
+        <td><a href="0008-enhanced-networking-and-ebs-optimized.html">Enhanced Networking and EBS-Optimized Instances</a></td>
+        <td>SR-IOV for bandwidth/PPS/latency; dedicated EBS network capacity for consistent storage performance</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The highest-yield details here are the <strong>instance profile vs. IAM role</strong> distinction (Lesson 03), the <strong>7-instances-per-AZ</strong> limit on spread placement groups versus partition placement groups' partition-based scaling (Lesson 06), and knowing <strong>user data runs once</strong> while <strong>cfn-init can respond to stack updates</strong> (Lessons 01–02) — all classic "which option actually does X" scenario traps.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-ec2-bootstrapping-user-data.html">Start: EC2 Bootstrapping with User Data →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

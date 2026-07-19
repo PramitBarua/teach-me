@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RDS &amp; Aurora – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › RDS &amp; Aurora</div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>Relational Database Service (RDS) &amp; Aurora</h1>
+    <p class="lesson-meta">16 lessons · ~2 hours total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" target="_blank">AWS RDS User Guide</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html" target="_blank">AWS Aurora User Guide</a></p>
+  </div>
+
+  <p>This module covers AWS's managed relational database services — from the fundamentals of relational and NoSQL data models through to RDS, Amazon Aurora, and database migration. Databases are one of the most heavily-tested domains on the SAA-C03 exam, and the concepts here (Multi-AZ vs read replicas, RDS vs Aurora architecture, backup/restore mechanics) recur constantly in scenario questions.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td><a href="0001-relational-database-fundamentals.html">Relational Database Fundamentals</a></td>
+        <td>Tables, attributes, primary keys, composite keys, fixed schema defined in advance</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td><a href="0002-nosql-database-models.html">NoSQL Database Models</a></td>
+        <td>Key-value, wide column, document, column (OLAP), graph — and their AWS products</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td><a href="0003-acid-vs-base.html">ACID vs BASE</a></td>
+        <td>CAP theorem trade-off; ACID → RDS, BASE → NoSQL, by default</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td><a href="0004-databases-on-ec2.html">Databases on EC2</a></td>
+        <td>Always possible, usually a bad idea; weigh OS-access needs against admin overhead</td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td><a href="0005-rds-architecture.html">RDS Architecture</a></td>
+        <td>DB subnet groups, dedicated EBS storage per instance, resource-based billing</td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td><a href="0006-rds-multi-az-instance-vs-cluster.html">RDS Multi-AZ: Instance vs Cluster</a></td>
+        <td>Instance mode = 1 unusable standby; cluster mode = 2 usable readers, faster failover</td>
+      </tr>
+      <tr>
+        <td>07</td>
+        <td><a href="0007-rds-backups-snapshots-restore.html">RDS Backups, Snapshots &amp; Restore</a></td>
+        <td>Manual snapshots never expire; automated backups + transaction logs enable point-in-time restore</td>
+      </tr>
+      <tr>
+        <td>08</td>
+        <td><a href="0008-rds-read-replicas.html">RDS Read Replicas</a></td>
+        <td>Asynchronous, usable for reads, near-zero RTO for failure — not for corruption</td>
+      </tr>
+      <tr>
+        <td>09</td>
+        <td><a href="0009-rds-data-security.html">RDS Data Security</a></td>
+        <td>KMS/EBS vs TDE encryption at rest; IAM auth is authentication only, not authorization</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td><a href="0010-rds-custom.html">RDS Custom</a></td>
+        <td>Middle ground between RDS and EC2; Oracle and SQL Server only; niche but exam-visible</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td><a href="0011-aurora-architecture.html">Amazon Aurora Architecture</a></td>
+        <td>Shared cluster storage, usable replicas, Backtrack, fast clone</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td><a href="0012-aurora-serverless.html">Aurora Serverless</a></td>
+        <td>ACUs from a warm pool, proxy fleet, scale-to-zero for variable/unpredictable workloads</td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td><a href="0013-aurora-global-database.html">Aurora Global Database</a></td>
+        <td>Sub-second, one-way, storage-layer replication across Regions for DR and global reads</td>
+      </tr>
+      <tr>
+        <td>14</td>
+        <td><a href="0014-aurora-multi-master-writes.html">Aurora Multi-Master Writes</a></td>
+        <td>Every instance writable; quorum-based commits; foundation for app-level fault tolerance</td>
+      </tr>
+      <tr>
+        <td>15</td>
+        <td><a href="0015-rds-proxy.html">RDS Proxy</a></td>
+        <td>Connection pooling + multiplexing; abstracts failover away from the application</td>
+      </tr>
+      <tr>
+        <td>16</td>
+        <td><a href="0016-database-migration-service-dms.html">Database Migration Service (DMS)</a></td>
+        <td>Replication instances/tasks, full load vs CDC, SCT only when the engine changes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The highest-yield topics in this module are the <strong>synchronous vs asynchronous</strong> distinction (Multi-AZ vs read replicas), the architectural differences between <strong>standard RDS and Aurora</strong> (dedicated storage vs shared cluster storage), and knowing when <strong>DMS</strong> and <strong>SCT</strong> are each required for a migration scenario.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-relational-database-fundamentals.html">Start: Relational Database Fundamentals →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – Network ACLs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 07
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>Network Access Control Lists (NACLs)</h1>
+    <p class="lesson-meta">Lesson 07 of 09 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html" target="_blank">AWS NACLs Docs</a></p>
+  </div>
+
+  <h2>What NACLs Do and Where They Sit</h2>
+  <p>A <strong>Network Access Control List (NACL)</strong> is a stateless firewall applied at the <em>subnet boundary</em>. It filters traffic as it crosses into or out of the subnet — not traffic that stays within the subnet. EC2 instances communicating with each other inside the same subnet are unaffected by NACLs.</p>
+
+  <p>Each NACL has two independent rule sets:</p>
+  <ul>
+    <li><strong>Inbound rules</strong> — evaluated when traffic enters the subnet from outside.</li>
+    <li><strong>Outbound rules</strong> — evaluated when traffic exits the subnet to outside.</li>
+  </ul>
+
+  <p>Because NACLs are stateless, you must create matching rules in <em>both</em> directions for any connection to work — including allowing the ephemeral port range for responses.</p>
+
+  <h2>Rule Numbering and Evaluation</h2>
+  <p>NACL rules are numbered and evaluated <strong>in ascending order</strong>. The first rule that matches the traffic is applied and processing stops — lower numbers win.</p>
+
+  <table>
+    <thead><tr><th>Rule #</th><th>Type</th><th>Protocol</th><th>Port range</th><th>Source/Dest</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>100</td><td>HTTPS</td><td>TCP</td><td>443</td><td>0.0.0.0/0</td><td>Allow</td></tr>
+      <tr><td>200</td><td>Custom TCP</td><td>TCP</td><td>1024–65535</td><td>0.0.0.0/0</td><td>Allow</td></tr>
+      <tr><td>*</td><td>All traffic</td><td>All</td><td>All</td><td>0.0.0.0/0</td><td>Deny</td></tr>
+    </tbody>
+  </table>
+
+  <p>The <strong>asterisk (*) rule</strong> is the implicit deny — it always sits at the bottom and cannot be removed. If no numbered rule matches, this rule denies the traffic.</p>
+
+  <h2>Default NACL vs Custom NACL</h2>
+  <table>
+    <thead><tr><th></th><th>Default NACL</th><th>Custom NACL</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Created by</strong></td><td>AWS, at VPC creation</td><td>You</td></tr>
+      <tr><td><strong>Initial inbound rules</strong></td><td>Allow all (rule 100) + implicit deny</td><td>Implicit deny only</td></tr>
+      <tr><td><strong>Initial outbound rules</strong></td><td>Allow all (rule 100) + implicit deny</td><td>Implicit deny only</td></tr>
+      <tr><td><strong>Net effect on creation</strong></td><td>All traffic allowed through</td><td>All traffic blocked until you add rules</td></tr>
+      <tr><td><strong>Initial subnet association</strong></td><td>All subnets not yet explicitly associated</td><td>No subnets (must manually associate)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    NACLs are the <strong>only</strong> AWS firewall that can explicitly deny traffic by IP or CIDR range. Security Groups have no explicit deny — they only allow or implicitly deny. Use a NACL to block a specific bad IP address.
+  </div>
+
+  <h2>What NACLs Cannot See</h2>
+  <p>NACLs work only with IP addresses, CIDR ranges, ports, and protocols. They have <strong>no awareness of AWS logical resources</strong> — you cannot write a NACL rule that references an EC2 instance, a Security Group, or an S3 bucket by name. NACLs can only be associated with subnets, not with individual resources. Each subnet can have exactly one NACL; one NACL can be associated with many subnets.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A custom NACL is created and immediately associated with a subnet. No rules have been added yet. What happens to traffic crossing that subnet boundary?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A custom NACL starts with only the implicit deny (* rule) — there is no catch-all allow like in the default NACL."> All traffic is allowed, matching the VPC default behavior</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. A custom NACL initially has only the implicit deny in both directions. All traffic is blocked until you add explicit allow rules."> All traffic is blocked by the implicit deny rule</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="NACLs do not inherit rules from the VPC's default NACL — each NACL has its own independent rule set."> Traffic follows the default NACL rules inherited from the VPC</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The implicit deny applies immediately on association, regardless of whether you save or confirm."> Traffic is allowed until you explicitly save a deny rule</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You want to block traffic from the specific IP address 203.0.113.5 from ever reaching any instance in a subnet. Which tool should you use and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Security Groups have no explicit deny capability — you can only allow traffic, not block a specific IP."> Security Group, using a deny rule for that IP address</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. NACLs support explicit deny rules and work at the subnet level, making them the right tool to block a specific IP from reaching any resource in the subnet."> NACL, because it supports explicit deny by IP address</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Route tables control traffic routing to destinations, not filtering by source IP."> Route table, by removing the route to that IP address</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An IGW controls access between the VPC and the internet as a whole, not filtering by individual IPs."> Internet Gateway, by removing the attachment to the VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A NACL has rule 100 (Allow TCP 443 inbound) and rule 50 (Deny TCP 443 inbound from 10.0.0.5). A request arrives from 10.0.0.5 on port 443. What is the result?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="NACL rules are evaluated in ascending numerical order — rule 50 is reached before rule 100."> Allowed; rule 100 is a broader allow and wins</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Rules are evaluated in ascending order. Rule 50 is matched first and denies the traffic; rule 100 is never reached."> Denied; rule 50 matches first and processing stops</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="NACLs do not combine or average conflicting rules — the first match wins."> Both rules apply and the result is indeterminate</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Deny rules in NACLs take no special priority — the lowest rule number that matches wins."> Denied; deny rules always override allow rules in NACLs</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-stateful-vs-stateless-firewalls.html">← Previous: Stateful vs Stateless Firewalls</a>
+      <a href="0008-security-groups.html">Next: Security Groups →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

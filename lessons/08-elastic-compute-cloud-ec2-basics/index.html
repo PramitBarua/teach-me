@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EC2 Basics – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › EC2 Basics</div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Elastic Compute Cloud (EC2) Basics</h1>
+    <p class="lesson-meta">21 lessons · ~3 hours total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html" target="_blank">AWS EC2 User Guide</a></p>
+  </div>
+
+  <p>This module covers EC2 from the virtualization fundamentals underneath it through to the day-to-day decisions a solutions architect makes: which storage type to attach, how to size and purchase capacity, and how to keep instances resilient. EC2 is the single most heavily-tested service on the SAA-C03 exam, and the concepts here — EBS volume types, instance store vs. EBS, purchase options, and IMDSv2 — recur constantly across almost every other domain in the course.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td><a href="0001-virtualization-101.html">Virtualization 101</a></td>
+        <td>Emulated vs. para- vs. hardware-assisted virtualization, leading to SR-IOV and EC2 enhanced networking</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td><a href="0002-ec2-architecture-and-resilience.html">EC2 Architecture and Resilience</a></td>
+        <td>EC2 hosts and instances are locked to one AZ across compute, network, and EBS storage</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td><a href="0003-ec2-instance-types-part-1.html">EC2 Instance Types (Part 1)</a></td>
+        <td>Five instance categories and how to decode family/generation/size naming</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td><a href="0004-ec2-instance-types-part-2.html">EC2 Instance Types (Part 2)</a></td>
+        <td>Representative families per category, plus family-letter memory hooks (C/R/I/D/G/P)</td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td><a href="0005-storage-refresher.html">Storage Refresher</a></td>
+        <td>Direct vs. network, ephemeral vs. persistent, block/file/object, and IOPS/throughput math</td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td><a href="0006-ebs-service-architecture.html">EBS Service Architecture</a></td>
+        <td>AZ-locked, network-attached block storage that persists independently of instance lifecycle</td>
+      </tr>
+      <tr>
+        <td>07</td>
+        <td><a href="0007-ebs-volume-types-general-purpose.html">EBS Volume Types: General Purpose (SSD)</a></td>
+        <td>gp2's size-linked I/O credit bucket vs. gp3's flat, size-independent baseline</td>
+      </tr>
+      <tr>
+        <td>08</td>
+        <td><a href="0008-ebs-volume-types-provisioned-iops.html">EBS Volume Types: Provisioned IOPS (SSD)</a></td>
+        <td>io1/io2/io2 Block Express decouple IOPS from size via IOPS:GB ratios</td>
+      </tr>
+      <tr>
+        <td>09</td>
+        <td><a href="0009-ebs-volume-types-hdd-based.html">EBS Volume Types: HDD-Based</a></td>
+        <td>st1 (throughput-optimized) vs. sc1 (cold) — credit-bucket MB/s scaling, neither boot-capable</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td><a href="0010-instance-store-volumes-architecture.html">Instance Store Volumes Architecture</a></td>
+        <td>Host-local, launch-time-only, ephemeral storage trading persistence for top performance</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td><a href="0011-choosing-instance-store-vs-ebs.html">Choosing Between Instance Store and EBS</a></td>
+        <td>When to default to EBS vs. instance store, plus per-instance IOPS ceilings</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td><a href="0012-snapshots-restore-and-fast-snapshot-restore.html">Snapshots, Restore &amp; Fast Snapshot Restore (FSR)</a></td>
+        <td>Incremental snapshots, cross-AZ/region restore, lazy loading vs. FSR</td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td><a href="0013-ebs-encryption.html">EBS Encryption</a></td>
+        <td>KMS-backed data-key architecture, snapshot key inheritance, no in-place decrypt</td>
+      </tr>
+      <tr>
+        <td>14</td>
+        <td><a href="0014-network-interfaces-instance-ips-and-dns.html">Network Interfaces, Instance IPs &amp; DNS</a></td>
+        <td>ENI attributes, private/public DNS resolution, Elastic IP behavior</td>
+      </tr>
+      <tr>
+        <td>15</td>
+        <td><a href="0015-amazon-machine-images-ami.html">Amazon Machine Images (AMI)</a></td>
+        <td>AMI contents, block device mapping, baking, region-scoping, EBS- vs. instance-store-backed</td>
+      </tr>
+      <tr>
+        <td>16</td>
+        <td><a href="0016-ec2-purchase-options-part-1.html">EC2 Purchase Options (Part 1)</a></td>
+        <td>On-Demand as the default baseline vs. Spot's discounted, interruptible spare capacity</td>
+      </tr>
+      <tr>
+        <td>17</td>
+        <td><a href="0017-ec2-purchase-options-part-2.html">EC2 Purchase Options (Part 2)</a></td>
+        <td>Standard RI terms and payment tiers; Dedicated Hosts (licensing) vs. Dedicated Instances</td>
+      </tr>
+      <tr>
+        <td>18</td>
+        <td><a href="0018-reserved-instances-the-rest.html">Reserved Instances: The Rest</a></td>
+        <td>Scheduled RIs, regional/zonal/on-demand capacity reservations, RI Marketplace, Savings Plans</td>
+      </tr>
+      <tr>
+        <td>19</td>
+        <td><a href="0019-instance-status-checks-and-auto-recovery.html">Instance Status Checks &amp; Auto Recovery</a></td>
+        <td>System vs. instance status checks, remediation paths, CloudWatch-triggered auto recovery</td>
+      </tr>
+      <tr>
+        <td>20</td>
+        <td><a href="0020-horizontal-and-vertical-scaling.html">Horizontal &amp; Vertical Scaling</a></td>
+        <td>Vertical resize ceiling/downtime vs. horizontal fleet scaling and off-host sessions</td>
+      </tr>
+      <tr>
+        <td>21</td>
+        <td><a href="0021-instance-metadata.html">Instance Metadata (IMDS)</a></td>
+        <td>IMDS endpoint/categories, public IPv4 quirk, IMDSv1 vs. token-based IMDSv2 SSRF mitigation</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The highest-yield topics in this module are <strong>EBS volume type selection</strong> (matching gp3/io2/st1/sc1 to a workload's IOPS and throughput needs), the <strong>instance store vs. EBS</strong> persistence trade-off, <strong>EC2 purchase options</strong> (On-Demand vs. Reserved vs. Spot vs. Savings Plans, and when each fits a scenario), and <strong>IMDSv2</strong> as the standard hardening answer against SSRF-driven credential theft.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-virtualization-101.html">Start: Virtualization 101 →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

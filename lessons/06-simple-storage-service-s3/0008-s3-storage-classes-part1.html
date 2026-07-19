@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – S3 Storage Classes Part 1</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 08</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Storage Classes — Part 1</h1>
+    <p class="lesson-meta">Lesson 08 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://aws.amazon.com/s3/storage-classes/" target="_blank">S3 Storage Classes Overview</a></p>
+  </div>
+
+  <p>This lesson covers the three "warm" storage classes. Part 2 covers Glacier tiers and Intelligent-Tiering.</p>
+
+  <h2>S3 Standard</h2>
+  <p>The default general-purpose class. Objects are replicated across <strong>3 Availability Zones</strong> in the region, giving high durability (11 nines) and availability.</p>
+  <ul>
+    <li><strong>Latency:</strong> milliseconds (first-byte latency)</li>
+    <li><strong>Retrieval fee:</strong> none</li>
+    <li><strong>Minimum duration:</strong> none</li>
+    <li><strong>Minimum object size:</strong> none</li>
+    <li><strong>Use for:</strong> frequently accessed, important, non-replaceable data</li>
+  </ul>
+
+  <h2>S3 Standard-IA (Infrequent Access)</h2>
+  <p>Same durability and availability as Standard (3 AZ), same millisecond latency, but optimised for data that is accessed infrequently.</p>
+  <ul>
+    <li><strong>Storage cost:</strong> cheaper than Standard</li>
+    <li><strong>Retrieval fee:</strong> per-GB charge on every retrieval (increases cost for frequent access)</li>
+    <li><strong>Minimum duration:</strong> 30 days — even if you delete early, you are billed for 30 days</li>
+    <li><strong>Minimum object size:</strong> 128 KB — small objects are charged as 128 KB each</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">When NOT to use Standard-IA</div>
+    Do not store frequently accessed data (retrieval fees make it expensive), short-lived data (30-day minimum billing), or many tiny files (128 KB minimum charge per object inflates cost).
+  </div>
+
+  <h2>S3 One Zone-IA</h2>
+  <p>Same characteristics as Standard-IA — retrieval fee, 30-day minimum, 128 KB minimum — but data is stored in <strong>only one AZ</strong>. Durability is still 11 nines <em>within that AZ</em>, but if the AZ fails, the data is lost.</p>
+  <ul>
+    <li><strong>Storage cost:</strong> cheaper than Standard-IA</li>
+    <li><strong>Use for:</strong> non-critical, reproducible data that you do not access often</li>
+  </ul>
+
+  <table>
+    <thead><tr><th></th><th>Standard</th><th>Standard-IA</th><th>One Zone-IA</th></tr></thead>
+    <tbody>
+      <tr><td>AZ count</td><td>3</td><td>3</td><td>1</td></tr>
+      <tr><td>Retrieval fee</td><td>None</td><td>Per GB</td><td>Per GB</td></tr>
+      <tr><td>Min duration</td><td>None</td><td>30 days</td><td>30 days</td></tr>
+      <tr><td>Min object size</td><td>None</td><td>128 KB</td><td>128 KB</td></tr>
+      <tr><td>First-byte latency</td><td>Milliseconds</td><td>Milliseconds</td><td>Milliseconds</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Standard-IA is designed for data you need <em>instantly</em> but <em>rarely</em> — "once a month" is a good mental model. One Zone-IA is the same but with the trade-off of reduced resilience for lower cost.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An object stored in S3 Standard-IA is deleted after 10 days. How many days are billed?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="You are not billed for just the 10 days the object was stored. Standard-IA has a minimum billing duration."> 10 days — only for the time stored</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Standard-IA has a 30-day minimum billing duration. Even if you delete after 10 days, you are charged for the full 30 days."> 30 days — the minimum billing duration</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="60 days is not the minimum duration for Standard-IA. That is 30 days."> 60 days — the standard billing cycle length</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="90 days is the minimum for Glacier Instant, not Standard-IA."> 90 days — same as Glacier Instant tier</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which storage class would you choose for data that must survive an entire Availability Zone failure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="S3 One Zone-IA stores data in a single AZ. If that AZ fails, the data is lost."> S3 One Zone-IA for lowest cost</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. S3 Standard replicates across 3 AZs, so data survives the failure of any single AZ."> S3 Standard for multi-AZ resilience</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Glacier Flexible also stores across 3 AZs, but the data is cold (not immediately retrievable) which is a separate trade-off."> S3 Glacier Flexible for archive resilience</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Standard-IA also uses 3 AZs, but it incurs retrieval fees and has minimums that make it unsuitable as a general replacement for Standard."> S3 Standard-IA for infrequent resilient data</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A system stores 50,000 thumbnail images averaging 20 KB each in S3 Standard-IA. Why might this be a poor fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard-IA does have millisecond latency, so speed is not the problem for thumbnails."> Standard-IA has slow retrieval for small objects</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard-IA supports public access. The problem is cost, not visibility."> Standard-IA does not support public object access</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Each 20 KB object is billed as 128 KB (the minimum charge). 50,000 objects × 128 KB costs 6.4× more storage than the actual data size."> Each small object is billed at the 128 KB minimum</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard-IA does not have a limit on the number of objects. The cost problem is the minimum size charge, not object count."> Standard-IA has a maximum object count limit</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-s3-bucket-keys.html">← Lesson 07: Bucket Keys</a>
+      <a href="0009-s3-storage-classes-part2.html">Next: Storage Classes Part 2 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

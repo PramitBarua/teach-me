@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – Aurora Serverless</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 12
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>Aurora Serverless</h1>
+    <p class="lesson-meta">Lesson 12 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html" target="_blank">Using Aurora Serverless</a></p>
+  </div>
+
+  <p>If <a href="0011-aurora-architecture.html">Aurora (provisioned)</a> is Aurora's core product, <strong>Aurora Serverless</strong> is what Fargate is to ECS: the same underlying engine, minus the need to statically size and manage instances. From this point on, the fixed-instance version is called <strong>Aurora provisioned</strong> to distinguish it from serverless.</p>
+
+  <h2>Aurora Capacity Units (ACUs)</h2>
+  <p>Instead of picking instance classes, you set a <strong>minimum and maximum ACU</strong> range for the cluster. Aurora Serverless scales between those bounds automatically based on load — and can scale all the way to <strong>zero</strong>, pausing the cluster so you're billed only for storage.</p>
+
+  <ul>
+    <li>Billing is <strong>per-second</strong>, based on the ACUs actually consumed.</li>
+    <li>Resilience matches Aurora provisioned: the same shared cluster storage, replicated across <strong>6 storage nodes in 3 AZs</strong>.</li>
+  </ul>
+
+  <h2>How Scaling Actually Works</h2>
+  <p>ACUs are allocated from a <strong>warm pool</strong> managed by AWS — stateless, shared across customers, with no local storage of their own. This is what makes them fast to allocate. When load increases, new (larger) capacity is brought online, storage access is handed over, and only then is the old capacity released — a seamless transition.</p>
+
+  <p>Because compute capacity changes size dynamically, clients don't connect directly to an ACU. Instead, a <strong>shared proxy fleet</strong>, managed by AWS, brokers the connection between the application and whichever ACU is currently serving the cluster. This is what lets Aurora Serverless scale in and out <strong>without disrupting existing connections</strong>.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    The proxy fleet is what makes Aurora Serverless's scaling "invisible" to the application — this is conceptually similar to what <a href="0015-rds-proxy.html">RDS Proxy</a> does for standard RDS/Aurora provisioned, though the two are separate mechanisms.
+  </div>
+
+  <h2>When Aurora Serverless Fits</h2>
+  <table>
+    <thead><tr><th>Use case</th><th>Why it fits</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Infrequent / low-volume apps</strong></td><td>Pay only when connections actually occur — no idle instance cost</td></tr>
+      <tr><td><strong>New applications</strong></td><td>No need to guess the right instance size upfront</td></tr>
+      <tr><td><strong>Variable / spiky workloads</strong></td><td>Scales to peak automatically instead of provisioning for it permanently</td></tr>
+      <tr><td><strong>Unpredictable workloads</strong></td><td>Set a wide min/max range and let observed usage guide future sizing</td></tr>
+      <tr><td><strong>Dev/test databases</strong></td><td>Pauses to zero compute during idle periods — only storage cost remains</td></tr>
+      <tr><td><strong>Multi-tenant apps</strong></td><td>Infrastructure cost scales in line with the revenue driving the load</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A dev/test Aurora Serverless cluster sits idle overnight with zero connections. What are you billed for during that time?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Aurora Serverless can scale ACUs all the way to zero when idle, so you are not paying full compute charges overnight."> Full compute charges, since ACUs never scale below a minimum floor</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Aurora Serverless can pause to zero ACUs during idle periods, leaving only the storage consumption charge."> Only the storage consumption charge, since compute can scale to zero</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Aurora Serverless clusters don't need to be manually deleted to avoid charges — they pause automatically to minimize cost during idle periods."> Nothing at all — the cluster must be manually deleted to stop billing</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Aurora Serverless bills per-second based on actual ACU consumption, not a flat hourly minimum regardless of usage."> A flat hourly minimum regardless of actual usage</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. How does Aurora Serverless avoid disrupting application connections while scaling compute capacity up or down?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Applications don't connect directly to individual ACUs at all — that's precisely what would cause disruption during scaling."> Applications connect directly to a specific ACU, which persists during scaling</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A shared, AWS-managed proxy fleet sits between the application and the ACUs, brokering the connection so scaling happens transparently without disrupting the client connection."> A shared proxy fleet brokers connections between the app and whichever ACU is active</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Aurora Serverless doesn't require the client to manually reconnect — the proxy fleet abstracts this away entirely."> The client application must reconnect manually after every scaling event</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DNS TTL settings aren't the mechanism providing seamless scaling — the proxy fleet is what abstracts capacity changes from clients."> DNS caching is disabled to force instant endpoint updates</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A brand-new application has completely unknown traffic patterns, and the team doesn't want to guess an instance size upfront. Which Aurora option best fits, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Aurora provisioned requires choosing a fixed instance class upfront — exactly the guesswork this team wants to avoid."> Aurora provisioned, because it guarantees consistent performance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Aurora Serverless lets the team set a min/max ACU range and let the database auto-scale based on observed load, avoiding the need to size an instance upfront."> Aurora Serverless, because it auto-scales within a min/max ACU range instead of requiring upfront sizing</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="RDS Custom is about OS/engine-level access for legacy applications, not about avoiding upfront capacity planning."> RDS Custom, because it grants full control over instance sizing</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard RDS Multi-AZ still requires selecting a fixed instance class, which is the exact upfront guesswork the team wants to avoid."> Standard RDS with Multi-AZ, because it offers the widest engine choice</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-aurora-architecture.html">← Previous: Amazon Aurora Architecture</a>
+      <a href="0013-aurora-global-database.html">Next: Aurora Global Database →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

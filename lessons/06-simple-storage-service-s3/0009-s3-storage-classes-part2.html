@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – S3 Storage Classes Part 2</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 09</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Storage Classes — Part 2</h1>
+    <p class="lesson-meta">Lesson 09 of 16 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://aws.amazon.com/s3/storage-classes/" target="_blank">S3 Storage Classes Overview</a></p>
+  </div>
+
+  <p>This lesson covers the Glacier tiers and Intelligent-Tiering. See <a href="0008-s3-storage-classes-part1.html">Part 1</a> for Standard, Standard-IA, and One Zone-IA.</p>
+
+  <h2>Glacier Instant Retrieval</h2>
+  <p>Like Standard-IA but even cheaper storage with higher retrieval cost and longer minimums. Data is immediately retrievable (millisecond latency) but is designed for data accessed roughly once per <em>quarter</em>.</p>
+  <ul>
+    <li><strong>Minimum duration:</strong> 90 days</li>
+    <li><strong>Use for:</strong> archive data you might need instantly but access very rarely</li>
+  </ul>
+
+  <h2>Glacier Flexible Retrieval</h2>
+  <p>Objects are <strong>cold</strong> — not immediately accessible. You must submit a retrieval job; during retrieval the object is temporarily staged in Standard-IA. Objects <strong>cannot be made public</strong>.</p>
+  <table>
+    <thead><tr><th>Retrieval type</th><th>Latency</th><th>Cost</th></tr></thead>
+    <tbody>
+      <tr><td>Expedited</td><td>1–5 minutes</td><td>Highest</td></tr>
+      <tr><td>Standard</td><td>3–5 hours</td><td>Mid</td></tr>
+      <tr><td>Bulk</td><td>5–12 hours</td><td>Lowest</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><strong>Minimum duration:</strong> 90 days · <strong>Minimum size:</strong> 40 KB</li>
+    <li><strong>AZ count:</strong> 3 — same regional durability as Standard</li>
+  </ul>
+
+  <h2>Glacier Deep Archive</h2>
+  <p>The coldest and cheapest storage class. Data is in a <strong>frozen</strong> state. Retrieval times are measured in hours to days.</p>
+  <table>
+    <thead><tr><th>Retrieval type</th><th>Latency</th></tr></thead>
+    <tbody>
+      <tr><td>Standard</td><td>~12 hours</td></tr>
+      <tr><td>Bulk</td><td>Up to 48 hours</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><strong>Minimum duration:</strong> 180 days · <strong>Minimum size:</strong> 40 KB</li>
+    <li><strong>Use for:</strong> regulatory archives, data retained for years but rarely if ever accessed</li>
+  </ul>
+
+  <h2>S3 Intelligent-Tiering</h2>
+  <p>Automatically moves objects between tiers based on access patterns. A per-object <strong>monitoring and automation fee</strong> replaces retrieval fees.</p>
+  <table>
+    <thead><tr><th>Tier</th><th>Moves to this tier after</th></tr></thead>
+    <tbody>
+      <tr><td>Frequent Access</td><td>Default tier; also gets "viral" objects promoted back</td></tr>
+      <tr><td>Infrequent Access</td><td>30 days of inactivity</td></tr>
+      <tr><td>Archive Instant Access</td><td>90 days of inactivity (optional)</td></tr>
+      <tr><td>Archive Access</td><td>90–270 days (optional, cold)</td></tr>
+      <tr><td>Deep Archive</td><td>180–730 days (optional, cold)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — quick decision guide</div>
+    <strong>Know the access pattern?</strong> → Use the matching specific class (Standard, Standard-IA, Glacier, etc.).<br>
+    <strong>Access pattern unknown or variable?</strong> → Use Intelligent-Tiering.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A compliance archive must retain records for 7 years. Records are never accessed. Retrieval within 24 hours is acceptable. Which class is the most cost-effective?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Standard is designed for frequently accessed data. It would be significantly over-priced for a 7-year archive never accessed."> S3 Standard for high durability access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Glacier Instant is for data needed immediately (milliseconds) and accessed occasionally. Overkill and more expensive than Deep Archive for a never-accessed archive."> S3 Glacier Instant for instant retrieval</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Glacier Deep Archive is the cheapest class for long-term, rarely-accessed data. Standard retrieval is ~12 hours and bulk up to 48 hours — both within the 24-hour requirement."> S3 Glacier Deep Archive for frozen long-term data</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Intelligent-Tiering adds monitoring charges per object. For data that is never accessed, the archive tiers of Intelligent-Tiering would eventually match Deep Archive cost — but it is not the most straightforward choice."> S3 Intelligent-Tiering for auto-managed access tiers</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You store medical scans in S3 Glacier Flexible. A scan from 3 years ago is needed urgently and must be available within 5 minutes. Which retrieval type should you request?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Bulk retrieval takes 5–12 hours, which far exceeds the 5-minute requirement."> Bulk retrieval for cheapest option</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Standard retrieval takes 3–5 hours — too slow for a 5-minute requirement."> Standard retrieval for balanced speed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Expedited retrieval delivers data within 1–5 minutes, meeting the urgent requirement. It is the most expensive option but the only one fast enough."> Expedited retrieval for 1–5 minute access</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There is no 'Instant' retrieval type for Glacier Flexible. Glacier Instant is a separate storage class."> Instant retrieval for immediate availability</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What fee does S3 Intelligent-Tiering charge instead of a retrieval fee?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Intelligent-Tiering does not charge a per-GB retrieval fee. That is replaced by the monitoring charge."> A per-GB retrieval fee on each access</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A cross-region transfer fee applies to data leaving the region, not to Intelligent-Tiering's monitoring model."> A cross-region transfer fee per tier change</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Intelligent-Tiering charges a monitoring and automation fee per 1,000 objects instead of charging per-GB on retrieval."> A monitoring and automation fee per 1,000 objects</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="There is no KMS key fee specific to Intelligent-Tiering. That would only apply if SSE-KMS encryption is used."> A KMS key usage fee per tier transition</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-s3-storage-classes-part1.html">← Lesson 08: Storage Classes Part 1</a>
+      <a href="0010-s3-lifecycle-configuration.html">Next: Lifecycle Configuration →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

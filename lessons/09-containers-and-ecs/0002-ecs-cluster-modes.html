@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – ECS Cluster Modes</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Containers &amp; ECS</a> › Lesson 02
+    </div>
+    <div class="module-tag">Containers &amp; ECS</div>
+    <h1>ECS Cluster Modes: EC2 vs Fargate</h1>
+    <p class="lesson-meta">Lesson 02 of 04 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/clusters.html" target="_blank">Amazon ECS Clusters</a> · <a href="https://aws.amazon.com/fargate/" target="_blank">AWS Fargate</a></p>
+  </div>
+
+  <p>Both cluster modes share the same high-level ECS components — scheduling, orchestration, cluster management, and the placement engine that decides where a container runs. What differs is <strong>who manages the container hosts</strong>, and that difference drives cost, capacity planning, and when you'd pick one over the other.</p>
+
+  <h2>EC2 Mode</h2>
+  <p>An EC2-mode cluster lives inside a VPC in your account, spanning whichever Availability Zones that VPC uses. The container hosts are ordinary <strong>EC2 instances</strong> running the ECS agent — you'll see them in your account, you're billed for them, and you can even connect to them directly. Their count is controlled by an Auto Scaling group, sized to whatever initial capacity you specify.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The catch</div>
+    You pay for these EC2 instances <strong>whether or not anything is running on them</strong>. ECS provisions the hosts, but capacity and availability planning is on you — this is explicitly <em>not</em> a serverless mode.
+  </div>
+
+  <p>Because it's plain EC2 underneath, EC2 mode can use whatever pricing your business already has: Reserved Instances, Savings Plans, Spot pricing. That's the trade you're making — more admin overhead (sizing, patching, scaling the hosts) in exchange for more control over cost.</p>
+
+  <h2>Fargate Mode</h2>
+  <p>Fargate removes the host layer entirely. There are no EC2 instances to size, patch, or scale — AWS maintains a <strong>shared Fargate infrastructure platform</strong> behind the scenes, the same way EC2 itself isolates tenants on shared hardware. You still define tasks and services the same way — image, ports, CPU/memory — but those resources are allocated from the shared platform rather than onto hosts you manage.</p>
+
+  <p>A Fargate cluster still uses a VPC across multiple AZs, and here's the detail worth remembering: each running task is <strong>injected into your VPC</strong> with its own elastic network interface and an IP address from that VPC's range. From that point on, a task behaves like any other VPC resource — reachable from within the VPC, and from the public internet if it sits in a public subnet with a public IP.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    With Fargate you pay purely for the <strong>container resources you consume</strong> — no host cost, ever, because there's no host to see. This is the single fastest way to distinguish an EC2-mode scenario from a Fargate-mode scenario in an exam question: does the question mention paying for idle capacity, or managing/patching instances? That's EC2 mode. Does it emphasize "no servers to manage" or per-task billing? That's Fargate.
+  </div>
+
+  <h2>Choosing Between Them</h2>
+  <p>As a solutions architect you're really choosing between three options: run the app natively on EC2, run it containerized on ECS in EC2 mode, or run it containerized on ECS in Fargate mode. If a workload already uses containers, ECS beats plain EC2 — the question is just which cluster mode.</p>
+
+  <table>
+    <thead><tr><th>Favors EC2 mode</th><th>Favors Fargate mode</th></tr></thead>
+    <tbody>
+      <tr><td>Large, <strong>consistent</strong> workload, price-conscious</td><td>Small or bursty workloads — pay only for what runs</td></tr>
+      <tr><td>Business already holds RIs / Spot capacity to reuse</td><td>Batch or periodic jobs — no idle host cost</td></tr>
+      <tr><td>Comfortable managing scaling, sizing, and faults</td><td>Overhead-averse, even at large scale</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Modern terminology note</div>
+    Current AWS documentation talks less about "cluster modes" and more about <strong>launch types</strong> and <strong>capacity providers</strong> — a cluster can mix EC2 and Fargate capacity providers rather than being locked to one mode. The underlying trade-off taught here is unchanged; see <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/clusters.html" target="_blank">Amazon ECS clusters</a> for the current model.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An ECS cluster's Auto Scaling group is sized for 4 container instances, but no tasks are currently scheduled on them. What are you billed for?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EC2 mode bills for running EC2 instances regardless of whether tasks are scheduled on them — idle hosts still cost money."> Nothing at all, since no tasks are running</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. In EC2 mode you're responsible for the EC2 instances backing the cluster, and you pay for them while running, whether or not any task is placed on them."> The 4 running EC2 instances, regardless of task usage</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Fargate resource pricing only applies to tasks running on the Fargate platform, not to an EC2-mode cluster's container instances."> Fargate task resource usage only</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Container images are stored in a registry like ECR and billed for storage, not for the EC2 instances backing a cluster."> Storage costs for the container images only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A task running on a Fargate-mode cluster needs to be reachable from other resources inside the VPC. How does networking work here?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fargate tasks aren't limited to the shared platform's own address space — they're injected into your VPC with a VPC IP address."> It stays on the shared Fargate platform, unreachable from the VPC</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fargate tasks don't run on EC2 container instances at all — there are no hosts to attach a secondary ENI to."> It attaches as a secondary ENI on an EC2 container instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Each Fargate task gets its own ENI and IP address injected into your VPC, so it behaves like any other VPC resource for connectivity."> It's injected into the VPC with its own ENI and IP address</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fargate doesn't require a bastion host for intra-VPC reachability — tasks get a normal VPC network presence via their ENI."> It requires a bastion host to bridge into the VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team runs a large, steady-state container workload, already holds EC2 Reserved Instances, and is very price-sensitive but comfortable handling scaling and patching themselves. Which cluster mode fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Large, consistent workloads from a price-conscious team that can reuse existing Reserved Instances and is willing to manage capacity are the classic case for EC2 mode."> EC2 mode, to reuse Reserved Instances and manage capacity directly</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fargate has no concept of host-level Reserved Instances — you can't apply existing RI capacity to it, which works against a price-sensitive team that already holds RIs."> Fargate mode, since Reserved Instances apply automatically there</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ECS doesn't have a mode called 'hybrid mode' that merges billing this way — the two real options are EC2 mode and Fargate mode (or mixing capacity providers)."> A hybrid mode that bills Fargate rates onto Reserved Instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Running the app directly on EC2 without ECS abandons containerization and orchestration benefits the team is already relying on — not what the scenario calls for."> Plain EC2 with no ECS, since RIs make containers unnecessary</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-ecs-concepts.html">← Previous: ECS Concepts</a>
+      <a href="0003-elastic-container-registry-ecr.html">Next: Elastic Container Registry →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

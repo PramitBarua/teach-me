@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – Logging on EC2 with the CloudWatch Agent</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced EC2</a> › Lesson 05
+    </div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>System and Application Logging on EC2</h1>
+    <p class="lesson-meta">Lesson 05 of 08 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-on-EC2-Instance.html" target="_blank">Installing the CloudWatch Agent</a></p>
+  </div>
+
+  <p>CloudWatch monitors EC2's <strong>external</strong> face — CPU utilization, network throughput, status checks. It has no native visibility into what's happening <em>inside</em> the operating system: memory usage per process, application logs, security logs. That inside view requires the <strong>CloudWatch agent</strong>, software that runs inside the instance itself.</p>
+
+  <h2>What the Agent Needs</h2>
+  <p>Three things have to be in place before the agent can do anything useful:</p>
+  <ul>
+    <li><strong>The agent installed</strong> on the instance's operating system.</li>
+    <li><strong>Configuration</strong> telling the agent exactly which metrics and log files to capture and ship.</li>
+    <li><strong>Permissions</strong> to actually call CloudWatch and CloudWatch Logs — delivered the best-practice way, via an <strong>IAM role</strong> attached to the instance (see the instance roles lesson), never long-term credentials baked in.</li>
+  </ul>
+
+  <h2>Log Groups and Log Streams</h2>
+  <p>Once running, the agent ships data into CloudWatch Logs using a consistent mapping: <strong>one log group per log file</strong> you want captured, and inside each log group, <strong>one log stream per instance</strong> writing to that log. So three log files monitored across a fleet of instances means three log groups, each containing one stream per instance in that fleet.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Worked example</div>
+    Monitoring Apache's <code>access_log</code>, <code>error_log</code>, and the OS-level <code>/var/log/secure</code> across a WordPress fleet produces <strong>three log groups</strong> (one per log file) — each holding one log stream per EC2 instance sending that particular log.
+  </div>
+
+  <h2>Configuring at Scale</h2>
+  <p>For a single instance, you can install and configure the agent by hand. At fleet scale, that's not practical — the agent needs to be installed and configured identically across every instance, which is where automation (CloudFormation, or the bootstrapping techniques from earlier lessons) comes in. The agent also supports pulling its configuration from external sources, and one convenient option is storing that configuration as a parameter in <strong>SSM Parameter Store</strong> — tying directly back into the previous lesson, and giving you one consistent, centrally-managed configuration that every instance in the fleet can reference.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Without any extra configuration, can CloudWatch see the memory usage of an individual process running inside an EC2 instance?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudWatch's default EC2 metrics are external — things like CPU utilization and network I/O — and don't include per-process, OS-level detail like memory usage."> Yes, CloudWatch monitors this by default on all instances</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. CloudWatch only sees the external face of an EC2 instance by default. OS-level detail like per-process memory requires the CloudWatch agent running inside the instance."> No, this requires the CloudWatch agent installed inside the OS</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Enhanced status checks report on instance/system reachability, not per-process memory consumption inside the OS."> Yes, as long as detailed status checks are enabled</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An instance role grants permissions, but it doesn't by itself give CloudWatch visibility into OS-level metrics — the agent still has to be installed and configured."> No, this data can never be sent to CloudWatch at all</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A fleet of 10 EC2 instances all ship the same 2 log files to CloudWatch Logs via the agent. How many log groups and log streams does this create?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Log groups map to log files, not to individual instances — 10 instances sharing 2 log files does not mean 10 log groups."> 10 log groups, each with 2 log streams</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Each distinct log file gets its own log group, and each instance sending that log gets its own stream within that group: 2 log groups × 10 streams each."> 2 log groups, each containing 10 log streams</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A single shared log group would lose the per-log-file separation the agent's mapping is designed to provide."> 1 shared log group with 20 combined streams</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Log streams are created per source (per instance) sending a given log, not per individual log line entry."> 20 log groups, one per log line entry format</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You want every instance in an Auto Scaling fleet to pick up the exact same CloudWatch agent configuration without baking it into a custom AMI. What's a convenient way to centralize that configuration?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Access keys are long-term credentials and bad practice for delivering permissions — and they wouldn't help distribute the agent's metric/log configuration anyway."> Hardcode access keys into each instance's agent config</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The CloudWatch agent supports pulling its configuration from SSM Parameter Store, giving every instance in the fleet one centrally managed, consistent configuration."> Store the agent configuration as an SSM Parameter Store parameter</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance metadata delivers things like IAM role credentials, not custom agent configuration content."> Store the agent configuration in instance metadata directly</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudTrail logs API activity for auditing — it isn't a mechanism for distributing application or agent configuration to instances."> Configure CloudTrail to push the config to each instance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-ssm-parameter-store.html">← Previous: SSM Parameter Store</a>
+      <a href="0006-ec2-placement-groups.html">Next: EC2 Placement Groups →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15 – Amazon Machine Images (AMI)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 15
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Amazon Machine Images (AMI)</h1>
+    <p class="lesson-meta">Lesson 15 of 21 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html" target="_blank">Amazon Machine Images (AMI)</a></p>
+  </div>
+
+  <p>Every EC2 instance you've launched so far has been built from an <strong>AMI</strong> — a template that defines the configuration used to create an instance. You've been consuming AMIs; this lesson covers building your own, and the architecture behind how that works.</p>
+
+  <h2>Where AMIs come from</h2>
+  <ul>
+    <li><strong>AWS-provided</strong> — official images such as Amazon Linux 2, maintained by AWS.</li>
+    <li><strong>Community-provided</strong> — vendors and distributions like Red Hat, CentOS, or Ubuntu publish their own AMIs.</li>
+    <li><strong>Marketplace</strong> — commercial AMIs bundling licensed software; launching one typically costs the normal instance rate plus an extra licensing fee.</li>
+    <li><strong>Custom / self-created</strong> — an AMI you build yourself from a configured instance, the focus of this lesson.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    AMIs are <strong>Region-specific</strong>. The same operating system has a different, unique AMI ID in every Region — an AMI created in one Region cannot be used directly in another. To use it elsewhere, you must explicitly <strong>copy</strong> it to the target Region first.
+  </div>
+
+  <h2>AMI permissions</h2>
+  <p>Every AMI has a permission model with three options: <strong>private</strong> (default — only your account can use it), <strong>public</strong> (any AWS account can use it), or shared with <strong>specific AWS accounts</strong> you explicitly add.</p>
+
+  <h2>The AMI lifecycle: launch, configure, create image, launch again</h2>
+  <p>Most people only ever experience the first phase — launching an instance from an existing AMI. But you can run the cycle further:</p>
+  <ol>
+    <li><strong>Launch</strong> — start an instance from an existing AMI.</li>
+    <li><strong>Configure</strong> — customize that instance: install software, apply settings, attach and size volumes exactly as your organization needs.</li>
+    <li><strong>Create image</strong> — capture that customized instance and its attached volumes as a brand-new AMI.</li>
+    <li><strong>Launch again</strong> — use the new AMI to stamp out many identical, pre-configured instances.</li>
+  </ol>
+  <p>This capture-and-replicate process is commonly called <strong>AMI baking</strong>: install and configure everything once, bake it into an AMI, then deploy it at scale instead of repeating manual setup on every instance.</p>
+
+  <h2>What an AMI actually contains</h2>
+  <p>Think of an AMI as a lightweight container, not a copy of the data itself. When you create an AMI from an instance, it holds three things:</p>
+  <ul>
+    <li><strong>Permissions</strong> — who can use the AMI (private, public, or shared accounts).</li>
+    <li><strong>EBS snapshots</strong> — one snapshot is taken of each EBS volume attached to the source instance. As with any snapshot, the first is a full copy of used data.</li>
+    <li><strong>Block device mapping</strong> — a table linking each new snapshot ID back to the original device ID it came from, e.g. the boot volume's snapshot maps to <code>/dev/xvda</code>, and a data volume's snapshot maps to <code>/dev/xvdf</code>.</li>
+  </ul>
+  <p>When you later launch an instance from that AMI, EC2 uses the block device mapping to create new EBS volumes — from those referenced snapshots — in the target Availability Zone, and attaches them to the new instance using the same device IDs the original volumes had. The result is a new instance with an identical volume layout and identical starting data. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html" target="_blank">AMI documentation</a> for the full reference.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    An AMI is Region-scoped but not AZ-scoped: an AMI built from an instance in AZ-A can be used to launch instances into <em>any</em> AZ within that same Region, because the underlying snapshots live in S3, which is already regional.
+  </div>
+
+  <h2>EBS-backed vs. instance-store-backed AMIs</h2>
+  <p>Most AMIs in modern use are <strong>EBS-backed</strong> — the root volume is an EBS volume built from a snapshot, as described above, and the instance supports stop/start as well as reboot/terminate. A legacy alternative is the <strong>instance-store-backed</strong> AMI, where the root device is instance store and the image itself is stored in S3 as a set of files rather than an EBS snapshot. Instance-store-backed instances can only be rebooted or terminated — they cannot be stopped and started, since instance store isn't persistent. For the exam, default to assuming EBS-backed unless a question explicitly says otherwise.</p>
+
+  <h2>Editing, copying, and billing</h2>
+  <table>
+    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+    <tbody>
+      <tr><td>Can you edit an existing AMI?</td><td>No — launch an instance from it, make changes, and create a new AMI instead.</td></tr>
+      <tr><td>Can an AMI be copied to another Region?</td><td>Yes, explicitly, as a separate action.</td></tr>
+      <tr><td>What does an AMI cost?</td><td>The storage cost of the underlying EBS snapshots it references — billed on data actually used, same as any snapshot.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. You need the same custom AMI available in two AWS Regions. What must you do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AMIs are Region-specific — there is no automatic cross-region sync; a copy action is required."> Nothing, AMIs sync automatically</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. AMIs are Region-scoped, so you must explicitly copy the AMI to the second Region before using it there."> Copy the AMI to the other Region</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Public sharing changes who can use the AMI, not which Region it exists in."> Make the AMI public in that Region</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An AMI is tied to a Region, not to a single AZ within it — AZ choice happens at launch time."> Change the AMI's AZ configuration</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. What does an AMI's block device mapping actually store?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The raw volume data lives in the referenced EBS snapshots, not embedded directly inside the AMI."> The raw data of every attached volume</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The block device mapping links each snapshot ID to the original device ID (like /dev/xvda), so new volumes are attached the same way on launch."> Links between snapshot IDs and device IDs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Security group membership is not part of an AMI's block device mapping — it's applied at instance launch."> The security groups of the instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Elastic IPs are account-level resources unrelated to an AMI's block device mapping."> The Elastic IP of the source instance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You need to change the software installed on an existing custom AMI. What's the correct approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AMIs cannot be edited directly — there is no in-place update operation."> Edit the AMI directly in console</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AMI IDs are fixed identifiers for an immutable image — there's no patch mechanism against an existing ID."> Patch the AMI ID via the CLI</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Launch an instance from the AMI, make your changes, then create a brand-new AMI from that updated instance."> Launch, update, then create a new AMI</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Snapshots underpin an AMI but editing a snapshot in isolation doesn't update the AMI's software configuration."> Modify the underlying snapshot only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0014-network-interfaces-instance-ips-and-dns.html">← Previous: Network Interfaces, Instance IPs & DNS</a>
+      <a href="0016-ec2-purchase-options-part-1.html">Next: EC2 Purchase Options (Part 1) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

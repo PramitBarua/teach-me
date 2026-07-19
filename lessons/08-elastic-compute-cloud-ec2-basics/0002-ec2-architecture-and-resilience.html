@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – EC2 Architecture and Resilience</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 02
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EC2 Architecture and Resilience</h1>
+    <p class="lesson-meta">Lesson 02 of 21 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html" target="_blank">AWS EC2 User Guide</a></p>
+  </div>
+
+  <p>Now that virtualization fundamentals are in place, this lesson covers how EC2 itself is architected — and the single idea that governs almost every design decision you'll make with it: EC2 is bound to an <strong>Availability Zone (AZ)</strong>.</p>
+
+  <h2>Instances, hosts, and ownership models</h2>
+  <p>An EC2 <strong>instance</strong> is a virtual machine: an operating system plus an allocation of vCPU, memory, possibly local storage, network access, and other hardware. Instances run on <strong>EC2 hosts</strong> — physical servers AWS manages, which are either:</p>
+  <ul>
+    <li><strong>Shared hosts</strong> — the default. Multiple AWS customers' instances run on the same physical host, fully isolated from one another with no visibility of the sharing. You pay per instance, based on runtime and resources allocated.</li>
+    <li><strong>Dedicated hosts</strong> — you pay for the entire physical host, not per instance. It is not shared with any other AWS customer.</li>
+  </ul>
+
+  <h2>Everything lives in one Availability Zone</h2>
+  <p>EC2 is an <strong>AZ-resilient service</strong>, which is a precise way of saying: an EC2 host runs inside exactly one AZ. If that AZ fails, every host in it — and every instance on those hosts — can fail or be heavily impacted. As a solutions architect, always assume this.</p>
+  <p>This AZ-locking runs through the entire stack:</p>
+  <ul>
+    <li><strong>Compute</strong> — the host itself is physically in one AZ.</li>
+    <li><strong>Networking</strong> — when an instance is provisioned into a subnet, a primary elastic network interface (ENI) is created in that subnet, mapped to the host's physical hardware. Subnets themselves exist in exactly one AZ. An instance can have multiple ENIs, but all of them must be in the same AZ as the instance.</li>
+    <li><strong>Persistent storage</strong> — <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html" target="_blank">Elastic Block Store (EBS)</a> also runs per-AZ. A volume created in AZ-A is a wholly separate thing from the EBS service in AZ-B, and volumes can only attach to instances in the same AZ.</li>
+    <li><strong>Local storage</strong> — hosts also offer local, host-attached <strong>instance store</strong> capacity. It's temporary: if the instance moves to a different host, that data is gone.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If an exam question mentions EC2, look for the Availability Zone detail — it's frequently the deciding factor. You can never attach an ENI or an EBS volume located in one AZ to an instance in another AZ. EC2 and EBS are both AZ-scoped services, full stop.
+  </div>
+
+  <h2>When does an instance move hosts?</h2>
+  <p>An instance stays on the same physical host across a normal restart. It only moves to a different host (always within the same AZ) when:</p>
+  <ol>
+    <li>The host fails, or AWS takes it down for maintenance, or</li>
+    <li>The instance is <strong>stopped and then started</strong> — not just rebooted.</li>
+  </ol>
+  <p>Instances can never natively move between AZs. The only way to relocate an instance's effective location is to take a copy — a snapshot or AMI — and launch a brand-new instance in the target AZ, a topic covered later in this module.</p>
+
+  <p>Hosts generally run instances from a single type and generation, since a host is built around a specific CPU class, memory type, and storage configuration for a given generation of instance. Different instance types typically land on different physical hosts, even though a single host commonly runs many differently-<em>sized</em> instances from that same family, often belonging to different customers.</p>
+
+  <h2>When should you reach for EC2?</h2>
+  <p>EC2 is the default AWS compute service. Reach for it as your starting point and only move to something more specialized (Lambda, ECS, etc.) when you have a specific reason to. EC2 fits well when you need:</p>
+  <ul>
+    <li>A traditional OS plus application, especially with vendor or internal support requirements tied to a specific runtime.</li>
+    <li><strong>Long-running compute</strong> — unlike some AWS compute services with runtime limits, EC2 is built for persistent, 24/7 workloads.</li>
+    <li>Server-style applications that sit and wait for incoming connections.</li>
+    <li>Workloads with either <strong>bursty</strong> or <strong>steady-state</strong> load — EC2 offers instance types suited to both.</li>
+    <li>Monolithic application stacks with multiple traditional components (database, middleware, etc.).</li>
+    <li>Lift-and-shift migrations of existing VM-based workloads, or disaster recovery targets for on-premises virtual servers.</li>
+  </ul>
+
+  <h2>Why AZ-locking is a strength, not a limitation</h2>
+  <p>Because the blast radius of any EC2 or EBS problem is always contained to a single AZ, you can design around it deliberately — deploying across multiple AZs and load balancing traffic between them to build highly available architectures. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html" target="_blank">EC2 User Guide</a> for the full breakdown of instance lifecycle and AZ concepts.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EC2 instance is stopped and then started again. What happens to its host placement?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A simple reboot keeps the instance on the same host — it's stop/start that can trigger relocation."> It always stays on the same host</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Stop/start (unlike a reboot) can move the instance to a different physical host — but always within the same AZ."> It may move to a different host in the same AZ</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Instances can never natively move between AZs — everything about them is locked to one AZ."> It may move to a different host in another AZ</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Stopping and starting does not delete an instance or its EBS-backed root volume by default."> The instance is permanently deleted</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which statement correctly describes EBS volume and EC2 instance placement?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EBS volumes are AZ-scoped and cannot attach across AZ boundaries at all."> A volume can attach across any AZ in-region</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. EBS is an AZ-scoped service — a volume can only attach to an instance located in the same AZ."> A volume can only attach to an instance in its own AZ</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EBS volumes are region-resilient is incorrect — EBS runs per-AZ, not across a whole region."> EBS volumes are resilient across the whole region</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instance store, not EBS, is the host-local temporary storage lost on host change."> A volume is deleted whenever the host changes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which scenario is the best default fit for choosing EC2 over a specialized compute service?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Ultra-short single-invocation tasks are usually a better fit for event-driven services like Lambda, not EC2's persistent model."> A single function that runs for milliseconds</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Persistent, server-style monolithic workloads requiring a traditional OS are exactly EC2's sweet spot."> A monolithic app needing a traditional OS running 24/7</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EC2 hosts are always within a single AZ — it never spans AZs natively."> A workload that must span multiple AZs on one host</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Purely stateless event triggers with no OS or long-running process are a better match for serverless services."> A stateless event trigger needing no OS access</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-virtualization-101.html">← Previous: Virtualization 101</a>
+      <a href="0003-ec2-instance-types-part-1.html">Next: EC2 Instance Types (Part 1) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

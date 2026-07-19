@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – EC2 Instance Types (Part 2)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 04
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EC2 Instance Types (Part 2)</h1>
+    <p class="lesson-meta">Lesson 04 of 21 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank">AWS EC2 Instance Types</a></p>
+  </div>
+
+  <p>Continuing directly from Part 1: this lesson walks through representative instance families in each category so you can start building intuition about which letter maps to which kind of workload. You are not expected to memorize every family and size — the goal is a working mental map, and to know where to look up specifics when you need them.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Because specific families and generations change over time, treat any exact family name here as illustrative rather than gospel — always confirm current offerings against the official <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank">EC2 Instance Types</a> documentation before relying on it in production or in a fresh exam attempt.
+  </div>
+
+  <h2>General purpose</h2>
+  <table>
+    <thead><tr><th>Family (illustrative)</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>ARM-based (e.g. Graviton-powered)</td><td>AWS-designed ARM processors; can offer strong price/performance if your OS and application support the architecture</td></tr>
+      <tr><td>Burstable (e.g. T-series)</td><td>Assumes low baseline CPU with a credit-based allowance for occasional bursts — cheaper than steady-state types; good for a lightly-loaded domain controller or mail relay</td></tr>
+      <tr><td>Steady-state (e.g. M-series, and AMD variants)</td><td>Consistent, predictable CPU load — good for something like a heavily used mail server running at a steady 60% CPU</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Compute optimized</h2>
+  <p>More CPU per dollar than general purpose, with network-optimized variants available. Good for media encoding, scientific modeling, gaming servers, and general machine learning workloads.</p>
+
+  <h2>Memory optimized</h2>
+  <p>Ranges from standard large-memory types, up through types offering some of the highest memory allocations AWS offers, to variants that pair large memory with fast local NVMe storage. Ideal for large in-memory applications, in-memory caching, and certain database workloads.</p>
+
+  <h2>Accelerated computing</h2>
+  <table>
+    <thead><tr><th>Capability</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td>GPU (parallel-processing oriented)</td><td>Parallel processing and machine learning training</td></tr>
+      <tr><td>GPU (graphics oriented)</td><td>Graphics-intensive work; usable but less ideal for ML than the parallel-processing type</td></tr>
+      <tr><td>FPGA</td><td>Genomics, financial analysis, big data — anywhere you want to program the hardware itself</td></tr>
+      <tr><td>ML-inference optimized</td><td>Recommendation, forecasting, voice, and conversational ML workloads</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Storage optimized</h2>
+  <p>Large amounts of fast local storage, tuned either toward high sequential throughput or maximum IOPS (or a balance of both, depending on the specific type). Suited to data warehousing, search workloads like Elasticsearch, and demanding analytics.</p>
+
+  <h2>Two tools worth bookmarking</h2>
+  <ul>
+    <li>The official <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank">Amazon EC2 Instance Types</a> documentation — browse by category, drill into a specific family/generation, and see exact resource allocations and notes per size.</li>
+    <li>Third-party sites such as ec2instances.info provide a sortable, filterable comparison across instance types, including on-demand and reserved pricing, EBS optimization, and OS compatibility — useful for quickly narrowing down options during real design work.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    For the exam, you don't need every family memorized — you need the family-letter associations (C = compute, R = RAM, I = I/O, D = dense storage, G = GPU, P = parallel processing) and the instinct for which of the five categories fits a described workload.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A domain controller normally runs at 2-3% CPU with occasional short bursts to 30%. Which general purpose type fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Burstable types assume a low baseline with occasional bursts covered by credits — exactly this workload, and cheaper than steady-state types."> A burstable (credit-based) instance type</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Steady-state types are built for consistent, predictable high load, not a mostly-idle workload with rare bursts."> A steady-state, consistent-load instance type</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Storage optimized targets fast local disk I/O, not CPU burst behavior for a domain controller."> A storage optimized instance type</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Accelerated computing types add GPU/FPGA capability that a domain controller has no use for."> An accelerated computing instance type</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which accelerated computing capability is specifically described as letting you program the hardware itself for tasks like genomics or financial analysis?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Parallel-processing GPUs are aimed at ML training and parallel workloads, not custom hardware programming."> Parallel-processing GPU accelerator</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Graphics-oriented GPUs target rendering and are only okay for ML — not reprogrammable hardware for genomics."> Graphics-oriented GPU accelerator</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. FPGAs are field-programmable gate arrays — hardware you program yourself, well suited to genomics, financial analysis, and big data."> FPGA, programmable hardware itself</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="ML-inference optimized types target recommendation/forecasting/voice inference, not general-purpose hardware programmability."> ML-inference optimized accelerator</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Where should you check for the exact, current resource allocation of a specific instance size before a production decision?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This lesson intentionally gives illustrative, high-level guidance — always confirm against the official documentation for current specifics."> This lesson's tables are always current</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The official EC2 Instance Types documentation is the authoritative, up-to-date source for exact specs per family, generation, and size."> The official EC2 Instance Types documentation</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Family letters give a category hint but not the precise resource allocations for a given size."> The single family letter alone</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Generation number tells you roughly how new a family is, not the exact current resource allocation."> Only the generation number in the name</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-ec2-instance-types-part-1.html">← Previous: EC2 Instance Types (Part 1)</a>
+      <a href="0005-storage-refresher.html">Next: Storage Refresher →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>19 – Instance Status Checks & Auto Recovery</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 19
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Instance Status Checks & Auto Recovery</h1>
+    <p class="lesson-meta">Lesson 19 of 21 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-instance-status-check.html" target="_blank">EC2 Status Checks</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-recover.html" target="_blank">EC2 Auto Recovery</a></p>
+  </div>
+
+  <p>Every EC2 instance is continuously evaluated by two independent status checks. Together they tell you whether a problem, if one exists, lives in AWS's infrastructure or inside your instance's own configuration — and that distinction determines how you fix it.</p>
+
+  <h2>Two checks, two failure domains</h2>
+  <p>When an instance first launches you'll typically see it move from <em>initializing</em> to <strong>2/2 checks passed</strong>. Anything less than 2/2 on a running instance signals a problem, and which check failed tells you where to look.</p>
+
+  <table>
+    <thead><tr><th>Check</th><th>What it tests</th><th>Example failure causes</th></tr></thead>
+    <tbody>
+      <tr><td><strong>System status check</strong></td><td>The underlying EC2 host / AWS infrastructure</td><td>Loss of system power, loss of network connectivity, hardware or software issues on the physical host</td></tr>
+      <tr><td><strong>Instance status check</strong></td><td>The instance's own operating system and configuration</td><td>Corrupted file system, misconfigured networking (e.g. a public IPv4 address statically set inside the OS), kernel issues preventing boot</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    <strong>System check failure = AWS's problem</strong> (the host). <strong>Instance check failure = your problem</strong> (the guest OS/config). This distinction is exactly what exam questions probe — match the failure type to the failure domain before picking a remediation.
+  </div>
+
+  <h2>Resolving each type of failure</h2>
+  <p>A <strong>system status check</strong> failure is typically resolved by stopping and starting the instance — since EC2 is EBS-backed and networked storage, a stop/start relocates the instance to different underlying hardware, sidestepping whatever hardware or power issue affected the original host. A simple <em>reboot</em> won't help here, since reboot keeps the instance on the same broken host.</p>
+
+  <p>An <strong>instance status check</strong> failure usually needs a fix at the OS or configuration level — a reboot, a manual repair, or in more serious cases a rebuild from a known-good AMI — because the underlying host is fine; it's the guest that's broken.</p>
+
+  <h2>Automating the response: CloudWatch + Auto Recovery</h2>
+  <p>Rather than watching the console and reacting manually, you can create a <strong>CloudWatch alarm</strong> on an instance's status checks. The alarm can notify you via SNS, and — critically — it can also trigger an automated action when either check fails for at least one evaluation period: reboot the instance, stop it, terminate it, or invoke <strong>EC2 Auto Recovery</strong>.</p>
+
+  <p>Auto Recovery moves the instance to a new, healthy host within the <em>same Availability Zone</em> and relaunches it with identical configuration — same private/public IP addressing, same instance ID — so any software configured to auto-start can bring the instance back to a working state with no human intervention. See <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-recover.html" target="_blank">EC2 Auto Recovery</a> for the full mechanics and requirements.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Auto Recovery has real limits: it stays within the <strong>same AZ</strong>, so it does nothing for a full AZ outage; it needs spare host capacity to succeed; it only supports specific, modern instance families; and it does <strong>not</strong> work for instances using instance store volumes — only instances backed entirely by EBS.
+  </div>
+
+  <ul>
+    <li><strong>System check fails</strong> → stop/start (moves to new hardware) or Auto Recovery.</li>
+    <li><strong>Instance check fails</strong> → reboot or manual OS-level fix; the host itself is healthy.</li>
+    <li>Auto Recovery handles narrow, isolated host or instance failures — it is not a substitute for multi-AZ high availability.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An instance fails its system status check. What is actually the problem?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A system status check failure points to an issue with the underlying EC2 host or AWS infrastructure."> The underlying EC2 host</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A corrupt file system is an instance-level issue, which the instance status check covers, not the system check."> The instance's file system</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="OS-level static IP misconfiguration is an instance status check concern, not a system check concern."> A misconfigured static IP</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Kernel boot issues are detected by the instance status check, which examines the guest OS."> A failing OS kernel boot</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why does rebooting typically NOT fix a system status check failure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Reboots do not touch EBS volume data, so this isn't the reason a reboot fails to help here."> It wipes the EBS volume data</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Reboot keeps the instance on the same host, but the host itself is the broken component."> Reboot keeps the same host</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Reboot is available for both purchase options and isn't restricted by that factor here."> Reboot only works on Spot</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Rebooting does not change or reassign the instance's IP addressing."> It changes the private IP</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which scenario is EC2 Auto Recovery unable to help with?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This is exactly what Auto Recovery is designed to fix — an isolated host power failure."> An isolated host power loss</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Auto Recovery handles isolated hardware faults on the host running an EBS-backed instance."> A single failed host component</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Auto Recovery only moves an instance within the same AZ, so it cannot help during a full AZ-wide outage."> A complete Availability Zone outage</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Loss of network connectivity to the host is a system-level issue Auto Recovery is designed to address."> Loss of host network connectivity</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0018-reserved-instances-the-rest.html">← Previous: Reserved Instances: The Rest</a>
+      <a href="0020-horizontal-and-vertical-scaling.html">Next: Horizontal & Vertical Scaling →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

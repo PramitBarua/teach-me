@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16 – EC2 Purchase Options (Part 1)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 16
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EC2 Purchase Options (Part 1)</h1>
+    <p class="lesson-meta">Lesson 16 of 21 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html" target="_blank">EC2 On-Demand Instances</a></p>
+  </div>
+
+  <p>EC2 instances are billed differently depending on the <strong>purchase option</strong> you choose at launch — AWS's official term for what many engineers still call "launch types." Every purchase option makes a different trade-off between price, commitment, and interruption risk. This lesson covers the two ends of that spectrum: On-Demand, which asks for no commitment at all, and Spot, which asks for none either but can take your capacity away at any moment. Part 2 picks up with Reserved Instances and the dedicated hardware options.</p>
+
+  <h2>On-Demand: the default</h2>
+  <p>On-Demand is deliberately unremarkable. Different customers' instances are packed onto the same shared pool of underlying EC2 hosts, which lets AWS allocate hardware efficiently — and that efficiency is why the On-Demand starting price is reasonable in the first place. You're billed per second while an instance is in the <code>running</code> state; stop it and the compute charge stops too, though attached resources like EBS volumes keep billing regardless of instance state because they consume capacity independent of whether the instance is running.</p>
+
+  <p>On-Demand has no interruptions — barring a genuine failure, an instance runs until you decide otherwise — but it also carries <strong>no capacity priority</strong>. If AWS suffers a major failure and remaining capacity is scarce, Reserved purchases are served first. On-Demand customers get whatever is left over.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Treat On-Demand as your <strong>default assumption</strong> for any exam scenario. Only move to a different purchase option once the question gives you a concrete reason to — a long-term commitment, a cost constraint, or a licensing requirement. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html" target="_blank">EC2 On-Demand Instances</a> guide for the full billing model.
+  </div>
+
+  <p>On-Demand fits short-term workloads, workloads of unknown duration or type, and anything — short-term or not — that simply cannot tolerate interruption.</p>
+
+  <h2>Spot: spare capacity at a discount</h2>
+  <p>At any given moment, EC2 hosts running On-Demand and Reserved instances still have unused capacity. Spot is AWS selling that spare capacity at a steep discount. Within each region, for each instance type, AWS tracks available spare capacity and publishes a <strong>spot price</strong> for it. You set a maximum price you're willing to pay, but you only ever pay the <em>current</em> spot price — never more, even if your maximum is higher.</p>
+
+  <p>If the spot price rises above your maximum — because AWS needs the capacity back for On-Demand demand, for example — your Spot instances are <strong>interrupted</strong>. AWS reclaims Spot capacity with only a very short interruption notice, so Spot should never be treated as reliable, continuously-available compute.</p>
+
+  <table>
+    <thead><tr><th>Attribute</th><th>Spot Instances</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Discount</strong></td><td>Up to ~90% versus On-Demand</td></tr>
+      <tr><td><strong>Price mechanic</strong></td><td>You pay the current spot price, capped by your maximum bid</td></tr>
+      <tr><td><strong>Reliability</strong></td><td>Can be reclaimed whenever the spot price exceeds your maximum</td></tr>
+      <tr><td><strong>Best for</strong></td><td>Fault-tolerant, flexible, interruption-tolerant workloads</td></tr>
+    </tbody>
+  </table>
+
+  <p>Good fits: highly parallel batch or scientific workloads that can be split into many pieces and rerun on failure, bursty jobs like media or image processing, cost-sensitive workloads that wouldn't be economical On-Demand, and stateless tiers where session data isn't stored on the instance. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html" target="_blank">EC2 Spot Instances guide</a> for the full mechanics.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Never pick Spot for anything that can't tolerate interruption — domain controllers, mail servers, traditional always-on websites, or anything business-critical. If a scenario mentions "cannot tolerate disruption," Spot is the wrong answer regardless of how attractive the discount sounds.
+  </div>
+
+  <ul>
+    <li><strong>On-Demand</strong> — no commitment, no discount, no interruption, no capacity priority.</li>
+    <li><strong>Spot</strong> — no commitment, deepest discount, can be interrupted at any time, no capacity priority.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Which statement correctly describes On-Demand billing?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="On-Demand bills per second while the instance is running, not a flat monthly charge regardless of state."> A flat fee charged monthly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. You pay per second while the instance is running, and the charge stops once it's stopped."> Per second while running only</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="On-Demand carries no term commitment at all — that's Reserved Instances."> A fixed one-year commitment</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="On-Demand has no capacity priority during shortages — Reserved purchases are served first."> Priority access during shortages</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A Spot customer sets a maximum price of $0.10/hr. The current spot price rises to $0.12/hr. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="You never pay above your set maximum — that's the whole point of setting one."> They are billed $0.12/hr</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Once the spot price exceeds your maximum, your Spot instances are interrupted."> Their instances get interrupted</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Spot has no priority queue mechanism like this — instances are simply reclaimed."> They move to a priority queue</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instances aren't converted between purchase options automatically like this."> They convert to On-Demand instantly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which workload is the best fit for Spot Instances?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A domain controller needs continuous availability and cannot tolerate the interruptions Spot introduces."> A primary domain controller</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Parallel batch jobs that can be split up and rerun on failure are a textbook Spot use case."> A parallel batch analysis job</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A production mail server needs to stay running continuously, making it a poor fit for Spot."> A production mail server</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Flight control systems are safety-critical and cannot tolerate interruption, so Spot is unsuitable."> A flight control system</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0015-amazon-machine-images-ami.html">← Previous: Amazon Machine Images (AMI)</a>
+      <a href="0017-ec2-purchase-options-part-2.html">Next: EC2 Purchase Options (Part 2) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

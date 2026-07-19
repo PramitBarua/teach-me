@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 – Aurora Global Database</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 13
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>Aurora Global Database</h1>
+    <p class="lesson-meta">Lesson 13 of 16 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html" target="_blank">Using Amazon Aurora Global Database</a></p>
+  </div>
+
+  <p>Aurora Global Database extends a single Aurora cluster's replication across <strong>AWS Regions</strong> — a primary Region plus multiple read-only secondary Regions, purpose-built for global read performance and cross-Region disaster recovery.</p>
+
+  <h2>Architecture</h2>
+  <ul>
+    <li>One <strong>primary Region</strong> — behaves like a normal Aurora cluster: one writer, up to 15 read replicas.</li>
+    <li><strong>Secondary Regions</strong> — entirely <strong>read-only</strong> during normal operation, with up to <strong>16 replicas each</strong>.</li>
+    <li>Replication happens at the <strong>storage layer</strong>, one-way from primary to secondaries, typically completing in <strong>under one second</strong>.</li>
+    <li>Because replication is storage-layer, it adds <strong>no CPU load</strong> to the primary — performance is unaffected.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Secondary Region limit — check current figures</div>
+    Cantrill's course states a limit of <strong>5 secondary Regions</strong>. AWS's current documentation allows <strong>up to 10</strong>. As with Aurora's storage ceiling, AWS raises limits like this over time — verify the current <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html" target="_blank">Aurora Global Database docs</a> if the exact number matters for your exam.
+  </div>
+
+  <h2>Why Use It</h2>
+  <table>
+    <thead><tr><th>Use case</th><th>How Global Database helps</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Cross-Region disaster recovery</strong></td>
+        <td>If the primary Region fails entirely, a secondary can be promoted to read-write — sub-second replication keeps both RPO and RTO very low</td>
+      </tr>
+      <tr>
+        <td><strong>Global read scaling</strong></td>
+        <td>Serve international users from a nearby secondary Region for low-latency reads, without touching the primary</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Global Database replication is <strong>one-way, not bidirectional</strong> — secondaries never write back to the primary during normal operation. This distinguishes it from <a href="0014-aurora-multi-master-writes.html">multi-master</a>, where multiple instances can all accept writes.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Under normal operation, can an Aurora Global Database secondary Region accept write operations from an application?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Secondary Region replicas are entirely read-only during normal operation — writes only occur in the primary Region."> Yes, both primary and secondary Regions accept writes simultaneously</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Under normal operation, secondary Regions in an Aurora Global Database are entirely read-only. They can only accept writes after being promoted, such as during a disaster recovery event."> No, secondary Regions are entirely read-only until promoted</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="No manual sync tool is required — replication between primary and secondary Regions happens automatically at the storage layer."> Yes, but only via a manual sync tool run hourly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Secondary Regions can serve reads during normal operation — they aren't fully disabled, just restricted from writes."> No, secondary Regions are completely inaccessible until a failover</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why does Aurora Global Database replication have minimal impact on the primary cluster's compute performance?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Replication does actually occur continuously (typically completing in under a second) — it isn't a nightly batch job."> Replication only happens once per day during a maintenance window</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Replication happens at the storage layer, not through the database engine or compute instances, so it doesn't consume CPU resources on the primary."> Replication occurs at the storage layer, not through the compute instances</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Secondary Regions have their own separate compute instances — they don't literally share the primary's compute resources."> Secondary Regions share the exact same compute instances as the primary</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Global Database replication doesn't rely on a dedicated read replica to absorb load — it uses storage-layer replication directly."> A dedicated read replica absorbs all replication overhead</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An entire AWS Region hosting an Aurora Global Database primary cluster becomes unavailable. What is the recovery action?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This describes a standard snapshot restore process, not the low-RTO recovery path Aurora Global Database is designed to provide."> Restore the most recent manual snapshot into a brand-new cluster</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A secondary Region cluster can be promoted to accept read-write traffic, and because replication was typically under a second behind, both RPO and RTO stay low."> Promote a secondary Region's cluster to read-write to take over as primary</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Aurora Serverless is a compute/billing model, not a Region-failure recovery mechanism — it doesn't address a Region-wide outage on its own."> Switch the cluster to Aurora Serverless mode to restore availability</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Global Database is designed precisely to avoid waiting on the primary Region to recover — a secondary can be promoted immediately instead."> Wait for the primary Region to recover, since no failover option exists</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0012-aurora-serverless.html">← Previous: Aurora Serverless</a>
+      <a href="0014-aurora-multi-master-writes.html">Next: Aurora Multi-Master Writes →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

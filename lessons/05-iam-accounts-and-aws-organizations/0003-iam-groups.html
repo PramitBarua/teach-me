@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – IAM Groups</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 03</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>IAM Groups</h1>
+    <p class="lesson-meta">Lesson 03 of 11 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups.html" target="_blank">AWS IAM Groups Docs</a></p>
+  </div>
+
+  <h2>What is an IAM Group?</h2>
+  <p>An <strong>IAM Group</strong> is a container for IAM users. It lets you attach policies to many users at once instead of managing policies user-by-user.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Important</div>
+    A group itself has <strong>no access rights</strong>. Rights exist only on the <em>members</em> — the group is just a convenient attachment point for policies.
+  </div>
+
+  <h2>Key Rules</h2>
+
+  <dl>
+    <dt>No built-in "all users" group</dt>
+    <dd>AWS does not create an all-users group automatically. If you want every user to share a policy, create the group and manage it yourself.</dd>
+
+    <dt>Policies on a group</dt>
+    <dd>A group can have both managed and inline policies attached. Both apply to every group member.</dd>
+
+    <dt>Policy merging</dt>
+    <dd>When a user belongs to multiple groups, AWS <em>merges</em> all policies — the user's own inline and managed policies plus every group's policies — then evaluates: Explicit Deny → Explicit Allow → Implicit Deny.</dd>
+
+    <dt>Groups cannot be nested</dt>
+    <dd>A group cannot contain another group. Only users can be group members.</dd>
+
+    <dt>Groups cannot be a principal</dt>
+    <dd>You cannot reference a group in a resource-based policy's <code>Principal</code> field. Only users, roles, and AWS services can be principals.</dd>
+  </dl>
+
+  <h2>Limits</h2>
+  <table>
+    <thead><tr><th>Limit</th><th>Value</th><th>Hard?</th></tr></thead>
+    <tbody>
+      <tr><td>Groups per account</td><td>300</td><td>No (can be increased)</td></tr>
+      <tr><td>Groups a single user may belong to</td><td>10</td><td>Yes</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    The 10-groups-per-user limit is a <strong>hard limit</strong> — you cannot increase it. The 300-groups-per-account limit is a soft limit. Expect scenario questions testing whether you know the difference.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A user belongs to two groups: GroupA allows <code>s3:PutObject</code>, GroupB denies <code>s3:PutObject</code>. The user's own policy has no statement about S3. What can the user do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="GroupA's allow does not override GroupB's deny."> The user can put objects because GroupA allows it</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Policies are merged across all groups, then Explicit Deny wins."> The user cannot put objects because deny wins</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The last-attached group does not take precedence; all policies are evaluated together."> The last group attached takes precedence</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS does not ask the user — evaluation is automatic."> AWS prompts the user to choose which policy applies</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Can you use an IAM Group as the Principal in an S3 bucket policy?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Groups cannot be principals anywhere — the docs explicitly exclude them."> Yes, groups can be principals in any policy type</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The restriction applies universally, not just to S3."> Yes, but only in S3 bucket policies specifically</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Groups are not valid principals. Reference individual users or roles instead."> No, groups cannot be referenced as a principal</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Using the group ARN is not possible — groups have no ARN usable as a principal."> Yes, by using the group ARN in the policy</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. How many groups can a single IAM user belong to simultaneously?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="5 is not a documented limit for groups.">  5 groups maximum per user</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. 10 is the hard limit — it cannot be increased via a support request."> 10 groups maximum per user</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="25 is not a documented limit for groups."> 25 groups maximum per user</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="There is a fixed hard limit; membership is not unlimited."> Unlimited group membership per user</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-iam-users-and-arns.html">← Lesson 02: IAM Users &amp; ARNs</a>
+      <a href="0004-iam-roles-tech.html">Next: IAM Roles – The Tech →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

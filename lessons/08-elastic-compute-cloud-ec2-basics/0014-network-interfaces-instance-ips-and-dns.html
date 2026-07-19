@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 – Network Interfaces, Instance IPs & DNS</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 14
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Network Interfaces, Instance IPs & DNS</h1>
+    <p class="lesson-meta">Lesson 14 of 21 · ~11 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html" target="_blank">Elastic Network Interfaces</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html" target="_blank">EC2 Instance IP Addressing</a></p>
+  </div>
+
+  <p>A lot of what the EC2 console UI presents as belonging to "the instance" — IP addresses, DNS names, security groups — actually belongs to something one layer down: the <strong>Elastic Network Interface (ENI)</strong>. Understanding that distinction clears up most of the confusing edge cases around EC2 networking.</p>
+
+  <h2>Every instance has at least one ENI</h2>
+  <p>Every EC2 instance launches with a <strong>primary ENI</strong>, and can optionally have one or more <strong>secondary ENIs</strong> attached. All of an instance's ENIs — primary and secondary — must live in the same Availability Zone as the instance, though they can sit in different subnets within that AZ. The primary ENI cannot be detached from its instance; secondary ENIs can be detached and reattached to a different instance, as long as that instance is in the same AZ.</p>
+
+  <h2>What actually lives on an ENI</h2>
+  <table>
+    <thead><tr><th>Attribute</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td><strong>MAC address</strong></td><td>Hardware address, visible inside the OS — often used for software licensing</td></tr>
+      <tr><td><strong>Primary private IPv4</strong></td><td>Exactly one, from the interface's subnet range; static for the interface's life</td></tr>
+      <tr><td><strong>Secondary private IPv4</strong></td><td>Zero or more additional private addresses</td></tr>
+      <tr><td><strong>Public IPv4</strong></td><td>Zero or one per interface, dynamic unless replaced by an Elastic IP</td></tr>
+      <tr><td><strong>Elastic IP</strong></td><td>Zero or one per private IPv4 address on the interface</td></tr>
+      <tr><td><strong>IPv6</strong></td><td>Zero or more; IPv6 addresses are publicly routable by default — there's no private/public split like IPv4</td></tr>
+      <tr><td><strong>Security groups</strong></td><td>Attached per ENI, affecting every IP address on that ENI</td></tr>
+      <tr><td><strong>Source/destination check</strong></td><td>When enabled (the default), traffic not matching an address on the ENI is discarded — must be disabled for NAT instances</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If a scenario needs different security group rules applied to different IP addresses on one instance, the answer is <strong>multiple ENIs</strong>, not multiple IPs on one ENI — security groups attach at the interface level, so separating IPs onto separate ENIs is the only way to give them separate rule sets.
+  </div>
+
+  <h2>Private and public DNS naming</h2>
+  <p>Every instance's primary private IPv4 address gets a matching private DNS hostname in the form <code>ip-10-16-0-10.ec2.internal</code> — resolvable only inside the VPC, and always pointing at the private address.</p>
+  <p>If the instance also receives a public IPv4 address, it gets a public DNS hostname too, roughly in the form <code>ec2-x-x-x-x.compute-1.amazonaws.com</code>. This public DNS name behaves differently depending on where you resolve it from:</p>
+  <ul>
+    <li><strong>Inside the VPC</strong> — resolves to the instance's private IPv4 address, so instance-to-instance traffic using this name never has to leave the VPC via the internet gateway.</li>
+    <li><strong>Outside the VPC</strong> — resolves to the public IPv4 address.</li>
+  </ul>
+  <p>This dual-resolution behavior is a recurring theme later when designing hybrid networks — see the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html" target="_blank">EC2 instance addressing guide</a> for the full reference.</p>
+
+  <h2>Public IPv4 is dynamic; Elastic IPs are not</h2>
+  <p>A standard public IPv4 address is <strong>dynamic</strong>: it is deallocated when the instance stops, and a new, different one is allocated when it starts again. A simple reboot does not change it — only a stop/start (or a forced host migration) does.</p>
+  <p>An <strong>Elastic IP (EIP)</strong> is a static public IPv4 address allocated to your AWS account, which you then associate with a private IP on either the primary or a secondary ENI. Associating an EIP with the primary ENI's private IP immediately replaces whatever dynamic public IP the instance had. If you later remove the EIP, the instance is assigned a brand-new dynamic public IP — the original one is gone for good.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    A favorite exam trap: "an instance had a dynamic public IP, an Elastic IP was assigned, then removed — can you recover the original dynamic IP?" No. Assigning an EIP permanently discards the original dynamic address; removing the EIP later just allocates a different new dynamic address.
+  </div>
+
+  <h2>The OS never sees the public IPv4 address</h2>
+  <p>Inside the operating system, only the private IPv4 address is ever configured on the network interface. The public IPv4 address isn't attached to the instance at all — it's mapped in by NAT performed at the internet gateway. You will never configure a Windows or Linux network interface with a public IPv4 address in AWS. IPv6 is the exception, since IPv6 addresses are public by design with no NAT translation involved.</p>
+
+  <p>Two more practical uses of secondary ENIs worth remembering: <strong>MAC-based software licensing</strong> can be made portable by binding the license to a secondary ENI's MAC address, then detaching and reattaching that ENI to a new instance when needed; and <strong>multi-homed instances</strong> can use separate ENIs in separate subnets for management versus data traffic, each governed by its own security group.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An instance needs two IP addresses governed by two different sets of security group rules. What's the correct design?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Security groups attach to the ENI, not to individual IPs on it — one ENI means one shared rule set for all its IPs."> Two secondary IPs on one ENI</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Security groups are attached per ENI, so isolating IPs onto separate ENIs is the only way to give them independent rule sets."> Two IPs split across two ENIs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Elastic IPs don't carry their own security group rules independent of the ENI they're associated with."> Two Elastic IPs on one ENI</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="IPv6 addresses share the ENI's security groups just like IPv4 — switching protocols doesn't isolate rules."> Switch both IPs to IPv6 instead</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An instance is stopped and then started again, with no Elastic IP attached. What happens to its public IPv4 address?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A public IPv4 address is dynamic and is deallocated on stop — it does not persist through a stop/start cycle."> It stays exactly the same</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A dynamic public IPv4 address is released on stop and a new, different one is allocated on start."> It changes to a new address</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Without an Elastic IP, the instance still gets a public IPv4 if the subnet auto-assigns one — it's not removed permanently."> It is permanently removed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Private DNS behavior is unrelated — this question is about the dynamic public IPv4 address specifically."> It becomes a private DNS name</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. From inside the same VPC, what does an instance's public DNS hostname resolve to?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Outside the VPC it resolves to the public IP — but this question asks about resolution from inside the VPC."> The instance's public IPv4 address</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Inside the VPC, the public DNS name resolves to the private IPv4 address, keeping instance-to-instance traffic off the internet gateway."> The instance's private IPv4 address</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="MAC addresses aren't a DNS resolution target at all."> The interface's MAC address value</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DNS resolution doesn't return an AZ name — it resolves to an IP address."> The Availability Zone name only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0013-ebs-encryption.html">← Previous: EBS Encryption</a>
+      <a href="0015-amazon-machine-images-ami.html">Next: Amazon Machine Images (AMI) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

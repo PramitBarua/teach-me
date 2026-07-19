@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – Service-linked Roles &amp; PassRole</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 06</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>Service-linked Roles &amp; PassRole</h1>
+    <p class="lesson-meta">Lesson 06 of 11 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html" target="_blank">AWS: Service-linked roles</a></p>
+  </div>
+
+  <h2>Service-linked Roles</h2>
+  <p>A <strong>service-linked role</strong> is an IAM role that is directly linked to one specific AWS service. Its permissions are <em>predefined by that service</em> — you cannot change what the role can do, only whether it exists.</p>
+
+  <table>
+    <thead><tr><th>Property</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Permissions</td><td>Fixed. Defined by the service, not by you.</td></tr>
+      <tr><td>Who creates it</td><td>The service itself (during first use), or you via IAM, or during the service setup wizard.</td></tr>
+      <tr><td>Deletion</td><td><strong>Cannot be deleted while the service is actively using it.</strong></td></tr>
+      <tr><td>Example</td><td>Elastic Load Balancing creates a service-linked role to manage EC2 instances on your behalf.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>PassRole</h2>
+  <p>Sometimes an operator needs to associate a role with an AWS service (e.g. "create an EC2 instance with this IAM role"). AWS enforces that the operator has the <code>iam:PassRole</code> permission for that specific role before allowing the association.</p>
+
+  <p>This separates two concerns:</p>
+  <ul>
+    <li><strong>Role creators</strong> — can create and edit roles</li>
+    <li><strong>Role passers</strong> — can associate existing roles with services, but cannot create or modify the roles</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Why this matters</div>
+    Without PassRole control, a user with only <code>ec2:RunInstances</code> could attach a highly-privileged role to an EC2 instance — gaining access they were never intended to have. PassRole is the safeguard.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Privilege escalation risk</div>
+    A user with PassRole can assign a role to a service that has <em>more</em> permissions than the user themselves. This is intentional — it enables delegation — but it must be granted carefully.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Can you edit the permissions of a service-linked role?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The permissions are controlled by the service and cannot be changed by customers."> Yes, you can add extra permissions to the role</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="You can't remove permissions from a service-linked role either."> Yes, but only to remove overly broad permissions</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Service-linked roles have fixed permissions defined by the service. You can create or delete the role, but not modify its permission set."> No, the permissions are predefined and fixed</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There is no time restriction — the permissions are always fixed by design."> No, but they can be edited after 30 days of use</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An operator wants to launch an EC2 instance with a highly privileged IAM role attached. The operator cannot create or edit IAM roles. What permission does the operator still need?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="iam:CreateRole is for creating new roles — the operator specifically cannot do this."> iam:CreateRole on the target role</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. iam:PassRole allows the operator to associate the existing role with EC2 without being able to create or modify it."> iam:PassRole for the specific role ARN</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="iam:AttachRolePolicy is for attaching policies to roles, which is not needed here."> iam:AttachRolePolicy on the target role</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="iam:AssumeRole is for STS-based assumption, not for attaching a role to EC2."> iam:AssumeRole on the target role</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An AWS service still uses its service-linked role. An admin tries to delete the role. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS will not delete the role silently; it will actively block the deletion."> The role is deleted immediately with no warning</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Deletion does not move the role to a different account."> The role is moved to the management account first</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The service does not re-create the role to work around the admin."> The service auto-creates a new role to replace it</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. AWS blocks deletion of a service-linked role while any resource is using it. You must remove the associated service resources first."> The deletion is blocked until the service stops using it</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-when-to-use-iam-roles.html">← Lesson 05: When to Use IAM Roles</a>
+      <a href="0007-aws-organizations.html">Next: AWS Organizations →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

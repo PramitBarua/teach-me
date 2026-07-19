@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 – Aurora Multi-Master Writes</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 14
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>Aurora Multi-Master Writes</h1>
+    <p class="lesson-meta">Lesson 14 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html" target="_blank">Amazon Aurora User Guide</a></p>
+  </div>
+
+  <p>The Aurora clusters you've seen so far run in <strong>single-master</strong> mode: one read-write instance, plus zero or more read-only replicas. <strong>Multi-master</strong> mode changes this fundamentally — <strong>every instance</strong> in the cluster can read <em>and</em> write.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Cantrill flags this as a low-priority topic — "not something I expect to immediately feature in detail on the exam." Understand the concept, don't over-invest in memorizing it.
+  </div>
+
+  <h2>Single-Master: Why Failover Takes Time</h2>
+  <p>In single-master mode, all read/write traffic goes through the <strong>cluster endpoint</strong>, which points at the primary. If the primary fails, a replica must be <strong>promoted</strong> from read-only to read-write before traffic can resume — this promotion step is what makes failover non-instant.</p>
+
+  <h2>Multi-Master: No Promotion Needed</h2>
+  <p>In a multi-master cluster, the same shared storage architecture exists, but there is <strong>no cluster endpoint</strong> — the application connects directly to individual instances and decides how to distribute operations across them. There's no built-in load balancing.</p>
+
+  <h3>How a Write Is Committed</h3>
+  <ol>
+    <li>An instance receiving a write <strong>proposes</strong> the change to every storage node in the cluster.</li>
+    <li>Each node <strong>confirms or rejects</strong> — rejecting if the change conflicts with another in-flight write.</li>
+    <li>If a <strong>quorum</strong> of nodes agrees, the write commits to shared storage. If not, the write is cancelled and an error is returned to the application.</li>
+    <li>The change is then replicated to <strong>other writer instances</strong> so their in-memory caches stay current — keeping reads from any instance consistent with what's on disk.</li>
+  </ol>
+
+  <h2>Why This Matters: Fault Tolerance</h2>
+  <p>In single-master mode, if the primary fails, the application loses access to the database until the cluster promotes a new primary and updates the cluster endpoint — a real (if brief) disruption. In multi-master mode, an application that maintains connections to <strong>multiple writers simultaneously</strong> can simply route all future writes to a surviving writer immediately — with little to no disruption.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Not automatic fault tolerance</div>
+    Multi-master gives you the <strong>foundation</strong> for a fault-tolerant application — it doesn't hand you fault tolerance for free. Your application still has to be designed to hold connections to multiple writers and manually load-balance across them; the cluster does none of this on your behalf.
+  </div>
+
+  <table>
+    <thead><tr><th></th><th>Single-master</th><th>Multi-master</th></tr></thead>
+    <tbody>
+      <tr><td>Writable instances</td><td>1 (the primary)</td><td>All instances</td></tr>
+      <tr><td>Cluster endpoint</td><td>Yes — points at primary</td><td>None — app connects to instances directly</td></tr>
+      <tr><td>Failover</td><td>Requires promoting a replica</td><td>App simply redirects writes to a surviving writer</td></tr>
+      <tr><td>Load balancing</td><td>Reader endpoint balances reads</td><td>Application-managed, no built-in balancing</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Why does failover take longer in a single-master Aurora cluster than in a multi-master one?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. In single-master mode, a replica must be promoted from read-only to read-write before it can serve write traffic, and the cluster endpoint must repoint — this promotion step is what makes single-master failover slower."> A replica must be promoted to read-write before it can serve writes</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Both modes use the same underlying shared cluster storage architecture — that isn't what differentiates their failover speed."> Single-master clusters use slower, non-SSD shared storage</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Single-master Aurora clusters do support automatic failover — manual-only failover isn't the reason for the speed difference."> Single-master clusters require manual intervention to fail over at all</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Single-master Aurora clusters can and do span multiple Availability Zones, just like multi-master — that isn't the distinguishing factor here."> Single-master clusters can only exist in a single Availability Zone</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. In a multi-master Aurora cluster, what happens when two instances attempt conflicting writes at nearly the same time?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Multi-master Aurora doesn't simply let both writes through and merge them later — a quorum-based confirmation process resolves conflicts at commit time."> Both writes are applied and merged automatically afterward</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Each proposed write requires a quorum of storage nodes to confirm it; a conflicting in-flight write causes rejection, and the application receives an error for the rejected write."> The conflicting write is rejected if it fails to get quorum agreement from storage nodes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There is no cluster endpoint in multi-master mode to arbitrate between instances — conflict resolution happens via the storage node quorum instead."> The cluster endpoint arbitrates and picks a winner</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Multi-master clusters don't pause all writes cluster-wide to wait for manual review — conflicting writes are rejected individually via the quorum mechanism."> All writes pause cluster-wide until an administrator intervenes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Does enabling Aurora multi-master mode automatically make an application fault-tolerant?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Multi-master mode provides the foundation for fault tolerance, but the application itself must be designed to hold connections to multiple writers and redirect traffic — this doesn't happen automatically."> Yes, the cluster automatically load-balances writes across all instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Multi-master removes the promotion delay and gives the application the ability to redirect writes to a surviving instance, but the application must be explicitly designed to maintain multiple writer connections and manage that failover logic itself."> No, the application must be explicitly designed to hold multiple writer connections and redirect traffic itself</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Multi-master clusters have no cluster endpoint at all — this option describes a mechanism that doesn't exist in multi-master mode."> Yes, because the cluster endpoint automatically reroutes failed writes</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Multi-master is unrelated to snapshot frequency — fault tolerance in this context is about write availability during instance failure, not backup cadence."> Yes, as long as automated snapshots are taken frequently enough</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0013-aurora-global-database.html">← Previous: Aurora Global Database</a>
+      <a href="0015-rds-proxy.html">Next: RDS Proxy →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Internet Gateway</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 04
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>Internet Gateway (IGW)</h1>
+    <p class="lesson-meta">Lesson 04 of 09 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html" target="_blank">AWS IGW Docs</a></p>
+  </div>
+
+  <h2>What is an Internet Gateway?</h2>
+  <p>An <strong>Internet Gateway (IGW)</strong> is the component that connects a VPC to the public internet and to AWS public-zone services (S3, SQS, SNS, etc.). It is <em>region-resilient</em> — a single IGW covers all AZs in the region, so you do not need one per AZ.</p>
+
+  <p>Key constraints:</p>
+  <ul>
+    <li>A VPC can have <strong>zero or one</strong> IGW — never more than one.</li>
+    <li>An IGW can exist without being attached to a VPC (it is created first, then attached).</li>
+    <li>A VPC with no IGW is entirely private — no internet access in or out.</li>
+  </ul>
+
+  <h2>Six Steps to Make a Subnet Public</h2>
+  <p>Making instances in a subnet reachable from the internet requires six configuration steps:</p>
+
+  <table>
+    <thead><tr><th>#</th><th>Step</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Create the IGW</td><td>Allocates the gateway resource in your account</td></tr>
+      <tr><td>2</td><td>Attach the IGW to the VPC</td><td>Links the gateway to the VPC (one-to-one)</td></tr>
+      <tr><td>3</td><td>Create a custom route table</td><td>Will hold the public-facing routes</td></tr>
+      <tr><td>4</td><td>Associate the route table with the public subnet</td><td>Overrides the main route table for that subnet</td></tr>
+      <tr><td>5</td><td>Add a default route: <code>0.0.0.0/0</code> → IGW</td><td>Sends all non-VPC traffic toward the internet</td></tr>
+      <tr><td>6</td><td>Enable auto-assign public IPv4 on the subnet</td><td>Instances launched here receive a public IP</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How the IGW Translates Addresses (Static NAT)</h2>
+  <p>The operating system of an EC2 instance <strong>never sees its public IP</strong>. The public IPv4 address exists only in a mapping table maintained by the IGW. Here is how a packet travels:</p>
+
+  <table>
+    <thead><tr><th>Direction</th><th>What happens at the IGW</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Outbound</strong> (instance → internet)</td>
+        <td>Instance sends packet with private IP as source. IGW replaces the source address with the instance's public IP before forwarding to the internet.</td>
+      </tr>
+      <tr>
+        <td><strong>Inbound</strong> (internet → instance)</td>
+        <td>Packet arrives at the public IP. IGW looks up the mapping and replaces the destination address with the private IP, then forwards into the VPC.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    IPv6 is different: all IPv6 addresses are globally routable and <em>publicly visible to the OS</em>. The IGW does no address translation for IPv6 — packets pass through with their original addresses intact.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EC2 instance runs <code>curl ifconfig.me</code> and sees IP address 54.12.34.56. The instance's private IP is 10.0.1.5. Which component owns the mapping between these two addresses?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The EC2 operating system never sees the public IP — the mapping does not live on the instance."> The EC2 instance's operating system</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The VPC router handles internal routing but does not maintain public-to-private IP mappings."> The VPC router inside the subnet</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. The Internet Gateway maintains the static NAT mapping between each instance's private IP and its public IP."> The Internet Gateway attached to the VPC</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route 53 handles DNS resolution, not IP address translation for EC2 instances."> The Route 53 DNS resolver in the VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. How many Internet Gateways can be attached to a single VPC at one time?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Zero is allowed (making the VPC private), but the question asks for the maximum that can be attached."> Zero; VPCs cannot use internet gateways</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. A VPC supports exactly one Internet Gateway at most. Attempting to attach a second will fail."> One; a VPC supports at most one IGW</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There is no per-AZ IGW requirement; a single IGW is region-resilient and covers all AZs."> One per Availability Zone in the region</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS does not allow multiple IGWs on one VPC, regardless of account limits."> As many as the account service limit allows</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You have followed all six steps to create a public subnet. Instances launched there still cannot reach the internet. Which missing step is most likely the cause?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="An IGW is region-resilient — it does not need to be placed in a specific AZ."> The IGW was not placed in the correct AZ</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Security Groups are stateful and default to allowing outbound traffic — they are unlikely to be the root cause of no internet at all."> The security group blocks all outbound traffic</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Without a default route (0.0.0.0/0 → IGW) in the subnet's route table, packets destined for the internet have nowhere to go."> The route table has no default route pointing to the IGW</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A VPC can have only one primary CIDR block; adding a secondary CIDR does not affect internet routing."> A secondary CIDR block has not been added to the VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-vpc-routing.html">← Previous: VPC Routing</a>
+      <a href="0005-bastion-hosts.html">Next: Bastion Hosts →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

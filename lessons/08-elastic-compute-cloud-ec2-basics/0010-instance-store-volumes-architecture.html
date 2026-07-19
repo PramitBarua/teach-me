@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – Instance Store Volumes Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 10
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Instance Store Volumes Architecture</h1>
+    <p class="lesson-meta">Lesson 10 of 21 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html" target="_blank">Amazon EC2 Instance Store (AWS docs)</a></p>
+  </div>
+
+  <p>Instance store volumes are block storage devices too — an instance sees a raw block device, formats a file system on it, and applications use it exactly like EBS. The difference is where the physical disk lives: instance store volumes are <strong>physically attached to one specific EC2 host</strong>, not accessed over a network like EBS. That local attachment is the source of both their biggest advantage and their biggest risk.</p>
+
+  <h2>Local, fast, and tied to the host</h2>
+  <p>Because the storage is directly wired to the host's hardware rather than reached over a storage network, instance store delivers the <strong>highest raw storage performance available in AWS</strong> — well above what EBS, including provisioned IOPS SSD, can provide.</p>
+
+  <p>Instance store volumes are also <strong>included in the price</strong> of any instance type that offers them — it's use-it-or-lose-it capacity you're already paying for.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Instance store volumes can only be attached <strong>at launch time</strong>. Unlike EBS, you cannot add instance store volumes to a running instance after the fact — this exact restriction is a recurring exam question. If you skip attaching them at launch, that capacity is simply unavailable for the life of that instance.
+  </div>
+
+  <h2>Ephemeral by design</h2>
+  <p>Each EC2 host has its own pool of physical devices, presented as instance store volumes to whichever instances happen to be running on that host. Multiple instances on the same host can each be allocated their own share of these local disks.</p>
+
+  <p>The critical property to internalize: instance store data is <strong>ephemeral</strong>. It does not survive:</p>
+
+  <ul>
+    <li><strong>Host migration</strong> — if the instance moves to different underlying hardware (which happens on stop/start, host maintenance, or an instance type change), it lands on a fresh host with blank, wiped instance store volumes. The old data is gone.</li>
+    <li><strong>Instance stop/start</strong> — this is itself a form of host migration, so data is lost.</li>
+    <li><strong>Instance type change</strong> — also causes a host migration, with the same data-loss consequence.</li>
+    <li><strong>Hardware failure</strong> — if the underlying physical disk fails, any instance using it loses that data, with no automatic redundancy.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Treat instance store data as gone the moment an instance stops, changes type, or its host has any kind of failure. Never use it for anything requiring persistence — it's a performance trade, not a durability option. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html" target="_blank">Amazon EC2 Instance Store guide</a> for the authoritative list of which instance families include it and how it behaves across restarts.
+  </div>
+
+  <h2>How fast is "fast"?</h2>
+  <p>The instructor cites illustrative, instance-family-specific figures from the time of the course — treat exact numbers as indicative rather than something to memorize precisely, and check current EC2 instance type specs for up-to-date figures:</p>
+
+  <table>
+    <thead><tr><th>Instance family</th><th>Storage media</th><th>Illustrative performance</th></tr></thead>
+    <tbody>
+      <tr><td><strong>D3 (storage optimized)</strong></td><td>Traditional HDD, large capacity</td><td>~4.6 GB/s throughput</td></tr>
+      <tr><td><strong>I3 (storage optimized)</strong></td><td>NVMe SSD</td><td>~16 GB/s throughput; up to ~2M read / ~1.6M write IOPS at optimal configuration</td></tr>
+    </tbody>
+  </table>
+
+  <p>Both figures comfortably exceed anything achievable with EBS, including the highest-end provisioned IOPS SSD volumes — that gap is the entire reason instance store exists as an option.</p>
+
+  <table>
+    <thead><tr><th>Property</th><th>Instance store</th><th>EBS</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Attachment</strong></td><td>Physically local to one EC2 host</td><td>Networked, over a storage network</td></tr>
+      <tr><td><strong>Add after launch?</strong></td><td>No — launch time only</td><td>Yes — attach/detach anytime</td></tr>
+      <tr><td><strong>Survives stop/start?</strong></td><td>No — wiped</td><td>Yes — persists</td></tr>
+      <tr><td><strong>Survives host migration?</strong></td><td>No — wiped</td><td>Yes — follows the instance</td></tr>
+      <tr><td><strong>Performance</strong></td><td>Highest available in AWS</td><td>High, but lower than instance store</td></tr>
+      <tr><td><strong>Cost</strong></td><td>Included in instance price</td><td>Billed separately per volume</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    Instance store is a straightforward trade: you accept ephemeral, host-local, launch-time-only storage in exchange for the highest performance ceiling AWS offers. It's the right call when your application layer already handles durability itself (e.g. replicating across nodes, or the data is disposable scratch/cache space) — never when the volume itself is the only copy of important data. The next lesson works through exactly how to choose between instance store and EBS in practice.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An instance is running with instance store volumes attached. It gets stopped and later started again. What happens to the data on those volumes?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Instance store data does not persist across stop/start — stop/start causes a host migration, and the new host provides fresh, blank volumes."> It persists, just like EBS</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Stop/start moves the instance to a (possibly different) host, and instance store volumes are wiped and reassigned as blank devices on any host migration."> It is lost — volumes are wiped</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There is no snapshot-and-restore mechanism for instance store the way there is for EBS — the data is simply gone."> It is automatically snapshotted</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Data loss on stop/start is not conditional on encryption settings — it happens regardless because of the underlying host migration."> It depends on encryption settings</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A running instance was launched without any instance store volumes attached. Can you add one now?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instance store volumes cannot be attached to an already-running instance — this only works with EBS volumes, not instance store."> Yes, attach it anytime</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A reboot alone does not enable adding instance store volumes — only a fresh launch with the volumes specified does."> Yes, after a simple reboot</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Instance store volumes can only be attached at launch time — this instance would need to be relaunched (a new instance) with the volumes specified from the start."> No, only possible at launch</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Multi-attach is a concept associated with certain EBS volume types, not a mechanism for adding instance store storage after launch."> Yes, via multi-attach mode</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Why does instance store achieve higher performance than even provisioned IOPS SSD EBS volumes?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance store is not free — it's included in the price of instances that offer it, but that pricing model doesn't explain the performance gap."> It is billed at no extra cost</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Instance store disks are physically attached to the same host the instance runs on, avoiding the storage-network hop that EBS, including provisioned IOPS SSD, always requires."> It is physically local, not networked</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance store volumes are not encrypted by default in a way that explains a performance advantage — encryption is a separate consideration from raw throughput."> It uses stronger default encryption</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance store volumes are host-local, not multi-AZ replicated — that's actually why they're ephemeral rather than durable."> It replicates across AZs always</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-ebs-volume-types-hdd-based.html">← Previous: EBS Volume Types: HDD-Based</a>
+      <a href="0011-choosing-instance-store-vs-ebs.html">Next: Choosing Between Instance Store and EBS →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

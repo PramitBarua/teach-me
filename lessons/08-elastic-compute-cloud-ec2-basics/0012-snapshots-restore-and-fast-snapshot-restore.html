@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – Snapshots, Restore & Fast Snapshot Restore (FSR)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 12
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Snapshots, Restore & Fast Snapshot Restore (FSR)</h1>
+    <p class="lesson-meta">Lesson 12 of 21 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html" target="_blank">Amazon EBS Snapshots</a></p>
+  </div>
+
+  <p><strong>Snapshots</strong> are backups of EBS volumes stored on S3. Because EBS volumes are only Availability-Zone resilient, an AZ-wide failure can take a volume with it — snapshots protect against exactly that, and because S3 is a regional service, snapshots make your data <strong>region</strong>-resilient instead of just AZ-resilient. They also double as a migration tool, letting you move volume data between AZs or between Regions entirely via S3.</p>
+
+  <h2>Snapshots are incremental</h2>
+  <p>The first snapshot of a volume is always a <strong>full copy</strong> — but only of the data actually <em>used</em>, not the volume's full allocated size. A 40 GB volume with 10 GB used produces a 10 GB first snapshot. This full copy takes time proportional to the data size, but it happens in the background without impacting the volume's live performance.</p>
+  <p>Every snapshot after the first is <strong>fully incremental</strong>: it stores only the blocks that changed since the previous snapshot, referencing the earlier snapshot for everything unchanged. This makes later snapshots both smaller and faster than the first.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Unlike traditional incremental backup chains, deleting a snapshot in the middle of an EBS chain does not break the ones after it — AWS automatically migrates any data those later snapshots still depend on. Every snapshot behaves as if it's self-sufficient, so there's no "must keep every incremental" risk to worry about.
+  </div>
+
+  <h2>Creating volumes from snapshots</h2>
+  <p>A new EBS volume can be created blank, or built from an existing snapshot — effectively cloning the source volume's data. Because the snapshot lives in S3, the resulting volume can be created:</p>
+  <ul>
+    <li>In the <strong>same AZ</strong> as the original volume.</li>
+    <li>In a <strong>different AZ</strong>, within the same Region — useful for moving data between AZs.</li>
+    <li>In a <strong>different Region</strong>, by first copying the snapshot there — useful for DR and cross-region migration.</li>
+  </ul>
+
+  <h2>Restore performance: lazy loading vs. Fast Snapshot Restore</h2>
+  <p>A brand-new blank EBS volume delivers full performance immediately. A volume restored from a snapshot does not — it restores <strong>lazily</strong>. In the background, EBS gradually pulls the snapshot's data from S3 onto the new volume. If your instance reads a block that hasn't been pulled yet, EBS fetches it from S3 on demand, which is noticeably slower than a native EBS read.</p>
+  <p>You have two ways to eliminate this "first touch" penalty:</p>
+  <ul>
+    <li><strong>Force a full read</strong> — use a tool like <code>dd</code> on Linux to read every block of the volume once, pulling all snapshot data from S3 immediately. Typically done once, right after restore, before the volume goes into production.</li>
+    <li><strong>Fast Snapshot Restore (FSR)</strong> — an AWS feature you enable on a snapshot that pre-warms it, so any volume created from it delivers full performance from the very first I/O, with no lazy-loading period at all.</li>
+  </ul>
+
+  <p>See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-fast-snapshot-restore.html" target="_blank">Fast Snapshot Restore documentation</a> for configuration details.</p>
+
+  <table>
+    <thead><tr><th>FSR fact</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Scope</strong></td><td>Enabled per snapshot, per Availability Zone</td></tr>
+      <tr><td><strong>Unit counted</strong></td><td>Each snapshot + AZ combination counts as one FSR</td></tr>
+      <tr><td><strong>Limit</strong></td><td>50 FSRs per Region (e.g. one snapshot enabled across 4 AZs uses 4 of the 50)</td></tr>
+      <tr><td><strong>Cost</strong></td><td>FSR is a paid feature, on top of normal snapshot storage cost</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If a question describes needing guaranteed full performance the instant a restored volume is used — no warm-up period, no manual <code>dd</code> step — the answer is Fast Snapshot Restore. If the scenario is cost-sensitive and a manual step is acceptable, forcing a full read with a tool like <code>dd</code> achieves the same end state for free.
+  </div>
+
+  <h2>How snapshot billing works</h2>
+  <p>Snapshots bill on a <strong>gigabyte-month</strong> basis, and only for <strong>data actually used</strong>, not the volume's allocated size — the same "used, not allocated" principle as the first full snapshot. Because each incremental snapshot only stores changed blocks, taking snapshots frequently (e.g. every five minutes instead of every hour) does not necessarily cost proportionally more — you're still only billed for whatever data actually changed.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A volume has 40 GB allocated, 10 GB used. What size is its first snapshot?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Snapshots bill and store based on used data, not the volume's full allocated size."> 40 GB, the full allocation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The first snapshot is a full copy, but only of the data actually used on the volume."> 10 GB, the data actually used</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There's no compression assumption built into snapshot sizing — it reflects used data directly."> 5 GB, compressed automatically</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A snapshot must contain at least the used data — it can't be zero regardless of incremental behavior."> 0 GB until the next change occurs</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You delete the second snapshot in a chain of five incremental snapshots. What happens to snapshots three, four, and five?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EBS snapshots don't behave like traditional incremental backup chains — later snapshots survive a deletion in the middle."> They become unusable immediately</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. EBS automatically migrates any data those later snapshots still depend on, so each snapshot remains self-sufficient."> They remain fully usable and intact</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="No restore-and-recreate step is needed — AWS handles data dependency migration transparently."> You must recreate them manually</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Only the second snapshot is removed; the others are unaffected in count or validity."> Only snapshot five still works</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team needs a restored volume to deliver full read performance from the very first I/O, with zero manual steps. What should they enable?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A manual dd read-through avoids the lazy-loading penalty but is a manual step, not automatic from first I/O."> A manual dd pass after restore</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Fast Snapshot Restore pre-warms the snapshot so any volume created from it has full performance immediately, with no manual step."> Fast Snapshot Restore on the snapshot</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Encryption doesn't change lazy-loading restore behavior at all."> Enabling default volume encryption</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="RAID striping affects throughput across volumes, not the lazy-loading penalty of a single restored snapshot."> Striping the volume with RAID 0</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-choosing-instance-store-vs-ebs.html">← Previous: Choosing Between Instance Store and EBS</a>
+      <a href="0013-ebs-encryption.html">Next: EBS Encryption →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

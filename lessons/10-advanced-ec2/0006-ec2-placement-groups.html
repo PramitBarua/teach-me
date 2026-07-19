@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – EC2 Placement Groups</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced EC2</a> › Lesson 06
+    </div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>EC2 Placement Groups</h1>
+    <p class="lesson-meta">Lesson 06 of 08 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html" target="_blank">Placement Groups for Your EC2 Instances</a></p>
+  </div>
+
+  <p>By default, AWS decides where an instance physically lands within an Availability Zone. A <strong>placement group</strong> lets you influence that decision — forcing instances either close together or deliberately apart, depending on whether you're chasing performance or resilience. There are three types, each solving a different problem.</p>
+
+  <h2>Cluster Placement Groups: Maximum Performance</h2>
+  <p>Cluster placement groups pack instances tightly — typically the same rack, often the <strong>same physical host</strong> — inside a <strong>single Availability Zone</strong>. You don't choose the AZ up front; it's locked in by wherever the first instance you launch into the group actually lands.</p>
+
+  <p>The payoff: instances in the same cluster placement group get direct, fast connections to each other, achieving <strong>10 Gbps single-stream</strong> transfer (versus the usual 5 Gbps), plus the lowest latency and highest packets-per-second possible in AWS. Getting these numbers requires instance types with high-performance networking and <strong>enhanced networking</strong> enabled — covered in the next lesson.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The cost of that performance</div>
+    All that physical closeness means almost no resilience — a single hardware failure can take out every instance in the group. Best practice is to launch all instances in the group <strong>at the same time</strong> and of the <strong>same instance type</strong>, so AWS reserves capacity for everything you need up front.
+  </div>
+
+  <h2>Spread Placement Groups: Maximum Isolation</h2>
+  <p>Spread placement groups do the opposite: each instance lands on <strong>separate, isolated hardware</strong> — its own rack, own network, own power source — so a single rack failure can't take out more than one instance. Unlike cluster groups, spread groups can span <strong>multiple Availability Zones</strong>.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the hard limit</div>
+    Spread placement groups are capped at <strong>7 instances per Availability Zone</strong> — because each instance needs its own isolated rack, and that's a finite resource. Use cases: a small number of critical instances that must never share a failure domain, e.g. domain controllers or file server mirrors. Dedicated Hosts/Instances aren't supported in spread placement groups.
+  </div>
+
+  <h2>Partition Placement Groups: Isolation at Scale</h2>
+  <p>Partition placement groups solve the problem spread groups can't: what if you need <strong>more than 7</strong> isolated instances per AZ? A partition group divides its capacity into <strong>partitions</strong> (max 7 per AZ), each with its own isolated rack — no sharing of hardware between partitions — but you can put as many instances as you like into each partition, and you choose which partition an instance lands in (or let EC2 decide).</p>
+
+  <table>
+    <thead><tr><th></th><th>Spread</th><th>Partition</th></tr></thead>
+    <tbody>
+      <tr><td>Instance cap</td><td>7 per AZ, one per rack, no exceptions</td><td>7 partitions per AZ, unlimited instances per partition</td></tr>
+      <tr><td>Isolation control</td><td>Fully automatic — always isolated</td><td>You (or your app) choose the grouping</td></tr>
+      <tr><td>Best for</td><td>A handful of critical, independent instances</td><td>Large distributed systems that are topology-aware</td></tr>
+    </tbody>
+  </table>
+
+  <p>The real value shows up with <strong>topology-aware</strong> distributed applications — HDFS, HBase, Cassandra — which can query which partition each instance belongs to and use that to make intelligent replication decisions. A 75-instance application replicating data 3 ways can deliberately spread each replica across a different partition, guaranteeing that losing one partition's hardware never takes out more than one copy of any given piece of data. Without partition awareness, all 75 instances could theoretically share hardware, and resilience would be down to luck.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: spread vs. partition, in one line</div>
+    Spread guarantees isolation automatically but caps you at 7 instances per AZ. Partition trades that automatic guarantee for scale — you (or a topology-aware app) manage which partition instances land in, but there's no hard cap on total instance count, only on the number of partitions (7 per AZ).
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A tightly-coupled HPC workload needs the lowest possible latency and highest packets-per-second between a set of instances, and can tolerate all of them going down together if the hardware fails. Which placement group fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Cluster placement groups pack instances physically close for the lowest latency and highest PPS in AWS, accepting reduced resilience as the trade-off — exactly this scenario's priorities."> Cluster, for the lowest latency and highest packet rate</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Spread placement groups optimize for isolation and resilience, at the cost of the tight physical closeness that gives cluster groups their performance edge — the opposite of this scenario's priority."> Spread, for the lowest latency and highest packet rate</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Partition groups are built for large topology-aware distributed systems needing isolation across many instances, not the raw single-AZ performance this scenario needs."> Partition, for the lowest latency and highest packet rate</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Dedicated Hosts address licensing and physical host control, not network latency or packets-per-second between instances."> Dedicated Hosts, for the lowest latency and highest packet rate</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You need 5 domain controllers, each guaranteed to be on entirely separate racks with independent power and networking, spread across 2 Availability Zones. Which placement group type guarantees this automatically?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cluster groups pack instances close together on shared hardware for performance — the opposite of the isolation this scenario needs."> Cluster, since it isolates instances across racks</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Spread placement groups automatically place each instance on separate, isolated hardware — rack, power, and networking — and can span multiple AZs, well within the 7-per-AZ limit for 5 instances."> Spread, since each instance lands on its own isolated rack</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Partition groups require you or a topology-aware app to manage which partition instances land in — it's not the fully-automatic guarantee spread offers for a small critical set like this."> Partition, since it automatically manages 5 domain controllers</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="No placement group type is called 'Isolated' — the three real types are cluster, spread, and partition."> Isolated, since it's designed specifically for domain controllers</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A Cassandra cluster needs 40 topology-aware instances per Availability Zone, replicated 3 ways, with guaranteed hardware isolation between replica groups. Spread placement groups can't be used here — why not, and what's the fix?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Spread placement groups do support multiple Availability Zones — that's not the limiting factor here; the real limit is the 7-instances-per-AZ cap."> Spread doesn't support multiple AZs; use cluster instead</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Spread caps out at 7 instances per AZ, well below the 40 needed here. Partition placement groups support up to 7 partitions per AZ with unlimited instances per partition, and Cassandra's topology awareness can use that structure for isolated replication."> Spread caps at 7 per AZ; use partition placement groups instead</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Spread placement groups have no restriction tied to topology-aware software — the actual blocker is the fixed 7-instance-per-AZ ceiling."> Spread doesn't work with topology-aware software; use Dedicated Hosts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Spread groups don't have a networking-speed restriction that rules them out here — the blocking factor is strictly the 7-instances-per-AZ instance count limit."> Spread requires enhanced networking, which Cassandra lacks; use cluster</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-logging-on-ec2-cloudwatch-agent.html">← Previous: Logging on EC2</a>
+      <a href="0007-ec2-dedicated-hosts.html">Next: EC2 Dedicated Hosts →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Custom VPCs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 01
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>Custom VPCs</h1>
+    <p class="lesson-meta">Lesson 01 of 09 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html" target="_blank">AWS VPC User Guide</a></p>
+  </div>
+
+  <h2>What is a VPC?</h2>
+  <p>A <strong>Virtual Private Cloud (VPC)</strong> is a regionally isolated, regionally resilient private network inside AWS. When you create a VPC it operates across <em>all</em> Availability Zones in that region, but nothing flows in or out without explicit configuration. Each VPC is its own isolated blast radius — a misconfiguration or breach in one VPC cannot automatically affect another.</p>
+
+  <p>You can create multiple VPCs in one account. The <strong>default VPC</strong> is created automatically by AWS; everything else is a <strong>custom VPC</strong> that you design from scratch.</p>
+
+  <h2>Tenancy and CIDR Allocation</h2>
+  <p>When you create a custom VPC you make two foundational choices:</p>
+
+  <table>
+    <thead><tr><th>Choice</th><th>Options</th><th>Key implication</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Tenancy</strong></td>
+        <td>Default / Dedicated</td>
+        <td>Dedicated forces every resource in the VPC onto dedicated physical hardware — expensive and hard to undo</td>
+      </tr>
+      <tr>
+        <td><strong>IPv4 CIDR block</strong></td>
+        <td>/28 (16 IPs) → /16 (65,536 IPs)</td>
+        <td>The CIDR range cannot overlap with other VPCs you intend to connect; plan carefully</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>A VPC always has <em>one mandatory</em> primary private IPv4 CIDR block. You can add optional secondary CIDR blocks later. By default, all addressing inside the VPC uses private IP space; public IPs are an overlay assigned at the subnet level.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    The allowed CIDR sizes are <strong>/28 (smallest, 16 IPs)</strong> and <strong>/16 (largest, 65,536 IPs)</strong>. Any prefix outside that range is rejected at creation time.
+  </div>
+
+  <h2>DNS Inside a VPC</h2>
+  <p>AWS provides a fully-featured DNS resolver for every VPC, powered by Route 53. The DNS address is always the <strong>base IP of the VPC + 2</strong>. For example, if your VPC CIDR starts at <code>10.0.0.0</code>, the DNS resolver lives at <code>10.0.0.2</code>.</p>
+
+  <p>Two VPC-level settings control DNS behaviour:</p>
+
+  <table>
+    <thead><tr><th>Setting</th><th>What it controls</th><th>Default in custom VPC</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>enableDnsSupport</code></td>
+        <td>Whether the VPC DNS resolver is active and reachable at base+2</td>
+        <td>true</td>
+      </tr>
+      <tr>
+        <td><code>enableDnsHostnames</code></td>
+        <td>Whether instances with public IPs receive public DNS hostnames</td>
+        <td>false (must be enabled manually)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If you need EC2 instances to receive public DNS names (e.g. <code>ec2-54-x-x-x.compute-1.amazonaws.com</code>), you must enable <strong>both</strong> <code>enableDnsSupport</code> and <code>enableDnsHostnames</code> on the VPC.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. You are creating a custom VPC and need to support up to 500 instances, each needing its own IP. Which CIDR prefix size is the smallest that provides enough capacity?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A /28 provides only 16 IP addresses — far too small for 500 instances."> /28, which provides 16 usable addresses</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A /24 provides 256 IP addresses — not enough for 500 instances."> /24, which provides 256 usable addresses</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. A /23 provides 512 IP addresses, which is the smallest block that comfortably covers 500 instances."> /23, which provides 512 usable addresses</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A /16 would work but it is unnecessarily large — /23 is the smallest sufficient size."> /16, which provides 65,536 usable addresses</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A VPC has a base CIDR of 172.31.0.0/16. At which IP address does the Route 53 DNS resolver for this VPC listen?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="172.31.0.0 is the network address itself, not the DNS resolver."> 172.31.0.0, the network base address</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="172.31.0.1 is reserved for the VPC router, not DNS."> 172.31.0.1, the VPC router address</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. AWS always places the DNS resolver at base + 2, so 172.31.0.2 in this case."> 172.31.0.2, the base address plus two</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="172.31.0.3 is reserved by AWS for future use, not DNS."> 172.31.0.3, reserved for future AWS use</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An EC2 instance in a custom VPC has a public IPv4 address but shows no public DNS hostname. Which VPC setting must be enabled to fix this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="enableDnsSupport controls whether DNS resolution is active, not whether public hostnames are assigned to instances."> Enable DNS support on the VPC</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. enableDnsHostnames must be true for instances with public IPs to receive public DNS hostnames."> Enable DNS hostnames on the VPC</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Adding a secondary CIDR does not affect DNS hostname assignment."> Add a secondary CIDR block to the VPC</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Changing tenancy to dedicated does not affect DNS hostnames and is very costly to reverse."> Switch the VPC tenancy to dedicated</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-vpc-subnets.html">Next: VPC Subnets →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

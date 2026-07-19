@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – EC2 Bootstrapping with User Data</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced EC2</a> › Lesson 01
+    </div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>EC2 Bootstrapping with User Data</h1>
+    <p class="lesson-meta">Lesson 01 of 08 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html" target="_blank">Amazon EC2 User Data</a></p>
+  </div>
+
+  <p>You've launched instances from an AMI and manually configured them afterward — installing WordPress by hand, command by command. <strong>Bootstrapping</strong> automates that step: instructions that run when an instance first launches, bringing it into a pre-configured state instead of a bare default one.</p>
+
+  <h2>How User Data Works</h2>
+  <p>EC2's implementation of bootstrapping is <strong>user data</strong> — injected into the instance the same way instance metadata is, and retrieved from the same special IP address, <code>169.254.169.254</code>, just under the path <code>latest/user-data</code> instead of <code>latest/meta-data</code>. Whatever you pass in is executed by the instance's operating system as the <strong>root user</strong>.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: once, at launch, only</div>
+    User data runs <strong>exactly once</strong> — at the instance's first launch. Stop the instance, change the user data, and start it again, and the new data is <em>not</em> re-executed. User data is for launch-time configuration only, not ongoing configuration management.
+  </div>
+
+  <h2>EC2 Doesn't Understand What It's Running</h2>
+  <p>This is the detail that matters most: EC2 treats user data as <strong>opaque</strong>. It doesn't validate it, interpret it, or care what it contains — it just hands the data to the operating system and lets a startup process execute it. If your script is well-formed, the instance ends up <strong>running and ready for service</strong>. If the script has an error, the instance is still running and still passes its status checks — but it's a <strong>bad configuration</strong>, silently broken from the outside.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Not secure, not unlimited</div>
+    User data is readable by anyone with access to the instance's operating system — never use it to pass long-term credentials. It's also capped at <strong>16 KB</strong> (raw, before base64 encoding); anything larger needs a script that downloads the rest.
+  </div>
+
+  <h2>Boot Time to Service Time</h2>
+  <p>A recurring exam theme is <strong>how quickly an instance is ready to serve traffic</strong> after launch — the time AWS takes to provision it, plus any time needed for software installs or configuration afterward (<strong>post-launch time</strong>). For a stock AWS AMI, that's minutes. For an instance that needs an application installed and configured by hand, post-launch time can stretch to hours.</p>
+
+  <p>Three ways to shrink it, in increasing order of sophistication:</p>
+  <table>
+    <thead><tr><th>Approach</th><th>Trade-off</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Bootstrapping</strong> (user data)</td><td>Automates the post-launch steps, cutting the time they take, but they still run after launch</td></tr>
+      <tr><td><strong>AMI baking</strong></td><td>Do the work in advance, baked into the AMI — removes post-launch time entirely, but sacrifices runtime flexibility</td></tr>
+      <tr><td><strong>Bake + bootstrap (optimal)</strong></td><td>Bake the time-intensive, static parts (e.g. the 90% of an install that never changes) into the AMI; bootstrap only the final, variable configuration</td></tr>
+    </tbody>
+  </table>
+
+  <p>That combined approach — front-load what's slow and static, bootstrap what's fast and variable — comes up again later in the course when scaling and high availability are covered, since it directly affects how quickly a fleet can scale out under load.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An instance was launched with user data that installs and configures an application. Later, the user data is updated and the instance is rebooted (not stopped/started). What happens to the new user data?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="User data only executes on the instance's initial launch — a reboot doesn't trigger it, and even a stop/start of a running instance won't re-run already-executed user data on most default configurations."> It re-executes automatically on every reboot</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. User data is executed only once, at initial launch. Updating it later doesn't cause it to run again without additional tooling to re-trigger execution."> It is not executed again; user data runs once at launch</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EC2 doesn't interpret or validate user data at all — it has no concept of merging old and new scripts."> EC2 merges the old and new scripts and runs both</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EC2 never validates or rejects user data content — it passes it through as opaque data regardless of what changed."> The update is rejected since user data is immutable</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A user data script has a typo that causes the application install to fail partway through. What state will the instance be in?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EC2 doesn't validate or monitor the content of user data execution — a script error doesn't stop the instance from reaching a running state."> Stopped, because EC2 detects the script failed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Status checks verify system and instance reachability, not whether a user data script logically succeeded — they will still pass."> Failing status checks, since the app didn't install correctly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. EC2 treats user data as opaque — it doesn't know or care whether the script logically succeeded. The instance reaches a running state and passes status checks, but it's a bad configuration."> Running and passing status checks, but in a bad configuration</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EC2 has no mechanism to roll back to a prior AMI state based on user data script outcomes."> Automatically rolled back to the AMI's default state</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team wants to minimize boot-time-to-service-time for a fleet that installs a large, rarely-changing application package plus a small piece of environment-specific configuration at launch. What's the optimal approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Doing everything via user data means the large, unchanging install still runs after every launch, adding unnecessary post-launch time."> Install everything via user data at every launch</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Baking absolutely everything removes flexibility entirely — the environment-specific configuration can't be baked in if it varies per launch."> Bake the entire application and configuration into one AMI</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Baking the large, static install into the AMI removes most of the post-launch time, while bootstrapping only the small variable configuration keeps flexibility — the optimal combination."> Bake the large static install into an AMI, bootstrap the rest</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="User data has no mechanism to skip or defer parts of itself based on package size — it just runs whatever script it's given."> Split the user data script to only run every other launch</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-cfn-init-and-creation-policies.html">Next: cfn-init and Creation Policies →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

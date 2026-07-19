@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – VPC Subnets</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 02
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>VPC Subnets</h1>
+    <p class="lesson-meta">Lesson 02 of 09 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html" target="_blank">AWS VPC Subnets Docs</a></p>
+  </div>
+
+  <h2>Subnets and Availability Zones</h2>
+  <p>A <strong>subnet</strong> is a subdivision of a VPC's IP address space that lives inside a <em>single</em> Availability Zone. Subnets are AZ-resilient: if the AZ hosting a subnet fails, that subnet and the resources in it become unavailable. This is why production architectures spread resources across subnets in multiple AZs.</p>
+
+  <p>The relationship is one-directional: one subnet belongs to exactly one AZ, but an AZ can contain zero or many subnets. All subnets inside the same VPC can communicate with each other by default — no routing configuration is required for intra-VPC traffic.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Subnets start entirely <strong>private</strong>. Making a subnet public requires additional steps (Internet Gateway + route table + auto-assign public IP). The presence of a subnet does not automatically mean internet access.
+  </div>
+
+  <h2>The Five Reserved IP Addresses</h2>
+  <p>Every subnet loses <strong>5 IP addresses</strong> to AWS reservations — these cannot be assigned to instances. Using the example subnet <code>10.16.16.0/20</code> (range 10.16.16.0 → 10.16.31.255):</p>
+
+  <table>
+    <thead><tr><th>Address</th><th>Offset</th><th>Reserved for</th></tr></thead>
+    <tbody>
+      <tr><td><code>10.16.16.0</code></td><td>+0</td><td>Network address (identifies the subnet itself)</td></tr>
+      <tr><td><code>10.16.16.1</code></td><td>+1</td><td>VPC router (default gateway for the subnet)</td></tr>
+      <tr><td><code>10.16.16.2</code></td><td>+2</td><td>DNS resolver (Route 53 resolver for the VPC)</td></tr>
+      <tr><td><code>10.16.16.3</code></td><td>+3</td><td>Reserved by AWS for future use</td></tr>
+      <tr><td><code>10.16.31.255</code></td><td>last</td><td>Broadcast address (not used in AWS, but still reserved)</td></tr>
+    </tbody>
+  </table>
+
+  <p>A <code>/28</code> subnet has 16 raw addresses; after reservations only 11 are usable. Factor this in when sizing subnets.</p>
+
+  <h2>DHCP Options Sets and Auto-Assign</h2>
+  <p>Instances in a VPC receive their IP configuration automatically through a <strong>DHCP options set</strong>. One options set is attached to a VPC at a time, and that configuration flows down to every subnet. You can create a new options set to change settings (e.g. custom DNS servers or domain names), but you <em>cannot edit</em> an existing options set — you must create a new one and then reassign the VPC to it.</p>
+
+  <p>At the subnet level, two optional settings extend this behaviour:</p>
+
+  <table>
+    <thead><tr><th>Setting</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Auto-assign public IPv4</strong></td><td>Every instance launched into the subnet automatically receives a public IPv4 address in addition to its private IP</td></tr>
+      <tr><td><strong>Auto-assign IPv6</strong></td><td>Every instance launched into the subnet automatically receives an IPv6 address (requires the VPC to have an IPv6 CIDR block)</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A subnet has the CIDR block 10.0.1.0/28. How many IP addresses are available for EC2 instances?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="16 is the total number of IPs in a /28, but 5 are reserved by AWS."> 16, the full size of a /28 block</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. A /28 has 16 addresses total. AWS reserves 5 (network, router, DNS, future, broadcast), leaving 11 usable."> 11, after subtracting the 5 AWS reservations</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="14 would be the result if only 2 addresses were reserved, as in classical IP subnetting — AWS reserves 5."> 14, after subtracting 2 reserved addresses</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A /28 does not have enough addresses to leave 254 usable — that would require a /24 with AWS reservations."> 251, the same calculation as a /24 block</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You need to change the DNS server address assigned to instances in a VPC. What is the correct process?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="You cannot edit an existing DHCP options set — they are immutable once created."> Edit the existing DHCP options set in place</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. DHCP options sets are immutable. You create a new set with the desired settings, then associate it with the VPC to replace the old one."> Create a new DHCP options set and associate it with the VPC</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Modifying the VPC CIDR does not affect DNS server assignments at all."> Modify the primary CIDR block of the VPC</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DNS settings come from DHCP options sets, not from subnet route tables."> Update the route table associated with each subnet</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A VPC spans three Availability Zones. For maximum resilience, where should application subnets be placed?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Placing all subnets in one AZ means a single AZ failure takes down all subnets."> All subnets in one AZ for simplicity</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Two AZs would survive a single AZ failure, but using all three AZs provides better resilience."> One subnet split across two AZs only</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. One subnet per AZ means the application can continue running in the two remaining AZs if any single AZ fails."> One subnet in each of the three AZs</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A subnet must be in exactly one AZ — a single subnet cannot span multiple AZs."> One subnet spanning all three AZs at once</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-vpc-fundamentals.html">← Previous: Custom VPCs</a>
+      <a href="0003-vpc-routing.html">Next: VPC Routing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

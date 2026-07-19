@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – RDS Read Replicas</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 08
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>RDS Read Replicas</h1>
+    <p class="lesson-meta">Lesson 08 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html" target="_blank">Working with DB instance read replicas</a></p>
+  </div>
+
+  <p>Read replicas solve a different problem than Multi-AZ. Where Multi-AZ is about <strong>availability</strong>, read replicas are about <strong>read performance and recovery time</strong> — and unlike a Multi-AZ standby, they're genuinely usable.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    For any RDS question (excluding Aurora): <strong>synchronous = Multi-AZ</strong>, <strong>asynchronous = read replicas</strong>. This single rule resolves a large share of RDS exam questions.
+  </div>
+
+  <h2>How Read Replicas Work</h2>
+  <ul>
+    <li>Read replicas are <strong>separate entities</strong> with their own endpoint — an application has zero awareness of them unless explicitly configured to use them.</li>
+    <li>Replication is <strong>asynchronous</strong>: a write is committed on the primary first, then replicated afterward — meaning there can be a small lag (seconds, depending on load and network conditions).</li>
+    <li>You can create up to <strong>5 direct read replicas</strong> per source instance.</li>
+    <li>Read replicas can themselves have their own read replicas (multi-level), but replication lag compounds the deeper you go.</li>
+    <li>Read replicas can be created in the <strong>same Region</strong> or a <strong>different Region</strong> (cross-Region), with AWS handling the networking transparently and encrypting the link in transit.</li>
+    <li>A replica is <strong>read-only until promoted</strong> — after promotion, it behaves as a standalone, fully functional RDS instance.</li>
+  </ul>
+
+  <h2>Why Read Replicas Matter</h2>
+  <table>
+    <thead><tr><th>Benefit</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Read scaling</strong></td><td>Offload read-heavy workloads to replicas, freeing capacity on the primary</td></tr>
+      <tr><td><strong>Global read performance</strong></td><td>Cross-Region replicas let distant users read locally, without hitting the primary</td></tr>
+      <tr><td><strong>Near-zero RTO</strong></td><td>A replica already has (nearly) current data, so promotion is fast — unlike a snapshot restore</td></tr>
+      <tr><td><strong>Cross-Region resilience</strong></td><td>Promote a cross-Region replica if an entire Region becomes unavailable</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Only for failure, not corruption</div>
+    Read replicas give you a great RTO — but <strong>only when recovering from failure</strong>. If your primary suffers <strong>data corruption</strong>, the replica almost certainly has that same corrupted data (it was just replicated). For corruption scenarios, you need <a href="0007-rds-backups-snapshots-restore.html">point-in-time restore</a> instead.
+  </div>
+
+  <table>
+    <thead><tr><th></th><th>Multi-AZ standby</th><th>Read replica</th></tr></thead>
+    <tbody>
+      <tr><td>Replication</td><td>Synchronous</td><td>Asynchronous</td></tr>
+      <tr><td>Usable for reads?</td><td>No</td><td>Yes</td></tr>
+      <tr><td>Automatic failover?</td><td>Yes</td><td>No — must be manually promoted</td></tr>
+      <tr><td>Cross-Region?</td><td>No (same Region only)</td><td>Yes</td></tr>
+      <tr><td>Max count</td><td>1 standby</td><td>Up to 5 direct replicas</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An RDS primary instance suffers severe data corruption from a bad application deploy. Should the team promote an existing read replica to recover?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Because replication is ongoing, the corrupted data was very likely already replicated to the read replica before the corruption was noticed — promoting it won't undo the damage."> Yes, promoting a replica always gives a clean copy of the data</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Read replicas are great for recovering from instance failure, but for data corruption the replica likely already has the corrupted data too — point-in-time restore from a backup is the right tool instead."> No, the replica likely already replicated the corrupted data — use point-in-time restore instead</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-AZ standbys aren't usable for reads and don't solve data corruption either, since they use synchronous replication and would have the same corrupted data."> Yes, but only after first converting it to a Multi-AZ standby</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Read replicas can absolutely be promoted — the issue here isn't a technical limitation, it's that corrupted data would already be present on the replica."> No, read replicas can never be promoted to standalone instances</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A global application wants users in Sydney to get fast read performance from a primary database that lives in us-east-1. What's the appropriate RDS feature?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Multi-AZ standbys can't be used for reads at all, and Multi-AZ deployments are restricted to a single AWS Region — they don't address geographic read latency."> A Multi-AZ standby instance in the Sydney region</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A cross-Region read replica in ap-southeast-2 (Sydney) lets local users read with low latency, without impacting the primary in us-east-1."> A cross-Region read replica deployed in ap-southeast-2</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Increasing the primary's instance size improves overall capacity but does nothing for the physical distance and latency between Sydney users and a us-east-1 database."> Increasing the instance size of the primary database</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A manual snapshot is a point-in-time backup artifact, not a live, queryable database that Sydney users could read from with low latency."> Taking more frequent manual snapshots of the primary</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What is the maximum number of direct read replicas a single RDS source instance can have?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single standby is the Multi-AZ instance limit, not the read replica limit — read replicas allow considerably more."> 1, matching the Multi-AZ standby limit</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. RDS allows up to 5 direct read replicas per source instance, and each of those can in turn have its own replicas, though lag compounds at deeper levels."> 5 direct replicas per source instance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="15 is the maximum replica count for an Amazon Aurora cluster, not for standard RDS read replicas — don't mix up the two figures."> 15, matching Aurora's replica limit</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Read replica counts are capped at 5 direct replicas per source in standard RDS — there is no unlimited option."> Unlimited, as long as you stay within account service quotas</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-rds-backups-snapshots-restore.html">← Previous: RDS Backups, Snapshots &amp; Restore</a>
+      <a href="0009-rds-data-security.html">Next: RDS Data Security →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

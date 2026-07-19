@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Service Control Policies</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 08</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>Service Control Policies (SCPs)</h1>
+    <p class="lesson-meta">Lesson 08 of 11 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html" target="_blank">AWS SCPs Docs</a></p>
+  </div>
+
+  <h2>What is an SCP?</h2>
+  <p>A <strong>Service Control Policy (SCP)</strong> is a JSON policy document attached to nodes in the AWS Organizations hierarchy. It sets the <em>maximum permissions boundary</em> for every account in its scope — including the account's root user.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">SCPs do not grant permissions</div>
+    An SCP only restricts what identities in an account <em>can do</em>. It never grants access by itself. An identity still needs its own IAM permissions to act — the SCP just caps the ceiling.
+  </div>
+
+  <h2>Where you can attach an SCP</h2>
+  <table>
+    <thead><tr><th>Attachment point</th><th>Scope</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Org Root</strong></td><td>Applies to all OUs and all member accounts in the organisation. <em>Does not affect the management account.</em></td></tr>
+      <tr><td><strong>Organizational Unit (OU)</strong></td><td>Applies to all accounts directly inside that OU and any nested OUs/accounts.</td></tr>
+      <tr><td><strong>Individual Account</strong></td><td>Applies to that one account only.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The management account exception</div>
+    The management account is <strong>never affected by SCPs</strong> — not even by an SCP attached to the root. This is a deliberate AWS design decision. Never use the management account for production workloads precisely because it cannot be restricted.
+  </div>
+
+  <h2>Deny list vs Allow list</h2>
+  <dl>
+    <dt>Deny list (default)</dt>
+    <dd>AWS attaches a default <code>FullAWSAccess</code> SCP to every account. You add explicit Deny statements to block specific services. Everything not denied is permitted (as far as SCPs go).</dd>
+    <dt>Allow list</dt>
+    <dd>Remove the <code>FullAWSAccess</code> SCP. Attach an SCP that explicitly allows only the services you permit. Nothing is allowed unless listed. Higher admin overhead, but tighter control.</dd>
+  </dl>
+
+  <h2>How SCP and IAM policies interact</h2>
+  <p>Access is granted only when it is permitted by <em>both</em> the SCP <em>and</em> the IAM identity policy. The effective permissions = intersection of what the SCP allows and what IAM allows.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An SCP attached to the Org Root denies <code>ec2:TerminateInstances</code>. An IAM admin in the management account tries to terminate an EC2 instance. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The SCP applies to all member accounts — not to the management account."> The termination is blocked because the SCP applies to all accounts</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. The management account is never affected by SCPs, even root-level ones. The admin can still terminate instances."> The termination succeeds because SCPs don't apply to the management account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="IAM admins have no special exemption from SCPs — only the management account is exempt."> The termination succeeds because IAM admins bypass SCPs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Only SCPs at the account level are directly applied; root-level SCPs do inherit, but the management account is still exempt."> The termination is blocked only if the SCP is attached at the account level</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An IAM user in a member account has <code>AdministratorAccess</code> IAM policy. The account's SCP only allows <code>s3:*</code>. What can the user do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AdministratorAccess grants all IAM permissions, but the SCP caps what the account can actually do."> The user can do everything because AdministratorAccess overrides SCPs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Effective permissions = IAM allows ∩ SCP allows. IAM allows everything, SCP limits to S3, so the result is S3 only."> The user can only perform S3 actions</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SCP is a boundary that applies above IAM; it doesn't grant IAM-level permissions."> The user can do everything because SCP doesn't restrict IAM policies</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The SCP does not block S3 — it explicitly allows it."> The user cannot do anything because the SCP must also allow IAM</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In an allow-list SCP strategy, AWS attaches a default <code>FullAWSAccess</code> SCP. What must you do first to implement a true allow-list?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Adding deny statements creates a deny-list strategy, not an allow-list."> Add explicit Deny statements to FullAWSAccess</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Remove FullAWSAccess first, then attach an SCP that explicitly lists only permitted services."> Remove FullAWSAccess and add an SCP with explicit allows</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Detaching IAM policies does not implement an allow-list at the SCP level."> Detach all IAM policies from all users in the account</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Moving the account to a different OU does not in itself implement an allow-list."> Move the member account to a new OU without SCPs</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-aws-organizations.html">← Lesson 07: AWS Organizations</a>
+      <a href="0009-cloudwatch-logs.html">Next: CloudWatch Logs →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – Amazon Aurora Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 11
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>Amazon Aurora Architecture</h1>
+    <p class="lesson-meta">Lesson 11 of 16 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html" target="_blank">What is Amazon Aurora?</a></p>
+  </div>
+
+  <p>Aurora is technically part of the RDS family, but its architecture is different enough that it's best treated as its own product. Two changes drive almost everything else in this lesson: Aurora is built around a <strong>cluster</strong>, and it uses <strong>shared storage</strong> instead of per-instance storage.</p>
+
+  <h2>Compute: One Writer, Many Usable Readers</h2>
+  <p>An Aurora cluster has a single <strong>primary (writer)</strong> instance and <strong>zero or more replicas</strong>. Unlike an RDS Multi-AZ standby, Aurora replicas are <strong>usable for reads during normal operation</strong> — meaning a single Aurora cluster gives you both the availability benefit of Multi-AZ <em>and</em> the read-scaling benefit of read replicas, without having to choose.</p>
+  <p>Aurora supports up to <strong>15 replicas</strong>, and <strong>any</strong> of them can be a failover target — a big jump from RDS's single standby.</p>
+
+  <h2>Storage: Shared Cluster Volume</h2>
+  <p>Aurora compute instances don't have local storage. Instead, the cluster has one <strong>shared cluster volume</strong> — SSD-based, spanning <strong>6 storage nodes across 3 Availability Zones</strong>. Every instance in the cluster (writer and replicas) has access to all of it.</p>
+
+  <ul>
+    <li>Writes are synchronously replicated across all 6 storage nodes at the <strong>storage layer</strong> — no extra compute resources are consumed on any instance to do this.</li>
+    <li>By default, only the primary can <strong>write</strong>; replicas and the primary can all <strong>read</strong>.</li>
+    <li>Aurora <strong>self-heals</strong> disk segment failures automatically, using data from the other storage nodes — reducing the need for point-in-time or snapshot restores after a disk failure.</li>
+    <li>Because storage belongs to the <strong>cluster</strong>, not individual instances, adding or removing replicas doesn't require provisioning or de-provisioning storage — replica changes are fast.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Storage limit — check current figures</div>
+    Cantrill's course states a <strong>128 TiB</strong> cluster storage ceiling. AWS's current documentation lists <strong>up to 256 TiB</strong>. AWS raises these limits over time — for the exam you're studying, treat 128 TiB as the traditionally-taught figure, but verify against the current <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html" target="_blank">Aurora User Guide</a> if precision matters.
+  </div>
+
+  <h2>Billing: Consumption, Not Provisioning</h2>
+  <p>You don't pre-allocate Aurora storage — you're billed on <strong>consumption</strong>, based on a <strong>high-watermark</strong>: if you use 50 GiB, you're billed for 50 GiB, even after freeing 10 GiB back down to 40 GiB actually stored. To meaningfully reduce storage cost, you'd need to create a new cluster and migrate the data across.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Watch for changes</div>
+    Cantrill notes AWS was, at time of recording, moving away from this high-watermark billing model for newer Aurora versions. Confirm current behaviour before relying on this detail heavily for a real deployment.
+  </div>
+
+  <h2>Endpoints</h2>
+  <table>
+    <thead><tr><th>Endpoint</th><th>Points at</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Cluster endpoint</strong></td><td>Always the primary — for reads and writes</td></tr>
+      <tr><td><strong>Reader endpoint</strong></td><td>Load-balances across all available replicas (falls back to the primary if there are none)</td></tr>
+      <tr><td><strong>Custom endpoints</strong></td><td>User-defined subsets of instances</td></tr>
+      <tr><td><strong>Instance endpoints</strong></td><td>One per instance — direct access, mainly for testing</td></tr>
+    </tbody>
+  </table>
+  <p>As you add replicas, the reader endpoint automatically incorporates them — read scaling requires no manual endpoint management.</p>
+
+  <h2>Advanced Recovery Features</h2>
+  <dl>
+    <dt>Backtrack</dt>
+    <dd>Roll an Aurora cluster back <em>in place</em> to a previous point in time — no new cluster, no application reconfiguration. Must be enabled per-cluster.</dd>
+    <dt>Fast clone</dt>
+    <dd>Create a new database from an existing one almost instantly. The clone doesn't copy all the data — it references the original storage and only stores the <em>differences</em> that accumulate afterward.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    No free tier for Aurora — it doesn't support the micro instance classes the free tier relies on. Backups (up to 100% of your consumed storage) are typically included in the price you already pay for the cluster.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants both high availability and read-scaling from a single database deployment, without maintaining two separate architectures. What does Aurora offer that standard RDS doesn't?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Unlike an RDS Multi-AZ standby (unusable for reads), Aurora replicas serve reads during normal operation while also acting as failover targets — combining both benefits in one cluster."> Aurora replicas serve reads during normal operation and can also act as failover targets</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Aurora doesn't use TDE-based encryption by default — this isn't the feature that unifies HA and read scaling."> Aurora uses TDE encryption by default on every replica</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Aurora clusters don't require a database proxy to combine HA and read scaling — that combination comes from the cluster architecture itself."> Aurora requires a separate RDS Proxy to enable any read traffic</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Aurora replicas actually can serve reads — this option describes the opposite of what makes Aurora distinctive versus standard RDS."> Aurora replicas are read-only until manually promoted, same as RDS</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An Aurora replica is added to an existing cluster. Does this require provisioning additional storage?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Storage in Aurora belongs to the cluster as a whole, not to individual instances — adding a replica doesn't require any separate storage provisioning."> Yes, each replica needs its own dedicated EBS volume provisioned</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Aurora storage is shared at the cluster level, not per-instance, so adding or removing replicas doesn't require any storage provisioning — this is part of why replica changes are fast."> No, storage belongs to the cluster, not individual instances</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Manual snapshotting isn't a prerequisite for adding a new replica to an Aurora cluster."> Yes, a manual snapshot must be taken and restored first</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Backtrack is a point-in-time rollback feature, unrelated to whether adding a replica requires storage provisioning."> Only if Backtrack is disabled on the cluster</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Major data corruption is discovered in an Aurora cluster, and the exact point before corruption is known. Which Aurora-specific feature avoids creating a brand-new cluster to recover?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fast clone creates a new, separate database referencing the original's storage — it doesn't roll back the existing cluster in place."> Fast clone, since it creates a lightweight copy of the cluster</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Backtrack rolls an Aurora cluster back in place to a point before the corruption occurred, without creating a new cluster or requiring any application reconfiguration."> Backtrack, since it rolls the existing cluster back in place</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard automated backup restore creates a brand-new cluster with a new endpoint — exactly what this scenario is trying to avoid."> A standard automated backup restore to a new cluster</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Promoting a read replica wouldn't help since the replica would already contain the same corrupted data, replicated from the primary."> Promoting one of the read replicas to primary</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-rds-custom.html">← Previous: RDS Custom</a>
+      <a href="0012-aurora-serverless.html">Next: Aurora Serverless →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

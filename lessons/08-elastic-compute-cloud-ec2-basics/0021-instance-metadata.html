@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>21 – Instance Metadata (IMDS)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 21
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Instance Metadata (IMDS)</h1>
+    <p class="lesson-meta">Lesson 21 of 21 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html" target="_blank">EC2 Instance Metadata Service</a></p>
+  </div>
+
+  <p>The Instance Metadata Service (IMDS) is a small HTTP service that EC2 exposes to every instance, giving anything running on it a way to ask "what am I, and what's around me?" It underpins a huge number of EC2 features you'll meet later in the course, it's one of the most exam-tested single facts in the whole certification, and it's also a genuine, real-world security surface — so this lesson is worth locking in properly.</p>
+
+  <h2>What metadata is — and what it isn't</h2>
+  <p>Metadata is data <em>about the running instance</em> — its hostname, its network configuration, its security groups, IAM role credentials, and more — queryable from inside the instance over HTTP. It is not the same thing as <strong>user data</strong>, which is the one-time configuration script or data you supply at launch (covered elsewhere in this module); metadata is queried continuously by anything running on the instance, at any point in its life.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Memorize the address: <code>169.254.169.254</code>, path <code>/latest/meta-data/</code>. Exam questions have been known to ask you to pick the exact URL out of several similar-looking options. Say it as a rhythm — "one-six-nine, two-five-four, repeated" — it sticks.
+  </div>
+
+  <h2>What you can retrieve</h2>
+  <p>Metadata is organized into categories. The ones you'll use most as a solutions architect:</p>
+
+  <ul>
+    <li><strong>Networking</strong> — private IPv4, IPv6, and (notably) the <strong>public IPv4 address</strong>, which is never configured inside the instance's own operating system. Public IPv4 is applied by the Internet Gateway via NAT, not the guest OS, so the only way software on the instance can learn its own public address is by asking the metadata service.</li>
+    <li><strong>IAM role credentials</strong> — when an instance is launched with an IAM role, applications on the instance retrieve temporary credentials for that role through the metadata service rather than ever having long-lived keys hardcoded anywhere.</li>
+    <li><strong>Instance identity</strong> — AMI ID, instance ID, instance type, Availability Zone, and security groups.</li>
+    <li><strong>User data</strong> — the launch script/configuration you supplied is itself retrievable through the metadata service's <code>user-data</code> path.</li>
+  </ul>
+
+  <p>You can query it directly with a tool like <code>curl</code> from inside the instance — for example, requesting <code>http://169.254.169.254/latest/meta-data/public-ipv4</code> returns the instance's public IPv4 address as plain text — or use the bundled <code>ec2-metadata</code> helper tool for a friendlier interface to the same data. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html" target="_blank">EC2 Instance Metadata Service</a> guide for the full category reference.</p>
+
+  <h2>IMDSv1 vs. IMDSv2</h2>
+  <p>The metadata endpoint has no authentication of its own — historically (IMDSv1), any process capable of making an HTTP request from inside the instance could simply query it directly, no credentials required. That's a real risk: a web application vulnerability that lets an attacker trick your server into making an outbound request on its behalf — a <strong>Server-Side Request Forgery (SSRF)</strong> — could be used to fetch the metadata endpoint and steal that instance's IAM role credentials, entirely from outside the instance.</p>
+
+  <p>AWS's mitigation is <strong>IMDSv2</strong>, a session-oriented mode that requires a token before any metadata request succeeds:</p>
+
+  <table>
+    <thead><tr><th>Version</th><th>Request pattern</th><th>SSRF resistance</th></tr></thead>
+    <tbody>
+      <tr><td><strong>IMDSv1</strong></td><td>Simple GET request straight to the metadata path</td><td>Low — a single unauthenticated GET is enough</td></tr>
+      <tr><td><strong>IMDSv2</strong></td><td>First <code>PUT</code> a request for a session token (with a hop-limit-respecting header), then include that token on subsequent GET requests</td><td>Much higher — most simple SSRF techniques only forge a GET, not the initial token-issuing PUT</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    IMDSv2 is one of the highest-yield EC2 security topics on SAA-C03. Know that: it's <strong>token-based and session-oriented</strong>; the token request is a <code>PUT</code>, which most naive SSRF exploits can't forge; and instances can be configured to <strong>require</strong> IMDSv2, rejecting any IMDSv1-style request outright. If a scenario mentions hardening an instance against credential theft via a web app vulnerability, IMDSv2 enforcement is very likely the answer.
+  </div>
+
+  <div class="callout">
+    Even with IMDSv2 enforced, treat the metadata endpoint as reachable by anyone with shell access to the instance — it still carries no per-user authentication. Restricting who can log into an instance matters just as much as which IMDS version it runs.
+  </div>
+
+  <ul>
+    <li><strong>Address:</strong> <code>169.254.169.254</code>, path <code>/latest/meta-data/</code>.</li>
+    <li><strong>Metadata ≠ user data</strong> — metadata describes the running instance; user data is the launch-time configuration payload.</li>
+    <li><strong>Public IPv4</strong> is visible only via metadata — never inside the guest OS's own network configuration.</li>
+    <li><strong>IMDSv2</strong> adds a token-based session requirement specifically to reduce exposure to SSRF-driven credential theft.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What is the correct IP address and base path for querying the EC2 Instance Metadata Service?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. 169.254.169.254/latest/meta-data/ is the fixed link-local address and base path for IMDS on every instance."> 169.254.169.254/latest/meta-data/</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This is not a valid metadata endpoint address — it doesn't match the reserved link-local address AWS uses."> 10.0.0.1/latest/meta-data/</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This is not the metadata service address — the correct octets are 169.254.169.254."> 169.254.254.169/latest/meta-data/</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This is not a metadata endpoint — 127.0.0.1 is the loopback address, unrelated to IMDS."> 127.0.0.1/latest/meta-data/</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why can't an application inside an EC2 instance simply read its public IPv4 address from the OS network configuration?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Public IPv4 addressing has nothing to do with security group rules blocking the request."> Security groups block the request</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Public IPv4 is applied via the Internet Gateway through NAT and is never written into the guest OS's own network config."> The Internet Gateway applies it via NAT</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="IMDSv2 governs how metadata is requested, but it isn't why the OS itself lacks the public address."> IMDSv2 conceals it from the OS</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Public IPv4 visibility isn't determined by which purchase option is used."> Only Reserved Instances receive one</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. How does IMDSv2 reduce the risk of credential theft via a Server-Side Request Forgery (SSRF) vulnerability?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="IMDSv2 doesn't add TLS certificate checking — it changes the request flow to a token-based session."> It requires TLS certificates</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. IMDSv2 requires a token first via a PUT request, which most simple SSRF exploits can't forge, unlike a plain GET."> It issues a token via PUT first</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="IMDSv2 doesn't relocate the endpoint — it stays at the same fixed address, just with token-based access."> It moves the endpoint to a new IP</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="IMDSv2 is unrelated to which AZ an instance runs in."> It restricts access by AZ only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0020-horizontal-and-vertical-scaling.html">← Previous: Horizontal &amp; Vertical Scaling</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the EC2 Basics module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – EBS Volume Types: General Purpose (SSD)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 07
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EBS Volume Types: General Purpose (SSD)</h1>
+    <p class="lesson-meta">Lesson 07 of 21 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html" target="_blank">EBS Volume Types (AWS docs)</a></p>
+  </div>
+
+  <p>General Purpose SSD is EBS's default, all-round storage family. There are two members: <strong>gp2</strong>, the original, and <strong>gp3</strong>, its simpler, cheaper successor. Understanding gp2's credit-bucket model first makes gp3 — and the other credit-based HDD types later in this module — much easier to reason about.</p>
+
+  <h2>gp2: size-linked performance via I/O credits</h2>
+  <p>A gp2 volume ranges from <strong>1 GiB to 16 TiB</strong>. Its IOPS performance is not a flat number you choose — it's derived from the volume's size through a credit-bucket mechanism.</p>
+
+  <ul>
+    <li>One <strong>I/O credit</strong> = one I/O operation on a 16 KB chunk of data.</li>
+    <li>Every volume earns a <strong>baseline refill rate of 3 credits/second for every GB</strong> of size, with an absolute floor of <strong>100 credits/second</strong> (so volumes up to ~33.33 GB all get the 100 IOPS minimum).</li>
+    <li>Credits accumulate in a bucket with a capacity of <strong>5.4 million credits</strong>. The bucket starts <em>full</em> when the volume is created.</li>
+    <li>You can <strong>burst</strong> above your baseline rate — up to <strong>3,000 IOPS</strong> — by drawing down the bucket, as long as it has credits available.</li>
+  </ul>
+
+  <p>Because the bucket starts full, a brand-new volume can sustain the full 3,000 IOPS burst rate for roughly 30 minutes before credits would run out if it weren't also refilling — in practice, often longer, since baseline credits keep streaming in the whole time. Spend credits faster than the baseline refill rate and the bucket drains; spend slower and it replenishes.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    gp2's baseline math: <strong>3 IOPS per GB</strong>, minimum <strong>100 IOPS</strong>, burst ceiling <strong>3,000 IOPS</strong>, credit bucket <strong>5.4 million</strong>. A 100 GB volume gets a 300 IOPS baseline. Volumes ≥ 1 TB have a baseline that already meets or exceeds 3,000 IOPS, so they stop using the credit system and simply get their calculated baseline as a sustained rate. At the time of this course, the ceiling for gp2 is <strong>16,000 IOPS</strong>, reached at volumes of roughly 5.33 TB and above — check the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html" target="_blank">EBS Volume Types doc</a> for the current maximum, since AWS periodically revises these ceilings.
+  </div>
+
+  <p>gp2 is a solid default for boot volumes, low-latency interactive workloads, and dev/test environments — basically anywhere you don't have a specific reason to reach for something else.</p>
+
+  <h2>gp3: same media, simpler and cheaper</h2>
+  <p>gp3 removes the credit-bucket complexity entirely. Every gp3 volume, <strong>regardless of size</strong>, starts with a flat <strong>3,000 IOPS</strong> and <strong>125 MB/s</strong> of throughput included in the base price — no bucket to manage, no baseline tied to GB.</p>
+
+  <p>If you need more, you provision it directly and pay extra: up to <strong>16,000 IOPS</strong> and up to <strong>1,000 MB/s</strong> throughput. Volume sizing still runs from 1 GiB up to 16 TiB. Unlike gp2, where more size automatically buys more baseline IOPS, gp3 performance and size are independent dials — sizing up a gp3 volume does not raise its IOPS or throughput.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    At the time of this course, gp3's base price runs roughly 20% cheaper than gp2 for equivalent baseline performance, so if your workload fits within 3,000 IOPS / 125 MB/s, gp3 is close to a strict upgrade over gp2. You can switch a volume from gp2 to gp3 (or between most EBS types) live using Elastic Volumes, without detaching it.
+  </div>
+
+  <table>
+    <thead><tr><th>Characteristic</th><th>gp2</th><th>gp3</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Size range</strong></td><td>1 GiB – 16 TiB</td><td>1 GiB – 16 TiB</td></tr>
+      <tr><td><strong>Baseline IOPS</strong></td><td>3 IOPS/GB, 100 min</td><td>3,000 flat, any size</td></tr>
+      <tr><td><strong>Max IOPS</strong></td><td>16,000</td><td>16,000 (extra cost above 3,000)</td></tr>
+      <tr><td><strong>Baseline throughput</strong></td><td>Tied to IOPS (up to 250 MB/s)</td><td>125 MB/s flat, any size</td></tr>
+      <tr><td><strong>Max throughput</strong></td><td>250 MB/s</td><td>1,000 MB/s (extra cost above 125)</td></tr>
+      <tr><td><strong>Performance model</strong></td><td>I/O credit bucket, size-linked</td><td>Flat, size-independent</td></tr>
+      <tr><td><strong>Typical use</strong></td><td>Boot volumes, dev/test, general workloads</td><td>Same use cases, generally cheaper</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    Same underlying use cases for both: boot volumes, virtual desktops, medium-sized databases, low-latency applications, dev/test. Pick gp3 unless you have a specific reason (e.g. an existing gp2 fleet you haven't migrated) to stay on gp2 — see the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html" target="_blank">official volume type comparison</a> for current defaults, since AWS has been shifting the platform default from gp2 toward gp3 over time.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A new 50 GB gp2 volume is created. What is its baseline IOPS?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="150 would be 3 IOPS/GB with no floor applied — but the 100 IOPS floor matters more here since 150 exceeds it slightly; check the actual floor threshold, which applies below ~33.33 GB."> 50 IOPS baseline</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. 50 GB × 3 IOPS/GB = 150 IOPS, which exceeds the 100 IOPS minimum, so the calculated 150 applies."> 150 IOPS baseline</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="3,000 is the gp2 burst ceiling, not the baseline for a 50 GB volume — baseline is calculated from size."> 3000 IOPS baseline</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="16,000 is gp2's maximum IOPS ceiling reached only at much larger volume sizes, not the baseline for 50 GB."> 16000 IOPS baseline</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. What is the key architectural difference between gp2 and gp3 performance?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Both gp2 and gp3 share the same 1 GiB–16 TiB size range — that's not what differs."> gp3 has a larger size limit</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. gp2 derives baseline IOPS from volume size via a credit bucket; gp3 gives a flat 3,000 IOPS/125 MB/s regardless of size, with extra performance purchased independently."> gp3 decouples IOPS from size</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="gp2 is SSD-based, not HDD-based — both gp2 and gp3 use SSD media."> gp2 switched to HDD media</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Multi-attach is not the distinguishing feature between gp2 and gp3; it's a separate capability tied to other volume types."> gp3 requires multi-attach</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A gp2 volume's credit bucket starts empty and drains quickly under load. What does this imply about the volume?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="gp2 credit buckets always start full at creation time, per the service design — this statement contradicts that fact, so the premise itself is wrong."> This is normal gp2 behavior</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. gp2 buckets start full (5.4 million credits) — a bucket appearing to start empty and drain fast would be inconsistent with documented gp2 behavior, so something else is going on."> The premise contradicts gp2 design</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="gp3 doesn't use a credit bucket at all, so this scenario can't describe gp3 — the question is specifically about gp2's bucket."> This describes typical gp3 use</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Multi-attach is unrelated to I/O credit bucket state; it governs whether multiple instances can attach to one volume."> Multi-attach must be enabled</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-ebs-service-architecture.html">← Previous: EBS Service Architecture</a>
+      <a href="0008-ebs-volume-types-provisioned-iops.html">Next: EBS Volume Types: Provisioned IOPS (SSD) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

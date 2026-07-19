@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>17 – EC2 Purchase Options (Part 2)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 17
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EC2 Purchase Options (Part 2)</h1>
+    <p class="lesson-meta">Lesson 17 of 21 · ~11 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-reserved-instances.html" target="_blank">EC2 Reserved Instances</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-overview.html" target="_blank">EC2 Dedicated Hosts</a></p>
+  </div>
+
+  <p>Part 1 covered On-Demand and Spot — the two purchase options that ask for no commitment. This lesson covers the options built around <strong>commitment</strong>: Reserved Instances, which commit you to long-term usage in exchange for a discount, and the two hardware-isolation options, Dedicated Hosts and Dedicated Instances.</p>
+
+  <h2>Reserved Instances (Standard)</h2>
+  <p>A Reserved Instance (RI) is a commitment you make to AWS to consume EC2 resources over a fixed term, in return for a reduced — or in some payment structures, eliminated — per-second price. Reservations attach to a specific instance type and can be scoped to a single Availability Zone or to an entire region. A reservation is a <strong>billing construct</strong>: it doesn't change how an instance runs, only what you pay for a matching instance. If a running instance matches an active reservation, the discount applies automatically; if the reservation goes unmatched, you still pay for it — the commitment is what you're billed for, not the usage.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    An unused reservation is not refunded or paused — you're billed for the commitment regardless of consumption. Only reserve capacity you're confident you'll actually run, and reserve it for the steady, unchanging parts of your architecture.
+  </div>
+
+  <p>Reservations can also apply <strong>partially</strong>. A reservation sized for a <code>t3.large</code> applied against a larger running instance in the same family still contributes a partial discount toward that larger instance's cost.</p>
+
+  <h3>Term and payment options</h3>
+  <p>You commit for either a <strong>one-year</strong> or <strong>three-year</strong> term — three years unlocks a bigger discount but carries more risk if your requirements change. Independently, you choose how much of that commitment to pay upfront:</p>
+
+  <table>
+    <thead><tr><th>Payment option</th><th>How it works</th><th>Discount</th></tr></thead>
+    <tbody>
+      <tr><td><strong>No Upfront</strong></td><td>Reduced per-second fee for the whole term, billed whether the instance runs or not</td><td>Smallest</td></tr>
+      <tr><td><strong>Partial Upfront</strong></td><td>A smaller lump sum paid upfront, plus a lower per-second fee</td><td>Middle ground</td></tr>
+      <tr><td><strong>All Upfront</strong></td><td>The entire term paid at purchase; no further per-second fee</td><td>Largest</td></tr>
+    </tbody>
+  </table>
+
+  <p>The single largest discount available across all Reserved options is a <strong>three-year, All Upfront</strong> commitment. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-reserved-instances.html" target="_blank">EC2 Reserved Instances</a> guide for current discount ranges — expect roughly a ~40–70% saving versus On-Demand, depending on term, payment option, and instance family.</p>
+
+  <p>Reserved Instances suit infrastructure with known, long-term, consistent usage that requires the lowest possible cost and cannot tolerate interruption — the opposite profile from Spot.</p>
+
+  <h2>Dedicated Hosts</h2>
+  <p>A Dedicated Host is a physical EC2 server allocated to you in its entirety, sized for a specific instance family (for example, all-A, all-C, or all-R instances). You pay for the host itself — instances launched onto it carry no separate per-second charge — and you can launch a mix of sizes up to the host's full physical capacity. Because it's your host and only your host, you get visibility into its physical sockets and cores, and a feature called <strong>host affinity</strong> that keeps a stopped-and-started instance pinned to the same physical host.</p>
+
+  <p>The reason to reach for Dedicated Hosts is almost always <strong>licensing</strong> — some software is still licensed per physical socket or per physical core, and that licensing model needs visibility into physical hardware that a normal virtualized instance can't provide.</p>
+
+  <h2>Dedicated Instances</h2>
+  <p>Dedicated Instances are a middle ground: your instances run on hardware used only by you, so AWS guarantees no other customer's instances share that physical host — but you don't manage or pay for the host itself, and you get no visibility into sockets or cores. You pay a small hourly fee per region where you use them, plus the per-instance cost. Choose Dedicated Instances when a compliance or contractual requirement says "don't share physical hardware," without needing the licensing-driven control that Dedicated Hosts provide.</p>
+
+  <table>
+    <thead><tr><th>Model</th><th>Hardware sharing</th><th>You pay for</th><th>Typical driver</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Shared (On-Demand / Spot / Reserved)</strong></td><td>Shared with other customers</td><td>The instance</td><td>Default; no special requirement</td></tr>
+      <tr><td><strong>Dedicated Instances</strong></td><td>Isolated — you only</td><td>The instance + hourly regional fee</td><td>"Don't share hardware" compliance</td></tr>
+      <tr><td><strong>Dedicated Hosts</strong></td><td>Isolated — you only</td><td>The whole physical host</td><td>Socket/core-based licensing</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If a question mentions <strong>bring-your-own-license tied to physical cores or sockets</strong>, the answer is Dedicated Hosts. If it only says "must not share underlying hardware" with no licensing angle, the answer is Dedicated Instances. See <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-overview.html" target="_blank">EC2 Dedicated Hosts</a> for the full comparison AWS publishes against Dedicated Instances.
+  </div>
+
+  <p>For the exam, focus your effort on On-Demand, Reserved, and Spot — they appear far more often than the dedicated hardware options.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. You purchase a one-year Reserved Instance but never launch a matching instance. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Reservations are billed for the commitment regardless of whether a matching instance ever runs."> You pay nothing at all</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. You're billed for the reservation commitment whether or not you actually use it."> You still pay for it</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS does not automatically cancel unused reservations for you."> AWS cancels it for you</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Reservations don't roll over into Spot capacity automatically."> It converts into Spot credit</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which Reserved Instance payment option offers the largest discount?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="No Upfront offers the smallest discount of the three payment options."> No Upfront, one year</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Partial Upfront is a middle-ground discount, not the largest available."> Partial Upfront, one year</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A three-year term paid entirely upfront delivers the greatest discount across all Reserved options."> All Upfront, three years</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Standard On-Demand has no discount at all — it's the baseline price."> Standard On-Demand pricing</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Your application is licensed per physical CPU socket. Which purchase option fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Dedicated Instances give hardware isolation but no visibility into physical sockets or cores."> Dedicated Instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Dedicated Hosts expose physical sockets and cores, which is exactly what socket-based licensing needs."> Dedicated Hosts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Spot Instances run on shared hardware and offer no socket-level visibility."> Spot Instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="On-Demand instances run on shared hardware with no physical socket visibility."> On-Demand Instances</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0016-ec2-purchase-options-part-1.html">← Previous: EC2 Purchase Options (Part 1)</a>
+      <a href="0018-reserved-instances-the-rest.html">Next: Reserved Instances: The Rest →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

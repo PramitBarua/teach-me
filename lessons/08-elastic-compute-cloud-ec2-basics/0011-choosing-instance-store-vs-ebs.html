@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – Choosing Between Instance Store and EBS</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 11
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>Choosing Between Instance Store and EBS</h1>
+    <p class="lesson-meta">Lesson 11 of 21 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html" target="_blank">Amazon EC2 Instance Store</a></p>
+  </div>
+
+  <p>You now understand both storage options individually. This lesson is deliberately fact-dense — it collects the scenario rules, minimums, and performance ceilings that let you pick between EBS and instance store quickly, both in the exam and in real designs.</p>
+
+  <h2>The clear-cut cases</h2>
+  <p>Start with a default rule: <strong>if you need persistent, resilient storage, default to EBS</strong> — or equivalently, default away from instance store. Instance store volumes are not persistent. Hardware failure, host maintenance, and anything that moves an instance to a different physical host can destroy the data on them. EBS, by contrast, is hardware-resilient within an Availability Zone and can be backed up to S3 via snapshots, making it region-resilient too.</p>
+
+  <p>A second clear case: if storage needs to be <strong>isolated from the instance's lifecycle</strong> — attached, detached, and reattached to a different instance over time — only EBS supports that. Instance store is physically tied to one host for the life of the instance.</p>
+
+  <h2>The "it depends" cases</h2>
+  <p>Some scenarios are genuinely ambiguous, and the exam likes to test exactly these:</p>
+  <ul>
+    <li><strong>Resilience with app-level replication</strong> — if the application already replicates data across many instances (think a distributed database or a cache cluster), you can use instance store on every node and accept that any single node's data is disposable, gaining raw performance without the resilience risk.</li>
+    <li><strong>High performance</strong> — both EBS and instance store can deliver strong performance up to a point. Beyond that point, only instance store can keep scaling (see the numbers below).</li>
+    <li><strong>Cost sensitivity</strong> — instance store capacity is bundled into the price of many instance types, so if cost is the primary driver and persistence isn't required, instance store is effectively "free" extra storage.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Purely cost-focused EBS questions should default you to ST1 or SC1 (magnetic, cheaper than SSD). Throughput/streaming-focused questions also point to ST1. But watch for the word "boot volume" — neither ST1 nor SC1 can be used as a boot volume, so a boot requirement rules both out regardless of cost or throughput framing.
+  </div>
+
+  <h2>Performance ceilings you need to memorize</h2>
+  <p>These figures come up repeatedly in performance-scenario questions. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html" target="_blank">EC2 Instance Store guide</a> for the underlying detail.</p>
+
+  <table>
+    <thead><tr><th>Layer</th><th>Ceiling</th></tr></thead>
+    <tbody>
+      <tr><td><strong>gp2 / gp3</strong></td><td>Up to 16,000 IOPS per volume</td></tr>
+      <tr><td><strong>io1 / io2</strong></td><td>Up to 64,000 IOPS per volume</td></tr>
+      <tr><td><strong>io2 Block Express</strong></td><td>Up to 256,000 IOPS per volume (needs a suitably large instance to realize it)</td></tr>
+      <tr><td><strong>RAID 0 across EBS volumes</strong></td><td>Combined performance of all volumes, capped by the instance's own maximum</td></tr>
+      <tr><td><strong>EC2 instance-level ceiling</strong></td><td>Currently up to 260,000 IOPS, regardless of how many volumes you stripe together</td></tr>
+      <tr><td><strong>Instance store</strong></td><td>Can exceed EBS's instance-level ceiling by a wide margin on the right instance type, at the cost of persistence</td></tr>
+    </tbody>
+  </table>
+
+  <p>The practical takeaway: no matter how many EBS volumes you RAID 0 together, an instance has a hard IOPS ceiling that EBS alone cannot exceed. If a requirement genuinely needs more than that ceiling and the workload can tolerate non-persistent storage, instance store is the only path to that level of performance.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    These are the rare AWS facts worth rote-memorizing: 16,000 IOPS (gp2/gp3), 64,000 IOPS (io1/io2), 256,000 IOPS (io2 Block Express, large instances only), and 260,000 IOPS as the current per-instance ceiling. If a question pushes past that last number and tolerates data loss, the answer is instance store.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A question asks for the cheapest EBS option for a large, throughput-heavy but non-boot workload. What should you pick?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="gp3 is SSD-based and costs more than the magnetic HDD options for pure throughput/cost scenarios."> gp3, for balanced baseline IOPS</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. ST1 is the cheaper, throughput-optimized magnetic option, and it's valid here because the volume isn't a boot volume."> ST1, the throughput-optimized HDD</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="io2 targets high, consistent IOPS at a premium price — the opposite of a cost-driven throughput scenario."> io2, for guaranteed high IOPS</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Instance store is not EBS at all, and it isn't persistent, which this scenario doesn't call for."> Instance store, since it is bundled free</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A workload needs 400,000 IOPS on a single instance and can tolerate losing data on host failure. What's the best fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="gp2/gp3 tops out at 16,000 IOPS per volume — far short of the requirement even when striped."> gp3 volumes striped with RAID 0</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="io2 Block Express can reach 256,000 IOPS per volume, but the overall EBS instance-level ceiling is currently 260,000 IOPS — still short of 400,000."> io2 Block Express on one volume</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Once a requirement exceeds EBS's instance-level ceiling and persistence isn't required, instance store on the right instance type is the only way to reach it."> Instance store on a fitting instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SC1 is a low-cost cold HDD tier meant for infrequent access, nowhere near this IOPS range."> SC1 volumes striped with RAID 0</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Why might an architect deliberately choose instance store for a distributed database node despite its lack of persistence?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance store is not more secure than EBS — security isn't the differentiator here."> It offers stronger built-in encryption</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. When the application itself replicates data across nodes, losing one node's local disk is recoverable at the app layer, so the raw performance of instance store becomes worth the trade-off."> The app already replicates data across nodes</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance store cannot be detached and moved between instances — that capability belongs to EBS."> It can be detached and reattached freely</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance store volumes are tied to one AZ and one host, not spread across zones."> It is automatically replicated across AZs</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-instance-store-volumes-architecture.html">← Previous: Instance Store Volumes Architecture</a>
+      <a href="0012-snapshots-restore-and-fast-snapshot-restore.html">Next: Snapshots, Restore & Fast Snapshot Restore (FSR) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

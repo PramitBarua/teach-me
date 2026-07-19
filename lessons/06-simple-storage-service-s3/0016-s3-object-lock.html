@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16 – S3 Object Lock</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 16</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Object Lock</h1>
+    <p class="lesson-meta">Lesson 16 of 17 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html" target="_blank">S3 Object Lock Docs</a></p>
+  </div>
+
+  <h2>What is S3 Object Lock?</h2>
+  <p>Object Lock implements a <strong>WORM</strong> (Write Once, Read Many) model — preventing objects from being deleted or overwritten for a specified period. Object Lock requires <strong>versioning to be enabled</strong>; it applies to <em>individual versions</em>, not to objects as a whole.</p>
+
+  <p>A bucket can have a <strong>default Object Lock configuration</strong> that applies automatically to all new objects.</p>
+
+  <h2>Retention Modes</h2>
+
+  <h3>Governance Mode</h3>
+  <p>Objects are protected during the retention period, but users with the special IAM permission <code>s3:BypassGovernanceRetention</code> (and the header <code>x-amz-bypass-governance-retention:true</code>) can adjust or remove the lock. This permission is also available via the console UI.</p>
+  <p><strong>Use for:</strong> most compliance and data protection scenarios where some trusted users need override capability.</p>
+
+  <h3>Compliance Mode</h3>
+  <p>The most restrictive mode. <strong>No one — not even the account root user — can delete or overwrite the object</strong> until the retention period expires. The retention period itself cannot be shortened.</p>
+  <p><strong>Use for:</strong> strict regulatory requirements (e.g. SEC Rule 17a-4 for financial records).</p>
+
+  <h3>Legal Hold</h3>
+  <p>A binary on/off flag — no retention period involved. When legal hold is <code>ON</code> for an object version, it cannot be deleted or overwritten for any reason until the hold is removed. Requires the IAM permission <code>s3:PutObjectLegalHold</code> to set or remove.</p>
+
+  <table>
+    <thead><tr><th></th><th>Governance</th><th>Compliance</th><th>Legal Hold</th></tr></thead>
+    <tbody>
+      <tr><td>Retention period</td><td>Set in days/years</td><td>Set in days/years</td><td>None (on/off)</td></tr>
+      <tr><td>Can bypass?</td><td>Yes, with special permission</td><td>No — not even root user</td><td>Yes, with PutObjectLegalHold</td></tr>
+      <tr><td>Retention can be shortened?</td><td>Yes (with bypass permission)</td><td>No</td><td>N/A</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    <strong>Compliance mode is absolute</strong> — remember that even the root user cannot delete or shorten it. If a question mentions "regulator requires immutable records for X years that no one can alter", the answer is Compliance mode.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An auditor requires financial records in S3 to be immutable for 7 years, and the company's own root user must not be able to delete them early. Which Object Lock mode satisfies this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Governance mode can be bypassed by users with the right IAM permission. The root user can grant themselves that permission, so it does not satisfy 'no one can delete' requirements."> Governance mode with a 7-year retention period</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Compliance mode is the most restrictive. Not even the account root user can delete or shorten the retention period once set. This meets strict regulatory immutability requirements."> Compliance mode with a 7-year retention period</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Legal Hold has no retention period and can be removed by anyone with s3:PutObjectLegalHold permission, so it doesn't enforce a guaranteed 7-year window."> Legal Hold with an expiry date of 7 years</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SSE-KMS with a key policy protects the confidentiality of data, not its immutability. Encryption does not prevent deletion."> SSE-KMS encryption with a locked key policy</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A legal team places a legal hold on an object version during a lawsuit. The lawsuit settles and the hold needs to be removed. What permission is required?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="s3:DeleteObject deletes an object but cannot remove a legal hold. You need a specific legal hold permission."> s3:DeleteObject on the locked object version</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="s3:BypassGovernanceRetention is specific to Governance mode, not to Legal Hold."> s3:BypassGovernanceRetention on the bucket version</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. The s3:PutObjectLegalHold permission is required to both set and remove a Legal Hold on an object version."> s3:PutObjectLegalHold on the object version</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="s3:GetObjectLegalHold allows reading the current hold status but cannot modify or remove it."> s3:GetObjectLegalHold on the object version</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. S3 Object Lock requires which bucket feature to be enabled before it can be used?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Static website hosting is unrelated to Object Lock. Object Lock needs versioning."> Static website hosting on the bucket</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cross-region replication is unrelated to Object Lock. Object Lock needs versioning."> Cross-region replication to a second bucket</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. S3 Object Lock requires versioning to be enabled because it locks individual object versions, not the object key as a whole."> Versioning enabled on the S3 bucket</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Transfer Acceleration is a performance feature unrelated to Object Lock."> Transfer Acceleration on the bucket endpoint</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0015-s3-access-logs.html">← Lesson 15: S3 Access Logs</a>
+      <a href="0017-s3-access-points.html">Next: S3 Access Points →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

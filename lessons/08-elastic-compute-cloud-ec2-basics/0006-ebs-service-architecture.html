@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – EBS Service Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 06
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EBS Service Architecture</h1>
+    <p class="lesson-meta">Lesson 06 of 21 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html" target="_blank">Amazon EBS User Guide</a></p>
+  </div>
+
+  <p>Elastic Block Store (EBS) is AWS's <strong>block storage</strong> service. It takes physical disks, carves them into allocations called <strong>volumes</strong>, and lets you address that storage by block number — exactly like a raw disk. When you attach a volume to an EC2 instance, the instance sees a plain block device and can format it with a file system (EXT3/EXT4/XFS on Linux, NTFS on Windows) just as it would a physical drive.</p>
+
+  <p>You'll use EBS constantly, directly or indirectly, so its architecture and limitations are worth knowing cold before you look at individual volume types in the next few lessons.</p>
+
+  <h2>EBS is an Availability Zone service</h2>
+  <p>This is the single most important fact about EBS. A volume is provisioned inside <strong>one specific Availability Zone</strong> and lives only there. EBS in AZ-A is a completely separate deployment from EBS in AZ-B — there is no cross-AZ attachment. An EC2 instance in AZ-B can never attach to a volume created in AZ-A, full stop.</p>
+
+  <p>Within its AZ, EBS replicates a volume's data across multiple physical devices for durability against individual disk failure. But that replication doesn't cross AZ boundaries — a full AZ failure can take down every volume provisioned in it, along with the instances that depend on them.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    "Can this EC2 instance attach to that EBS volume?" is almost always answered by checking whether they're in the <strong>same Availability Zone</strong>. Different AZ, same region — no. Region mismatch — definitely no.
+  </div>
+
+  <h2>Volumes are decoupled from instance lifecycle</h2>
+  <p>An EBS volume is not tied to any one instance's lifecycle. It is created, has data written to it, and persists until you explicitly delete it. Practically, this means:</p>
+
+  <ul>
+    <li><strong>Persistence across stop/start/restart</strong> — the volume's data survives even if the instance stops and starts again.</li>
+    <li><strong>Persistence across host migration</strong> — if AWS moves your instance to different underlying hardware, the EBS volume follows it (this works precisely because EBS is a networked, not local, storage service).</li>
+    <li><strong>Detach and reattach</strong> — you can detach a volume from one instance and attach it to another instance in the same AZ.</li>
+  </ul>
+
+  <p>By default, a volume attaches to exactly one instance at a time over a storage network. Some volume types support a feature called <strong>multi-attach</strong>, allowing simultaneous attachment to multiple instances for clustered applications — but in that case, the cluster software itself is responsible for coordinating writes so concurrent access doesn't corrupt data. EBS does not arbitrate that for you.</p>
+
+  <h2>Snapshots: escaping the AZ boundary</h2>
+  <p>Because EBS is AZ-locked, AWS gives you a mechanism to move data between AZs and regions: the <strong>snapshot</strong>. A snapshot copies a volume's data into S3, which — unlike EBS — is a regionally resilient service, replicated across the AZs of that region automatically.</p>
+
+  <p>Once a volume is snapshotted into S3, that snapshot can be used to create a brand-new volume in <em>any</em> AZ within the region, or even copied to a different AWS region entirely and used to create a volume there. This is the standard technique for migrating data across AZs or regions, and it's covered in full (including fast snapshot restore) in a dedicated later lesson. See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html" target="_blank">Amazon EBS User Guide</a> for the underlying service model.</p>
+
+  <table>
+    <thead><tr><th>Concept</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Scope</strong></td><td>Single Availability Zone — no cross-AZ attach</td></tr>
+      <tr><td><strong>Durability</strong></td><td>Replicated across multiple devices <em>within</em> the AZ only</td></tr>
+      <tr><td><strong>Attachment</strong></td><td>One instance by default; multiple with multi-attach (app-managed)</td></tr>
+      <tr><td><strong>Lifecycle</strong></td><td>Independent of any instance — persists until deleted</td></tr>
+      <tr><td><strong>Cross-AZ/region mobility</strong></td><td>Only via snapshot to S3, which is regionally (or cross-region, via copy) resilient</td></tr>
+      <tr><td><strong>Encryption</strong></td><td>Optional, via KMS (covered in a dedicated lesson)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    Volume types differ mainly in the underlying physical media (SSD vs. HDD), size limits, and performance profile — the AZ-locked, persistent architecture described here is common to <em>all</em> of them. That's what the next three lessons build on.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EC2 instance runs in us-east-1a. Can it attach an EBS volume created in us-east-1b?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EBS is an Availability Zone service — a volume only exists in the AZ it was created in, and there is no cross-AZ attachment mechanism."> Yes, always allowed</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Encryption status has no bearing on cross-AZ attachment — EBS simply cannot attach across AZs regardless."> Yes, if encrypted</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. EBS volumes live in one AZ only; the instance would need to be in us-east-1b too, or the volume recreated there from a snapshot."> No, never directly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-attach lets multiple instances share a volume, but only within the same single AZ — it does not enable cross-AZ attachment."> Yes, with multi-attach</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An EC2 instance backed by EBS is stopped and later started again on different underlying hardware. What happens to its attached EBS volume's data?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EBS volumes are not tied to instance store ephemeral behavior — they persist independently of the instance lifecycle."> It is wiped, like instance store</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. EBS volumes are decoupled from any single instance's lifecycle and persist across stop/start and host migration."> It persists and follows it</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="No manual snapshot restore is required for a routine stop/start — persistence is automatic for EBS."> It requires a manual restore</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Data loss on stop/start only happens with ephemeral instance store volumes, not EBS."> It is lost only sometimes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What is the standard mechanism for moving EBS-backed data from one Availability Zone to another?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Direct attach across AZs is not possible with EBS — this is the whole reason snapshots exist for migration."> Direct cross-AZ attach</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Snapshotting to S3 (which is regionally resilient) lets you create a new volume from that snapshot in any AZ in the region."> Snapshot the volume to S3</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Multi-attach shares one volume across instances within a single AZ; it does not move data between AZs."> Enable multi-attach mode</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="KMS handles encryption, not AZ-to-AZ data mobility."> Re-encrypt with KMS keys</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-storage-refresher.html">← Previous: Storage Refresher</a>
+      <a href="0007-ebs-volume-types-general-purpose.html">Next: EBS Volume Types: General Purpose (SSD) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

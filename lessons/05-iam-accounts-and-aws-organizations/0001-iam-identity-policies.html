@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – IAM Identity Policies</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 01
+    </div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>IAM Identity Policies</h1>
+    <p class="lesson-meta">Lesson 01 of 11 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html" target="_blank">AWS IAM Policies Docs</a></p>
+  </div>
+
+  <h2>What is an IAM Identity Policy?</h2>
+  <p>An <strong>IAM Identity Policy</strong> is a JSON document attached to an AWS identity (user, group, or role). It tells AWS which actions that identity is <em>allowed</em> or <em>denied</em> on which resources.</p>
+
+  <p>AWS identities are:</p>
+  <ul>
+    <li><strong>IAM User</strong> – a single person or application</li>
+    <li><strong>IAM Group</strong> – a collection of users</li>
+    <li><strong>IAM Role</strong> – a short-term identity assumed by a service or person</li>
+  </ul>
+
+  <h2>Anatomy of a Policy Statement</h2>
+  <p>Every policy is a list of <em>statements</em>. Each statement has four key fields:</p>
+
+  <table>
+    <thead><tr><th>Field</th><th>Required?</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>Sid</code></td><td>Optional</td><td>A human-readable label for the statement</td></tr>
+      <tr><td><code>Effect</code></td><td>Yes</td><td><code>Allow</code> or <code>Deny</code></td></tr>
+      <tr><td><code>Action</code></td><td>Yes</td><td>Which API operations, e.g. <code>s3:GetObject</code> or <code>s3:*</code></td></tr>
+      <tr><td><code>Resource</code></td><td>Yes</td><td>Which AWS resources the statement applies to, specified as ARNs</td></tr>
+    </tbody>
+  </table>
+
+  <p>A statement only <em>applies</em> when the action and resource of the incoming request match the statement.</p>
+
+  <h2>The Three Outcomes: Allow, Deny, or Implicit Deny</h2>
+  <p>When AWS evaluates an identity's access to a resource it runs through all attached policies and arrives at one of three outcomes:</p>
+
+  <dl>
+    <dt>Explicit Deny</dt>
+    <dd>A statement with <code>"Effect": "Deny"</code> matches. <strong>Deny always wins</strong> — it overrides any allow.</dd>
+    <dt>Explicit Allow</dt>
+    <dd>No deny matched, but a statement with <code>"Effect": "Allow"</code> did. Access is granted.</dd>
+    <dt>Implicit Deny</dt>
+    <dd>No statement matched at all. <strong>Everything in AWS is denied by default.</strong></dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    The evaluation order is: <strong>Explicit Deny → Explicit Allow → Implicit Deny</strong>. If you see a question where a deny policy and an allow policy overlap, the deny wins.
+  </div>
+
+  <h2>Managed Policies vs Inline Policies</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Stored as</th><th>Reusable?</th><th>When to use</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>AWS Managed</strong></td>
+        <td>Standalone JSON doc (AWS-owned)</td>
+        <td>Yes – attach to any identity</td>
+        <td>Common permission sets (e.g. <code>ReadOnlyAccess</code>)</td>
+      </tr>
+      <tr>
+        <td><strong>Customer Managed</strong></td>
+        <td>Standalone JSON doc (you own)</td>
+        <td>Yes – attach to any identity</td>
+        <td>Custom permissions you manage</td>
+      </tr>
+      <tr>
+        <td><strong>Inline</strong></td>
+        <td>Embedded inside one identity</td>
+        <td>No – one identity only</td>
+        <td>Exceptional or one-off allows/denies only</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-title">Rule of thumb</div>
+    Prefer <strong>managed policies</strong> — they reduce admin overhead because one change updates every identity that uses the policy. Reserve inline policies for truly exceptional cases.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An IAM user has an explicit Allow for <code>s3:GetObject</code> on a bucket. A second attached policy has an explicit Deny for the same action on the same bucket. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Allow does not win when an explicit Deny also applies."> The Allow wins because it was attached first</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Explicit Deny always overrides any Explicit Allow, regardless of order."> The Deny wins and access is blocked</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS does not report a conflict — it simply applies the deny."> AWS reports a policy conflict error</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Inline vs managed distinction does not affect evaluation order."> The inline policy wins over the managed one</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. No IAM policy grants an identity permission to call <code>ec2:DescribeInstances</code>. What is the result?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Explicit Allow requires a matching policy statement."> Access is allowed by default</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. When no statement matches, the result is an Implicit Deny."> Access is denied by implicit deny</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS does not ask the user; it evaluates policies silently."> AWS prompts the user to confirm</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Read-only describe actions are not free; they still require explicit allow."> Read-only actions are always allowed</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You need a permission set applied to 50 IAM users, and it must be updated centrally. Which policy type is the best fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Inline policies are embedded per identity — updating 50 of them is high overhead."> Inline policy on every user</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. A customer managed policy is a standalone document you can attach to all 50 users and update in one place."> Customer managed policy attached to all</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Resource-based policies are attached to resources, not identities."> Resource-based policy on the resource</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Session policies are used with AssumeRole, not for persistent user permissions."> Session policy for each login event</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-iam-users-and-arns.html">Next: IAM Users &amp; ARNs →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

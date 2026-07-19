@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Relational Database Fundamentals</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 01
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>Relational Database Fundamentals</h1>
+    <p class="lesson-meta">Lesson 01 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" target="_blank">AWS RDS User Guide</a></p>
+  </div>
+
+  <p>Before RDS, Aurora, and any of the managed database products in this module make sense, you need the vocabulary of relational databases themselves. This lesson is the foundation everything else in this module builds on.</p>
+
+  <h2>SQL, RDBMS — Same Thing, Different Names</h2>
+  <p>Strictly speaking, <strong>SQL</strong> (Structured Query Language) is the language used to store, update, and retrieve data, while <strong>RDBMS</strong> (Relational Database Management System) is the platform itself. In practice — and on the exam — the two terms are used interchangeably to mean "relational database."</p>
+
+  <p>The defining trait of a relational database is <strong>structure</strong>: a fixed <strong>schema</strong> defined <em>before</em> any data goes in. The schema declares the names of things, valid values, data types, and — critically — the relationships between tables. All of this is rigid and hard to change once data exists.</p>
+
+  <h2>Tables, Attributes, and Primary Keys</h2>
+  <p>A relational database groups related data into <strong>tables</strong>. Each table has <strong>attributes</strong> (columns), and each row must supply a value for every attribute in that table.</p>
+
+  <table>
+    <thead><tr><th>Concept</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Table</strong></td><td>Stores data that relates together, e.g. all "humans" in one table, all "animals" in another</td></tr>
+      <tr><td><strong>Attribute</strong></td><td>A column in a table (e.g. <code>FNAME</code>, <code>AGE</code>)</td></tr>
+      <tr><td><strong>Attribute value</strong></td><td>The value a specific row holds for a specific attribute</td></tr>
+      <tr><td><strong>Primary key</strong></td><td>An attribute that is unique for every row in a table — how a row is identified</td></tr>
+    </tbody>
+  </table>
+
+  <p>Every row must have a unique primary key value. In a humans table, that might be a simple incrementing <code>ID</code>: row 1, row 2, row 3, each unique.</p>
+
+  <h2>Relationships and Composite Keys</h2>
+  <p>Relational databases formally link tables together using keys. Consider humans who own pets, where a human can have many pets and a pet can have many human "owners" — a <strong>many-to-many</strong> relationship. This is modelled with a <strong>join table</strong>, which references the primary keys of both other tables.</p>
+
+  <p>A join table's own primary key is usually a <strong>composite key</strong> — formed from two or more attributes that, <em>together</em>, must be unique. Two rows can share the same animal ID (the same pet has two owners) as long as the full combination of animal ID + human ID isn't repeated anywhere else in the table.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Relationships between tables are defined <strong>in advance</strong>, as part of the schema. This is precisely what makes relational databases a poor fit for data with rapidly changing relationships (like a social network) — a theme you'll see again when comparing to NoSQL models in the next lesson.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A junction table linking humans to pets has two rows that both reference animal ID 2, but with different human IDs. Is this valid?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The composite key is (human ID + animal ID), and each combination is unique — that's all that's required."> Yes, because the composite key of both columns together is unique</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Primary keys don't need to be single columns — composite keys formed from two or more columns are standard for join tables."> No, because a primary key must be a single column</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Repeating the animal ID is exactly how many-to-many relationships are modelled — it is not an error."> No, because the animal ID attribute is repeated</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Join tables don't require every attribute to be unique individually — only the composite key as a whole."> Yes, but only if every attribute in the row is unique</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which statement best describes a relational database schema?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This describes a weak or absent schema, which is characteristic of many NoSQL models, not relational databases."> It is loose and can evolve freely as data is added</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The schema — table structure, types, and relationships — is fixed and declared before any data is stored."> It is fixed and defined before any data is stored</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Schemas are defined per database, not automatically generated by AWS."> It is automatically generated by AWS based on query patterns</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Relationships between tables are part of the schema and are fixed, not computed freely at query time in relational databases."> It only governs attribute names, not relationships</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In a table of animals, every row has a value for "name" and "type." What relational rule does this demonstrate?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This isn't about primary key uniqueness — it's about attributes having values, not identifying rows."> Every row must have a unique primary key</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. In a relational table, every row must supply a value for every attribute defined on that table."> Every row must have a value for every attribute in the table</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Different tables absolutely can have different attributes — the humans table and animals table have entirely different columns."> Every table must share the same attributes as other tables</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Composite keys apply to join tables modelling relationships, not to every table's individual attributes."> Attributes are only valid if they form a composite key</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-nosql-database-models.html">Next: NoSQL Database Models →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

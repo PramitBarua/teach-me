@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – RDS Data Security</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 09
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>RDS Data Security</h1>
+    <p class="lesson-meta">Lesson 09 of 16 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.html" target="_blank">Security in Amazon RDS</a> · <a href="https://docs.aws.amazon.com/kms/latest/developerguide/" target="_blank">AWS KMS Documentation</a></p>
+  </div>
+
+  <p>RDS data security breaks into four areas: <strong>authentication</strong> (logging in), <strong>authorization</strong> (what you can do once in), <strong>encryption in transit</strong>, and <strong>encryption at rest</strong>.</p>
+
+  <h2>Encryption in Transit</h2>
+  <p>Every RDS engine supports encrypting client-to-instance traffic via <strong>SSL/TLS</strong>. This can be made <strong>mandatory per database user</strong>, not just optional.</p>
+
+  <h2>Encryption at Rest — Two Approaches</h2>
+  <table>
+    <thead><tr><th>Method</th><th>Where encryption happens</th><th>Engines</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>KMS + EBS encryption</strong></td>
+        <td>The host, not the database engine — the engine writes data as if unencrypted, and the host encrypts before it hits storage</td>
+        <td>All RDS engines (default mechanism)</td>
+      </tr>
+      <tr>
+        <td><strong>TDE (Transparent Data Encryption)</strong></td>
+        <td>Inside the database engine itself, before data ever leaves the engine</td>
+        <td>Microsoft SQL Server, Oracle</td>
+      </tr>
+      <tr>
+        <td><strong>TDE + CloudHSM</strong></td>
+        <td>Engine-level, with keys in a customer-managed CloudHSM — <strong>no key exposure to AWS at all</strong></td>
+        <td>Oracle only</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>With KMS-based encryption, you select a <strong>CMK</strong> (customer-managed or AWS-managed), which is used to generate <strong>DEKs</strong> (data encryption keys) — the actual keys performing encrypt/decrypt operations, loaded onto the RDS host as needed. Storage, logs, snapshots, and replicas all inherit the <strong>same</strong> CMK.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Encryption is one-way</div>
+    Once enabled on an RDS instance, encryption at rest <strong>cannot be removed</strong>. To "unencrypt," you'd need to create a new, unencrypted instance and migrate the data across.
+  </div>
+
+  <p>TDE is the more trustworthy option where it's available: because the database engine itself handles encryption before writing, data is protected from the moment it leaves the engine — you don't need to trust the host layer at all. Add CloudHSM on Oracle, and even AWS has zero visibility into your keys, which matters for the most demanding regulatory environments.</p>
+
+  <h2>IAM Authentication for RDS</h2>
+  <p>By default, RDS logins use <strong>local database users</strong> — created and managed inside the database engine, entirely separate from IAM. RDS can optionally be configured to allow <strong>IAM-based authentication</strong> instead of passwords:</p>
+
+  <ol>
+    <li>Create a local database user configured to accept AWS auth tokens.</li>
+    <li>Attach an IAM policy to a user or role that maps that identity to the local database user.</li>
+    <li>The IAM identity calls <strong>generate DB auth token</strong>, receiving a token valid for <strong>15 minutes</strong>.</li>
+    <li>That token is used to log in — no password required.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    IAM authentication for RDS is <strong>authentication only</strong>, not authorization. Once logged in, permissions inside the database are still governed entirely by the local database user's own grants — IAM plays no role in what that user can actually do.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants encryption at rest where AWS itself never has access to the encryption keys. Which RDS configuration achieves this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Default KMS + EBS encryption uses keys managed within AWS KMS — AWS's infrastructure is still involved in generating and using the DEKs."> Default KMS + EBS-based encryption with an AWS-managed CMK</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="TDE alone moves encryption into the database engine, but the keys can still be managed via AWS KMS unless paired with CloudHSM specifically."> TDE on Microsoft SQL Server with a customer-managed CMK</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Oracle TDE combined with CloudHSM keeps keys entirely under customer control in a dedicated hardware security module, with zero key exposure to AWS."> TDE on Oracle combined with CloudHSM for key management</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Enabling SSL/TLS secures data in transit, but has no bearing on how encryption at rest and key management are handled."> Enforcing SSL/TLS on all client connections</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A developer authenticates to an RDS MySQL database using an IAM-generated auth token instead of a password. What controls what that developer is allowed to do once connected?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="IAM database authentication only handles the login step — it does not extend to controlling in-database permissions like table access."> The IAM policy that granted them the ability to generate the token</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. IAM authentication for RDS is authentication only — once logged in, permissions are governed entirely by the grants on the local database user, just as with password-based logins."> The permissions granted to the local database user they authenticated as</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Auth tokens are valid for 15 minutes and govern login validity, not in-database authorization scope."> The 15-minute validity window of the auth token itself</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS engines don't inherit an EC2 instance's Security Group rules as in-database permissions — that's a network-layer control, unrelated to SQL-level authorization."> The Security Group attached to the EC2 instance role</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An unencrypted RDS instance needs to become encrypted at rest. What is the correct approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Encryption at rest can't be toggled on for an existing instance in place — it must be set up via a new, encrypted instance."> Enable the "encryption at rest" checkbox on the existing instance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Encryption at rest is set at creation time and can't be added or removed afterward — the standard approach is snapshotting the unencrypted instance, copying the snapshot with encryption enabled, and restoring a new encrypted instance from it."> Create an encrypted snapshot copy and restore a new instance from it</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="TDE is only available for Microsoft SQL Server and Oracle — it isn't a universal retrofit mechanism for encryption on any engine."> Enable TDE, which works retroactively on any RDS engine</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Encryption at rest can't be enabled after the fact on the same instance — this option describes something that isn't possible."> Contact AWS Support to flip the encryption flag without downtime</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-rds-read-replicas.html">← Previous: RDS Read Replicas</a>
+      <a href="0010-rds-custom.html">Next: RDS Custom →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15 – RDS Proxy</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 15
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>RDS Proxy</h1>
+    <p class="lesson-meta">Lesson 15 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html" target="_blank">Amazon RDS Proxy</a></p>
+  </div>
+
+  <p>Opening and closing a database connection has real overhead — trivial for a long-lived app server, but a serious problem for <strong>Lambda</strong>, where every invocation might open a fresh connection. Add in the complexity of handling connection failures and failovers correctly in application code, and you have a strong case for a dedicated <strong>database proxy</strong>. That's what RDS Proxy is.</p>
+
+  <h2>The Core Idea</h2>
+  <p>Instead of applications connecting to the database directly, they connect to <strong>RDS Proxy</strong>, which maintains a <strong>long-lived pool of connections</strong> to the actual database instance. Proxy connections are cheap to establish and place no load on the database. The proxy then <strong>multiplexes</strong> — routing many client connections over a smaller number of actual database connections — which matters most for small instance classes like T2/T3, where connection overhead eats into limited resources.</p>
+
+  <h2>Architecture</h2>
+  <ul>
+    <li>RDS Proxy runs <strong>only within a VPC</strong>, across multiple AZs — it's <strong>not reachable from the public internet</strong>.</li>
+    <li>Clients (EC2, Lambda) connect to the proxy's endpoint, which looks and behaves just like a normal database endpoint.</li>
+    <li>The proxy maintains the long-running connection pool to the database, reused across many client connections and repeated Lambda invocations.</li>
+    <li>The proxy can enforce <strong>SSL/TLS</strong> and can use existing <strong>IAM authentication</strong>, including credentials Lambda already has via its execution role.</li>
+  </ul>
+
+  <h2>How It Helps With Failover</h2>
+  <p>This is the standout benefit. Without RDS Proxy, an application connects directly to the database endpoint, and during failover it must wait for the DNS change and reconnect itself. With RDS Proxy:</p>
+  <ol>
+    <li>Clients stay connected to the <strong>same proxy endpoint</strong>, the whole time.</li>
+    <li>If the backend database fails over, the proxy detects it and establishes new connections to the new primary <strong>in the background</strong>.</li>
+    <li>Client requests simply <strong>wait briefly</strong> — no reconnect logic needed in the application.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    RDS Proxy can reduce Aurora failover time by roughly <strong>60–67%</strong> compared to connecting directly. Combined with connection pooling, this is the headline reason RDS Proxy shows up on the exam.
+  </div>
+
+  <h2>When to Reach for RDS Proxy</h2>
+  <table>
+    <thead><tr><th>Scenario</th><th>Why RDS Proxy helps</th></tr></thead>
+    <tbody>
+      <tr><td>"Too many connections" errors</td><td>Reduces actual DB connection count via pooling and multiplexing</td></tr>
+      <tr><td>Lambda functions accessing RDS/Aurora</td><td>Avoids per-invocation connection setup/teardown; reuses a long-running pool</td></tr>
+      <tr><td>Small/burstable instance classes (T2/T3)</td><td>Connection overhead is proportionally more expensive on small instances</td></tr>
+      <tr><td>Long-running SaaS apps needing low latency</td><td>No repeated connection-establishment cost per user interaction</td></tr>
+      <tr><td>High resilience to DB failure</td><td>Failover becomes transparent to the application</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A serverless application uses many short-lived Lambda invocations, each connecting to an RDS database directly, causing "too many connections" errors. What is the best fix?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Enabling Multi-AZ improves availability but doesn't reduce the number of concurrent database connections opened by Lambda invocations."> Enable Multi-AZ to add a standby instance that absorbs extra connections</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. RDS Proxy maintains a long-running connection pool and multiplexes many client connections over fewer actual database connections — exactly the fix for connection exhaustion caused by frequent Lambda invocations."> Put RDS Proxy in front of the database to pool and multiplex connections</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Read replicas scale read throughput, but each replica still requires its own connections — they don't solve the connection pooling problem."> Add read replicas so Lambda can distribute connections across them</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Snapshot frequency has no relationship to the number of concurrent connections a database can serve."> Increase the automated backup retention period</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. During an Aurora failover event, how does RDS Proxy change the experience for a connected application?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Applications don't need custom retry logic against the proxy endpoint — the proxy itself absorbs the failover and clients simply wait briefly."> The application must implement its own retry logic against the proxy endpoint</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Clients stay connected to the same proxy endpoint throughout, and the proxy establishes new connections to the new primary in the background — requests simply wait briefly with no reconnect logic needed."> The client stays connected to the same proxy endpoint while the proxy reconnects to the new primary in the background</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS Proxy doesn't require applications to poll a DNS record — it abstracts the failover behind a stable endpoint instead."> The application must poll the DB C-name until the DNS change propagates</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS Proxy doesn't drop all in-flight connections during failover — it works to preserve the client connection while it reconnects behind the scenes."> All existing client connections are immediately dropped and must be recreated</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Can an application on the public internet connect directly to an RDS Proxy endpoint?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="RDS Proxy is explicitly only accessible from within a VPC — it cannot be reached from the public internet under any configuration."> Yes, as long as a public IP is assigned to the proxy</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. RDS Proxy is only accessible from within a VPC or VPC-connected networks — it is never reachable from the public internet."> No, RDS Proxy is only accessible from within a VPC or connected networks</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Enabling SSL/TLS secures the connection but doesn't make the proxy publicly reachable — VPC-only access still applies."> Yes, but only if SSL/TLS enforcement is enabled</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="IAM authentication controls how a client authenticates to the proxy — it doesn't change the fact that the proxy is VPC-only and unreachable from the public internet."> Yes, if IAM authentication is configured for the client</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0014-aurora-multi-master-writes.html">← Previous: Aurora Multi-Master Writes</a>
+      <a href="0016-database-migration-service-dms.html">Next: Database Migration Service (DMS) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – IAM Users &amp; ARNs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 02</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>IAM Users &amp; ARNs</h1>
+    <p class="lesson-meta">Lesson 02 of 11 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html" target="_blank">AWS IAM Users Docs</a></p>
+  </div>
+
+  <h2>What is an IAM User?</h2>
+  <p>An <strong>IAM User</strong> is an identity for <em>long-term</em> AWS access. Use one whenever you can picture exactly one thing — one human, one application, one service account — that needs persistent credentials.</p>
+
+  <div class="callout">
+    <div class="callout-title">Decision rule</div>
+    "Can I name exactly one thing that will use this identity?" If yes → IAM User. If no, or if more than 5 000 users are needed → consider an IAM Role instead.
+  </div>
+
+  <h2>Principals and Authentication</h2>
+  <p>A <strong>principal</strong> is any entity trying to access an AWS account. At first it is <em>unauthenticated</em>. To act, it must authenticate:</p>
+  <ul>
+    <li><strong>Human</strong> – username + password (console)</li>
+    <li><strong>Application</strong> – Access Key ID + Secret Access Key (API / CLI)</li>
+  </ul>
+  <p>These are <em>long-term credentials</em>. After a successful authentication AWS resolves which policies are attached and enforces them for every subsequent request.</p>
+
+  <h2>Amazon Resource Names (ARNs)</h2>
+  <p>Every AWS resource is uniquely identified by an <strong>ARN</strong>. The general format is:</p>
+  <p><code>arn:partition:service:region:account-id:resource-id</code></p>
+
+  <table>
+    <thead><tr><th>Example ARN</th><th>What it identifies</th></tr></thead>
+    <tbody>
+      <tr><td><code>arn:aws:s3:::catgifs</code></td><td>The S3 bucket named <em>catgifs</em></td></tr>
+      <tr><td><code>arn:aws:s3:::catgifs/*</code></td><td>Every object <em>inside</em> that bucket</td></tr>
+      <tr><td><code>arn:aws:iam::123456789012:user/alice</code></td><td>IAM user <em>alice</em> in account 123456789012</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Omitting a segment vs using *</div>
+    <p>Leaving a segment empty (<code>::</code>) means it is <em>not required</em> for that resource type. For S3 the region and account-id are left empty because bucket names are globally unique.</p>
+    <p>Using <code>*</code> is a <strong>wildcard meaning all values</strong>. These are different: <code>arn:aws:s3:::catgifs</code> (region not required) ≠ <code>arn:aws:ec2:*::</code> (all regions).</p>
+  </div>
+
+  <h2>IAM User Limits</h2>
+  <ul>
+    <li>Maximum <strong>5 000 IAM users</strong> per AWS account (hard limit)</li>
+    <li>An IAM user can belong to a maximum of <strong>10 groups</strong></li>
+  </ul>
+  <p>If you need more identities (e.g. an application serving thousands of customers), use IAM Roles with federation instead.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Which ARN correctly references every object inside an S3 bucket called <em>my-data</em>?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This ARN targets the bucket itself, not the objects inside it."> <code>arn:aws:s3:::my-data</code></label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. The /* wildcard matches any object key inside the bucket."> <code>arn:aws:s3:::my-data/*</code></label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The asterisk at the end must be preceded by / to match object keys; ** is not valid ARN syntax."> <code>arn:aws:s3:::my-data/**</code></label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 bucket names are globally unique and do not require a region in the ARN."> <code>arn:aws:s3:us-east-1::my-data/*</code></label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A startup plans to give AWS access to 6 000 contractors. Why can't they all be IAM Users in one account?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="IAM users can call all services; there is no service restriction."> IAM users cannot call more than 10 AWS services</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. The hard limit is 5 000 IAM users per account. For more identities, use IAM Roles with identity federation."> The IAM user hard limit per account is 5 000</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Managed policies support any number of attachments; that is not the constraint here."> Managed policies allow at most 1 000 attachments</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Console logins are not restricted to internal staff."> Console login is restricted to internal staff only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What does an IAM principal do before it can interact with AWS resources?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Policies are not submitted — they are already attached and evaluated by AWS."> Submits a policy to the IAM service first</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Roles are assumed, not created, and only when needed for temporary access."> Creates an IAM role for each request</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. A principal starts unauthenticated and must prove identity (password or access key) before AWS resolves and enforces its policies."> Authenticates with long-term or temporary credentials</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Resource policies are optional and separate from authentication."> Attaches a resource policy to each resource</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-iam-identity-policies.html">← Lesson 01: IAM Identity Policies</a>
+      <a href="0003-iam-groups.html">Next: IAM Groups →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

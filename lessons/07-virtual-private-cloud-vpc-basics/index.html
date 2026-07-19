@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VPC Basics – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › VPC Basics</div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>Virtual Private Cloud (VPC) Basics</h1>
+    <p class="lesson-meta">9 lessons · ~80 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/" target="_blank">AWS VPC User Guide</a></p>
+  </div>
+
+  <p>This module covers the foundational networking layer of AWS. Every service you deploy lives inside (or connects to) a VPC, so a firm grasp of VPC concepts is essential for the SAA-C03 exam and for real-world architecture work.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td><a href="0001-vpc-fundamentals.html">Custom VPCs</a></td>
+        <td>Region-resilient, CIDR /28–/16, DNS flags enableDnsSupport &amp; enableDnsHostnames</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td><a href="0002-vpc-subnets.html">VPC Subnets</a></td>
+        <td>AZ-resilient, 5 reserved IPs per subnet, DHCP options sets are immutable</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td><a href="0003-vpc-routing.html">VPC Routing &amp; Route Tables</a></td>
+        <td>Longest-prefix-match, local target wins ties, main vs custom route tables</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td><a href="0004-internet-gateway.html">Internet Gateway (IGW)</a></td>
+        <td>Region-resilient, max 1 per VPC, static NAT — OS never sees public IP</td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td><a href="0005-bastion-hosts.html">Bastion Hosts</a></td>
+        <td>Jump box in public subnet for SSH/RDP to private instances</td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td><a href="0006-stateful-vs-stateless-firewalls.html">Stateful vs Stateless Firewalls</a></td>
+        <td>Stateless (NACL) needs 2 rules per connection; stateful (SG) auto-allows responses</td>
+      </tr>
+      <tr>
+        <td>07</td>
+        <td><a href="0007-network-acls.html">Network ACLs (NACLs)</a></td>
+        <td>Subnet boundary, stateless, numbered rules, only tool that can explicitly deny by IP</td>
+      </tr>
+      <tr>
+        <td>08</td>
+        <td><a href="0008-security-groups.html">Security Groups</a></td>
+        <td>ENI-level, stateful, allow-only, can reference other SGs and itself</td>
+      </tr>
+      <tr>
+        <td>09</td>
+        <td><a href="0009-nat-gateway.html">NAT &amp; NAT Gateway</a></td>
+        <td>Many-to-one outbound-only; AZ-resilient; deploy one per AZ for HA; no IPv6</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-title">Exam scope</div>
+    The SAA-C03 exam regularly tests the difference between NACLs and Security Groups (stateful vs stateless, explicit deny vs implicit), NAT Gateway HA design, and the six steps to make a subnet public. These are the highest-yield topics in this module.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-vpc-fundamentals.html">Start: Custom VPCs →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

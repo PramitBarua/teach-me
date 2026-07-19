@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – S3 Replication</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 11</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Replication (CRR &amp; SRR)</h1>
+    <p class="lesson-meta">Lesson 11 of 16 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html" target="_blank">S3 Replication Docs</a></p>
+  </div>
+
+  <h2>Two Types of Replication</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Source and destination</th><th>Common use cases</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>CRR</strong> (Cross-Region Replication)</td>
+        <td>Different AWS regions</td>
+        <td>Global resilience, reduced latency for distant users</td>
+      </tr>
+      <tr>
+        <td><strong>SRR</strong> (Same-Region Replication)</td>
+        <td>Same AWS region</td>
+        <td>Log aggregation, prod→test account sync, data sovereignty</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>How Replication is Configured</h2>
+  <p>Replication configuration lives on the <strong>source bucket</strong> and specifies:</p>
+  <ol>
+    <li><strong>Destination bucket</strong> — where objects are replicated to.</li>
+    <li><strong>IAM role</strong> — assumed by S3 to perform the replication. The trust policy allows S3 to assume the role; the permission policy grants read on the source and write on the destination.</li>
+  </ol>
+
+  <h2>Same vs Different AWS Accounts</h2>
+  <table>
+    <thead><tr><th>Scenario</th><th>Extra requirement</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Same AWS account</td>
+        <td>None — the IAM role is trusted by both buckets automatically</td>
+      </tr>
+      <tr>
+        <td>Different AWS accounts</td>
+        <td>A bucket policy on the <em>destination</em> bucket must explicitly allow the source account's IAM role to write into it</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>What Is and Isn't Replicated</h2>
+  <table>
+    <thead><tr><th>Feature</th><th>Behaviour</th></tr></thead>
+    <tbody>
+      <tr><td>Replication direction</td><td>One-way (source → destination) by default; bi-directional needs additional config</td></tr>
+      <tr><td>Retroactive replication</td><td>Not retroactive — only objects written <em>after</em> replication is enabled; use Batch Replication for existing objects</td></tr>
+      <tr><td>Versioning requirement</td><td>Both source and destination buckets must have versioning enabled</td></tr>
+      <tr><td>Delete markers</td><td>Not replicated by default; must be explicitly enabled</td></tr>
+      <tr><td>Lifecycle actions</td><td>Not replicated — lifecycle rules on the source do not carry over</td></tr>
+      <tr><td>Glacier / Glacier Deep Archive objects</td><td>Not replicated</td></tr>
+      <tr><td>Objects not owned by source account</td><td>Not replicated unless the source bucket owner has permission on those objects</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Replication Time Control (RTC)</h2>
+  <p>An optional feature that adds a guaranteed <strong>15-minute SLA</strong> for replication. Useful when predictability of replication lag is important for compliance or applications.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    The most common exam traps: (1) replication is <em>not</em> retroactive — existing objects need Batch Replication; (2) delete markers are <em>not</em> replicated by default; (3) versioning must be enabled on <em>both</em> buckets.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. CRR is enabled on a bucket that already contains 10,000 objects. How many of those existing objects are replicated automatically?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Replication is not retroactive. Enabling it does not trigger replication of existing objects."> All 10,000 objects replicate automatically</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Only the most recent version is not automatically replicated either. Replication only applies to new writes after it is enabled."> Only the most recent version of each object</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Replication is not retroactive. Zero existing objects replicate automatically. Use S3 Batch Replication to replicate pre-existing objects."> Zero — existing objects need Batch Replication</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Objects modified after enabling replication will replicate, but none of the 10,000 pre-existing objects replicate automatically."> Only objects modified after enabling replication</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team deletes an object in the source bucket. Is the delete marker replicated to the destination bucket by default?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Delete markers are not replicated by default. This is a deliberate safety measure — you must explicitly opt in."> Yes, delete markers replicate by default always</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Delete marker replication is opt-in. By default, deleting an object in the source does not affect the destination bucket."> No, delete marker replication must be enabled first</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The destination bucket is not locked. Objects can be added or deleted independently. Only replication behaviour is affected."> No, but the destination bucket becomes read-only</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Both buckets need versioning enabled for replication to work, but that doesn't affect whether delete markers are replicated."> Yes, if versioning is enabled on both buckets</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Replication is configured between two buckets in different AWS accounts. What extra configuration is required?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Transfer Acceleration is for upload speed, not cross-account replication permissions."> Enable Transfer Acceleration on both buckets</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Disabling versioning would break replication — versioning must be enabled on both buckets, not disabled."> Disable versioning on the destination bucket</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. The destination bucket is in a different account and does not trust the source account's IAM role by default. A bucket policy on the destination must grant the source account's role permission to write."> Add a bucket policy on the destination to allow the source role</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Making the destination bucket public would violate least-privilege. A targeted bucket policy is the correct solution."> Make the destination bucket publicly accessible</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-s3-lifecycle-configuration.html">← Lesson 10: Lifecycle Configuration</a>
+      <a href="0012-s3-presigned-urls.html">Next: Pre-Signed URLs →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

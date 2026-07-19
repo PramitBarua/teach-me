@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – Elastic Container Registry (ECR)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Containers &amp; ECS</a> › Lesson 03
+    </div>
+    <div class="module-tag">Containers &amp; ECS</div>
+    <h1>Elastic Container Registry (ECR)</h1>
+    <p class="lesson-meta">Lesson 03 of 04 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html" target="_blank">Amazon ECR User Guide</a></p>
+  </div>
+
+  <p>You've already pushed a container image to Docker Hub. <strong>ECR</strong> (Elastic Container Registry) is AWS's own equivalent: a managed registry for container images, usable by ECS, EKS, or any other container tooling — and integrated with the rest of AWS the way you'd expect.</p>
+
+  <h2>Structure</h2>
+  <p>Every AWS account gets one <strong>public registry</strong> and one <strong>private registry</strong>. Inside a registry you can create many <strong>repositories</strong> (think of a repository like a repo in Git), and inside each repository you can store many <strong>container images</strong>, each identified by one or more <strong>tags</strong> that must be unique within that repository.</p>
+
+  <table>
+    <thead><tr><th>Registry type</th><th>Read access</th><th>Write access</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Public</strong></td><td>Anyone — no permissions needed</td><td>Requires IAM permissions</td></tr>
+      <tr><td><strong>Private</strong></td><td>Requires IAM permissions</td><td>Requires IAM permissions</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    A <strong>public</strong> ECR registry means anyone can <em>pull</em> without credentials, but <em>pushing</em> always needs permission. A <strong>private</strong> registry requires permission for both directions. This asymmetry — free reads, gated writes — is the detail most likely to show up as a distractor.
+  </div>
+
+  <h2>Why Use ECR</h2>
+  <ul>
+    <li><strong>IAM-integrated</strong> — every permission on the registry, repositories, or images is controlled through IAM, same as any other AWS resource.</li>
+    <li><strong>Image scanning</strong>, in two tiers: <strong>basic</strong> scanning checks images against a CVE database on push or on demand; <strong>enhanced</strong> scanning uses <strong>Amazon Inspector</strong> for continuous, layer-by-layer scanning of both the OS and any language-level software packages inside the image.</li>
+    <li><strong>Near real-time metrics</strong> delivered to CloudWatch — authentication, push, and pull operations.</li>
+    <li><strong>CloudTrail</strong> logs every API action against the registry.</li>
+    <li><strong>EventBridge</strong> events, so pushes/pulls can drive an event-driven workflow.</li>
+    <li><strong>Replication</strong>, both cross-Region and cross-account, for distributing images closer to where they're consumed.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Basic vs. enhanced scanning</div>
+    Basic scanning is billed through ECR itself and checks for known CVEs. Enhanced scanning is billed through Amazon Inspector and goes further — continuous rescans as new vulnerabilities are published, plus visibility into programming-language packages, not just the OS layer. See <a href="https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html" target="_blank">Scan images for vulnerabilities in Amazon ECR</a>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A repository holds two versions of the same application image. What must be true of the tags on those two images?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Tags aren't shared across images in a repository — each image needs its own tag, and that tag must be unique within the repository."> They must share the exact same tag for consistency</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Tags must be unique within a repository — that's how ECR (and Docker generally) tells two images in the same repository apart."> They must each have a tag that's unique within the repository</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Tags are scoped to a repository, not to the whole registry — uniqueness across every repository in the account isn't required."> They must be unique across the entire registry account-wide</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Tags are a core, required part of how images are referenced and pulled — images are not untagged by default."> Tags are optional and images are untagged by default</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Your team wants external partners to be able to pull a container image without needing any AWS credentials, while still controlling who can push new versions. What should you configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A private registry requires IAM permissions for reads too, which blocks partners from pulling without credentials."> A private registry, since it restricts both read and write access</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A public ECR registry allows anyone to pull without credentials, while push access still requires IAM permissions — exactly this requirement."> A public registry, which allows open pulls but gated pushes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Enhanced scanning affects vulnerability detection, not who can read or write to the registry."> Enhanced scanning enabled on a private repository</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cross-account replication copies images between accounts you control — it doesn't grant public, credential-free read access to partners."> Cross-account replication configured to the partner's account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Security wants continuous rescanning of container images for both OS-level and programming-language-package vulnerabilities as new CVEs are published. What should you enable?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Basic scanning checks against a CVE database on push or on demand, but doesn't provide continuous rescanning or language-package coverage."> Basic scanning, since it covers all vulnerability classes</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Enhanced scanning uses Amazon Inspector for continuous, layer-by-layer scans covering both the OS and language-level packages."> Enhanced scanning, which uses Amazon Inspector continuously</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cross-Region replication copies images between Regions; it has no vulnerability-scanning capability of its own."> Cross-Region replication, to duplicate scans across Regions</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EventBridge delivers events about registry activity — it doesn't itself scan images for vulnerabilities."> EventBridge rules that scan on every push event</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-ecs-cluster-modes.html">← Previous: ECS Cluster Modes</a>
+      <a href="0004-elastic-kubernetes-service-eks.html">Next: Elastic Kubernetes Service →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

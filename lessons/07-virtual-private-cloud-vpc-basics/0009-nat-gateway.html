@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – NAT Gateway</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 09
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>NAT &amp; NAT Gateway</h1>
+    <p class="lesson-meta">Lesson 09 of 09 · ~11 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html" target="_blank">AWS NAT Gateway Docs</a></p>
+  </div>
+
+  <h2>What NAT Does and Why</h2>
+  <p><strong>Network Address Translation (NAT)</strong> lets private instances initiate <em>outbound</em> connections to the internet or AWS public services (S3, SQS, etc.) without being reachable from the internet. It is a many-to-one mapping: many private IP addresses share a single public IP.</p>
+
+  <p>Compare this to an Internet Gateway, which does a <strong>one-to-one static NAT</strong> between a private and a public IP. NAT is for private instances that need outbound-only internet access and should never be directly reachable.</p>
+
+  <table>
+    <thead><tr><th></th><th>Internet Gateway (IGW)</th><th>NAT Gateway</th></tr></thead>
+    <tbody>
+      <tr><td><strong>IP mapping</strong></td><td>One private IP ↔ one public IP</td><td>Many private IPs → one public IP</td></tr>
+      <tr><td><strong>Direction</strong></td><td>Inbound and outbound</td><td>Outbound only (responses allowed, initiations blocked)</td></tr>
+      <tr><td><strong>Public IP type</strong></td><td>Elastic IP or dynamic public IP</td><td>Elastic IP (static, does not change)</td></tr>
+      <tr><td><strong>Resilience</strong></td><td>Region-resilient (one per VPC)</td><td>AZ-resilient only (one per AZ for full HA)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How to Set Up NAT Gateway</h2>
+  <ol>
+    <li>Provision the NAT Gateway <em>in a public subnet</em> — it needs access to the IGW to reach the internet.</li>
+    <li>Assign an <strong>Elastic IP</strong> to the NAT Gateway — this is the public IP it presents to the internet.</li>
+    <li>In the private subnet's route table, set the default route (<code>0.0.0.0/0</code>) to point at the NAT Gateway.</li>
+  </ol>
+
+  <p>When a private instance sends a packet, the VPC router forwards it to the NAT Gateway. The NAT Gateway records the connection in its translation table, replaces the source IP with its own private IP, and passes the packet to the IGW. The IGW then translates that to the Elastic IP. Responses follow the same path in reverse.</p>
+
+  <h2>High Availability Design</h2>
+  <p>A NAT Gateway is <strong>AZ-resilient</strong> — it can survive hardware failures <em>within</em> an AZ but goes down if the entire AZ fails. For region-level resilience, deploy one NAT Gateway per AZ and configure each AZ's private subnets to use the NAT Gateway in their own AZ:</p>
+
+  <table>
+    <thead><tr><th>AZ</th><th>Public subnet</th><th>NAT Gateway</th><th>Private subnet route</th></tr></thead>
+    <tbody>
+      <tr><td>eu-west-1a</td><td>public-a</td><td>nat-a (EIP-A)</td><td>0.0.0.0/0 → nat-a</td></tr>
+      <tr><td>eu-west-1b</td><td>public-b</td><td>nat-b (EIP-B)</td><td>0.0.0.0/0 → nat-b</td></tr>
+      <tr><td>eu-west-1c</td><td>public-c</td><td>nat-c (EIP-C)</td><td>0.0.0.0/0 → nat-c</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If all private subnets route to a <em>single</em> NAT Gateway and that AZ fails, all private instances lose outbound internet access even though their own AZs are healthy. Deploy one NAT Gateway per AZ for full resilience.
+  </div>
+
+  <h2>NAT Gateway vs NAT Instance</h2>
+  <table>
+    <thead><tr><th></th><th>NAT Gateway</th><th>NAT Instance (EC2)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Managed by</strong></td><td>AWS (fully managed)</td><td>You</td></tr>
+      <tr><td><strong>Scales to</strong></td><td>45 Gbps</td><td>Limited by instance size</td></tr>
+      <tr><td><strong>Security Groups</strong></td><td>Not supported — use NACLs only</td><td>Supported</td></tr>
+      <tr><td><strong>Bastion host use</strong></td><td>Not possible (managed service)</td><td>Possible</td></tr>
+      <tr><td><strong>Port forwarding</strong></td><td>Not supported</td><td>Supported</td></tr>
+      <tr><td><strong>Source/dest check</strong></td><td>Handled automatically</td><td>Must be disabled manually</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    NAT gateways do <strong>not</strong> work with IPv6. IPv6 addresses are publicly routable — private instances with IPv6 can route directly through an IGW (or use an Egress-Only IGW for outbound-only IPv6). NAT is only needed for IPv4.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company deploys one NAT Gateway in us-east-1a and routes all three AZs' private subnets to it. The us-east-1a AZ suffers an outage. What is the impact on private instances in us-east-1b?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Private instances in us-east-1b can still communicate within the VPC, but outbound internet access requires the NAT Gateway."> No impact; they continue operating normally including internet access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. The NAT Gateway in us-east-1a fails with that AZ. Private instances in other AZs that route to it lose outbound internet access."> They lose outbound internet access because the NAT Gateway is down</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="NAT Gateways do not fail over automatically to another AZ — you must deploy one per AZ for that resilience."> AWS automatically fails over to a NAT Gateway in another AZ</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="VPC routing does not automatically reroute to the IGW when the NAT Gateway is unavailable."> Traffic reroutes through the Internet Gateway directly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A private EC2 instance needs to download OS patches from the internet. The VPC has an IGW but the instance has no public IP. Which component must be added to enable this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A second IGW is not allowed — a VPC can have at most one, and it does not help private instances without public IPs."> A second Internet Gateway attached to the VPC</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A bastion host enables SSH access for admins — it does not give private instances outbound internet access."> A bastion host in the public subnet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. A NAT Gateway in the public subnet, with the private subnet's default route pointing to it, gives private instances outbound-only internet access without a public IP."> A NAT Gateway in the public subnet with a route from the private subnet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="VPC peering connects two VPCs to each other — it does not provide internet access."> A VPC peering connection to a public VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You want to apply a Security Group to a NAT Gateway to restrict which traffic it forwards. Is this possible?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Security Groups cannot be attached to NAT Gateways — they are a managed service and only support NACLs."> Yes; attach the Security Group directly to the NAT Gateway</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Security Groups cannot be applied to a NAT Gateway at all, regardless of subnet association."> Yes; apply it via the public subnet's Security Group setting</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. NAT Gateways are managed by AWS and do not support Security Groups. Use NACLs on the relevant subnets to filter traffic at the network boundary."> No; use a NACL on the subnet to filter traffic instead</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The IAM role controls API permissions, not network traffic filtering."> No; control traffic by assigning an IAM role to the NAT Gateway</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-security-groups.html">← Previous: Security Groups</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the VPC Basics module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – CloudWatch Logs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 09</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>CloudWatch Logs</h1>
+    <p class="lesson-meta">Lesson 09 of 11 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html" target="_blank">CloudWatch Logs Docs</a></p>
+  </div>
+
+  <h2>What is CloudWatch Logs?</h2>
+  <p><strong>Amazon CloudWatch Logs</strong> is a <em>public</em> AWS service that stores, monitors, and provides access to log data. It is a <strong>regional</strong> service — log data stays in the region it was ingested in.</p>
+
+  <p>Sources can be AWS services (Lambda, VPC Flow Logs, Route 53, etc.) or on-premises systems via the <strong>unified CloudWatch agent</strong>.</p>
+
+  <h2>The Hierarchy</h2>
+
+  <table>
+    <thead><tr><th>Concept</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Log Event</strong></td>
+        <td>The smallest unit. A timestamp + a message (any blob of text — structured or unstructured).</td>
+      </tr>
+      <tr>
+        <td><strong>Log Stream</strong></td>
+        <td>An ordered sequence of log events from one source (e.g. one EC2 instance, one Lambda execution environment).</td>
+      </tr>
+      <tr>
+        <td><strong>Log Group</strong></td>
+        <td>A container for multiple log streams from the same type of source (e.g. <code>/aws/lambda/my-function</code>). <strong>Retention policies and permissions are set at the log group level.</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Metric Filters and Alarms</h2>
+  <p>A <strong>metric filter</strong> can scan log data in a log group and produce a numeric metric when a pattern matches (e.g. count of "ERROR" log lines). You can then create a <strong>CloudWatch Alarm</strong> on that metric to trigger notifications or auto-scaling.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Retention and permissions are configured per <strong>log group</strong>, not per stream. If you want different retention for different services, put them in separate log groups.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Where do you configure log retention settings in CloudWatch Logs?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Retention is not set at the individual event level."> On each individual log event</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Log streams don't have their own retention settings."> On each individual log stream</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Retention periods and access permissions are configured at the log group level and apply to all streams inside it."> On the log group containing the streams</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The CloudWatch agent is a data shipper; it doesn't control retention."> On the unified CloudWatch agent config</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants to receive an SNS alert when the error rate in their Lambda function exceeds 10 per minute. What CloudWatch feature enables this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A log stream is just a container for events — it has no alerting capability."> A log stream configured with a threshold</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. A metric filter converts log patterns into metrics; a CloudWatch Alarm on that metric can trigger an SNS notification."> A metric filter on the log group plus an alarm</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudTrail is for API call auditing, not application log monitoring."> A CloudTrail trail watching the Lambda logs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EventBridge rules react to structured events, not to free-text log patterns."> An EventBridge rule matching log entries directly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An on-premises server needs to ship its system logs to CloudWatch Logs. What is required on the server?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="SSH access does not push logs to CloudWatch; a local agent is needed."> Open an SSH tunnel from AWS to the server</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. The unified CloudWatch agent runs on the server and ships logs to the CloudWatch Logs endpoint."> Install and configure the unified CloudWatch agent</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kinesis Firehose is for streaming data delivery, and a local CloudWatch agent is still needed to capture the logs."> Attach a Kinesis Firehose delivery stream to the server</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudTrail records API calls in AWS, not server-side system logs."> Configure a CloudTrail trail for the on-premises server</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-service-control-policies.html">← Lesson 08: Service Control Policies</a>
+      <a href="0010-cloudtrail.html">Next: CloudTrail →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

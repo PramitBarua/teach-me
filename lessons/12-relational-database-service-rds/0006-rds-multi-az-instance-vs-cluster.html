@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – RDS Multi-AZ: Instance vs Cluster</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 06
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>RDS Multi-AZ: Instance vs Cluster</h1>
+    <p class="lesson-meta">Lesson 06 of 16 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html" target="_blank">Configuring and managing a Multi-AZ deployment</a></p>
+  </div>
+
+  <p>RDS offers two Multi-AZ high-availability architectures: the original <strong>Multi-AZ instance</strong> deployment, and the newer <strong>Multi-AZ cluster</strong> deployment. They solve the same problem — surviving an AZ or instance failure — with meaningfully different trade-offs.</p>
+
+  <h2>Multi-AZ Instance Deployment</h2>
+  <p>One primary, one standby, in different AZs. Replication is <strong>synchronous</strong> at the storage level (the exact mechanism depends on the engine — Amazon failover technology for MariaDB/MySQL/Oracle/PostgreSQL, SQL Server mirroring/always-on for SQL Server — but the behaviour is the same either way).</p>
+
+  <ul>
+    <li>All reads <em>and</em> writes go to the <strong>primary</strong> via the DB <strong>C-name</strong> (a DNS endpoint). The standby is <strong>never</strong> used for reads.</li>
+    <li>The standby's only job is to be ready for <strong>failover</strong>.</li>
+    <li>Failover changes what the C-name points to — a <strong>DNS update</strong> that typically takes <strong>60–120 seconds</strong>.</li>
+    <li>Backups can be taken from the standby, avoiding any I/O performance hit on the primary.</li>
+    <li>Multi-AZ is <strong>not included in the free tier</strong> — you're paying for a second instance.</li>
+    <li>Failovers happen for AZ outages, primary instance failure, instance type changes, manual testing, or even routine patching (patch the standby, then fail over).</li>
+  </ul>
+
+  <h2>Multi-AZ Cluster Deployment</h2>
+  <p>The newer model: <strong>one writer, two readers</strong>, each in a different AZ. Unlike instance mode, <strong>the readers are usable</strong> — for read operations, provided your application is built to route reads there.</p>
+
+  <table>
+    <thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Cluster endpoint</strong></td><td>Points at the writer; use for reads, writes, and admin</td></tr>
+      <tr><td><strong>Reader endpoint</strong></td><td>Points at available readers (sometimes including the writer); load-balances read traffic</td></tr>
+      <tr><td><strong>Instance endpoints</strong></td><td>One per instance; generally for testing only — no automatic failover if you connect directly</td></tr>
+    </tbody>
+  </table>
+
+  <p>A write is considered committed once it's been sent to the writer <em>and</em> confirmed by at least one reader — resilience is baked into the commit itself, spanning multiple AZs. Cluster mode also runs on faster hardware: <strong>Graviton</strong> processors with local <strong>NVMe SSD</strong> storage, writing locally first and flushing to EBS after.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Multi-AZ cluster mode replicates using <strong>transaction logs</strong> rather than full storage-level sync, which is why failover drops to as little as <strong>~35 seconds</strong> (plus log replay time) — versus 60–120 seconds for instance mode.
+  </div>
+
+  <h2>Instance Mode vs Cluster Mode</h2>
+  <table>
+    <thead><tr><th>Property</th><th>Multi-AZ instance</th><th>Multi-AZ cluster</th></tr></thead>
+    <tbody>
+      <tr><td>Standby/reader count</td><td>1 standby</td><td>2 readers</td></tr>
+      <tr><td>Standby usable for reads?</td><td>No</td><td>Yes (readers)</td></tr>
+      <tr><td>Failover time</td><td>60–120 sec</td><td>~35 sec + log replay</td></tr>
+      <tr><td>Hardware</td><td>Standard</td><td>Graviton + local NVMe SSD</td></tr>
+      <tr><td>Storage per instance</td><td>Dedicated EBS each</td><td>Dedicated EBS each (not shared, unlike Aurora)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Don't confuse with Aurora</div>
+    Multi-AZ <em>cluster</em> mode sounds a lot like Aurora, but each RDS instance in the cluster still has its <strong>own dedicated local storage</strong> — there's no shared cluster storage volume the way Aurora has. Keep this distinction sharp before you reach the Aurora lessons.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An application using RDS Multi-AZ instance mode wants to offload some read traffic to the standby replica. Is this possible?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="In Multi-AZ instance mode, the standby is never accessible for reads or writes — it exists purely for failover."> Yes, the standby accepts read-only connections by default</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. In Multi-AZ instance mode, all reads and writes go through the primary via the DB C-name; the standby's only role is failover readiness."> No, the standby in instance mode exists only for failover, not reads</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="No manual promotion is required to enable reads — the limitation is architectural: instance-mode standbys simply don't serve reads, period."> Yes, but only after manually promoting the standby first</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This describes Multi-AZ cluster mode's readers, not instance mode's standby, which never accepts application connections."> Yes, using the dedicated reader endpoint</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why does Multi-AZ cluster mode typically fail over faster than Multi-AZ instance mode?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Both modes place standby/reader instances in different AZs from the writer — that isn't the reason for the speed difference."> Cluster mode keeps its readers in the same AZ as the writer</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Cluster mode replicates via transaction logs rather than full storage-level synchronous replication, enabling failover in as little as ~35 seconds plus log replay, versus 60–120 seconds for instance mode."> Cluster mode replicates via transaction logs, which is faster than instance mode's storage-level sync</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DNS propagation delay applies to both modes' endpoint changes — it isn't what differentiates their failover speed."> Cluster mode doesn't rely on any DNS propagation at all</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Both modes support automatic failover — manual-only failover isn't a distinguishing trait of instance mode."> Instance mode requires manual failover, while cluster mode is automatic</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What is a key architectural difference between an RDS Multi-AZ cluster and an Amazon Aurora cluster?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Both RDS Multi-AZ clusters and Aurora clusters span multiple Availability Zones — that isn't the distinguishing factor."> RDS Multi-AZ clusters span only a single Availability Zone</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. In an RDS Multi-AZ cluster, each instance still has its own dedicated local storage. Aurora instead uses a shared cluster storage volume accessible to all instances — covered in Lesson 11."> RDS Multi-AZ cluster instances each have dedicated local storage; Aurora instances share one cluster storage volume</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Neither an RDS Multi-AZ cluster nor Aurora exposes a dedicated writer endpoint that also serves reads exclusively — both provide separate reader-facing endpoints too."> RDS Multi-AZ clusters have no reader endpoint at all, unlike Aurora</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="RDS Multi-AZ cluster mode does support usable readers for read scaling — that capability is not exclusive to Aurora."> Only Aurora supports readers that can serve read traffic</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-rds-architecture.html">← Previous: RDS Architecture</a>
+      <a href="0007-rds-backups-snapshots-restore.html">Next: RDS Backups, Snapshots &amp; Restore →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

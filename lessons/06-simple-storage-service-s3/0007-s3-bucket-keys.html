@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – S3 Bucket Keys</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 07</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Bucket Keys</h1>
+    <p class="lesson-meta">Lesson 07 of 16 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-key.html" target="_blank">S3 Bucket Keys Docs</a></p>
+  </div>
+
+  <h2>The Problem: KMS at Scale</h2>
+  <p>When using SSE-KMS, every single object upload triggers a <strong>separate API call to KMS</strong> to generate a new Data Encryption Key. KMS is a managed service with <em>rate limits</em> on API calls and a cost per request. Uploading millions of objects means millions of KMS calls — slow, expensive, and potentially throttled.</p>
+
+  <h2>The Solution: S3 Bucket Keys</h2>
+  <p>When a bucket key is enabled, KMS generates a single <strong>time-limited bucket key</strong> and hands it to the S3 bucket. The bucket then uses that key locally to generate individual DEKs for each object — without calling KMS for every upload.</p>
+
+  <table>
+    <thead><tr><th></th><th>Without Bucket Key</th><th>With Bucket Key</th></tr></thead>
+    <tbody>
+      <tr><td>KMS API calls</td><td>1 per object upload</td><td>1 per time-limited bucket key period</td></tr>
+      <tr><td>Cost</td><td>Higher (per-object KMS cost)</td><td>Lower (bulk DEK generation in S3)</td></tr>
+      <tr><td>Scalability</td><td>Rate-limited by KMS</td><td>S3 handles DEK generation locally</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Replication Behaviour</h2>
+  <ul>
+    <li>If you replicate a <strong>plaintext object</strong> to a destination bucket that has <em>default encryption or a bucket key</em>, S3 encrypts the object using the destination bucket's configuration. This <strong>can change the ETag</strong> between source and destination.</li>
+    <li>If the <strong>bucket key is enabled</strong> on the source bucket, the encryption settings are preserved during same-account or cross-account replication.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Bucket keys reduce KMS API calls and cost — they are purely an optimisation layer for SSE-KMS. The encryption itself is unchanged; only the DEK generation is offloaded to S3.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What is the primary benefit of enabling S3 Bucket Keys when using SSE-KMS?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Bucket keys do not change the encryption algorithm — AES-256 via KMS is still used."> It changes the encryption from AES-256 to RSA</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Bucket keys do not replace the need for KMS — they reduce the number of calls to KMS, not eliminate them."> It removes the requirement to use KMS entirely</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. With a bucket key, S3 generates DEKs locally using the bucket key rather than calling KMS per object. This reduces KMS API calls, cost, and rate-limit pressure."> It reduces KMS API calls and cost per object upload</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Bucket keys do not change the access control model. Key policies and IAM permissions still apply."> It grants all users automatic decrypt permissions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. How does an S3 Bucket Key work at a high level?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="KMS still generates the bucket key. The change is that this key is given to S3 to generate per-object DEKs locally, rather than KMS generating each DEK individually."> KMS generates a unique DEK per object as normal</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. KMS generates one time-limited bucket key and gives it to the bucket. S3 uses that bucket key locally to generate per-object DEKs, dramatically reducing KMS round-trips."> KMS gives the bucket a key; S3 generates DEKs locally</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="S3 does not generate keys inside KMS. The bucket key stays in S3's control for the duration of its validity period."> S3 generates the bucket key inside KMS directly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="All objects in the bucket still get unique DEKs. The bucket key is not used as the direct object encryption key."> All objects in the bucket share one encryption key</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. When replicating an unencrypted (plaintext) object to a destination bucket that uses SSE-S3 by default, what can change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Object metadata is preserved during replication. Encryption of the object doesn't alter metadata."> The object's metadata tags are removed entirely</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The storage class can be configured in the replication rule but is not forced to change when encryption is applied."> The object's storage class is downgraded by default</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. When a plaintext object is encrypted at the destination, its content changes (it is now encrypted), which produces a different ETag compared to the unencrypted source object."> The ETag of the object can differ at the destination</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Ownership defaults to the source account, not the destination. It can be changed via configuration but is not changed automatically by encryption."> The object ownership transfers to the destination account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-s3-object-encryption-cse-sse.html">← Lesson 06: S3 Object Encryption</a>
+      <a href="0008-s3-storage-classes-part1.html">Next: Storage Classes Part 1 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

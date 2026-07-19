@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – S3 Lifecycle Configuration</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 10</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Lifecycle Configuration</h1>
+    <p class="lesson-meta">Lesson 10 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html" target="_blank">S3 Lifecycle Management Docs</a></p>
+  </div>
+
+  <h2>What is Lifecycle Configuration?</h2>
+  <p>A lifecycle configuration is a set of <strong>rules</strong> that automatically perform actions on objects in a bucket based on age (not access frequency). Rules can target the whole bucket, a prefix, or specific object tags.</p>
+
+  <h2>Action Types</h2>
+  <table>
+    <thead><tr><th>Type</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Transition action</strong></td><td>Moves objects to a different (cheaper) storage class after N days</td></tr>
+      <tr><td><strong>Expiration action</strong></td><td>Deletes objects (or non-current versions) after N days</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Not access-based</div>
+    Lifecycle rules are <strong>time-based</strong>, not access-based. A rule that moves objects after 30 days will move them even if they are accessed daily. Use Intelligent-Tiering for access-based automation.
+  </div>
+
+  <h2>Transition Hierarchy</h2>
+  <p>Objects can only move <strong>down</strong> this hierarchy — never back up:</p>
+  <ol>
+    <li>S3 Standard</li>
+    <li>S3 Standard-IA</li>
+    <li>S3 Intelligent-Tiering</li>
+    <li>S3 One Zone-IA</li>
+    <li>S3 Glacier Instant Retrieval</li>
+    <li>S3 Glacier Flexible Retrieval</li>
+    <li>S3 Glacier Deep Archive</li>
+  </ol>
+  <p><strong>Exception:</strong> One Zone-IA cannot transition directly to Glacier Instant Retrieval.</p>
+
+  <h2>Key Constraints</h2>
+  <ul>
+    <li>Objects must remain in <strong>S3 Standard for at least 30 days</strong> before a lifecycle rule can transition them to Standard-IA or One Zone-IA. (This restriction does not apply if you place the object directly into those classes at upload time.)</li>
+    <li>Using a <strong>single lifecycle rule</strong> to go Standard → Standard-IA → Glacier requires waiting the full 30 days in Standard-IA. To bypass this with two rules, you can transition to Standard-IA and then to Glacier in less than 30 days total.</li>
+    <li>Watch small objects: transitioning many tiny objects can increase cost due to the minimum object-size billing of lower classes.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Lifecycle rules are a cost-optimisation tool. The 30-day wait for Standard → Standard-IA via lifecycle, and the one-way-only hierarchy, are the two most tested constraints.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A lifecycle rule is configured to move objects from S3 Standard to Standard-IA after 15 days. What will happen?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The transition will not execute at 15 days. The minimum wait before a lifecycle rule can transition Standard objects to Standard-IA is 30 days."> Objects move to Standard-IA after 15 days</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 does not silently ignore the rule. Objects will still eventually transition — just not until the 30-day minimum has elapsed."> The objects are permanently deleted at 15 days</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Lifecycle rules cannot transition Standard objects to Standard-IA before 30 days. The rule is valid but the transition will only execute after 30 days."> The rule is valid but transition waits 30 days minimum</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 does not auto-correct the rule to 30 days. The rule stays as configured but the service enforces the 30-day minimum at execution time."> S3 auto-corrects the rule to 30-day transition</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which transition is NOT allowed in the S3 lifecycle hierarchy?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Standard → Standard-IA is a valid downward transition in the hierarchy."> S3 Standard to S3 Standard-IA transition</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Glacier Flexible → Glacier Deep Archive is a valid downward transition."> Glacier Flexible to Glacier Deep Archive</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Upward transitions (from a colder class back to a warmer one) are not possible via lifecycle rules. You can only move down the hierarchy."> Glacier Deep Archive to S3 Standard-IA tier</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Standard-IA → Glacier Instant is a valid downward transition (skipping One Zone-IA is allowed)."> Standard-IA to Glacier Instant Retrieval class</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team sets a lifecycle rule to transition all objects to Glacier Flexible after 30 days, regardless of how often objects are accessed. Objects that are read daily will be:</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Lifecycle rules are time-based, not access-based. Frequent access does not exempt an object from lifecycle transitions."> Excluded because they are accessed frequently</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Lifecycle rules do not automatically switch to Intelligent-Tiering. The configured rule applies uniformly."> Automatically moved to Intelligent-Tiering instead</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Lifecycle rules act on age alone. An object accessed daily will still be transitioned to Glacier Flexible after 30 days, making it cold and requiring a retrieval job to access."> Moved to Glacier Flexible after 30 days anyway</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 does not warn about high-access objects; it executes lifecycle rules as configured without regard to access patterns."> Flagged with a warning but not transitioned yet</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-s3-storage-classes-part2.html">← Lesson 09: Storage Classes Part 2</a>
+      <a href="0011-s3-replication.html">Next: S3 Replication →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

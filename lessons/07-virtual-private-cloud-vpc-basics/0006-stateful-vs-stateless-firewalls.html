@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – Stateful vs Stateless Firewalls</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 06
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>Stateful vs Stateless Firewalls</h1>
+    <p class="lesson-meta">Lesson 06 of 09 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/security-groups.html" target="_blank">AWS Security Groups &amp; NACLs</a></p>
+  </div>
+
+  <h2>Request–Response and Ephemeral Ports</h2>
+  <p>Every network connection has two phases: a <strong>request</strong> (client → server) and a <strong>response</strong> (server → client). The request uses a well-known destination port — HTTP is TCP 80, HTTPS is TCP 443. The <em>response</em> returns to whichever <strong>ephemeral port</strong> the client's OS chose for that connection, typically a random port in the range <strong>1024–65535</strong>.</p>
+
+  <table>
+    <thead><tr><th>Traffic direction</th><th>Destination port</th><th>Who chooses it</th></tr></thead>
+    <tbody>
+      <tr><td>Client request → server</td><td>Well-known (e.g. 443)</td><td>Protocol specification</td></tr>
+      <tr><td>Server response → client</td><td>Ephemeral (e.g. 49,152)</td><td>Client OS, randomly assigned per connection</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Stateless Firewalls</h2>
+  <p>A <strong>stateless firewall</strong> evaluates every packet in isolation. It has no memory of previous packets, so it cannot tell whether a response packet belongs to an already-approved request. This means you need <em>two separate rules</em> per connection:</p>
+
+  <ul>
+    <li>An <strong>inbound rule</strong> allowing the request on the well-known port (e.g. TCP 443 from 0.0.0.0/0).</li>
+    <li>An <strong>outbound rule</strong> allowing the response on the full ephemeral range (TCP 1024–65535 to the client IP).</li>
+  </ul>
+
+  <p>Because the response can come back on any ephemeral port, stateless firewalls typically need a wide outbound rule, which creates more exposure than a stateful firewall would require.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    AWS <strong>NACLs</strong> are stateless. When writing NACL rules you must explicitly allow both the request direction <em>and</em> the response direction, including the ephemeral port range. Forgetting the outbound ephemeral rule is the most common NACL mistake on the exam.
+  </div>
+
+  <h2>Stateful Firewalls</h2>
+  <p>A <strong>stateful firewall</strong> tracks connections. Once it approves a request, it automatically allows the corresponding response — even on an ephemeral port — without requiring a separate explicit rule. You allow the <em>request</em>, and the <em>response</em> is automatically permitted.</p>
+
+  <table>
+    <thead><tr><th></th><th>Stateless</th><th>Stateful</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Memory of connections</strong></td><td>None — each packet evaluated alone</td><td>Yes — tracks request/response pairs</td></tr>
+      <tr><td><strong>Rules needed per connection</strong></td><td>Two (request + response)</td><td>One (request only)</td></tr>
+      <tr><td><strong>Ephemeral port rules</strong></td><td>Must be explicitly opened</td><td>Handled automatically</td></tr>
+      <tr><td><strong>AWS implementation</strong></td><td>Network ACLs (NACLs)</td><td>Security Groups</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A NACL allows inbound HTTPS (TCP 443) but blocks all outbound traffic. A user tries to load a website hosted on an EC2 instance. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="NACLs are stateless — the inbound allow does not automatically permit the outbound response."> The page loads because the inbound rule is sufficient</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. NACLs are stateless; the server's response must leave the subnet via an outbound rule. With all outbound blocked the response never reaches the client."> The page fails to load because the response is blocked outbound</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS does not convert NACLs to stateful mode; they are always stateless by design."> AWS automatically converts the NACL to stateful mode</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Port 80 and 443 are different protocols; allowing 443 does not help with port 80, and neither case makes the firewall stateful."> The page loads only if port 80 is also allowed inbound</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why must a stateless firewall typically allow the entire ephemeral port range (1024–65535) in the outbound direction?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Servers do not choose the client's ephemeral port; the client OS selects it randomly."> The server randomly assigns the client's destination port</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Each client OS picks a random ephemeral port from the 1024–65535 range for each connection; since the firewall does not track connections it cannot predict the specific port and must allow all of them."> The client OS picks a random port from that range per connection</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The firewall does not block ports; it does not track which ports are in use."> The firewall blocks ports already in use on the server</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Well-known ports (0–1023) are used for server listening ports, not for response traffic going back to clients."> All well-known ports (0–1023) are reserved for server responses</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A Security Group allows inbound TCP 443 from 0.0.0.0/0. No outbound rules explicitly allow the ephemeral response port. Will HTTPS responses reach clients?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Security Groups are stateful — responses are automatically allowed regardless of outbound rules."> No; you must add an outbound ephemeral port rule</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Security Groups are stateful. Once an inbound HTTPS request is allowed, the corresponding response is automatically permitted outbound."> Yes; Security Groups are stateful and auto-allow responses</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Security Groups do not require both inbound and outbound rules for responses; that is a NACL requirement."> No; stateful applies only to NACLs, not Security Groups</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Security Groups always have an implicit deny for unmatched traffic, but stateful tracking means responses are matched to allowed requests automatically."> Yes; Security Groups allow all outbound traffic by default</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-bastion-hosts.html">← Previous: Bastion Hosts</a>
+      <a href="0007-network-acls.html">Next: Network ACLs →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

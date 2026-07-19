@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – SSM Parameter Store</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced EC2</a> › Lesson 04
+    </div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>SSM Parameter Store</h1>
+    <p class="lesson-meta">Lesson 04 of 08 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html" target="_blank">AWS Systems Manager Parameter Store</a></p>
+  </div>
+
+  <p>Passing secrets into an instance via user data is bad practice — anyone with instance access can read them. <strong>Parameter Store</strong>, part of Systems Manager, is the fix: a resilient, scalable place to store configuration strings, documents, and secrets, referenced by name instead of embedded in a script.</p>
+
+  <h2>Parameter Types</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td><strong>String</strong></td><td>Plain-text single value — connection strings, hostnames, ports, license codes</td></tr>
+      <tr><td><strong>StringList</strong></td><td>Plain-text, comma-separated list of values</td></tr>
+      <tr><td><strong>SecureString</strong></td><td>Ciphertext, encrypted via <strong>KMS</strong> — for passwords or anything sensitive</td></tr>
+    </tbody>
+  </table>
+
+  <p>Encrypting a parameter as a SecureString means KMS permissions come into play too — whoever reads the parameter needs both Parameter Store and the relevant CMK permission.</p>
+
+  <h2>Hierarchical Structure</h2>
+  <p>Parameters can be flat (<code>myDBpassword</code>) or organized into a tree using path-style names, e.g. <code>/wordpress/DBUser</code> and <code>/wordpress/DBPassword</code>. Permissions can be granted on an individual parameter or on a whole branch of the tree — so a team could be scoped to just <code>/dev-team-passwords/</code> without seeing anything else in the store. Just like S3, Parameter Store keeps <strong>versions</strong> of parameters as they change, and parameter changes can generate events that drive other AWS services.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: public parameters</div>
+    AWS itself publishes <strong>public parameters</strong> into Parameter Store — the reason a CloudFormation template can create an EC2 instance without you hardcoding an AMI ID: it looks up the latest AMI ID for a given OS/Region from a public parameter instead.
+  </div>
+
+  <h2>Access and Integration</h2>
+  <p>Parameter Store is a public AWS service — anything using it needs to either be an AWS service or reach the public AWS endpoints, and it's fully <strong>IAM-integrated</strong>. EC2 instances, Lambda functions, and other applications can all be granted access, typically via an IAM role rather than long-term credentials — the same best practice covered in the previous lesson on instance roles.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. You need to store a database password in Parameter Store so it's encrypted and unreadable without the right KMS permission. Which parameter type do you use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="String parameters are stored in plain text — anyone with Parameter Store read access could see the value directly."> String, since it's the default parameter type</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="StringList just stores a comma-separated plain-text list — it offers no encryption on its own."> StringList, so multiple passwords can be stored together</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. SecureString parameters are encrypted via KMS, requiring both Parameter Store and CMK permissions to read the plaintext value."> SecureString, which encrypts the value using KMS</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Parameter Store doesn't have a parameter type called 'Hierarchical' — hierarchy is a naming convention (paths), not a distinct parameter type."> Hierarchical, since it enables path-based access control</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Your dev team should only be able to read and write parameters under their own branch of the tree, not anything else in the account's Parameter Store. How do you scope this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Parameter Store permissions can be scoped to individual parameters or whole path branches via IAM — a separate AWS account per team isn't required for this."> Create a completely separate AWS account for the team</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. IAM permissions on Parameter Store can be granted on a specific path/branch of the hierarchy, such as /dev-team-passwords/, scoping access to just that tree."> Grant IAM permissions scoped to their path, e.g. /dev-team-passwords/</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SecureString controls encryption of the value, not who can see which parameters exist or read them at a path level."> Make every parameter a SecureString for that team</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Versioning tracks changes to a parameter's value over time — it has no bearing on which team can access which parameters."> Enable versioning on all of the team's parameters</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A CloudFormation template creates an EC2 instance without specifying a hardcoded AMI ID, yet it always launches with the current recommended AMI for the Region. How is this typically achieved?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFormation doesn't have privileged built-in knowledge of the newest AMI — it retrieves this via an explicit lookup, most commonly a public Parameter Store parameter."> CloudFormation automatically knows the newest AMI</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. AWS publishes public parameters into Parameter Store, and templates can reference these to resolve the latest AMI ID for a given OS and Region at deploy time."> The template references an AWS-published public parameter for the AMI</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="User data runs after the instance already exists from a chosen AMI — it can't retroactively determine which AMI was used to launch the instance."> User data selects the AMI after the instance launches</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="An instance role provides permissions to running instances — it has no involvement in resolving which AMI CloudFormation should launch."> An instance role automatically resolves the AMI at launch</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-ec2-instance-roles-and-profiles.html">← Previous: EC2 Instance Roles and Profiles</a>
+      <a href="0005-logging-on-ec2-cloudwatch-agent.html">Next: Logging on EC2 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

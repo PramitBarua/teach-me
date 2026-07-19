@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – Bastion Hosts</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 05
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>Bastion Hosts</h1>
+    <p class="lesson-meta">Lesson 05 of 09 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-best-practices.html" target="_blank">AWS VPC Security Best Practices</a></p>
+  </div>
+
+  <h2>What is a Bastion Host?</h2>
+  <p>A <strong>bastion host</strong> (also called a <em>jump box</em>) is a single EC2 instance placed in a <em>public subnet</em> whose sole purpose is to provide a hardened, auditable entry point into a VPC. Administrators SSH or RDP into the bastion from the internet, then connect from the bastion to instances in private subnets that have no direct internet exposure.</p>
+
+  <p>The pattern solves a common problem: you need to manage private resources (databases, application servers) but you do not want to expose them directly to the internet. The bastion host is the single controlled door.</p>
+
+  <h2>Architecture and Security Rules</h2>
+  <table>
+    <thead><tr><th>Component</th><th>Placement</th><th>Access rule</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Bastion host</strong></td>
+        <td>Public subnet (has public IP)</td>
+        <td>Inbound SSH/RDP allowed only from known admin IPs; all other inbound blocked</td>
+      </tr>
+      <tr>
+        <td><strong>Private instances</strong></td>
+        <td>Private subnet (no public IP)</td>
+        <td>Inbound SSH/RDP allowed only from the bastion's private IP or security group</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Security hardening for a bastion host typically includes:</p>
+  <ul>
+    <li>No unnecessary software installed — its only job is SSH/RDP forwarding.</li>
+    <li>Security group restricted to specific source IPs (your office CIDR, VPN egress IP).</li>
+    <li>Key-based authentication only — password login disabled.</li>
+    <li>All sessions logged (CloudTrail, OS-level logging) for audit purposes.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    On the exam, a bastion host is the go-to answer when you need to provide <strong>administrative (SSH/RDP) access to private instances</strong> without making those instances publicly reachable. Do not confuse it with a NAT gateway — a NAT gateway lets private instances reach the internet outbound; a bastion lets admins reach private instances inbound.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company's private EC2 instances need to be patched by an operations team. The instances have no public IPs. Which solution lets the ops team connect via SSH without exposing the private instances directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Assigning public IPs to private instances directly exposes them to the internet — this defeats the purpose of a private subnet."> Assign public IPs to each private instance</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. A bastion host in the public subnet acts as the single, hardened entry point, allowing SSH to private instances without exposing them directly."> Deploy a bastion host in the public subnet</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A NAT gateway provides outbound internet access for private instances — it does not allow inbound SSH from admins."> Place a NAT gateway in the public subnet</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An additional Internet Gateway would not help; the private instances still have no public IP to receive inbound connections."> Attach a second Internet Gateway to the VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which subnet type should a bastion host be placed in, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A private subnet has no internet connectivity — admins outside the VPC could not reach a bastion placed there."> A private subnet, because it is more secure</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. The bastion needs a public IP so admins can reach it from the internet; only instances in a public subnet with auto-assign enabled receive public IPs."> A public subnet, so admins can reach it from the internet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There is no 'management subnet' type in AWS — this is not a valid option."> A dedicated management subnet with no route table</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The subnet type matters — an isolated subnet would block both admin traffic and connections to private instances."> An isolated subnet not associated with any route table</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. The security group on a bastion host currently allows SSH from 0.0.0.0/0 (all IPs). What is the recommended change to reduce attack surface?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Moving the bastion to a private subnet would make it unreachable by internet-based admins."> Move the bastion host to a private subnet</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Enabling MFA is a good practice but does not reduce the network attack surface — the port remains open to the whole internet."> Enable MFA on SSH without changing the source range</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Restricting the inbound SSH rule to known admin IPs (e.g. your office CIDR) dramatically reduces the exposed surface."> Restrict the inbound SSH rule to known admin IP ranges</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Changing the SSH port is security-by-obscurity and does not meaningfully reduce risk from automated scanners."> Change the SSH port from 22 to a high-numbered port</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-internet-gateway.html">← Previous: Internet Gateway</a>
+      <a href="0006-stateful-vs-stateless-firewalls.html">Next: Stateful vs Stateless Firewalls →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

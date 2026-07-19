@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Databases on EC2</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 04
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>Databases on EC2</h1>
+    <p class="lesson-meta">Lesson 04 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html#Welcome.Concepts.comparison" target="_blank">RDS vs EC2 vs on-premises comparison</a></p>
+  </div>
+
+  <p>Every managed database product in this module exists to answer one question: why not just run a database on EC2? This lesson sets the baseline. <strong>Running a database on EC2 is always a workable option, and almost always a worse one</strong> — the question is whether a specific justification outweighs the downsides.</p>
+
+  <h2>Why You Might Choose EC2 Anyway</h2>
+  <table>
+    <thead><tr><th>Justification</th><th>Worth questioning?</th></tr></thead>
+    <tbody>
+      <tr><td>Need OS-level / root access to the database host</td><td>Usually — few real requirements demand this; RDS exposes many tunable parameters without root access</td></tr>
+      <tr><td>Need a DB engine or version AWS doesn't offer</td><td>Legitimate, especially for niche or emerging databases</td></tr>
+      <tr><td>Need a specific OS + DB version combination</td><td>Legitimate for tightly-coupled legacy applications</td></tr>
+      <tr><td>Need a replication architecture RDS doesn't support</td><td>Legitimate in some advanced scenarios</td></tr>
+      <tr><td>"Decision makers just want it on EC2"</td><td>Worth challenging, but sometimes non-negotiable</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Don't assume EC2-hosted databases are always the wrong exam answer. Cantrill notes tricky questions exist where a database on EC2 <em>is</em> the correct choice — usually when the scenario demands OS-level access or an unsupported engine.
+  </div>
+
+  <h2>Why You Usually Shouldn't</h2>
+  <p>Even when a justification exists, weigh it against these costs:</p>
+  <ul>
+    <li><strong>Admin overhead</strong> — you patch the OS <em>and</em> the database engine, and you own backup and disaster-recovery planning end-to-end.</li>
+    <li><strong>Single-AZ exposure</strong> — an EC2 instance and its EBS volume both live in one Availability Zone. If that AZ fails, the database fails, unless you build your own multi-AZ replication.</li>
+    <li><strong>Missing features</strong> — AWS invests heavily in performance and availability features that ship only with managed products, not a self-installed engine.</li>
+    <li><strong>No serverless option</strong> — EC2 is on or off. It can't scale to zero or burst automatically the way some managed database products can.</li>
+    <li><strong>Replication is on you</strong> — designing, monitoring, and validating replication is work that managed products largely automate away.</li>
+    <li><strong>Reduced performance ceiling</strong> — off-the-shelf engine software on generic EC2 doesn't benefit from the optimisation work AWS puts into its own database products.</li>
+  </ul>
+
+  <h2>The Architecture Question</h2>
+  <p>Running a database on EC2 usually means one of two shapes:</p>
+  <ul>
+    <li><strong>Single instance</strong> — app, web server, and database all on one EC2 instance, in one AZ. Simple, but a single point of failure and hard to scale independently.</li>
+    <li><strong>Split architecture</strong> — database on its own instance, separate from the application tier. This introduces a network dependency between the two, and if they're split across AZs, cross-AZ data transfer has a (small) cost, unlike same-AZ private IP traffic, which is free.</li>
+  </ul>
+  <p>Splitting the database out of a monolithic stack is a necessary first step even if you plan to stay on EC2 — and it's also the natural on-ramp to migrating that database into RDS later, without re-architecting the application tier at the same time.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A vendor insists their application needs root-level OS access to the database server. What should a solutions architect do first?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Jumping straight to EC2 skips verifying whether the requirement is genuine — many vendor claims of needing root access don't hold up to scrutiny."> Immediately provision a database on EC2 to satisfy the vendor</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Root-access claims should be questioned first — many database tuning options are exposed by RDS without needing OS-level access at all."> Question the requirement, since many tuning options are available in RDS without root access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="RDS Custom is a valid middle ground, but the first step is verifying whether root access is genuinely required before choosing an architecture."> Switch the application vendor to one that supports Aurora Serverless</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-AZ RDS doesn't grant OS-level access — it's a high-availability feature, unrelated to the root-access requirement described."> Enable Multi-AZ on a standard RDS instance to grant OS access</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A database runs on a single EC2 instance in one Availability Zone. What is the primary architectural risk described in this lesson?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cross-region data transfer cost isn't the primary risk of a single-AZ EC2 database — the instance isn't even spanning regions."> High cross-region data transfer costs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Both the EC2 instance and its EBS volume live in a single AZ — if that AZ fails, the database becomes unavailable unless you've built your own cross-AZ replication."> If that single Availability Zone fails, the database becomes unavailable</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EC2 pricing isn't inherently higher than RDS for equivalent instance sizes — the concern in this lesson is admin overhead and availability, not raw pricing comparison."> EC2 instances are always more expensive than equivalent RDS instances</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Encryption in transit is available on EC2-hosted databases just as much as managed ones — it isn't the risk being described here."> The database cannot support encryption in transit</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Why is splitting a monolithic app+database EC2 instance into two separate instances considered a useful first step, even before adopting RDS?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Splitting instances doesn't remove all admin overhead by itself — you're still managing both EC2 instances until you migrate to a managed product."> It immediately removes all admin overhead from the architecture</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Separating the database from the application tier lets each scale independently and sets up a clean migration path into RDS later without re-architecting the app tier at the same time."> It decouples the database from the app tier, easing a later migration to RDS</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Splitting instances across AZs does introduce a small cross-AZ data transfer cost — it doesn't eliminate data transfer charges."> It eliminates all data transfer charges between instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance splitting is an architectural change, not an encryption feature — it has no direct bearing on encryption at rest."> It automatically enables encryption at rest on the database volume</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-acid-vs-base.html">← Previous: ACID vs BASE</a>
+      <a href="0005-rds-architecture.html">Next: RDS Architecture →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

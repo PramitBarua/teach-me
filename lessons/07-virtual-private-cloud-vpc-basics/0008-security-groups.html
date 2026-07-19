@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Security Groups</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 08
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>Security Groups</h1>
+    <p class="lesson-meta">Lesson 08 of 09 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/security-groups.html" target="_blank">AWS Security Groups Docs</a></p>
+  </div>
+
+  <h2>Where Security Groups Are Attached</h2>
+  <p>A <strong>Security Group (SG)</strong> is attached to an <strong>Elastic Network Interface (ENI)</strong> — not to an EC2 instance, not to a subnet. Because an instance has an ENI, the effect is the same in practice, but the distinction matters: the SG filters traffic at the network card level, and a single ENI can have multiple security groups applied simultaneously.</p>
+
+  <p>An SG is <strong>stateful</strong>. When an inbound connection is allowed, the corresponding outbound response is automatically permitted — and vice versa — with no additional rule needed.</p>
+
+  <h2>Allow Only — No Explicit Deny</h2>
+  <p>Security Groups can only <strong>allow</strong> traffic. There is no explicit deny rule. Everything that is not explicitly allowed is <strong>implicitly denied</strong>. This means:</p>
+  <ul>
+    <li>You cannot use an SG to block a specific IP while allowing everything else.</li>
+    <li>To block a specific source, you must use a <strong>NACL</strong>.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    SG = stateful, no explicit deny. NACL = stateless, can explicitly deny. When a question asks how to block a specific IP, the answer is always NACL.
+  </div>
+
+  <h2>Referencing Logical Resources</h2>
+  <p>Unlike NACLs, Security Groups can reference <strong>AWS logical resources</strong> as the source or destination of a rule — not just IP addresses and CIDR ranges. You can write a rule like "allow inbound TCP 3306 from <em>sg-webserver</em>", meaning: allow traffic from any ENI that has the webserver Security Group attached. This is far more maintainable than tracking IP addresses as instances scale up or down.</p>
+
+  <h2>Self-Referencing</h2>
+  <p>A Security Group can reference <em>itself</em> in a rule. A self-referencing rule means: allow all traffic from any resource that is also a member of this Security Group. This is the canonical way to allow intra-tier communication in a multi-instance cluster:</p>
+
+  <table>
+    <thead><tr><th>Scenario</th><th>Rule to add</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>10 app servers in the same SG need to communicate with each other</td>
+        <td>Inbound: All TCP from <em>this SG</em> (self-reference)</td>
+        <td>All 10 can talk to each other; adding or removing instances needs no rule update</td>
+      </tr>
+      <tr>
+        <td>Database tier allows access from web tier only</td>
+        <td>Inbound TCP 3306 from <em>web-tier SG</em></td>
+        <td>Any instance in the web SG can reach the DB; IP changes are irrelevant</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EC2 instance has a Security Group that allows inbound TCP 443. The SG has no outbound rules (only the default allow-all). A client connects on port 443. Will the server's response reach the client?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Security Groups are stateful — you do not need a separate outbound rule for responses to allowed inbound connections."> No; an outbound ephemeral port rule is needed for responses</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Security Groups are stateful. The allowed inbound connection automatically permits the response outbound — no additional rule is needed."> Yes; the stateful SG automatically allows the response outbound</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Security Groups are stateful, not stateless — they do not require explicit return rules."> No; SGs require explicit rules in both directions like NACLs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Security Groups are associated with ENIs at any time, not just at launch."> Yes; only because the SG was attached at instance launch time</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You want to block all traffic from the IP range 198.51.100.0/24 from reaching instances in a security group. You add a deny rule in the SG. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Security Groups do not support explicit deny rules — only allow rules exist."> The IP range is blocked as expected by the deny rule</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Security Groups have no explicit deny capability. To block specific IPs you must use a NACL."> The rule cannot be created; SGs support only allow rules</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Security Groups do not fall back to NACL rules — they are independent firewall layers."> The SG falls back to the associated NACL for deny logic</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There is no 'pending' state for SG rules — the rule either can or cannot be created."> The rule is created but stays pending until manually activated</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You have a cluster of 20 EC2 instances, all in the same Security Group, that must communicate freely with each other. As instances are added and removed, IP addresses change. What is the most maintainable SG rule to enable this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Listing 20 individual /32 CIDR rules requires constant updates as instances scale — not maintainable."> Add an inbound rule for each instance's private IP as a /32</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Allowing all traffic from 0.0.0.0/0 would permit external traffic, not just cluster traffic."> Add an inbound allow-all rule from 0.0.0.0/0</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. A self-referencing rule allows all resources with this SG to communicate with each other. Adding or removing instances automatically updates the effective rule."> Add a self-referencing inbound rule from this Security Group</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="VPC-level CIDR allows all resources in the VPC, not just the 20 cluster instances."> Add an inbound rule for the entire VPC CIDR block</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-network-acls.html">← Previous: Network ACLs</a>
+      <a href="0009-nat-gateway.html">Next: NAT Gateway →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

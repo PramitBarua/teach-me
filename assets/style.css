@@ -1,0 +1,339 @@
+/* Shared stylesheet – AWS SAA-C03 lessons */
+:root {
+  --bg: #fffff8;
+  --text: #111;
+  --muted: #555;
+  --accent: #1a56a0;
+  --accent-light: #dbeafe;
+  --warn: #b45309;
+  --warn-light: #fef3c7;
+  --success: #166534;
+  --success-light: #dcfce7;
+  --danger: #991b1b;
+  --danger-light: #fee2e2;
+  --border: #e2e8f0;
+  --code-bg: #f1f5f9;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --max-width: 680px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 18px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  line-height: 1.7;
+  margin: 0;
+  padding: 2rem 1rem 4rem;
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+/* ── Typography ── */
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.35rem;
+  margin: 2.5rem 0 0.75rem;
+  font-weight: 700;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.3rem;
+}
+
+h3 {
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.5rem;
+  font-weight: 600;
+}
+
+p { margin: 0.75rem 0; }
+
+a { color: var(--accent); text-decoration: underline; }
+a:hover { text-decoration: none; }
+
+ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+li { margin: 0.3rem 0; }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+/* ── Header / breadcrumb ── */
+.lesson-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid var(--accent);
+}
+
+.breadcrumb {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.breadcrumb a { color: var(--muted); }
+
+.module-tag {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 0.2em 0.6em;
+  border-radius: 3px;
+  margin-bottom: 0.6rem;
+}
+
+.lesson-meta {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+
+/* ── Callout boxes ── */
+.callout {
+  border-left: 4px solid var(--accent);
+  background: var(--accent-light);
+  padding: 0.75rem 1rem;
+  margin: 1.25rem 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.callout.warn {
+  border-color: var(--warn);
+  background: var(--warn-light);
+}
+
+.callout.exam-tip {
+  border-color: var(--warn);
+  background: var(--warn-light);
+}
+
+.callout-title {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.3rem;
+  color: var(--accent);
+}
+
+.callout.warn .callout-title,
+.callout.exam-tip .callout-title {
+  color: var(--warn);
+}
+
+/* ── Concept table ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: var(--code-bg);
+  border-bottom: 2px solid var(--border);
+  font-family: var(--sans);
+  font-weight: 600;
+}
+
+td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tr:last-child td { border-bottom: none; }
+
+/* ── Quiz widget ── */
+.quiz-section {
+  margin-top: 3rem;
+  border-top: 3px solid var(--border);
+  padding-top: 1.5rem;
+}
+
+.quiz-section h2 {
+  border-bottom: none;
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.quiz-progress {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.question-block {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.question-text {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.options { list-style: none; padding: 0; margin: 0; }
+
+.options li {
+  margin: 0.4rem 0;
+}
+
+.options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  transition: background 0.1s;
+}
+
+.options label:hover { background: var(--accent-light); }
+
+.options input[type="radio"] { margin-top: 0.2rem; flex-shrink: 0; }
+
+.check-btn {
+  display: inline-block;
+  margin-top: 0.9rem;
+  padding: 0.45rem 1.1rem;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.check-btn:hover { opacity: 0.85; }
+
+.feedback {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  display: none;
+}
+
+.feedback.correct {
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid #bbf7d0;
+}
+
+.feedback.wrong {
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid #fecaca;
+}
+
+.score-banner {
+  display: none;
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--success-light);
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+/* ── Footer ── */
+.lesson-footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--border);
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.lesson-footer .ask-claude {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  background: var(--accent-light);
+  color: var(--accent);
+  border-radius: 4px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.nav-links a {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+}
+
+/* ── Source citation ── */
+.source-link {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0.25rem 0;
+}
+
+.source-link a { color: var(--muted); }
+
+/* ── Definition list ── */
+dl { margin: 0.5rem 0; }
+dt {
+  font-weight: 700;
+  margin-top: 0.75rem;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+}
+dd { margin: 0.2rem 0 0.5rem 1.25rem; }
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  html { font-size: 16px; }
+  .question-block { padding: 1rem; }
+}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – ECS Concepts</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Containers &amp; ECS</a> › Lesson 01
+    </div>
+    <div class="module-tag">Containers &amp; ECS</div>
+    <h1>ECS Concepts</h1>
+    <p class="lesson-meta">Lesson 01 of 04 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html" target="_blank">Amazon ECS Task Definitions</a></p>
+  </div>
+
+  <p>You've already built a container image and run it with Docker directly on an EC2 instance. That works, but it means you're managing the host, the engine, and the container yourself. <strong>ECS</strong> (Elastic Container Service) takes over the orchestration: you hand it a container image and instructions, and it decides where and how that container runs. ECS is to containers roughly what EC2 is to virtual machines.</p>
+
+  <p>ECS runs in one of two cluster modes — <strong>EC2 mode</strong> and <strong>Fargate mode</strong> — covered in the next lesson. This lesson stays one level up: the building blocks that apply to both modes.</p>
+
+  <h2>From Image to Running Container</h2>
+  <p>Working bottom-up, four concepts stack on top of each other:</p>
+
+  <dl>
+    <dt>Container definition</dt>
+    <dd>Points ECS at a container image stored on a registry — <strong>ECR</strong> (Amazon's own) or something external like Docker Hub — and declares which ports the container exposes. That's the associate-level scope: image + ports.</dd>
+
+    <dt>Task definition</dt>
+    <dd>Represents <strong>one application</strong> as a whole. A task definition bundles one or more container definitions — a simple app might be a single container, a more complex one might pair a web container with a database container. Alongside the container definitions, the task definition stores the CPU and memory the task consumes, its networking mode, which launch types (EC2 / Fargate) it's compatible with, and the <strong>task role</strong> (below).</dd>
+
+    <dt>Task</dt>
+    <dd>A running instance of a task definition. A single task <strong>does not scale itself and is not highly available</strong> — if it dies, nothing replaces it automatically.</dd>
+
+    <dt>Service (service definition)</dt>
+    <dd>Wraps one or more tasks to provide scaling and resilience: how many copies to run, restarting failed tasks, and distributing incoming load across copies via a load balancer. Anything long-running and business-critical is deployed as a service, not a bare task.</dd>
+  </dl>
+
+  <p>Creating a task definition in the console also creates a container definition alongside it, and a lot of real task definitions only ever hold one container — which is exactly why the two get confused. Keep them conceptually separate: the container definition is a pointer to an image and its ports; everything else — resources, networking, IAM, and the containers themselves — lives in the task definition.</p>
+
+  <h2>The Task Role</h2>
+  <p>The task definition specifies a <strong>task role</strong> — an IAM role the task assumes, giving every container inside that task temporary credentials to call AWS APIs. This is the best-practice way to give containerized code permissions, instead of baking credentials into the image or the host. This one comes up on the exam.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: two roles, not one</div>
+    ECS actually uses <strong>two separate IAM roles</strong>, and mixing them up is a classic exam trap:
+    <ul style="margin-top:0.5rem">
+      <li><strong>Task role</strong> — assumed by your application code inside the container, for calls it makes to AWS services (e.g. reading from S3).</li>
+      <li><strong>Task execution role</strong> — assumed by the <em>ECS agent</em> itself, before your code even runs, to pull the image from ECR and write logs to CloudWatch Logs.</li>
+    </ul>
+    See <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html" target="_blank">Task IAM role</a> and <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html" target="_blank">Task execution IAM role</a>. If a question describes a container that fails to pull its image or can't ship logs, that's an execution-role problem, not a task-role problem.
+  </div>
+
+  <h2>Putting It Together</h2>
+  <p>You deploy tasks or services into an ECS <strong>cluster</strong> — the same top-level building blocks apply whether the cluster is EC2-based or Fargate-based. The next lesson covers the technical differences between those two modes.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What does an ECS container definition specify?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The container definition is a pointer to where the image lives and which ports it exposes — that's the whole scope at the associate level."> The container image location and the ports it exposes</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CPU and memory limits belong to the task definition, which wraps one or more container definitions."> The CPU and memory limits for the whole task</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The IAM role a container can assume is the task role, defined at the task definition level, not the container definition."> The IAM role that the container is allowed to assume</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Desired copy count and load balancer wiring are configured in a service definition, not a container definition."> The number of running copies and the load balancer setup</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A single ECS task keeps crashing under load, and nothing is replacing it or spreading traffic across copies. What's missing?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A second container definition just adds another container to the same task — it doesn't add restart handling or scaling."> A second container definition inside the same task</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A task execution role only affects image pulls and log delivery — it has no effect on scaling or restarts."> A task execution role attached to the task definition</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A bare task has no built-in scaling or resilience. Wrapping it in a service handles restarting failed tasks, running multiple copies, and distributing load."> A service definition wrapping the task for scaling and restarts</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="ECR is just an image registry — swapping registries changes nothing about how many copies of a task are running."> Switching the container registry from Docker Hub to ECR</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A container in a running task fails before your application code even starts, unable to pull its image from ECR. Which role is most likely misconfigured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The task role is what your application code uses after startup to call AWS services — it isn't involved in pulling the image."> The task role, since it grants the app AWS access</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The task execution role is assumed by the ECS agent to pull the image and ship logs, before your code runs — that's exactly this failure mode."> The task execution role, since the agent needs it to pull images</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A service definition controls scaling and restarts, not image pull permissions for a single task."> The service definition, since it controls task restarts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Container definitions point at an image and its ports; they don't carry IAM permissions themselves."> The container definition, since it names the image</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-ecs-cluster-modes.html">Next: ECS Cluster Modes →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

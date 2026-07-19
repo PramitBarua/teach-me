@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – VPC Routing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">VPC Basics</a> › Lesson 03
+    </div>
+    <div class="module-tag">VPC Basics</div>
+    <h1>VPC Routing &amp; Route Tables</h1>
+    <p class="lesson-meta">Lesson 03 of 09 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html" target="_blank">AWS Route Tables Docs</a></p>
+  </div>
+
+  <h2>The VPC Router</h2>
+  <p>Every VPC contains a <strong>VPC router</strong> — a highly available virtual device that runs across every AZ the VPC uses. You do not manage it directly; it is always present and active. The router is reachable from every subnet at the <em>network + 1</em> address (e.g. <code>10.0.0.1</code> for a subnet starting at <code>10.0.0.0</code>). Without any additional configuration the router handles all intra-VPC traffic automatically — subnets can talk to each other out of the box.</p>
+
+  <h2>Route Tables</h2>
+  <p>A <strong>route table</strong> is a set of rules that tells the VPC router what to do with traffic leaving a subnet. Each row in the table is a <em>route</em> with two fields:</p>
+
+  <table>
+    <thead><tr><th>Field</th><th>Meaning</th><th>Example values</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Destination</strong></td><td>The IP range the rule matches</td><td><code>10.0.0.0/16</code> (entire VPC), <code>0.0.0.0/0</code> (default — everything else)</td></tr>
+      <tr><td><strong>Target</strong></td><td>Where to send matching traffic</td><td><code>local</code> (keep inside VPC), an IGW ID, a NAT gateway ID</td></tr>
+    </tbody>
+  </table>
+
+  <p>Route selection follows <strong>longest-prefix-match</strong>: the most specific route that matches the destination wins. A <code>/32</code> beats a <code>/24</code>, which beats a <code>/16</code>, which beats the default <code>0.0.0.0/0</code>. One exception: if two routes tie for specificity and one has target <code>local</code>, the <code>local</code> route always wins.</p>
+
+  <h2>Main Route Table vs Custom Route Tables</h2>
+  <p>A VPC is created with a single <strong>main route table</strong>. Any subnet that is not explicitly associated with a custom route table automatically uses the main route table. You can create additional <strong>custom route tables</strong> and associate them with specific subnets to override default routing behaviour.</p>
+
+  <table>
+    <thead><tr><th></th><th>Main route table</th><th>Custom route table</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Created by</strong></td><td>AWS, at VPC creation</td><td>You</td></tr>
+      <tr><td><strong>Default association</strong></td><td>All subnets not explicitly associated</td><td>Subnets you explicitly assign</td></tr>
+      <tr><td><strong>Can be deleted?</strong></td><td>No (only replaced)</td><td>Yes (if no subnets are associated)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    A subnet can only be associated with <strong>one route table</strong> at a time — either the main or a custom one. To make a subnet public you create a custom route table with a <code>0.0.0.0/0</code> → IGW route and associate it with that subnet.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A VPC route table has two routes: 10.0.0.0/16 → local and 10.0.1.0/24 → NAT Gateway. Traffic destined for 10.0.1.50 will be sent to which target?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The local route matches 10.0.1.50 but with a /16 prefix — less specific than the /24 route."> The local target, because local always wins</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. 10.0.1.0/24 is more specific than 10.0.0.0/16, so the longest-prefix-match rule sends traffic to the NAT Gateway."> The NAT Gateway, because /24 is more specific than /16</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There is no ambiguity — the /24 is clearly more specific than the /16."> Neither; AWS reports a routing conflict</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Routes are evaluated by prefix length, not by table position."> The local target, because it is listed first in the table</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You create a new subnet in a VPC but do not associate it with any route table. Which route table does it use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There is no 'empty' route table — every subnet is always associated with a route table."> No route table; traffic is dropped by default</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Any subnet without an explicit association automatically uses the VPC's main route table."> The VPC's main route table by default</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS does not prompt you to choose — it assigns the main route table automatically."> AWS prompts you to choose a route table</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The Internet Gateway route table is a custom table you create; it is not used by default for new subnets."> The Internet Gateway route table automatically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Two route table entries both match a packet's destination. One has target "local" and one has an equally specific prefix pointing to an IGW. Which target does the VPC router use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="When prefixes are equal, the IGW route does not win — local takes precedence."> The IGW, because it was added most recently</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. When two routes have equal prefix length, the local target always wins over any gateway target."> The local target, because local wins on equal-length ties</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS does not return an error for equal-length routes; it uses the defined tie-breaking rule."> Neither; AWS returns a routing error</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Route tables are deterministic — traffic is not split across both targets."> Traffic is load-balanced between both targets</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-vpc-subnets.html">← Previous: VPC Subnets</a>
+      <a href="0004-internet-gateway.html">Next: Internet Gateway →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

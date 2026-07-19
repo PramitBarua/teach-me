@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – EBS Volume Types: HDD-Based</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 09
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EBS Volume Types: HDD-Based</h1>
+    <p class="lesson-meta">Lesson 09 of 21 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html" target="_blank">EBS Volume Types (AWS docs)</a></p>
+  </div>
+
+  <p>HDD-based EBS volumes use spinning magnetic platters and moving read/write heads instead of flash memory. Moving parts mean lower performance and no support for random-access IOPS-heavy workloads — but they're significantly cheaper than SSD, which makes them the right call for specific, throughput-oriented, high-volume use cases.</p>
+
+  <p>There are two HDD types in general use: <strong>st1</strong> (Throughput Optimized HDD) and <strong>sc1</strong> (Cold HDD). A third, legacy magnetic type exists but isn't part of current general usage.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Neither st1 nor sc1 can be used as a <strong>boot volume</strong>. They're also unsuitable for anything requiring random, low-latency access — if a question mentions IOPS-sensitive or random-access workloads, HDD types are the wrong answer regardless of cost.
+  </div>
+
+  <h2>st1 — Throughput Optimized HDD</h2>
+  <p>st1 targets <strong>sequential</strong>, throughput-heavy access patterns — big data, data warehousing, log processing — where economy and sustained throughput matter more than IOPS or minimal latency. Volumes range from <strong>125 GB to 16 TB</strong>.</p>
+
+  <p>Just like gp2, st1 uses a credit-bucket model — except measured in <strong>MB/s</strong> rather than IOPS, and I/O is measured in 1 MB blocks (so its "500 IOPS" maximum is really 500 MB/s):</p>
+
+  <ul>
+    <li><strong>Baseline:</strong> 40 MB/s per TB of volume size</li>
+    <li><strong>Burst:</strong> up to 250 MB/s per TB of volume size</li>
+    <li><strong>Absolute ceiling:</strong> 500 MB/s (500 "IOPS" at 1 MB per operation) per volume</li>
+  </ul>
+
+  <h2>sc1 — Cold HDD</h2>
+  <p>sc1 is the cheapest storage EBS offers — built for data you rarely touch: archives, cold backups, anything accessed a handful of times a day at most. Sizing matches st1, <strong>125 GB to 16 TB</strong>, and it uses the same credit-bucket model at lower rates:</p>
+
+  <ul>
+    <li><strong>Baseline:</strong> 12 MB/s per TB of volume size</li>
+    <li><strong>Burst:</strong> up to 80 MB/s per TB of volume size</li>
+    <li><strong>Absolute ceiling:</strong> 250 MB/s (250 "IOPS" at 1 MB per operation) per volume</li>
+  </ul>
+
+  <table>
+    <thead><tr><th>Characteristic</th><th>st1 (Throughput Optimized)</th><th>sc1 (Cold)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Size range</strong></td><td>125 GB – 16 TB</td><td>125 GB – 16 TB</td></tr>
+      <tr><td><strong>Baseline throughput</strong></td><td>40 MB/s per TB</td><td>12 MB/s per TB</td></tr>
+      <tr><td><strong>Burst throughput</strong></td><td>250 MB/s per TB</td><td>80 MB/s per TB</td></tr>
+      <tr><td><strong>Max throughput/volume</strong></td><td>500 MB/s</td><td>250 MB/s</td></tr>
+      <tr><td><strong>Access pattern</strong></td><td>Sequential, frequent</td><td>Sequential, infrequent</td></tr>
+      <tr><td><strong>Boot volume?</strong></td><td>No</td><td>No</td></tr>
+      <tr><td><strong>Typical use</strong></td><td>Big data, data warehouses, log processing</td><td>Archives, cold/rarely-scanned data</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    Choosing between them is simple: if the data is genuinely cold and you can tolerate sc1's lower ceiling, take the extra savings. If you need frequent, sequential throughput, go st1. If the workload needs IOPS at all — random access, databases, anything latency-sensitive — skip HDD entirely and go back to SSD (gp2/gp3 or provisioned IOPS). See the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html" target="_blank">EBS Volume Types doc</a> for the full current comparison across all types.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team runs nightly log-processing jobs that stream large sequential files and need good sustained throughput at low cost. Which volume type fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="io2 is far more expensive than needed here and is built for random-access IOPS, not the sequential throughput this workload needs."> io2 provisioned IOPS SSD</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. st1 is designed exactly for sequential, throughput-heavy, frequently-accessed workloads like log processing at a lower cost than SSD."> st1 throughput optimized HDD</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="sc1 is cheaper but intended for infrequently accessed cold data, not nightly recurring throughput jobs — st1 fits the frequency better."> sc1 cold HDD storage</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="gp2's credit-bucket IOPS model isn't tuned for large sequential throughput jobs the way st1 is, and it costs more per GB for this pattern."> gp2 general purpose SSD</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Can an sc1 volume be used as an EC2 instance's boot volume?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="HDD-based volumes, including sc1, cannot serve as boot volumes — only SSD-based types can."> Yes, always supported</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Encryption status doesn't change whether sc1 can boot an instance — HDD types simply aren't boot-capable."> Only if encrypted first</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Neither st1 nor sc1 can be used as boot volumes — only SSD-based EBS types support that."> No, not supported at all</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instance size has no bearing on this — sc1's inability to boot an instance is a property of the volume type itself, not the instance."> Only on the largest instances</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. How does throughput scale for st1 and sc1 as volume size increases?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Throughput is not flat regardless of size for HDD types — it scales with size via a per-TB credit-bucket model, unlike gp3's flat baseline."> It stays flat regardless of size</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Both st1 and sc1 use a credit-bucket model where baseline and burst throughput scale per TB of volume size, up to a fixed per-volume ceiling."> It scales per TB, up to a cap</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="These types don't scale with a fixed IOPS-per-GB ratio like io1/io2 — HDD throughput scaling is per TB and measured in MB/s, not a GB-based IOPS ratio."> It follows a fixed IOPS:GB ratio</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Throughput is not manually provisioned independent of size for st1/sc1 the way it is for provisioned IOPS SSD or gp3's extra performance tier — it's derived from size via the credit model."> It is manually set, size-independent</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-ebs-volume-types-provisioned-iops.html">← Previous: EBS Volume Types: Provisioned IOPS (SSD)</a>
+      <a href="0010-instance-store-volumes-architecture.html">Next: Instance Store Volumes Architecture →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – CloudTrail</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 10</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>CloudTrail</h1>
+    <p class="lesson-meta">Lesson 10 of 11 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html" target="_blank">CloudTrail Docs</a></p>
+  </div>
+
+  <h2>What is CloudTrail?</h2>
+  <p><strong>AWS CloudTrail</strong> records every API call and account activity across your AWS account. Every action taken — via the console, CLI, SDK, or another AWS service — is logged as a <strong>CloudTrail event</strong>.</p>
+
+  <h2>Default Behaviour</h2>
+  <ul>
+    <li>CloudTrail is <strong>enabled by default</strong> for all AWS accounts.</li>
+    <li><strong>90 days</strong> of event history are stored at no cost, visible in the CloudTrail console.</li>
+    <li>To keep logs longer or process them programmatically, deliver them to an <strong>S3 bucket</strong> (where they can stay indefinitely for the cost of S3 storage alone).</li>
+  </ul>
+
+  <h2>Trail Types</h2>
+  <table>
+    <thead><tr><th>Type</th><th>What it logs</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>One-region trail</strong></td>
+        <td>Only records events from the region in which it is created.</td>
+      </tr>
+      <tr>
+        <td><strong>All-regions trail</strong></td>
+        <td>Records events from every region, including global services (IAM, STS, CloudFront). Recommended default.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Event Types</h2>
+  <table>
+    <thead><tr><th>Event type</th><th>Examples</th><th>Default?</th><th>Cost</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Management events</strong></td>
+        <td>Create/delete resources, attach policies, configure services (control-plane)</td>
+        <td>Yes</td>
+        <td>Free for first copy per region</td>
+      </tr>
+      <tr>
+        <td><strong>Data events</strong></td>
+        <td>S3 object reads/writes, Lambda invocations (data-plane)</td>
+        <td>No</td>
+        <td>Extra cost</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">CloudTrail is NOT real-time</div>
+    Events typically appear in the trail within <strong>15 minutes</strong> of the account activity. Do not rely on CloudTrail for immediate alerting — use CloudWatch Events / EventBridge for that.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    <strong>Who did what, when?</strong> → CloudTrail.<br>
+    <strong>What is happening in my application right now?</strong> → CloudWatch.<br>
+    These are the two most commonly confused services in exam questions.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. By default, how many days of CloudTrail event history are stored without a configured trail?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="7 days is not the documented default.">  7 days of event history free</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="30 days is not the documented default."> 30 days of event history free</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. AWS stores 90 days of event history at no cost in the CloudTrail console, even without a configured trail."> 90 days of event history free</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="365 days free is not the default; that would require a trail delivering to S3."> 365 days of event history free</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An S3 bucket has a bucket policy change, and a user also reads 1 000 objects from it. Which CloudTrail event types capture each activity?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Management and data events are different types; they are not both management events."> Both are captured as management events</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Bucket policy changes are management events (control-plane), not data events."> Both are captured as data events</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Changing a bucket policy is a management (control-plane) event; reading objects is a data event (must be enabled, costs extra)."> Policy change = management event; object reads = data event</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Object reads are data events, not management events."> Policy change = data event; object reads = management event</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A security engineer needs to determine exactly which IAM user deleted an S3 bucket 20 days ago. Which service provides this information?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudWatch Logs captures application logs and metrics, not API call history."> CloudWatch Logs, using log group search</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Config records configuration state changes but is not the primary source for 'who did it' audit trails."> AWS Config, using the configuration timeline</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. CloudTrail records every API call including DeleteBucket, the identity that made it, and the timestamp."> CloudTrail, which logs every API call with identity and time</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="VPC Flow Logs capture network traffic, not AWS API calls."> VPC Flow Logs, which capture network calls</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-cloudwatch-logs.html">← Lesson 09: CloudWatch Logs</a>
+      <a href="0011-aws-control-tower.html">Next: AWS Control Tower →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

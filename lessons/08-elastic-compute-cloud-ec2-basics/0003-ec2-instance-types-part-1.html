@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – EC2 Instance Types (Part 1)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 03
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EC2 Instance Types (Part 1)</h1>
+    <p class="lesson-meta">Lesson 03 of 21 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank">AWS EC2 Instance Types</a></p>
+  </div>
+
+  <p>An EC2 instance is an OS plus an allocation of resources — and the <strong>instance type</strong> is how you control exactly what that allocation looks like. Choosing well matters: it affects raw resource amounts, the <em>ratio</em> between resources, network and storage bandwidth, underlying hardware architecture, price, and access to specialized capabilities like GPUs or FPGAs.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    A recurring exam pattern: a performance problem is described, and one answer option is simply "change the instance type." Being able to judge whether a compute-optimized, memory-optimized, or storage-optimized type fits better is often enough to answer correctly.
+  </div>
+
+  <h2>What instance type selection actually controls</h2>
+  <ul>
+    <li><strong>Raw resources</strong> — vCPU count, memory, local storage capacity and type.</li>
+    <li><strong>Resource ratios</strong> — some families give more CPU per dollar, others prioritize memory per dollar.</li>
+    <li><strong>Network and storage bandwidth</strong> — if you provision a high-performance EBS volume but pick an instance without enough network bandwidth, the instance becomes the bottleneck, not the storage.</li>
+    <li><strong>Hardware architecture and vendor</strong> — ARM vs. x86, Intel vs. AMD CPUs.</li>
+    <li><strong>Additional capabilities</strong> — GPUs for graphics, or FPGAs (field-programmable gate arrays) — reconfigurable hardware you can program for a specific task.</li>
+  </ul>
+
+  <h2>The five instance categories</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Optimized for</th><th>Typical use cases</th></tr></thead>
+    <tbody>
+      <tr><td><strong>General purpose</strong></td><td>Balanced CPU:memory ratio</td><td>Default starting point for steady-state workloads</td></tr>
+      <tr><td><strong>Compute optimized</strong></td><td>More CPU per dollar</td><td>Media encoding, HPC, scientific modeling, gaming servers, ML</td></tr>
+      <tr><td><strong>Memory optimized</strong></td><td>More memory per dollar</td><td>Large in-memory datasets, in-memory caching, some databases</td></tr>
+      <tr><td><strong>Accelerated computing</strong></td><td>Dedicated GPUs or FPGAs</td><td>Parallel processing, ML training, custom-programmed hardware</td></tr>
+      <tr><td><strong>Storage optimized</strong></td><td>Large, fast local storage</td><td>Data warehousing, search, high sequential/random I/O workloads</td></tr>
+    </tbody>
+  </table>
+  <p><strong>General purpose is always your default.</strong> Only move to a specialized category once you have a specific, identified requirement that general purpose can't satisfy well.</p>
+
+  <h2>Decoding an instance type name</h2>
+  <p>Instance type names look cryptic — for example <code>R5DN.8XLARGE</code> — but they follow a consistent structure. Always use the <em>full</em> instance type when communicating a requirement; it's unambiguous.</p>
+
+  <table>
+    <thead><tr><th>Segment</th><th>Example</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Family</strong></td><td>R</td><td>The category/purpose code (see below) — memory optimized, in this case</td></tr>
+      <tr><td><strong>Generation</strong></td><td>5</td><td>Which iteration of that family — higher is newer, generally better price/performance</td></tr>
+      <tr><td><strong>Additional capability letters</strong></td><td>DN</td><td>Optional flags — e.g. <code>d</code> = NVMe storage, <code>n</code> = network optimized, <code>a</code> = AMD CPU, <code>e</code> = extra RAM/storage</td></tr>
+      <tr><td><strong>Size</strong></td><td>8XLARGE</td><td>Amount of CPU/memory allocated within that family and generation</td></tr>
+    </tbody>
+  </table>
+
+  <p>Sizes typically scale in a roughly linear sequence: nano, micro, small, medium, large, xlarge, 2xlarge, 4xlarge, 8xlarge, and so on — though the exact starting point varies by family. Larger sizes often carry a price premium, which matters when weighing "scale up" against "scale out" later in the course.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Default guidance is to always pick the latest generation available — it typically offers better price/performance. The only reasons to stay on an older generation are regional availability or an organization's internal testing/approval process. See the official <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank">EC2 Instance Types guide</a> for the current, authoritative list of families, generations, and sizes.
+  </div>
+
+  <h2>Memory hooks for family letters</h2>
+  <ul>
+    <li><strong>C</strong> — Compute</li>
+    <li><strong>R</strong> — RAM (memory)</li>
+    <li><strong>I</strong> — I/O</li>
+    <li><strong>D</strong> — Dense storage</li>
+    <li><strong>G</strong> — GPU</li>
+    <li><strong>P</strong> — Parallel processing</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. In the instance type <code>M6G.LARGE</code>, what does the "6" represent?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The instance family (general purpose vs compute vs memory, etc.) is denoted by the leading letter, here M."> The instance family category</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The number directly after the family letter is the generation — higher numbers are newer iterations."> The generation of that family</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Size (large, xlarge, 2xlarge, etc.) is a separate segment at the end of the name, not the number after the family letter."> The instance size within the family</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Region/AZ is never encoded in the instance type name — that's set separately at launch."> The AWS Region it must launch in</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A workload needs a heavy CPU:memory ratio for scientific modeling. Which category fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="General purpose gives a balanced ratio, not extra CPU per dollar for compute-heavy modeling work."> General purpose</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Compute optimized instances give more CPU per dollar and suit HPC, scientific modeling, and media encoding."> Compute optimized</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Memory optimized prioritizes RAM per dollar, the opposite ratio of what a CPU-bound modeling workload needs."> Memory optimized</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Storage optimized targets fast local disk I/O, not raw CPU-heavy computation."> Storage optimized</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You provision a high-IOPS EBS volume but the instance shows disappointing performance. What's the likely cause per this lesson?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EBS volumes attach within the same AZ as the instance by design; that alone wouldn't cause a performance shortfall like this."> The volume was provisioned in the wrong AZ</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Instance type governs available network/storage bandwidth — an undersized instance becomes the bottleneck even with a fast EBS volume."> The instance's bandwidth is the bottleneck</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance store is unrelated to attached EBS volume performance — it's separate host-local storage."> The instance store was not enabled</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance generation affects price/performance broadly, but the specific bottleneck described is bandwidth, tied to instance type sizing."> The EBS volume generation is outdated</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-ec2-architecture-and-resilience.html">← Previous: EC2 Architecture and Resilience</a>
+      <a href="0004-ec2-instance-types-part-2.html">Next: EC2 Instance Types (Part 2) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

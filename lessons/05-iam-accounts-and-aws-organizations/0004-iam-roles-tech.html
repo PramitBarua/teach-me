@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – IAM Roles – The Tech</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 04</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>IAM Roles – The Tech</h1>
+    <p class="lesson-meta">Lesson 04 of 11 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html" target="_blank">AWS IAM Roles Docs</a></p>
+  </div>
+
+  <h2>Roles vs Users: the key difference</h2>
+  <p>An <strong>IAM Role</strong> is not tied to one specific person or application. It represents a <em>level of access</em> that can be assumed temporarily by any trusted identity.</p>
+
+  <table>
+    <thead><tr><th></th><th>IAM User</th><th>IAM Role</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Who uses it</strong></td><td>One named entity</td><td>Any trusted principal</td></tr>
+      <tr><td><strong>Credentials</strong></td><td>Long-term (password / access key)</td><td>Short-term (temporary security credentials)</td></tr>
+      <tr><td><strong>Good for</strong></td><td>Known, countable principals</td><td>Services, unknown count, federation</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-title">When to choose a role over a user</div>
+    If you cannot name exactly <em>one</em> thing using the identity, or there could be more than 5 000 principals, prefer an IAM Role.
+  </div>
+
+  <h2>Two Policies on Every Role</h2>
+
+  <dl>
+    <dt>Trust Policy</dt>
+    <dd>Answers: <em>Who is allowed to assume this role?</em> It lists trusted principals — IAM users, other roles, AWS services, external identity providers (Google, Facebook), or other AWS accounts.</dd>
+
+    <dt>Permission Policy</dt>
+    <dd>Answers: <em>What can the role do once assumed?</em> Standard IAM policy statements with Allow/Deny.</dd>
+  </dl>
+
+  <h2>Assuming a Role: the flow</h2>
+  <ol>
+    <li>A principal (inside or outside the account) calls <strong>STS AssumeRole</strong>.</li>
+    <li>AWS checks the role's Trust Policy — is this principal listed?</li>
+    <li>If yes, AWS issues <strong>temporary credentials</strong> (Access Key ID + Secret + Session Token) with a configurable expiry.</li>
+    <li>The principal uses those credentials to call AWS APIs. The Permission Policy governs what it can do.</li>
+    <li>Credentials expire. To continue, the principal must re-assume the role.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    A role can be referenced as a principal in <strong>resource-based policies</strong> (e.g. S3 bucket policies). An IAM Group cannot.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Which policy on an IAM Role controls <em>who</em> can assume it?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The permission policy defines what actions the role can take after it is assumed — not who can assume it."> Permission policy attached to the role</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. The trust policy lists principals that are allowed to call AssumeRole."> Trust policy attached to the role</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SCPs restrict accounts, not who can assume a role."> Service Control Policy on the account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Session policies are optional and only restrict, they don't grant assume rights."> Session policy passed at assume-role time</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. When an identity assumes a role, what type of credentials does AWS return?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Long-term access keys belong to IAM Users, not to assumed roles."> Long-term access key and secret</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. STS returns temporary credentials: Access Key ID, Secret Access Key, and a Session Token, all with an expiry."> Temporary credentials with an expiry time</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="No new user is created; the principal uses temporary credentials under the role."> A new IAM User is created dynamically</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The role's ARN is not a credential — it's an identifier."> The role ARN acts as the API credential</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. The trust policy of a role lists <em>arn:aws:iam::222222222222:root</em>. What does this mean?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation=":root in an ARN refers to the account, not specifically the root user."> Only the root user of account 222222222222 can assume the role</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. :root means the entire account is trusted. Any principal in account 222222222222 that has permission to call AssumeRole may assume the role."> Any principal in account 222222222222 may assume the role</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS services are identified by service principal format (e.g. ec2.amazonaws.com), not account ARNs."> Any AWS service in account 222222222222 can use the role</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cross-account access requires an explicit account ARN in the trust policy, not same-account."> The role is limited to same-account usage only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-iam-groups.html">← Lesson 03: IAM Groups</a>
+      <a href="0005-when-to-use-iam-roles.html">Next: When to Use IAM Roles →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

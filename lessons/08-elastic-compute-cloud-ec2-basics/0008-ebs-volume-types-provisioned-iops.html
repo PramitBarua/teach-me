@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – EBS Volume Types: Provisioned IOPS (SSD)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">EC2 Basics</a> › Lesson 08
+    </div>
+    <div class="module-tag">EC2 Basics</div>
+    <h1>EBS Volume Types: Provisioned IOPS (SSD)</h1>
+    <p class="lesson-meta">Lesson 08 of 21 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html" target="_blank">EBS Volume Types (AWS docs)</a></p>
+  </div>
+
+  <p>Provisioned IOPS SSD is EBS's high-performance tier: <strong>io1</strong>, its successor <strong>io2</strong>, and the higher-performance <strong>io2 Block Express</strong> variant. Where gp2/gp3 give you a performance level derived from (or capped near) volume size, provisioned IOPS volumes let you dial in an IOPS number <em>independent of size</em> — you pay for the size and the performance as two separate line items.</p>
+
+  <p>These volumes exist for workloads that need sub-millisecond, <strong>consistently low latency</strong> at high and predictable throughput — the kind of profile large relational databases and I/O-intensive workloads demand.</p>
+
+  <h2>Per-volume specs</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Size range</th><th>Max IOPS/volume</th><th>Max throughput/volume</th><th>Max IOPS:GB ratio</th></tr></thead>
+    <tbody>
+      <tr><td><strong>io1</strong></td><td>4 GiB – 16 TiB</td><td>64,000</td><td>1,000 MB/s</td><td>50:1</td></tr>
+      <tr><td><strong>io2</strong></td><td>4 GiB – 16 TiB</td><td>64,000</td><td>1,000 MB/s</td><td>500:1</td></tr>
+      <tr><td><strong>io2 Block Express</strong></td><td>4 GiB – 64 TiB</td><td>256,000</td><td>4,000 MB/s</td><td>1000:1</td></tr>
+    </tbody>
+  </table>
+
+  <p>The IOPS:GB ratio is a <em>maximum</em> — it caps how much IOPS you can provision relative to a given volume size, not a guaranteed baseline. io1 tops out at 50 IOPS per GB, io2 at 500, and Block Express at 1000, which is exactly why the newer types are useful for small volumes that still need extreme performance.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    64,000 IOPS on io1/io2 is <strong>4× the maximum available on gp2/gp3</strong> (16,000). Throughput of 1,000 MB/s on io1/io2 matches gp3's max but comfortably beats gp2's 250 MB/s ceiling. If a question says "smaller volume, needs extreme IOPS," the answer is provisioned IOPS SSD, not General Purpose — size-linked types can't get there.
+  </div>
+
+  <h2>Per-instance performance ceilings</h2>
+  <p>A single volume's maximum isn't the whole story — there's also a ceiling on how much performance a single <strong>EC2 instance</strong> can draw from EBS in total, across all attached volumes combined. This ceiling depends on the instance type and size (only the newest, largest instances hit the top figures), and it's typically higher than what one volume alone can supply — meaning you often need several volumes working together to actually saturate it.</p>
+
+  <p>At the time of this course, the instructor cites these approximate per-instance maximums — treat the exact figures as illustrative rather than exam-critical, and check current values in the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html" target="_blank">EBS Volume Types doc</a> or the EC2 instance type pages, since AWS raises these ceilings as new instance generations ship:</p>
+
+  <table>
+    <thead><tr><th>Volume type</th><th>Per-instance max IOPS</th><th>Per-instance max throughput</th></tr></thead>
+    <tbody>
+      <tr><td><strong>gp2 / gp3</strong></td><td>~260,000</td><td>~7,000 MB/s</td></tr>
+      <tr><td><strong>io1</strong></td><td>~260,000</td><td>~7,500 MB/s</td></tr>
+      <tr><td><strong>io2</strong></td><td>~160,000</td><td>~4,750 MB/s</td></tr>
+      <tr><td><strong>io2 Block Express</strong></td><td>~260,000</td><td>~7,500 MB/s</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    Don't try to memorize the precise per-instance numbers — the exam cares more about the <em>relative ordering</em>: General Purpose SSD &lt; Provisioned IOPS SSD (io1/io2) &lt; io2 Block Express &lt; instance store, which the next couple of lessons will put in context.
+  </div>
+
+  <h2>When to reach for provisioned IOPS</h2>
+  <ul>
+    <li>Workloads needing <strong>sub-millisecond, consistent</strong> latency — not just high average throughput.</li>
+    <li>Smaller volumes that still need very high IOPS — impossible with gp2/gp3 because their performance is capped near volume size.</li>
+    <li>Large, I/O-intensive relational or NoSQL databases where latency spikes are unacceptable.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Why would you choose io2 over gp3 for a small, 20 GB volume?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="io2 is not cheaper for small volumes generally — you're paying separately for provisioned IOPS on top of size, which usually costs more than gp3's included baseline."> io2 always costs less overall</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. io2 lets you provision IOPS independently of size, up to a 500:1 ratio, so a small volume can still get very high, consistent IOPS — something gp3 can't match beyond its 16,000 ceiling shared across sizes."> Need IOPS beyond size limits</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="io2 does not have a smaller minimum size than gp3 — both are usable at small sizes, that's not the distinguishing reason."> io2 has a smaller size minimum</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-AZ replication is not a distinguishing feature here — EBS volumes, of any type, are AZ-scoped."> io2 replicates data across AZs</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. What does the IOPS:GB ratio (e.g. 500:1 for io2) actually represent?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="It's not a guaranteed baseline you automatically receive — you must explicitly provision the IOPS you want, up to that ratio."> A guaranteed baseline IOPS</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. It's the maximum IOPS you're allowed to provision relative to volume size — e.g. a 100 GB io2 volume could be provisioned up to 50,000 IOPS."> A cap on provisionable IOPS</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This ratio governs IOPS provisioning limits, not throughput in MB/s, which has its own separate maximum."> The max throughput in MB/s</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This ratio has nothing to do with instance attachment limits — it's purely about IOPS relative to a single volume's size."> The number of attachable instances</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Why might a single EC2 instance need multiple provisioned IOPS volumes attached to hit its full performance potential?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EBS volumes are not attachable across multiple instances by default — this isn't about multi-attach, and it doesn't address the per-instance ceiling question."> Volumes cannot multi-attach here</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. There's a per-instance maximum for total EBS performance, and it's often higher than what a single volume can deliver on its own — so several volumes combined are needed to saturate it."> Per-instance caps exceed one volume</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Volume size limits (up to 16 TiB or 64 TiB) aren't the reason for needing multiple volumes here — the driver is the per-instance performance ceiling, not capacity."> Volumes are capped at 4 GiB total</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Snapshots are unrelated to why an instance might need multiple concurrently attached volumes for performance."> Snapshots must always be paired up</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-ebs-volume-types-general-purpose.html">← Previous: EBS Volume Types: General Purpose (SSD)</a>
+      <a href="0009-ebs-volume-types-hdd-based.html">Next: EBS Volume Types: HDD-Based →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

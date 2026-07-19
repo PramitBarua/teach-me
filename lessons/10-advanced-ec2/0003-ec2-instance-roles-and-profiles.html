@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – EC2 Instance Roles and Profiles</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced EC2</a> › Lesson 03
+    </div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>EC2 Instance Roles and Profiles</h1>
+    <p class="lesson-meta">Lesson 03 of 08 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html" target="_blank">IAM Roles for Amazon EC2</a></p>
+  </div>
+
+  <p>IAM roles are the best-practice way for AWS services to gain permissions on your behalf. An <strong>EC2 instance role</strong> is that same idea applied to EC2: an IAM role the EC2 service can assume, so that anything running inside the instance inherits whatever permissions the role's policy grants — no long-term credentials required.</p>
+
+  <h2>Role, Profile, Instance: Three Distinct Things</h2>
+  <p>The architecture has one layer of indirection that's easy to miss. An <strong>IAM role</strong> has a permissions policy attached to it — assuming it generates temporary credentials with that policy's permissions. But a role can't attach to an EC2 instance directly. The thing that actually attaches is an <strong>instance profile</strong> — a thin wrapper around the role that's the real mechanism for getting the role's credentials into the instance.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the console hides this from you</div>
+    Create a role through the IAM console and it automatically creates an instance profile with the <strong>same name</strong> — so it looks like you're attaching a role directly to an instance. You're not; you're attaching the instance profile. Using the CLI or CloudFormation, you must create the role and the instance profile as two separate resources. This distinction is a known exam trap.
+  </div>
+
+  <h2>How Credentials Reach the Instance</h2>
+  <p>Once an instance profile is attached, temporary security credentials are delivered via <strong>instance metadata</strong> — specifically under the IAM tree, in a security-credentials path named for the role. Any application on the instance can read that metadata path and use the credentials to call AWS APIs, the same way the AWS CLI does automatically when it finds instance role credentials available.</p>
+
+  <p>The standout feature of this delivery mechanism: EC2 and the Security Token Service continuously coordinate to keep these credentials <strong>renewed before they expire</strong>. As long as the instance role stays attached and your application re-checks the metadata periodically, it never ends up holding expired credentials.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Always prefer roles over long-term credentials</div>
+    Storing access keys inside an EC2 instance — or anywhere else long-term, like a laptop — is explicitly bad practice. Instance roles remove the need entirely: no keys to leak, rotate, or manage, since the credentials are temporary and self-renewing for as long as the role is attached.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Using the AWS CLI, you create an IAM role for EC2 with a permissions policy, but launching an instance with it fails because there's nothing matching to attach. What's missing?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A permissions policy is already attached to the role in this scenario — that's not the missing piece when using the CLI."> A permissions policy attached to the IAM role</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Unlike the console, the CLI doesn't auto-create an instance profile alongside the role — you must create the instance profile yourself and add the role to it before it can attach to an instance."> An instance profile wrapping the role, created separately</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EC2 instance roles use temporary STS credentials, not long-term access keys — adding access keys would be the bad practice this feature is designed to avoid."> A set of long-term access keys for the instance</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A trust policy on the role is needed for EC2 to assume it, but the scenario is about attaching to an instance, which specifically requires the instance profile wrapper."> A CloudTrail trail to log the role's usage</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application on an EC2 instance has been running for hours using instance role credentials, calling S3 constantly. What's true of its credentials right now?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instance role credentials are temporary by design and continuously renewed by EC2 and STS — they don't simply expire and fail without renewal."> They expired hours ago and every call is failing</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. EC2 and STS coordinate to keep instance role credentials renewed before expiry, so as long as the role stays attached, the app always has valid credentials via metadata."> They're still valid, since EC2 and STS keep them renewed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instance role credentials rotate automatically in the background — the application doesn't need to manually request renewal via an API call."> The app must manually call IAM to renew them each hour</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instance role credentials are scoped to the role's permissions policy for as long as the role is attached — they don't silently downgrade to read-only."> They've silently downgraded to read-only permissions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team wants applications on an EC2 instance to call AWS APIs without ever storing access keys on the instance. What should they use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Access keys stored in user data are still long-term credentials sitting on the instance, readable by anyone with instance access — this doesn't avoid storing keys."> Access keys embedded in the instance's user data</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. An instance profile wrapping an IAM role delivers temporary, auto-renewing credentials via instance metadata — no long-term keys ever need to be stored on the instance."> An instance profile wrapping an IAM role with the needed permissions</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A security group controls network traffic to and from the instance — it has no role in delivering AWS API credentials."> A security group configured to allow outbound API calls</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="An AMI baked with credentials still embeds long-term keys directly into every instance launched from it — the opposite of the goal here."> An AMI pre-baked with the application's access keys</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-cfn-init-and-creation-policies.html">← Previous: cfn-init and Creation Policies</a>
+      <a href="0004-ssm-parameter-store.html">Next: SSM Parameter Store →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

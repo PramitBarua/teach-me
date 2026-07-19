@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15 – S3 Access Logs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 15</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Access Logs</h1>
+    <p class="lesson-meta">Lesson 15 of 17 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html" target="_blank">S3 Server Access Logging Docs</a></p>
+  </div>
+
+  <h2>What is S3 Access Logging?</h2>
+  <p>S3 Access Logging records detailed information about every request made to a bucket. It is a primary tool for <strong>security auditing</strong>, understanding access patterns, and diagnosing unexpected S3 billing increases.</p>
+
+  <h2>Source Bucket and Target Bucket</h2>
+  <p>The setup involves two buckets:</p>
+  <ul>
+    <li><strong>Source bucket</strong> — the bucket you want visibility into. You enable access logging on this bucket.</li>
+    <li><strong>Target bucket</strong> — where the log files are delivered. It can be a different bucket, or even the source bucket itself (though a separate bucket is cleaner).</li>
+  </ul>
+
+  <h2>How Logging Works</h2>
+  <p>When you enable logging, S3 creates a <strong>log delivery group</strong> — a special system entity that reads the logging configuration on the source bucket and writes log files to the target bucket. The log delivery group needs <strong>write permission on the target bucket</strong>, which is granted via an <strong>ACL</strong> on the target bucket.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Best-effort delivery</div>
+    Access logging is a <em>best-effort</em> process. Log records are usually delivered within a few hours, and changes to the logging configuration may take a few hours to take effect. Do not rely on it for real-time alerting — use <a href="0014-s3-events.html">S3 Events</a> or CloudWatch for that.
+  </div>
+
+  <h2>Managing Multiple Source Buckets</h2>
+  <p>A single target bucket can receive logs from <strong>many source buckets</strong>. To keep logs organised, set a <strong>key prefix</strong> in each source bucket's logging configuration. For example, a source bucket named <code>prod-uploads</code> could log to the prefix <code>prod-uploads/</code> in the shared target bucket.</p>
+
+  <h2>Log Lifecycle</h2>
+  <p>S3 does not automatically expire or delete log files — they accumulate indefinitely. You are responsible for managing their lifecycle: apply <strong>lifecycle rules</strong> on the target bucket to transition old logs to a cheaper storage class or expire them after a retention period.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Three things to remember: (1) access is granted to the log delivery group via <strong>ACL</strong> on the target bucket; (2) logging is <em>best-effort</em>, not real-time; (3) you must manage log expiry yourself with lifecycle rules.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What mechanism grants the S3 log delivery group permission to write to the target bucket?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="IAM policies attach to identities. The log delivery group is an S3 system entity, not an IAM identity — you can't attach an IAM policy to it."> An IAM policy attached to the log delivery group</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The bucket policy on the source bucket controls access to the source, not write access to the target bucket."> A bucket policy on the source logging bucket</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. The log delivery group is granted write access to the target bucket via an ACL on the target bucket. This is one of the remaining use cases for S3 ACLs."> An ACL on the target bucket for write access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A pre-signed URL is a time-limited URL for a specific object. It is not the mechanism for granting ongoing system-level write access."> A pre-signed URL with PUT permission scope</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Ten S3 buckets all log to the same target bucket. How should logs be separated to make auditing easy?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Using a separate target bucket per source bucket defeats the purpose of centralising logs and increases management overhead."> Create a separate target bucket for each source bucket</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Lifecycle rules manage log expiry, not log organisation within a bucket."> Apply lifecycle rules to each source bucket directly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Setting a unique key prefix in each source bucket's logging configuration causes S3 to write that source's logs under a distinct prefix path in the shared target bucket."> Set a unique log key prefix per source bucket configuration</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="S3 does not separate logs by storage class. Storage class is a cost/access trade-off, not an organisational feature."> Store each source bucket's logs in a different storage class</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A target bucket has been receiving access logs for 2 years. No lifecycle rule is configured. What happens to the log files?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 does not auto-delete log files. They accumulate until you configure a lifecycle rule to expire them."> S3 automatically deletes logs older than 90 days</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 does not auto-archive logs to Glacier. Without a lifecycle rule, logs stay in whatever class they were written in."> S3 automatically archives logs to Glacier Flexible</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. S3 Access Logs accumulate indefinitely without any automatic cleanup. You must create lifecycle rules on the target bucket to transition or expire old log files."> Log files accumulate indefinitely, increasing storage cost</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 does not stop writing new logs when old ones are not cleaned up. Logging continues and files continue to accumulate."> S3 stops writing new logs once storage exceeds a limit</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0014-s3-events.html">← Lesson 14: S3 Events</a>
+      <a href="0016-s3-object-lock.html">Next: S3 Object Lock →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

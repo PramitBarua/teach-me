@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – EFS Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Network Storage &amp; Data Lifecycle</a> › Lesson 01
+    </div>
+    <div class="module-tag">Network Storage &amp; Data Lifecycle</div>
+    <h1>EFS Architecture</h1>
+    <p class="lesson-meta">Lesson 01 of 02 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html" target="_blank">Amazon EFS User Guide</a></p>
+  </div>
+
+  <p>Every EC2 instance you've used so far stores its data on EBS — storage tied to one instance, in one Availability Zone. That's fine until you need many instances to share the same files, or you need an instance to be disposable without losing its data. <strong>EFS</strong> (Elastic File System) solves this: a network file system that multiple Linux instances can mount and use at the same time.</p>
+
+  <h2>File Storage, Not Block Storage</h2>
+  <p>EFS is AWS's managed implementation of <strong>NFS version 4</strong> (Network File System), a common shared-storage standard. Where <strong>EBS is block storage</strong> — a raw volume attached to a single instance — <strong>EFS is file storage</strong>: Linux mounts it into its directory tree (e.g. <code>/nfs/media</code>) and it behaves like a local folder, except the underlying data lives outside any one instance and can be attached to many instances simultaneously.</p>
+
+  <p>Think of a WordPress-style app storing user-uploaded media on local disk: lose the instance, lose the media. Move that media onto an EFS file system instead, and the instance becomes closer to <strong>stateless</strong> — it can be replaced without losing anything, and every instance in a fleet sees the same files.</p>
+
+  <h2>Architecture: File Systems and Mount Targets</h2>
+  <p>EFS is a <strong>private, VPC-scoped service</strong> by default. The base entity is the <strong>file system</strong>, which uses <strong>POSIX permissions</strong> — the standard permission model every Linux distribution understands.</p>
+
+  <p>Instances don't connect to the file system directly. They connect through <strong>mount targets</strong> — elastic network interfaces placed in specific subnets, each taking an IP address from that subnet's range. An instance mounts the file system via the mount target's IP.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    For high availability, place a <strong>mount target in every Availability Zone</strong> the VPC uses — exactly the same HA pattern as NAT Gateways. One mount target per AZ means an AZ failure doesn't cut off access to the file system for instances in the other AZs.
+  </div>
+
+  <p>Because EFS is VPC-scoped, access from outside the VPC — an on-premises data center, for example — requires hybrid networking: <strong>VPC peering</strong>, a <strong>VPN connection</strong>, or <strong>AWS Direct Connect</strong>. Any Linux server reachable through one of those paths can mount the same file system as instances inside the VPC.</p>
+
+  <h2>Performance Modes</h2>
+  <table>
+    <thead><tr><th>Mode</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>General Purpose</strong> (default)</td><td>Latency-sensitive workloads — web servers, CMS, home directories, general file serving</td></tr>
+      <tr><td><strong>Max I/O</strong></td><td>Highly parallel workloads needing higher aggregate throughput/operations-per-second, at the cost of increased latency — big data, media processing, scientific analysis</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Throughput Modes</h2>
+  <table>
+    <thead><tr><th>Mode</th><th>How it behaves</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Bursting</strong> (default)</td><td>Throughput scales with file system size, with a burst pool — same trade-off as EBS gp2</td></tr>
+      <tr><td><strong>Provisioned</strong></td><td>Throughput is set independently of how much data is stored — same trade-off as EBS io1</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Storage Classes</h2>
+  <p>EFS mirrors S3's cost/access trade-off with two storage classes: <strong>Standard</strong> (default, for frequently accessed files) and <strong>Infrequent Access (IA)</strong> (lower cost, for files that aren't touched often). Just like S3, <strong>lifecycle policies</strong> can automatically move files between classes based on access patterns.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Scope</div>
+    EFS is officially supported for <strong>Linux instances only</strong>. If a scenario mentions Windows instances needing shared file storage, EFS is the wrong answer — that points toward FSx instead.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A fleet of Linux EC2 instances across 3 Availability Zones needs to share the same set of files, with no single AZ failure cutting off access. What should you configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A single mount target in one AZ means instances in the other two AZs lose access if that AZ fails — this doesn't provide HA."> One EFS mount target, placed in whichever AZ has the most instances</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Just like NAT Gateways, EFS mount targets are AZ-scoped — one mount target per AZ ensures instances in every AZ keep access if any single AZ fails."> An EFS file system with one mount target in each of the 3 Availability Zones</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EBS volumes attach to a single instance in a single AZ — they cannot be mounted by multiple instances across AZs the way EFS can."> A shared EBS volume attached to all instances</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EFS mount targets are placed per-AZ inside the VPC — a single Region-wide endpoint isn't how the architecture works."> A single Region-wide EFS endpoint with no per-AZ configuration</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application performs highly parallel big-data processing across many EC2 instances and needs maximum aggregate throughput, tolerating some added latency. Which EFS performance mode fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="General Purpose is optimized for latency-sensitive workloads like web serving, not maximum aggregate throughput for parallel processing."> General Purpose, because it is the default mode</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Max I/O scales to higher aggregate throughput and operations-per-second for highly parallel workloads, trading off increased per-operation latency."> Max I/O, because it scales to higher aggregate throughput for parallel workloads</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Provisioned is a throughput mode (controlling bandwidth independent of size), not a performance mode — it doesn't address the parallel-workload requirement here."> Provisioned throughput mode, because it removes all latency</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EFS doesn't have a 'Bursting' performance mode — Bursting is a throughput mode, and performance modes are General Purpose and Max I/O."> Bursting performance mode, since it is designed for parallel access</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team wants to migrate rarely-accessed archival files onto EFS, minimizing storage cost, while still letting the data move automatically as access patterns change. What should they use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard is EFS's default storage class for frequently accessed files — it costs more than Infrequent Access and doesn't fit a cost-minimization goal for rarely-accessed data."> The Standard storage class only, since it is the EFS default</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Infrequent Access minimizes cost for rarely-touched files, and EFS lifecycle policies — mirroring S3 — can automatically transition files between Standard and IA as access patterns change."> The Infrequent Access storage class, combined with a lifecycle policy to transition files automatically</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Bursting is a throughput mode governing bandwidth scaling, not a storage class — it has no effect on per-GB storage cost."> Bursting throughput mode, since it reduces per-GB storage cost</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Max I/O is a performance mode for parallel throughput, unrelated to storage cost or access-based data movement."> Max I/O performance mode, since it automatically archives cold data</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-aws-backup.html">Next: AWS Backup →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – RDS Custom</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 10
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>RDS Custom</h1>
+    <p class="lesson-meta">Lesson 10 of 16 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-custom.html" target="_blank">Amazon RDS Custom</a></p>
+  </div>
+
+  <p>This is a deliberately short lesson — RDS Custom is a niche product. You need a surface-level understanding for the exam, not deep expertise.</p>
+
+  <h2>Filling the Gap Between RDS and EC2</h2>
+  <p>Standard RDS gives you a fully managed database server, but <strong>no OS or engine-level access</strong>. Running a database on EC2 gives you full access, but you own <em>everything</em> — OS patching, engine patching, backups, HA, all of it (see <a href="0004-databases-on-ec2.html">Lesson 04</a>). <strong>RDS Custom sits in between</strong>: RDS-style automation, plus the ability to customize the OS and engine.</p>
+
+  <table>
+    <thead><tr><th></th><th>RDS</th><th>RDS Custom</th><th>Database on EC2</th></tr></thead>
+    <tbody>
+      <tr><td>OS / SSH access</td><td>No</td><td>Yes (SSH, RDP, Session Manager)</td><td>Yes</td></tr>
+      <tr><td>Engines</td><td>MySQL, MariaDB, PostgreSQL, Oracle, SQL Server</td><td><strong>Oracle and SQL Server only</strong></td><td>Any</td></tr>
+      <tr><td>Visible in your account?</td><td>No EC2/EBS/backups visible</td><td><strong>Yes</strong> — EC2 instances, EBS volumes, backups all appear</td><td>Yes</td></tr>
+      <tr><td>Networking</td><td>ENIs injected into your VPC</td><td>Runs directly within your account</td><td>Runs directly within your account</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    RDS Custom currently supports only <strong>Oracle and SQL Server</strong>. If a scenario needs low-level engine access on MySQL/MariaDB/PostgreSQL, RDS Custom isn't the answer — EC2 is.
+  </div>
+
+  <h2>Database Automation Pausing</h2>
+  <p>Because RDS Custom still runs RDS-style automation in the background, any manual customization risks conflicting with it. Before making changes, you must <strong>pause database automation</strong>, perform the customization, then <strong>resume automation</strong> — ensuring the instance is production-ready again.</p>
+
+  <h2>Shared Responsibility Shifts</h2>
+  <p>Moving along the spectrum from on-premises → EC2 → RDS → RDS Custom changes who owns what:</p>
+  <ul>
+    <li><strong>On-premises:</strong> customer owns everything.</li>
+    <li><strong>EC2:</strong> AWS owns hardware only; customer owns OS, engine, patching, backups, HA, scaling.</li>
+    <li><strong>RDS:</strong> AWS owns everything except application optimization.</li>
+    <li><strong>RDS Custom:</strong> AWS owns hardware; customer owns application optimization; <strong>everything else is shared</strong> between AWS and customer.</li>
+  </ul>
+  <p>RDS Custom trades some of RDS's full automation for the flexibility of OS/engine access — a middle ground for legacy or highly customized applications that genuinely can't run on standard RDS.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A legacy application requires root-level OS access on a MySQL database. Is RDS Custom the right fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="RDS Custom currently supports only Oracle and Microsoft SQL Server — MySQL is not one of the supported engines."> Yes, RDS Custom supports all RDS engines with OS access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. RDS Custom is limited to Oracle and SQL Server, so a MySQL requirement for OS-level access would need to run on EC2 instead."> No, RDS Custom only supports Oracle and SQL Server — MySQL would need EC2</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-AZ is a high-availability feature and has nothing to do with granting OS-level access — it wouldn't help here regardless of engine."> Yes, as long as Multi-AZ mode is also enabled</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="RDS Custom does grant OS-level access via SSH, RDP, or Session Manager — the limitation here is the unsupported engine, not the access model itself."> No, RDS Custom never grants OS-level access to any engine</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Before manually customizing the OS on an RDS Custom for Oracle instance, what must an administrator do first?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS Custom doesn't require converting to plain EC2 first — that would defeat the purpose of using RDS Custom's automation at all."> Convert the instance to a plain EC2-hosted database</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. RDS Custom still runs background automation, so it must be paused before manual customization to avoid conflicts, then resumed afterward to restore production-readiness."> Pause database automation, then resume it after the change</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Deleting automated backups isn't part of the customization workflow for RDS Custom — pausing automation is the correct step."> Delete all existing automated backups for the instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS Custom is designed to allow OS-level customization without switching database engines — that isn't a required step."> Switch the database engine from Oracle to SQL Server</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In the RDS Custom shared responsibility model, who is responsible for application optimization?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Across on-premises, EC2, RDS, and RDS Custom, application optimization always remains the customer's responsibility — it's the one constant across every model."> The customer, across every deployment model including RDS Custom</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Application optimization is never handled by AWS in any RDS variant — it depends on business logic and query design that only the customer understands."> AWS, since RDS Custom automates most database tasks</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Responsibility isn't split evenly on this particular item — application optimization is squarely the customer's job across all models."> It is split 50/50 between AWS and the customer</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Application optimization responsibility doesn't shift based on database engine choice — it remains with the customer regardless."> It depends on whether Oracle or SQL Server is used</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-rds-data-security.html">← Previous: RDS Data Security</a>
+      <a href="0011-aurora-architecture.html">Next: Amazon Aurora Architecture →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>17 – S3 Access Points</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 17</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Access Points</h1>
+    <p class="lesson-meta">Lesson 17 of 17 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-points.html" target="_blank">S3 Access Points Docs</a></p>
+  </div>
+
+  <h2>The Problem: One Bucket, Many Teams</h2>
+  <p>When a single S3 bucket is shared by many teams or stores objects for different purposes, the bucket policy becomes complex and hard to manage. A single bucket policy must contain rules for every team's access, every prefix, and every use case — growing unwieldy over time.</p>
+
+  <h2>What are Access Points?</h2>
+  <p>An <strong>Access Point</strong> is a named network endpoint attached to a bucket. Think of it as a <em>mini-bucket view</em> with its own:</p>
+  <ul>
+    <li><strong>Unique DNS address</strong> — each access point has its own hostname</li>
+    <li><strong>Access Point Policy</strong> — functionally equivalent to a bucket policy; controls what can be done via that access point</li>
+    <li>Optional <strong>VPC restriction</strong> — an access point can be locked to a specific VPC, so it can only be reached from within that VPC</li>
+  </ul>
+
+  <p>You create as many access points as you need. Each team gets its own access point with its own scoped policy.</p>
+
+  <h2>The Delegation Pattern</h2>
+  <p>Access point permissions and bucket policy permissions are <strong>both evaluated</strong>. A permission defined in an access point policy must also be allowed in the bucket policy. The recommended pattern is <strong>delegation</strong>:</p>
+  <ol>
+    <li>On the <strong>bucket policy</strong>: grant broad (wildcard) access via any access point. This delegates the fine-grained control to the access points themselves.</li>
+    <li>On each <strong>access point policy</strong>: define the specific, least-privilege permissions for that team or use case.</li>
+  </ol>
+
+  <div class="callout">
+    <div class="callout-title">Creating an access point (CLI)</div>
+    <code>aws s3control create-access-point --name &lt;name&gt; --account-id &lt;account&gt; --bucket &lt;bucket&gt;</code>
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Access points are a <em>management simplification</em> tool, not a new access control mechanism. The bucket policy still applies; access points let you break one unwieldy bucket policy into smaller, team-scoped policies.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What does each S3 Access Point provide that makes it distinct from another access point on the same bucket?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Access points share the same underlying bucket and storage. They don't create separate data stores."> Separate physical storage for each team's objects</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Each access point has its own DNS hostname and its own access point policy, allowing different teams to have different scoped permissions while accessing the same underlying bucket."> A unique DNS address and a scoped access policy</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Storage class is set per object, not per access point. Access points don't change storage class."> A unique storage class for objects accessed through it</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Encryption is configured at the bucket or object level, not per access point."> A separate encryption key for each access point user</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An access point policy allows a team to read objects in the /finance/ prefix. The bucket policy has no statement for that team. Can the team read those objects?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Access point permissions alone are not sufficient. The bucket policy must also permit the access — both policies are evaluated."> Yes — the access point policy alone grants access</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Both the access point policy and the bucket policy must permit the action. If the bucket policy has no statement for the team, access is denied."> No — the bucket policy must also permit the action</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Access points do not fall back to IAM identity policies. The bucket policy is still a required gate."> Yes — if the user has IAM read permission as well</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Access points are not only for VPC traffic. VPC restriction is an optional feature."> No — access points only work from within a VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A financial application runs in a VPC and must only access S3 through a private network path, never the public internet. Which access point feature enables this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Transfer Acceleration routes via edge locations on the public internet. That is the opposite of private access."> Transfer Acceleration for a private upload path</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Bucket versioning is a data-protection feature. It doesn't control network access paths."> Enabling bucket versioning to restrict access paths</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. An access point can be configured with a VPC origin restriction, so it only accepts requests originating from that specific VPC — all public internet access is blocked."> VPC-origin restriction on the access point configuration</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A bucket policy IP condition can restrict source IPs but is harder to maintain for VPC resources than using a VPC-restricted access point."> A bucket policy denying all non-corporate IP addresses</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0016-s3-object-lock.html">← Lesson 16: S3 Object Lock</a>
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">That's the complete S3 module! Ready to tackle another topic? Type <strong>/teach</strong> and drop in your next Cantrill notes file.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

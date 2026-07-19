@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – EC2 Dedicated Hosts</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced EC2</a> › Lesson 07
+    </div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>EC2 Dedicated Hosts</h1>
+    <p class="lesson-meta">Lesson 07 of 08 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-overview.html" target="_blank">EC2 Dedicated Hosts</a></p>
+  </div>
+
+  <p>A <strong>Dedicated Host</strong> is a physical EC2 server allocated entirely to your account. You pay for the whole host — not per instance — and every instance you run on it after that is free of additional EC2 instance charges. The narrow but important reason this exists: <strong>software licensing</strong>.</p>
+
+  <h2>Why Pay for the Whole Host</h2>
+  <p>Some enterprise software licenses by physical socket or physical core, regardless of how much of that hardware any one instance actually uses. Run that software on a small standard instance and you could still be on the hook for licensing the entire underlying host's hardware — hardware you can't otherwise access. Dedicated Hosts make that visible and billable directly: you pay for the host (On-Demand, or 1/3-year reservations with the same upfront-payment options as Reserved Instances), and license against it, with no separate per-instance fees layered on top.</p>
+
+  <h2>Fixed Sizing vs. Nitro Flexibility</h2>
+  <p>A host is built for one specific instance family, with a fixed number of physical sockets and cores — and that determines how many instances of what size can run on it.</p>
+
+  <table>
+    <thead><tr><th>Host type</th><th>Sizing flexibility</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Older / non-Nitro</strong> (e.g. A1: 1 socket, 16 cores)</td><td>Fixed at creation to <em>one</em> instance size — e.g. 16 × medium, <em>or</em> 8 × large, <em>or</em> 4 × xlarge — no mixing</td></tr>
+      <tr><td><strong>Nitro-based</strong> (e.g. R5: 2 sockets, 48 cores)</td><td>Mix instance sizes freely up to the core limit — e.g. 1×12xlarge + 2×2xlarge + 1×4xlarge on the same host</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    You just need to know Dedicated Hosts <strong>exist</strong>, the licensing rationale, and the fixed-size-vs-Nitro-flexible distinction. You won't need exact core counts or per-family pricing for the associate exam.
+  </div>
+
+  <h2>Limitations</h2>
+  <ul>
+    <li><strong>AMI restrictions</strong> — RHEL, SUSE Linux, and Windows AMIs are not supported on Dedicated Hosts.</li>
+    <li><strong>No Amazon RDS</strong> — RDS instances can't run on a Dedicated Host.</li>
+    <li><strong>No placement groups</strong> — placement groups aren't supported in combination with Dedicated Hosts.</li>
+  </ul>
+
+  <h2>Sharing Within an Organization</h2>
+  <p>A Dedicated Host can be shared with other accounts in your AWS Organization via <strong>AWS Resource Access Manager (RAM)</strong>. The owning account sees <em>every</em> instance running on the host; each account the host is shared with can only see and control the instances <em>it</em> created — a clean visibility and control boundary even though the underlying hardware is shared.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Narrow use case</div>
+    In most real-world situations, Dedicated Hosts are not the default choice for running EC2 — they trade away flexibility (fixed family, fixed or semi-fixed sizing) for something you only need if licensing constraints require visibility into physical sockets/cores.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A business runs enterprise software licensed per physical CPU core, and needs visibility into exactly which physical hardware their instances consume. What EC2 feature directly addresses this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Spread placement groups address hardware isolation for resilience, not visibility into physical socket/core counts for licensing purposes."> Spread placement groups, for physical hardware visibility</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Dedicated Hosts allocate an entire physical server to your account, with visible socket and core counts — exactly what per-core/per-socket licensing needs."> Dedicated Hosts, which allocate an entire physical server</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Enhanced networking improves network throughput and latency — it has nothing to do with physical socket or core licensing visibility."> Enhanced networking, for dedicated core allocation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Instance roles grant AWS API permissions to instances — unrelated to physical hardware licensing visibility."> EC2 instance roles, for hardware-level permissions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. On a Nitro-based R5 Dedicated Host with 48 cores, can you run a mix of different R5 instance sizes at the same time?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fixed single-size-at-a-time allocation describes older, non-Nitro dedicated hosts — Nitro-based hosts like R5 specifically allow mixing sizes."> No, one host can only run one fixed instance size at a time</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Nitro-based Dedicated Hosts like R5 allow mixing different instance sizes simultaneously, as long as total consumption stays within the host's 48-core capacity."> Yes, Nitro-based hosts allow mixed sizes up to the core limit</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Dedicated Hosts are still allocated for one instance family (e.g. R5), even on Nitro — mixing across totally unrelated families like R5 and C5 on the same host isn't how this works."> Yes, but only if every instance is a completely different family</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Placement groups are explicitly unsupported on Dedicated Hosts — a placement group requirement wouldn't lift the mixed-sizing capability, and there is no such rule here."> No, mixing sizes requires a placement group to be applied</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Account A owns a Dedicated Host and shares it via RAM with Account B, which launches 3 instances on it. What can Account B see and control?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Sharing a host via RAM doesn't grant the receiving account visibility into every instance on the host — only into the instances it created itself."> All instances on the host, including Account A's own instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. An account a Dedicated Host is shared with can only see and control the instances it created itself — the owning account (A) is the only one with visibility into everything on the host."> Only the 3 instances it created itself on the shared host</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="RAM sharing of a Dedicated Host doesn't grant control over the host's billing or capacity settings to the account it's shared with — that stays with the owning account."> The host's billing configuration and total capacity settings</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="RAM sharing gives Account B the ability to launch and see its own instances on the host — it doesn't grant read-only visibility into Account A's instances as a consolation."> Nothing, since shared hosts are strictly read-only for Account B</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-ec2-placement-groups.html">← Previous: EC2 Placement Groups</a>
+      <a href="0008-enhanced-networking-and-ebs-optimized.html">Next: Enhanced Networking & EBS-Optimized →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

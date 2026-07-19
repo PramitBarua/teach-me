@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – AWS Control Tower</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 11</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>AWS Control Tower</h1>
+    <p class="lesson-meta">Lesson 11 of 11 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/controltower/latest/userguide/what-is-control-tower.html" target="_blank">AWS Control Tower Docs</a></p>
+  </div>
+
+  <h2>What is AWS Control Tower?</h2>
+  <p><strong>AWS Control Tower</strong> automates the setup and ongoing governance of a secure, compliant, multi-account AWS environment. It sits on top of AWS Organizations and adds a layer of automated policy enforcement and account provisioning.</p>
+
+  <div class="callout">
+    <div class="callout-title">Relationship to AWS Organizations</div>
+    Control Tower <em>uses</em> Organizations under the hood. If you already have an org, Control Tower can be enabled on top of it. Think of Organizations as the plumbing; Control Tower as the governance layer built on that plumbing.
+  </div>
+
+  <h2>Core Concepts</h2>
+
+  <dl>
+    <dt>Landing Zone</dt>
+    <dd>The multi-account environment that Control Tower sets up for you — a pre-configured hierarchy of OUs, accounts, and baselines (logging, security tooling, identity). It is the "starting point" for a well-governed AWS estate.</dd>
+
+    <dt>Guardrails (Controls)</dt>
+    <dd>Pre-built policies that enforce governance. There are two kinds:
+      <ul>
+        <li><strong>Preventive guardrails</strong> — implemented as SCPs; prevent non-compliant actions from being taken at all.</li>
+        <li><strong>Detective guardrails</strong> — implemented as AWS Config rules; identify resources that are already non-compliant and report them.</li>
+      </ul>
+    </dd>
+
+    <dt>Account Factory</dt>
+    <dd>A self-service mechanism for provisioning new AWS accounts that automatically comply with the landing zone standards. Each new account is vended with guardrails, logging, and identity access pre-configured. Eliminates manual account setup toil.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    For the SAA-C03 exam, know the high-level purpose of each concept:<br>
+    <strong>Landing zone</strong> = the governed environment.<br>
+    <strong>Guardrails</strong> = ongoing policy enforcement (preventive → SCP; detective → Config).<br>
+    <strong>Account Factory</strong> = automated, standardised new-account provisioning.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Which Control Tower feature automatically provisions new AWS accounts with governance baselines pre-applied?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The landing zone is the overall environment, not the tool for vending new accounts."> Landing zone configuration in the console</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Guardrails enforce policy on existing accounts — they do not provision new accounts."> Guardrails applied to the org root</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Account Factory is the self-service mechanism that vends new accounts with all baselines (guardrails, logging, IAM access) pre-configured."> Account Factory for automated account vending</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Service Control Policies are used by guardrails but are not themselves the provisioning mechanism."> Service Control Policy at the root level</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A preventive guardrail in Control Tower is implemented using which underlying AWS mechanism?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Config rules are used for detective guardrails, not preventive ones."> AWS Config rules that flag violations</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Preventive guardrails use SCPs to block non-compliant actions from being taken at all."> Service Control Policies that block actions</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="IAM policies are per-identity; they are not the mechanism for org-wide preventive guardrails."> IAM permission policies on each user</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudTrail is an audit tool; it records what happened but cannot prevent anything."> CloudTrail trails that alert on violations</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A detective guardrail finds that an S3 bucket in a member account has public access enabled, which violates company policy. What does the guardrail do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Only preventive guardrails block actions. Detective guardrails report after the fact."> Immediately blocks the public-access setting</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Detective guardrails do not delete resources; that would be destructive automation."> Deletes the S3 bucket to enforce compliance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. A detective guardrail (Config rule) identifies and reports non-compliance in the Control Tower dashboard; it does not take remediation action automatically."> Reports the non-compliance in the dashboard</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Guardrails don't move accounts; they report or block actions."> Moves the account to a quarantine OU</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-cloudtrail.html">← Lesson 10: CloudTrail</a>
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">That's the end of this module! Want to explore another topic or need a recap? Type <strong>/teach</strong> and ask.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – NoSQL Database Models</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 02
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>NoSQL Database Models</h1>
+    <p class="lesson-meta">Lesson 02 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://aws.amazon.com/getting-started/decision-guides/databases-on-aws-how-to-choose/" target="_blank">Choosing an AWS database service</a></p>
+  </div>
+
+  <p><strong>NoSQL isn't one thing.</strong> It's a catch-all for everything that isn't relational — a family of models that trade the rigid schema of <a href="0001-relational-database-fundamentals.html">SQL</a> for flexibility, scale, or speed. The exam expects you to recognise each model from a scenario description and eliminate the wrong database type. Let's go through them.</p>
+
+  <table>
+    <thead><tr><th>Model</th><th>Structure</th><th>Best for</th><th>AWS example</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Key-value</strong></td>
+        <td>Just keys and opaque values — no schema, no relationships</td>
+        <td>Simple lookups, in-memory caching</td>
+        <td>ElastiCache</td>
+      </tr>
+      <tr>
+        <td><strong>Wide column</strong></td>
+        <td>Partition key (+ optional sort key); items in a table can have any mix of attributes</td>
+        <td>Massive scale, fast reads/writes, no SQL joins needed</td>
+        <td>DynamoDB</td>
+      </tr>
+      <tr>
+        <td><strong>Document</strong></td>
+        <td>Self-contained JSON/XML documents, each with a unique ID; nested attributes are queryable</td>
+        <td>Catalogues, profiles, content management</td>
+        <td>DocumentDB</td>
+      </tr>
+      <tr>
+        <td><strong>Column (OLAP)</strong></td>
+        <td>Data physically grouped by column, not row</td>
+        <td>Reporting and analytics over one column at a time</td>
+        <td>Redshift</td>
+      </tr>
+      <tr>
+        <td><strong>Graph</strong></td>
+        <td>Nodes (nouns) + edges (named, directional relationships) stored alongside the data</td>
+        <td>Highly interconnected data — social networks, HR systems</td>
+        <td>Neptune</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Key-Value: the Simplest Model</h2>
+  <p>A key-value store is nothing more than a list of unique keys, each pointing at a value. The database has no awareness of what's inside the value — text, JSON, a cat picture, it's all opaque. As long as keys are unique, there's no structure to enforce, which makes key-value stores extremely fast and easy to shard across servers.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If a scenario mentions <strong>simple key/value pairs</strong>, <strong>no structure</strong>, or <strong>in-memory caching</strong>, think key-value store.
+  </div>
+
+  <h2>Wide Column: Key-Value's Scalable Cousin</h2>
+  <p>A wide column store still centres on keys — a mandatory <strong>partition key</strong>, plus an optional secondary key (DynamoDB calls it the <strong>sort key</strong>). The only rigid rule: every item in a table must share the same key <em>structure</em>, and that key must be unique.</p>
+  <p>Unlike a relational table, items don't all need the same attributes. One item can have every attribute, another a mix, another none at all. This is what makes wide column stores like DynamoDB so fast and scalable — there's no schema to enforce across rows.</p>
+
+  <h2>Document Databases</h2>
+  <p>Think of a document database as key-value with the value made visible to the database. Each document (JSON or XML) has a unique ID, but the database can see and query <em>inside</em> the document — including deeply nested attributes. This suits data that's naturally document-shaped and versioned over time: user profiles, orders, CMS content.</p>
+
+  <h2>Row vs Column Storage: OLTP vs OLAP</h2>
+  <p>This distinction explains <em>why</em> some databases are built for transactions and others for reporting.</p>
+  <ul>
+    <li><strong>Row-based (OLTP)</strong> — data for a full row is stored together on disk. Reading or writing one order is efficient; scanning one attribute across every order is not. Most SQL/relational engines are OLTP.</li>
+    <li><strong>Column-based (OLAP)</strong> — data is grouped by column instead. Querying "every price ever charged" is efficient because that column sits together on disk, but updating a single row is inefficient. Redshift is AWS's column-store/data-warehousing product.</li>
+  </ul>
+  <p>The common real-world pattern: run transactions on an OLTP (row) database, then periodically shift the data into an OLAP (column) database for reporting and analytics.</p>
+
+  <h2>Graph Databases</h2>
+  <p>Relational databases <em>compute</em> relationships at query time by joining keys across tables. Graph databases store the relationship itself, as first-class data. <strong>Nodes</strong> are objects (with key-value properties); <strong>edges</strong> are named, directional relationships between nodes, and edges can carry their own data too (e.g. an employment start date).</p>
+  <p>Because the relationship is already stored rather than recalculated, queries over highly interconnected data — "find everyone who works for XYZ Corp" — run far faster than the equivalent relational join.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Scenario mentions <strong>social media</strong> or <strong>complex, fluid relationships</strong>? Think graph database first.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team needs to run monthly reports that scan the "total sales" column across millions of order rows, but rarely update individual orders. Which storage model fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Row-based storage is efficient for reading/writing whole rows, but inefficient for scanning a single column across millions of rows."> Row-based storage, for fast full-row transactions</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Column-based storage groups each column together on disk, making single-column scans (like reporting) highly efficient."> Column-based storage, for fast single-column scans</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Graph databases excel at relationship queries, not column-wide aggregate scans over millions of rows."> Graph storage, for relationship-heavy queries</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Key-value stores have no concept of columns to scan across — they only support lookup by key."> Key-value storage, for the fastest possible lookups</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A DynamoDB table has items where one item has 10 attributes and another item has only 2. Why is this valid in a wide column store?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Wide column stores don't require attributes to be pre-declared in a schema at all."> Because attributes were pre-declared in a flexible schema</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The only rigid rule in a wide column store is that every item shares the same key structure and has a unique key — attributes can vary freely."> Because only the key structure must be consistent, not the attributes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Composite keys are about the row identifier, not about how many attributes a row is allowed to have."> Because DynamoDB always uses composite keys</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This describes column-store (OLAP) behaviour, not the attribute flexibility of a wide column store."> Because it is secretly a column-based OLAP database</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An exam question describes a social network where users, companies, and their fluid, ever-changing relationships must be queried quickly. Which model is the best fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Document databases handle nested data well, but they don't optimize for querying a dense web of many-to-many relationships the way graph databases do."> Document database, for nested profile data</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Relational databases compute relationships at query time via joins, which becomes slow and rigid for data with rapidly changing relationships."> Relational database, since it enforces relationships via keys</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Graph databases store relationships (edges) as first-class data alongside nodes, making relationship-heavy queries fast — the classic social network use case."> Graph database, since relationships are stored as first-class data</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Column stores are optimized for scanning single attributes for reporting, not for traversing relationships between entities."> Column-based database, for reporting on user activity</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-relational-database-fundamentals.html">← Previous: Relational Database Fundamentals</a>
+      <a href="0003-acid-vs-base.html">Next: ACID vs BASE →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

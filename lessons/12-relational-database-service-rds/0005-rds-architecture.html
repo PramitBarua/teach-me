@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – RDS Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">RDS &amp; Aurora</a> › Lesson 05
+    </div>
+    <div class="module-tag">RDS &amp; Aurora</div>
+    <h1>RDS Architecture</h1>
+    <p class="lesson-meta">Lesson 05 of 16 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" target="_blank">AWS RDS User Guide</a></p>
+  </div>
+
+  <p>RDS is often called "database as a service," but that's not quite accurate: you pay for and receive a <strong>database server</strong>, which can host multiple databases. A more precise name would be <strong>database server as a service</strong>.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Separate <strong>Amazon Aurora</strong> from "RDS" in your mind. Aurora is technically part of the RDS family but is a custom AWS-built engine with a fundamentally different architecture — covered in its own lessons later in this module.
+  </div>
+
+  <p>RDS gives you database engines including <strong>MySQL, MariaDB, PostgreSQL</strong>, and commercial engines like <strong>Oracle</strong> and <strong>Microsoft SQL Server</strong>. It manages the hardware, OS, engine installation, and much of the ongoing maintenance. Critically: <strong>no SSH and no OS-level access</strong> (with one asterisk — RDS Custom, covered in <a href="0010-rds-custom.html">Lesson 10</a>).</p>
+
+  <h2>RDS Lives Inside a VPC</h2>
+  <p>Unlike S3 or DynamoDB, RDS is not a public service — it runs in subnets within a VPC, in a specific AWS Region. The key building block is a <strong>DB subnet group</strong>: a named list of subnets, spanning multiple AZs, that RDS is allowed to use for a given instance.</p>
+
+  <table>
+    <thead><tr><th>Concept</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td><strong>DB subnet group</strong></td><td>List of subnets (ideally across ≥2 AZs) RDS can place instances into</td></tr>
+      <tr><td><strong>Best practice</strong></td><td>One DB subnet group per RDS deployment, for maximum flexibility</td></tr>
+      <tr><td><strong>Public vs private subnets</strong></td><td>RDS instances in private subnets are reachable only from inside the VPC or connected networks; instances in public subnets <em>can</em> get public addressing — strongly discouraged for security</td></tr>
+    </tbody>
+  </table>
+
+  <p>When you launch a Multi-AZ instance, RDS picks one subnet for the primary and a different subnet in a different AZ for the standby — at random, unless you specify a preference.</p>
+
+  <h2>Storage, Replication, and Backups</h2>
+  <ul>
+    <li>Every RDS instance can host <strong>multiple databases</strong>.</li>
+    <li>Each instance has its own <strong>dedicated EBS-backed storage</strong> — this is a key contrast with Aurora, which uses shared cluster storage (see <a href="0011-aurora-architecture.html">Lesson 11</a>).</li>
+    <li><strong>Multi-AZ</strong> primary → standby replication is <strong>synchronous</strong> — the standby always has the same data as the primary.</li>
+    <li><strong>Read replicas</strong> use <strong>asynchronous</strong> replication and can live in the same Region or a different one (covered in <a href="0008-rds-read-replicas.html">Lesson 08</a>).</li>
+    <li><strong>Backups</strong> are stored in an AWS-managed S3 bucket — not visible in your own S3 console — and are automatically spread across multiple AZs. If Multi-AZ is enabled, backups are taken from the standby, so there's no primary-instance performance hit.</li>
+  </ul>
+
+  <h2>The Cost Model</h2>
+  <p>RDS billing, like EC2, is based on <strong>resource allocation</strong>, not query volume:</p>
+
+  <table>
+    <thead><tr><th>Cost component</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Instance size/type</td><td>Hourly rate, billed per second — bigger/richer instance = more cost</td></tr>
+      <tr><td>Multi-AZ</td><td>Extra cost for the additional standby instance(s)</td></tr>
+      <tr><td>Storage</td><td>Per-GB monthly fee; Provisioned IOPS storage costs more than General Purpose</td></tr>
+      <tr><td>Data transfer</td><td>Per-GB cost for traffic to/from the internet and other Regions</td></tr>
+      <tr><td>Backups/snapshots</td><td>Free up to the amount of provisioned storage; beyond that, a per-GB-month fee</td></tr>
+      <tr><td>Commercial engines</td><td>Additional licensing costs for engines like Oracle or SQL Server</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Why is "database as a service" technically an inaccurate description of RDS?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. You provision and pay for a database server (instance), which can host multiple individual databases — it's more accurately a database server as a service."> RDS provides a database server, which can host multiple databases</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="RDS charges based on resource allocation (instance size, storage), not query volume — that alone doesn't explain the naming distinction being made here."> RDS charges based on the number of queries run, not resources</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="RDS does run inside a VPC as a private service — this isn't the reason the 'database as a service' label is considered imprecise."> RDS is a fully public service reachable without a VPC</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="RDS supports several engines, including commercial ones like Oracle and SQL Server, not just open-source options."> RDS only supports a single fixed database engine</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An architect launches a Multi-AZ RDS instance without specifying an AZ preference. How does RDS choose where to place the primary and standby?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS doesn't require them to be in the same AZ for Multi-AZ — in fact it deliberately places them in different AZs to provide resilience."> It always places both in the same Availability Zone for low latency</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Without a stated preference, RDS picks subnets at random from the DB subnet group but always places the primary and standby in different Availability Zones."> It picks subnets at random from the DB subnet group, but always uses different AZs for primary and standby</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS doesn't require the administrator to manually select every subnet each time — it can pick automatically from the DB subnet group."> It requires the administrator to manually assign every subnet at launch</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS instances are placed in private or public subnets that you control via the DB subnet group — they aren't placed in a separate AWS-managed VPC outside your account."> It places the standby in a separate AWS-managed VPC outside your account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A key architectural difference between standard RDS and Aurora is:</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Both standard RDS and Aurora deploy inside a VPC — this isn't a distinguishing factor between them."> Standard RDS runs in a VPC, but Aurora does not</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Standard RDS instances each have their own dedicated EBS-backed storage, while Aurora instances share a common cluster storage volume — a key architectural distinction covered in Lesson 11."> Standard RDS instances each have dedicated EBS storage; Aurora instances share a cluster storage volume</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Neither standard RDS nor Aurora grants SSH/OS-level access by default — RDS Custom is the narrow exception, and it's separate from Aurora."> Aurora grants SSH access to the underlying host, but standard RDS does not</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Backups for both standard RDS and Aurora are stored in AWS-managed S3 buckets, not visible directly in your own S3 console."> Standard RDS backups appear in your own S3 console, but Aurora's do not</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-databases-on-ec2.html">← Previous: Databases on EC2</a>
+      <a href="0006-rds-multi-az-instance-vs-cluster.html">Next: RDS Multi-AZ: Instance vs Cluster →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

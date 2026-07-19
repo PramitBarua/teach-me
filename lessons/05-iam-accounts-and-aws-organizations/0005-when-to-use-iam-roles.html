@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – When to Use IAM Roles</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Lesson 05</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>When to Use IAM Roles</h1>
+    <p class="lesson-meta">Lesson 05 of 11 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_common-scenarios.html" target="_blank">AWS: Common role scenarios</a></p>
+  </div>
+
+  <h2>The five scenarios</h2>
+
+  <table>
+    <thead><tr><th>Scenario</th><th>Why a role?</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>AWS Services</strong><br><small>e.g. Lambda, EC2, ECS</small></td>
+        <td>Services can't hold long-term credentials. Assign a role so the service gets temporary credentials automatically.</td>
+      </tr>
+      <tr>
+        <td><strong>Emergency / break-glass</strong></td>
+        <td>An operator normally has limited access but needs elevated access for an incident. Assume a role temporarily instead of granting permanent elevation.</td>
+      </tr>
+      <tr>
+        <td><strong>Existing corporate identity (federation)</strong></td>
+        <td>Your company already uses Active Directory or another IdP. Map AD groups to roles so staff log in with their corporate password — no separate IAM user needed, and the 5 000-user limit is bypassed.</td>
+      </tr>
+      <tr>
+        <td><strong>External identity providers</strong><br><small>Google, Facebook, etc.</small></td>
+        <td>Web/mobile users can't have IAM users. Use Web Identity Federation: the external provider authenticates them, then they assume a role to call AWS APIs.</td>
+      </tr>
+      <tr>
+        <td><strong>Cross-account access</strong></td>
+        <td>Account A's user needs to do work in Account B. Account B creates a role that trusts Account A. The user assumes it — no need for a separate IAM user in Account B.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Any scenario involving an AWS service doing work on your behalf (Lambda reads S3, EC2 calls DynamoDB, etc.) always means a role — never an access key embedded in code.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A Lambda function needs to write objects to S3. Which is the correct approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Embedding credentials in code is a security anti-pattern — credentials can leak and don't rotate."> Store an IAM access key in the Lambda code</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Lambda assumes an execution role and gets temporary credentials automatically — no static keys needed."> Assign an IAM execution role to the function</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Lambda runs in AWS — it doesn't need a VPN; identity comes from the role."> Configure a VPN between Lambda and S3</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 public access would grant access to everyone, not just your Lambda."> Make the S3 bucket public to allow writes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company has 10 000 employees already in Active Directory. Which identity approach avoids creating 10 000 IAM users?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The IAM user limit is 5 000 — you cannot create 10 000 IAM users in one account."> Create one IAM user per employee in AWS</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. Identity federation maps AD users to IAM roles. Staff log in with corporate credentials and assume a role, bypassing the IAM user limit."> Federate AD with IAM roles using SAML 2.0</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A shared account is a security risk — individual users cannot be audited."> Create one shared IAM user for all staff</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Groups are not identities — employees still need individual credentials to authenticate."> Add all employees to one IAM group instead</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Team A (Account 111) needs to manage EC2 instances in Account 222. No new IAM users should be created in Account 222. What is the correct solution?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Creating users in Account 222 is exactly what the requirement says to avoid."> Create IAM users in Account 222 for Team A</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Account 222 creates a cross-account role trusting Account 111. Team A's users assume that role to manage EC2 in Account 222."> Create a cross-account role in Account 222 trusting Account 111</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="You cannot merge accounts; each account remains a separate billing and security boundary."> Merge the two accounts into one organisation account</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="VPC peering is a network concept; it does not affect IAM identity or cross-account permissions."> Peer the VPCs in both accounts together</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-iam-roles-tech.html">← Lesson 04: IAM Roles – The Tech</a>
+      <a href="0006-service-linked-roles-and-passrole.html">Next: Service-linked Roles &amp; PassRole →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

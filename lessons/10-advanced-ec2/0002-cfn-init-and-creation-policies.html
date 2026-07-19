@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – cfn-init and Creation Policies</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced EC2</a> › Lesson 02
+    </div>
+    <div class="module-tag">Advanced EC2</div>
+    <h1>Enhanced Bootstrapping with cfn-init and Creation Policies</h1>
+    <p class="lesson-meta">Lesson 02 of 08 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/cfn-init.html" target="_blank">cfn-init</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-creationpolicy.html" target="_blank">CreationPolicy Attribute</a></p>
+  </div>
+
+  <p>Plain user data is <strong>procedural</strong> — a script, run line by line, once. CloudFormation offers something more powerful for bootstrapping instances it creates: <strong>cfn-init</strong>, an AWS-provided helper script pre-installed on operating systems like Amazon Linux 2 that behaves less like a script and more like a lightweight configuration management system.</p>
+
+  <h2>Desired State, Not Just Procedure</h2>
+  <p>cfn-init can run commands procedurally like user data, but its real strength is <strong>desired state</strong>: you declare what you want to be true — "Apache version X installed" — and cfn-init figures out what to do. If Apache is already at that version, it does nothing. If it's missing or outdated, cfn-init installs or updates it. It can also manage OS users and groups, download and extract authenticated sources, write files with specific contents/permissions/ownership, run commands with post-condition checks, and ensure services are started or enabled at boot.</p>
+
+  <p>The desired state itself lives in the CloudFormation template, inside a special metadata block on the EC2 instance's logical resource: <code>AWS::CloudFormation::Init</code>. The <code>cfn-init</code> command is invoked from user data — so it's still triggered the same way user data always is — but instead of containing the configuration itself, that user data line just tells cfn-init which stack, resource, and region to pull its real instructions from:</p>
+
+  <pre style="background:var(--code-bg); padding:0.75rem 1rem; border-radius:4px; overflow-x:auto; font-family:var(--mono); font-size:0.82rem;">/opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource EC2Instance \
+  --configsets wordpress_install --region ${AWS::Region}</pre>
+
+  <p>CloudFormation substitutes the real stack ID and Region into that command before it ever reaches the instance, which is what lets cfn-init phone home to the right CloudFormation stack and retrieve its configuration.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: cfn-init survives stack updates</div>
+    User data only ever runs once, at launch — full stop. cfn-init can be configured to <strong>watch for metadata changes</strong> on its resource, and re-apply configuration whenever the stack is updated, moving the instance toward whatever the new desired state is. This is the single biggest practical advantage cfn-init has over plain user data.
+  </div>
+
+  <h2>Creation Policies and cfn-signal</h2>
+  <p>Without anything extra, CloudFormation's resource-creation process is naive: it creates the EC2 instance, hands it user data (which might invoke cfn-init), and as soon as EC2 itself reports the instance provisioned, CloudFormation marks the resource <strong>complete</strong> — regardless of whether the bootstrapping inside that instance actually succeeded. CloudFormation doesn't understand user data any better than EC2 does.</p>
+
+  <p>A <strong>CreationPolicy</strong> fixes this by making CloudFormation wait for an explicit signal from inside the resource itself, instead of trusting EC2's "instance provisioned" status:</p>
+
+  <pre style="background:var(--code-bg); padding:0.75rem 1rem; border-radius:4px; overflow-x:auto; font-family:var(--mono); font-size:0.82rem;">CreationPolicy:
+  ResourceSignal:
+    Timeout: PT15M</pre>
+
+  <p>With this in place, CloudFormation holds the resource in a pending state until it receives a signal via <strong>cfn-signal</strong> — typically the last line of the user data, run right after cfn-init:</p>
+
+  <pre style="background:var(--code-bg); padding:0.75rem 1rem; border-radius:4px; overflow-x:auto; font-family:var(--mono); font-size:0.82rem;">/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region}</pre>
+
+  <p><code>-e $?</code> captures the exit code of the previous command (cfn-init) and reports it as the signal. A success code moves the resource to <strong>CREATE_COMPLETE</strong>; a failure code — or no signal at all within the timeout — moves it to a failed/error state instead.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Scope</div>
+    The transcript this lesson is based on notes that CreationPolicy/cfn-signal detail is slightly beyond core associate-level requirements, but understanding the architecture helps with any automation-flavored exam question. You won't be tested on writing the exact syntax.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A CloudFormation stack updates a running instance's desired Apache version. What's needed for the instance to actually pick up that change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Plain user data never re-executes after the initial launch — a stack update alone won't cause it to run again."> Nothing; user data automatically re-runs on stack updates</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. cfn-init can watch the metadata on its resource for changes and re-apply the desired state — this is exactly the capability user data lacks."> cfn-init configured to watch for metadata changes and reapply state</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Instances aren't automatically terminated and replaced on stack metadata updates unless you've configured that behavior separately (e.g. via a launch template version change in an ASG)."> The instance is automatically terminated and relaunched</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A CreationPolicy governs whether CloudFormation waits for a signal during resource creation — it doesn't itself reapply configuration on updates."> A CreationPolicy alone reapplies the new configuration</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A CloudFormation template creates an EC2 instance with no CreationPolicy, using user data that runs a bootstrapping script which fails. What does the stack report?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Without a CreationPolicy, CloudFormation has no way to learn that the internal bootstrapping failed — it only knows EC2 reported the instance as provisioned."> CREATE_FAILED, since CloudFormation detects the bad config</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Without a CreationPolicy, CloudFormation only tracks whether EC2 provisioned the instance, not whether the bootstrapping inside it succeeded — so the stack reports success regardless."> CREATE_COMPLETE, because EC2 reported the instance as provisioned</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFormation doesn't pause waiting for a signal unless a CreationPolicy with ResourceSignal is explicitly configured."> The stack pauses indefinitely waiting for a signal</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFormation has no built-in retry mechanism for a failed bootstrapping script inside user data."> CloudFormation automatically retries the user data script</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A resource has <code>CreationPolicy: ResourceSignal: Timeout: PT15M</code>, and cfn-init fails after 3 minutes, so cfn-signal reports a non-zero exit code. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A received failure signal fails the resource immediately — CloudFormation doesn't need to wait out the remaining timeout once it has an explicit failure signal."> CloudFormation waits the full 15 minutes regardless</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. cfn-signal reports the failure code from cfn-init, and CloudFormation marks the resource as failed rather than waiting further or assuming success."> The resource is marked as failed based on the reported signal</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A CreationPolicy timeout governs how long CloudFormation waits for a signal — it doesn't retry the underlying script."> cfn-init is automatically retried until the 15-minute timeout</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFormation only considers this resource complete on a success signal — an explicit failure signal doesn't get treated as complete just because a signal arrived."> The resource is marked complete since a signal was received at all</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-ec2-bootstrapping-user-data.html">← Previous: EC2 Bootstrapping with User Data</a>
+      <a href="0003-ec2-instance-roles-and-profiles.html">Next: EC2 Instance Roles and Profiles →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

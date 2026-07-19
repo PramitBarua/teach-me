@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – Object Versioning &amp; MFA Delete</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 03</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>Object Versioning &amp; MFA Delete</h1>
+    <p class="lesson-meta">Lesson 03 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html" target="_blank">S3 Versioning Docs</a></p>
+  </div>
+
+  <h2>Bucket Versioning States</h2>
+  <p>Every S3 bucket starts with versioning <strong>disabled</strong>. Once you enable it, you cannot go back to disabled — you can only <strong>suspend</strong> it. A suspended bucket can be re-enabled later.</p>
+
+  <table>
+    <thead><tr><th>State</th><th>Can transition to</th></tr></thead>
+    <tbody>
+      <tr><td>Disabled (default)</td><td>Enabled</td></tr>
+      <tr><td>Enabled</td><td>Suspended only — never back to Disabled</td></tr>
+      <tr><td>Suspended</td><td>Enabled again</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How Versioning Works</h2>
+  <p>Each object is identified by its <strong>key</strong> (the object name). When versioning is disabled, the object's version ID is <code>null</code>. When versioning is enabled, every upload or modification gets a new unique version ID — the previous version is <em>not</em> overwritten; both co-exist in the bucket.</p>
+
+  <h2>Deleting Versioned Objects</h2>
+  <table>
+    <thead><tr><th>Operation</th><th>What actually happens</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Delete without specifying a version ID</td>
+        <td>S3 adds a <strong>delete marker</strong> — the object appears deleted, but all versions are still in the bucket. Remove the delete marker to restore.</td>
+      </tr>
+      <tr>
+        <td>Delete <em>with</em> a specific version ID</td>
+        <td>That version is <strong>permanently removed</strong>. Cannot be undone.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Cost note</div>
+    All stored versions count towards your storage bill. A 1 GB file modified 10 times stores up to 10 GB worth of data. Use lifecycle rules to expire old versions.
+  </div>
+
+  <h2>MFA Delete</h2>
+  <p><strong>MFA Delete</strong> is an extra security layer enabled on the bucket configuration. Once on, two operations require <strong>MFA authentication</strong> (serial number + one-time code from the MFA device):</p>
+  <ol>
+    <li>Changing the versioning state of the bucket (enable ↔ suspend)</li>
+    <li>Permanently deleting a specific object version</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Once versioning is enabled it <em>cannot</em> be disabled — only suspended. This is a common distractor in exam questions. Also remember: a plain DELETE call adds a delete marker; you need to specify the exact version ID for a permanent deletion.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A bucket currently has versioning enabled. An admin wants to turn versioning completely off. What can they do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Deleting and recreating the bucket would also lose all data. And even then, you'd start a brand-new bucket from scratch, not 'turn off' versioning on the existing one."> Delete the bucket and create a new one</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Once enabled, versioning cannot be returned to the disabled state — only suspended."> Disable versioning via the console settings</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. Once enabled, versioning can only be suspended — not fully disabled. Suspension stops new versions being created but existing versions remain."> Suspend versioning — full disable is not possible</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Contacting AWS support cannot override the S3 service constraint that once-enabled versioning cannot be fully disabled."> Contact AWS support to override the setting</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A user deletes an object from a versioning-enabled bucket without specifying a version ID. What is the result?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Without a version ID, S3 does not permanently remove any version — it adds a delete marker."> The latest version is permanently removed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="All versions remain in the bucket; only a delete marker is inserted."> All versions of the object are permanently erased</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. A delete marker is added, making the object appear deleted. All existing versions are still stored and can be restored by removing the delete marker."> A delete marker is added; all versions remain</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Versioning is not suspended when an object is deleted. Only an admin can change the bucket's versioning state."> Versioning is automatically suspended on that key</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which two actions require MFA authentication when MFA Delete is enabled on a bucket?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Uploading new objects and reading objects are not controlled by MFA Delete. Only state changes and permanent version deletions require it."> Uploading a new object and reading an object</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Changing bucket policy and enabling static hosting are not operations covered by MFA Delete."> Changing the bucket policy and enabling hosting</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. MFA Delete protects the two most destructive/irreversible operations: changing the versioning state and permanently deleting a specific version."> Changing versioning state and deleting a version</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Enabling replication and adding a lifecycle rule are not protected by MFA Delete."> Enabling replication and adding a lifecycle rule</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-s3-static-hosting.html">← Lesson 02: Static Hosting</a>
+      <a href="0004-s3-performance-optimization.html">Next: Performance Optimization →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

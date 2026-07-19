@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – S3 Object Encryption: CSE &amp; SSE</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 06</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Object Encryption: CSE &amp; SSE</h1>
+    <p class="lesson-meta">Lesson 06 of 16 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingEncryption.html" target="_blank">S3 Encryption Docs</a></p>
+  </div>
+
+  <h2>Objects are Encrypted — Not Buckets</h2>
+  <p>S3 encrypts <strong>individual objects</strong>, not buckets. Different objects in the same bucket can use different encryption settings. A bucket can have a <em>default</em> encryption configuration, but each object's effective encryption is what matters.</p>
+
+  <p>Since 2023 AWS mandates server-side encryption for all new S3 objects — unencrypted storage is no longer permitted.</p>
+
+  <h2>Client-Side Encryption (CSE) vs Server-Side Encryption (SSE)</h2>
+  <table>
+    <thead><tr><th></th><th>CSE</th><th>SSE</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Where encryption happens</strong></td><td>Client, before upload</td><td>S3 servers, after arrival via HTTPS</td></tr>
+      <tr><td><strong>Who holds the keys</strong></td><td>Client entirely</td><td>Varies by SSE type</td></tr>
+      <tr><td><strong>AWS visibility of plaintext</strong></td><td>Never — AWS only sees ciphertext</td><td>Briefly during the encryption step</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The Three SSE Types</h2>
+
+  <h3>SSE-C — Customer-Provided Keys</h3>
+  <p>You manage the key. You send the key + plaintext data over HTTPS to S3. S3 encrypts the object, stores a <strong>hash of the key</strong> alongside the object, then destroys the key. To decrypt, you must supply the same key again — S3 uses the hash to verify it matches.</p>
+  <p><strong>Use when:</strong> you must own and manage keys but are happy to let S3 handle the cryptographic operation itself.</p>
+
+  <h3>SSE-S3 — S3-Managed Keys (default)</h3>
+  <p>AWS manages both the encryption and the keys. S3 uses a <strong>unique key per object</strong> (AES-256). You have no control over key rotation, key access, or who can use the key.</p>
+  <p><strong>Problem:</strong> a full S3 administrator can decrypt all data — there is no role separation between S3 access and data access.</p>
+
+  <h3>SSE-KMS — KMS-Managed Keys</h3>
+  <p>Like SSE-S3 but the key is a customer-managed KMS key. S3 requests a DEK from KMS for each object, uses the plaintext DEK to encrypt the object, discards it, and stores the ciphertext DEK alongside the object.</p>
+  <p><strong>Advantages over SSE-S3:</strong> key audit trail in CloudTrail, configurable rotation, and <strong>role separation</strong> — an S3 admin without KMS decrypt permission cannot read the data.</p>
+
+  <table>
+    <thead><tr><th>Type</th><th>Key owner</th><th>Who does crypto</th><th>Role separation?</th></tr></thead>
+    <tbody>
+      <tr><td>SSE-C</td><td>Customer</td><td>S3</td><td>No</td></tr>
+      <tr><td>SSE-S3</td><td>AWS (S3)</td><td>S3</td><td>No</td></tr>
+      <tr><td>SSE-KMS</td><td>AWS KMS (CMK)</td><td>S3 + KMS</td><td>Yes</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If a question asks about <strong>preventing S3 admins from reading data</strong>, or about <strong>controlling key rotation</strong>, the answer is SSE-KMS with a customer-managed key. SSE-S3 cannot provide role separation.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. With SSE-C, what does S3 store alongside the encrypted object to enable future decryption verification?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 destroys the key after encryption. It does not store the original customer key."> The original encryption key in encrypted form</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. S3 stores a one-way hash of the key. When you provide the key during decryption, S3 hashes it and compares to the stored hash to verify authenticity."> A one-way hash of the key for verification</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 does not store the key in KMS. With SSE-C the key management is entirely the customer's responsibility."> A ciphertext version of the key in KMS</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 does not store a pointer to the customer's key store. It only stores the hash internally."> A pointer to the customer's external key store</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company is legally required to prove that S3 data encryption keys are rotated annually and that access to the keys is audited. Which encryption type meets this requirement?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SSE-S3 uses AWS-managed keys with no customer control over rotation schedule or audit trail access."> SSE-S3 with the default S3-managed keys</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SSE-C requires the customer to manage keys entirely, but does not provide an AWS audit trail of key usage in CloudTrail."> SSE-C with customer-provided key management</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. SSE-KMS with a customer-managed key provides controllable rotation, CloudTrail audit logging of every key usage, and role separation."> SSE-KMS with a customer-managed KMS key</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Client-side encryption gives you full key control but AWS has no visibility into it, so AWS cannot provide the audit trail the company needs."> Client-side encryption before uploading to S3</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. With SSE-S3, what can a user with full S3 administrator permissions do that would be prevented with SSE-KMS?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Uploading objects is an S3 data-plane action unrelated to the encryption type comparison here."> Upload new objects to any bucket they manage</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Bucket policy management is an S3 control-plane action, not related to encryption key access."> Modify bucket policies on any accessible bucket</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. With SSE-S3, the S3 service owns and controls all keys, so a full S3 admin implicitly has decrypt access. With SSE-KMS, the KMS key policy is a separate permission boundary — no KMS access means no decrypt."> Decrypt and read all encrypted object contents</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Enabling Transfer Acceleration is a bucket configuration action unrelated to encryption key access."> Enable Transfer Acceleration on any S3 bucket</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-kms-introduction.html">← Lesson 05: KMS Introduction</a>
+      <a href="0007-s3-bucket-keys.html">Next: S3 Bucket Keys →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

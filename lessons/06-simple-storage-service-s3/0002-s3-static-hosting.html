@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – S3 Static Website Hosting</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">S3</a> › Lesson 02</div>
+    <div class="module-tag">Simple Storage Service (S3)</div>
+    <h1>S3 Static Website Hosting</h1>
+    <p class="lesson-meta">Lesson 02 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteHosting.html" target="_blank">S3 Static Website Hosting Docs</a></p>
+  </div>
+
+  <h2>What is S3 Static Hosting?</h2>
+  <p>By default, S3 is accessed via the <strong>AWS API</strong> (HTTPS with AWS signing). Static website hosting enables an <strong>HTTP endpoint</strong> that any browser can reach — making S3 suitable for hosting static HTML, CSS, JavaScript, and media files.</p>
+
+  <p>When you enable static website hosting on a bucket you must specify two files:</p>
+  <ul>
+    <li><strong>Index document</strong> (e.g. <code>index.html</code>) — returned when a visitor navigates to the root URL or a directory without specifying a file.</li>
+    <li><strong>Error document</strong> (e.g. <code>error.html</code>) — returned when a requested page does not exist or a server error occurs.</li>
+  </ul>
+
+  <h2>Two Practical Use Cases</h2>
+  <table>
+    <thead><tr><th>Use case</th><th>How it works</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Offloading</strong></td>
+        <td>Serve static assets (images, JS, CSS) from S3 instead of your application servers. Reduces load on compute and takes advantage of S3's scaling.</td>
+      </tr>
+      <tr>
+        <td><strong>Out-of-band pages</strong></td>
+        <td>Host a maintenance or status page in S3. When your primary servers go offline, update DNS to point visitors to the S3 static site instead. The maintenance page is hosted entirely outside your main infrastructure.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Cost Model</h2>
+  <table>
+    <thead><tr><th>Cost component</th><th>Direction</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Storage</td><td>Always</td><td>Per GB per month; billed proportionally if stored for less than a full month</td></tr>
+      <tr><td>Data transfer</td><td>Data <strong>in</strong> is free; data <strong>out</strong> charged per GB</td><td>Transfers to the internet or other AWS regions incur egress fees</td></tr>
+      <tr><td>Requests</td><td>Always</td><td>Charged per 1,000 operations (GET, PUT, etc.); different operations have different per-1k rates</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    The out-of-band pattern is a favourite exam scenario: "your web servers are unavailable — how do you show users a maintenance page?" The answer is to pre-host a static page in S3 and redirect DNS to it.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. When a browser requests the root URL of an S3 static website and no path is specified, which file does S3 return?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The error document is returned on errors (missing files, server errors), not on root navigation."> The configured error document file</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true"  data-explanation="Correct. The index document is returned when no specific file is requested — it is the default document for the root and any directory path."> The configured index document file</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 static hosting does not provide a directory listing by default; it serves the index document instead."> An auto-generated directory listing page</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 does not redirect to the API endpoint; it serves the index document when the website endpoint is used."> A redirect to the S3 API endpoint URL</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company's web servers are taken offline for emergency maintenance. Users need to see a "We'll be back soon" page. Which architecture achieves this with minimal infrastructure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A standby EC2 instance requires managing additional compute infrastructure, which contradicts 'minimal infrastructure'."> Launch a standby EC2 web server instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFront caching can serve cached content but won't show a custom maintenance page unless there's a custom error response configured pointing to S3."> Enable CloudFront to cache the last response</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true"  data-explanation="Correct. This is the out-of-band pattern: pre-host a static maintenance page in S3 and update DNS to redirect traffic to it during downtime."> Host a static page in S3 and update DNS routing</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Route 53 health checks can detect failure but don't serve a custom page on their own — you still need the S3 static site as the target."> Configure Route 53 health checks on the servers</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which S3 data transfer scenario always incurs zero cost?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Data transferred out to the internet is charged per GB. This is not free."> Data transferred out to internet users</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cross-region transfers incur egress fees because data leaves one AWS region for another."> Data transferred out to another AWS region</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true"  data-explanation="Correct. Data flowing INTO S3 (uploads) is always free regardless of origin. You pay for storage, egress, and requests — not ingress."> Data transferred into S3 from any source</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="GET requests incur a per-1,000-requests charge; they are not free even within the same region."> Data retrieved via a GET request in same region</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-s3-security-resource-policies-acls.html">← Lesson 01: S3 Security</a>
+      <a href="0003-object-versioning-mfa-delete.html">Next: Object Versioning →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
