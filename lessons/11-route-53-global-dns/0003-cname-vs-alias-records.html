@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – CNAME vs. Route 53 Alias Records</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 03
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>CNAME vs. Route 53 Alias Records</h1>
+    <p class="lesson-meta">Lesson 03 of 13 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-choosing-alias-non-alias.html" target="_blank">Choosing Between Alias and Non-Alias Records</a></p>
+  </div>
+
+  <p>This distinction shows up repeatedly in exam questions, and it trips up people new to DNS. Get the two failure modes straight and the rest falls into place.</p>
+
+  <h2>The Problem with CNAME Alone</h2>
+  <p>An <strong>A record</strong> maps a name to an IP address (<code>catagram.io</code> → <code>1.3.3.7</code>). A <strong>CNAME</strong> maps a name to <em>another name</em> (<code>www.catagram.io</code> → <code>catagram.io</code>) — a standard, well-understood DNS mechanism.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The DNS-standard limitation</div>
+    You cannot create a CNAME for the <strong>zone apex</strong> — the "naked" domain itself (<code>catagram.io</code>, with no subdomain). This isn't an AWS restriction; it's baked into the DNS standard. <code>www.catagram.io</code> can be a CNAME. <code>catagram.io</code> cannot.
+  </div>
+
+  <p>That's a real problem, because many AWS services — Elastic Load Balancers, CloudFront, API Gateway — hand you a <strong>DNS name</strong> rather than a static IP. If you only had CNAME available, you could point <code>www.catagram.io</code> at a load balancer's DNS name, but never the naked <code>catagram.io</code>.</p>
+
+  <h2>Alias Records: AWS's Fix</h2>
+  <p>A Route 53 <strong>alias record</strong> maps a name onto an AWS resource, and — unlike CNAME — it <em>can</em> be used at the zone apex. It's a Route 53–specific extension to the DNS standard, so it only works if Route 53 is hosting your domain.</p>
+
+  <table>
+    <thead><tr><th></th><th>CNAME</th><th>Alias</th></tr></thead>
+    <tbody>
+      <tr><td>Works at the zone apex?</td><td>No — never</td><td>Yes</td></tr>
+      <tr><td>Works for normal (non-apex) records?</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td>Cost for queries to AWS resources</td><td>Billed</td><td><strong>Free</strong></td></tr>
+      <tr><td>DNS-standard or AWS-specific?</td><td>DNS standard</td><td>AWS-specific (Route 53 only)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: default to alias for AWS resources</div>
+    AWS makes alias queries to AWS resources <strong>free</strong>, specifically to encourage this default. For anything in a Route 53 zone pointing at an AWS resource — ELB, CloudFront, API Gateway, Elastic Beanstalk, Global Accelerator, or an S3 website bucket — default to an <strong>alias record</strong>, apex or not.
+  </div>
+
+  <h2>Alias Is a Wrapper, Not a New Record Type</h2>
+  <p>"Alias" isn't its own DNS record type — it's a flag applied to an existing type. You get an <strong>A record alias</strong> or a <strong>CNAME record alias</strong> depending on what the target resource itself provides. An ELB hands you an A record, so pointing at an ELB means creating an <strong>A record alias</strong> — match the alias's record type to the target's record type.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. You need the naked domain catagram.io (no subdomain) to resolve to an Elastic Load Balancer's DNS name. Why can't a plain CNAME record do this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route 53 does support CNAME records generally — the restriction is specific to the zone apex, not CNAMEs as a whole."> Route 53 doesn't support CNAME records at all</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The DNS standard itself forbids a CNAME at the zone apex (the naked domain) — this isn't an AWS-specific limitation, it applies to any DNS provider."> CNAME records can't be used at the zone apex, per the DNS standard</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="ELBs provide a DNS name rather than a static IP — that's exactly why CNAME/alias records are needed here instead of a plain A record pointing at an IP."> ELBs don't provide any DNS name to point a record at</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CNAME records are free to configure; the cost distinction is about DNS query billing (CNAME queries to AWS resources are billed, alias queries are free), not record creation."> CNAME records cost extra to create at any level of a zone</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why does AWS recommend defaulting to alias records over CNAME for anything pointing at an AWS resource, even where CNAME would technically work?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Alias records aren't faster to propagate than CNAME — the main practical incentive AWS provides is that alias queries to AWS resources are free, plus apex support."> Alias records propagate across name servers faster</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Route 53 doesn't charge for alias queries made to AWS resources, while CNAME queries are billed — a direct cost incentive to default to alias."> Route 53 doesn't charge for alias queries to AWS resources</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Alias records are a Route 53-specific extension — they aren't part of the general DNS standard, and don't work outside of Route 53 hosting your domain."> Alias records are part of the general DNS standard, unlike CNAME</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="TTL configurability isn't the differentiator being emphasized here — in fact, alias records pointing at AWS resources use the resource's own TTL rather than a custom one."> Alias records let you set a custom TTL that CNAME doesn't allow</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You're creating a Route 53 alias record to point at a resource that itself provides an A record. What type of alias should you create?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Alias is applied on top of a record type, matching whatever the target provides — a CNAME record alias would be used if the target itself provided a name-to-name mapping, not here."> A CNAME record alias, since alias always implies CNAME</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Alias isn't a distinct record type — it's a flag on an existing type, matched to what the target resource provides. An A-record-providing target needs an A record alias."> An A record alias, matching the record type the target provides</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="MX record aliases aren't a relevant option here — the target provides an A record, so the alias should match that type."> An MX record alias, since it's the most flexible option</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="There's no dedicated 'AWS record' type distinct from standard DNS record types — alias is a modifier on standard types like A or CNAME."> A special 'AWS record' type reserved only for AWS targets</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-r53-private-hosted-zones.html">← Previous: Route 53 Private Hosted Zones</a>
+      <a href="0004-simple-routing.html">Next: Simple Routing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

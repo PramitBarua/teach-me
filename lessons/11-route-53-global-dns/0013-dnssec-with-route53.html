@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 – Implementing DNSSEC with Route 53</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 13
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Implementing DNSSEC with Route 53</h1>
+    <p class="lesson-meta">Lesson 13 of 13 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec.html" target="_blank">Configuring DNSSEC Signing in Amazon Route 53</a></p>
+  </div>
+
+  <p>This is the module's most advanced topic — where cryptographic signing meets the DNS delegation chain covered in Lesson 01. DNSSEC lets a resolver <strong>verify</strong> that a DNS response genuinely came from the zone's owner and wasn't tampered with in transit.</p>
+
+  <h2>Two Kinds of Keys</h2>
+  <p>Enabling DNSSEC on a Route 53 hosted zone creates an <strong>asymmetric key pair</strong> in <strong>KMS</strong> (in <strong>us-east-1</strong> — this is a hard requirement, regardless of which Region your zone otherwise concerns), used to derive the zone's <strong>key-signing key (KSK)</strong>. Route 53 separately creates the <strong>zone-signing key (ZSK)</strong> entirely internally — <strong>KMS is not involved</strong> in ZSK creation or management.</p>
+
+  <table>
+    <thead><tr><th>Key</th><th>Backed by</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Key-Signing Key (KSK)</strong></td><td>An asymmetric KMS key you own, in us-east-1</td><td>Signs the DNSKEY record; its public part is hashed into the parent zone's DS record</td></tr>
+      <tr><td><strong>Zone-Signing Key (ZSK)</strong></td><td>Managed internally by Route 53, no KMS</td><td>Signs the zone's other records</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Building the Chain of Trust</h2>
+  <p>Once the keys exist, Route 53 does the rest of the signing automatically:</p>
+  <ol>
+    <li>The public parts of both the KSK and ZSK are added to a <strong>DNSKEY</strong> record in the hosted zone.</li>
+    <li>The <strong>private KSK</strong> signs that DNSKEY record, producing an <strong>RRSIG</strong> record — proof the DNSKEY record itself is valid and unmodified.</li>
+    <li>The <strong>parent zone</strong> (e.g. the <code>.org</code> TLD) needs a <strong>DS (Delegation Signer) record</strong> — a hash of the KSK's public part — to extend the chain of trust downward. If the domain is registered <em>through Route 53</em>, this can be added directly from the console/CLI; otherwise, it has to be added manually wherever the domain is registered.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: where each piece lives</div>
+    Three details are the ones most likely to be tested directly: the KMS key backing the KSK must be in <strong>us-east-1</strong>; the <strong>ZSK is Route-53-internal, no KMS</strong>; and the <strong>DS record lives in the parent zone</strong> (not your own zone) to link your zone's signature into the wider chain of trust.
+  </div>
+
+  <h2>Operational Notes</h2>
+  <ul>
+    <li>Enabling DNSSEC caps a hosted zone's TTLs at <strong>one week</strong> maximum, regardless of what you'd previously set.</li>
+    <li>Set up CloudWatch alarms for <strong>DNSSEC internal failure</strong> and <strong>key-signing key action needed</strong> — both indicate an urgent problem, either with the KSK itself or with the KMS interaction.</li>
+    <li>You can additionally enable <strong>DNSSEC validation for VPCs</strong>: for DNSSEC-enabled zones, any record that fails signature validation is withheld rather than returned. Non-DNSSEC zones are entirely unaffected by this setting.</li>
+    <li>Timing matters in production: AWS documents specific wait periods (tied to your existing TTLs) that must be respected between steps — rushing this on a live domain can cause a resolution outage.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Your hosted zone is in ap-southeast-2. You're enabling DNSSEC and creating the KMS key that will back the key-signing key. Which Region must that KMS key be created in?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The KSK's backing KMS key has a hard Region requirement of us-east-1 regardless of where the hosted zone's other concerns lie — it doesn't follow the zone's own Region."> ap-southeast-2, matching the hosted zone's own Region</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The asymmetric KMS key backing a hosted zone's key-signing key must be created in us-east-1, regardless of which Region the zone itself is associated with."> us-east-1, regardless of the hosted zone's own Region</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There's no requirement to create the KMS key in every Region — DNSSEC only needs it in the single fixed us-east-1 Region."> Every Region the account uses, for redundancy</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The ZSK, not the KSK, is managed entirely internally without any KMS key at all — but the KSK specifically does require a KMS key in us-east-1."> No Region requirement, since KMS isn't involved at all</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which statement correctly describes how the zone-signing key (ZSK) is created and managed in Route 53's DNSSEC implementation?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The ZSK specifically does not involve KMS — that's the key-signing key's role. The ZSK is created and managed entirely internally by Route 53."> It's backed by the same KMS asymmetric key as the KSK</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Route 53 creates and manages the zone-signing key entirely internally — KMS is not involved in ZSK creation or management at all."> It's created and managed internally by Route 53, without KMS</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The ZSK isn't manually uploaded by the domain owner — Route 53 generates and manages it internally as part of enabling DNSSEC signing."> You must manually generate and upload it via the CLI</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The ZSK isn't stored in the parent (TLD) zone — that's where the DS record (a hash of the KSK's public part) goes, not the ZSK itself."> It's stored in the parent zone alongside the DS record</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. To complete the chain of trust for a DNSSEC-enabled hosted zone, a DS (Delegation Signer) record must be added. Where does this record need to live?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The DNSKEY record (holding the public KSK/ZSK) lives in your own zone, but the DS record specifically needs to be added to the parent zone to extend the chain of trust downward."> Inside your own hosted zone, alongside the DNSKEY record</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The DS record — a hash of the KSK's public part — must be added to the parent zone (e.g. the .org TLD registry) to extend the chain of trust down into your hosted zone."> In the parent zone, e.g. the .org top-level domain registry</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The DS record isn't stored inside the KMS key itself — KMS holds the asymmetric key material backing the KSK, while the DS record is a separate DNS record added at the parent zone."> Inside the KMS key resource itself, as a tag</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The DS record isn't part of instance metadata — it's a DNS record that must be published in the parent zone to establish the chain of trust."> In the EC2 instance metadata of any instance in the VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0012-r53-interoperability.html">← Previous: Route 53 Interoperability</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Route 53 & Global DNS module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

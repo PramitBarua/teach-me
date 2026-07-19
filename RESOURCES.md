@@ -71,3 +71,11 @@
 | R65 | EC2 Placement Groups | https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html | Cluster/spread/partition strategies and limits |
 | R66 | EC2 Enhanced Networking | https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html | SR-IOV, ENA, bandwidth/PPS/latency benefits |
 | R67 | Amazon EBS-Optimized Instances | https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html | Dedicated EBS I/O network capacity |
+| R68 | Amazon Route 53 Concepts | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/route-53-concepts.html | Hosted zones, records, name servers terminology |
+| R69 | Working with Public Hosted Zones | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html | Public zone architecture, walking the tree |
+| R70 | Working with Private Hosted Zones | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html | VPC association, split-view DNS |
+| R71 | Choosing Between Alias and Non-Alias Records | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-choosing-alias-non-alias.html | CNAME vs. alias, zone apex restriction |
+| R72 | Choosing a Routing Policy | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html | Overview of all Route 53 routing policy types |
+| R73 | How Route 53 Checks the Health of Your Resources | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/welcome-health-checks.html | Health check types, 18% healthy threshold |
+| R74 | Geoproximity Routing | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-geoproximity.html | Distance-based routing with bias |
+| R75 | Configuring DNSSEC Signing in Amazon Route 53 | https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec.html | KSK/ZSK architecture, chain of trust, DS records |

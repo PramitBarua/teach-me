@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – Route 53 Private Hosted Zones</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 02
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Route 53 Private Hosted Zones</h1>
+    <p class="lesson-meta">Lesson 02 of 13 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html" target="_blank">Working with Private Hosted Zones</a></p>
+  </div>
+
+  <p>A <strong>private hosted zone</strong> works exactly like a public one — same records, same resolver mechanics — except it's never reachable from the public internet. It's only accessible from the specific <strong>VPCs you associate</strong> with it, using the Route 53 resolver at each VPC's base <code>+2</code> address.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Two things must both be true to resolve a private hosted zone: the service doing the query must be <strong>running inside a VPC</strong>, and that VPC must be <strong>associated with the zone</strong>. Miss either one and resolution simply fails — there's no partial access. Association can be done via console, CLI, or API within one account; <strong>cross-account association requires the CLI or API</strong>.
+  </div>
+
+  <h2>Why Use One</h2>
+  <p>Private hosted zones are for records that are legitimate but shouldn't be exposed publicly — internal service discovery, sensitive configuration, systems that should only resolve inside your environment. A VPC that isn't associated with the zone is in exactly the same position as a random user on the public internet: no access at all.</p>
+
+  <h2>Split-View (Split-Horizon) DNS</h2>
+  <p>A powerful pattern combines both zone types under the <strong>same domain name</strong>: a private hosted zone for <code>animalsforlife.org</code> associated with an internal VPC, and a separate <strong>public</strong> hosted zone, also for <code>animalsforlife.org</code>, containing only a subset of records.</p>
+
+  <p>The result: internal users resolving <code>animalsforlife.org</code> from inside the associated VPC see the full private record set (e.g. an internal accounting system). External users on the public internet, walking the tree through the <code>.org</code> TLD servers, only ever reach the public zone — anything private-only, like that accounting record, is simply invisible to them.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Same name, different answers</div>
+    Split-view DNS is exactly why a company can run its intranet and public website on the <em>same</em> domain name — the private zone answers for internal clients, the public zone answers for everyone else, and neither one knows the other exists.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EC2 instance sits in VPC-B, which is <em>not</em> associated with a private hosted zone for internal.animalsforlife.org. What happens when it queries a record in that zone?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Running inside some VPC isn't enough — the specific VPC must be associated with the private hosted zone, or resolution fails entirely."> It resolves successfully since it's inside a VPC</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Without an association between VPC-B and the private hosted zone, the instance has no access at all — same as a public internet user."> Resolution fails; VPC-B has no access to that zone</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route 53 private hosted zones don't silently fall back to a public zone of the same name — resolution against the private zone simply fails without an association."> It falls back to querying the public hosted zone instead</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Private hosted zone access isn't billing-gated in this way — the actual requirement is a VPC association, not a payment tier."> It resolves, but only after a billing upgrade is applied</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company wants internal staff on the corporate VPC to reach an intranet at intranet.animalsforlife.org, while public visitors resolving the same name reach the public marketing site. What architecture achieves this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A single hosted zone can't serve two different answers depending on whether the requester is public or internal — that split behavior requires two separate zones."> A single public hosted zone with two records of the same name</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Split-view (split-horizon) DNS uses a private hosted zone for the internal VPC and a separate public hosted zone for the same domain name, each with its own record set."> Split-view DNS: a private zone for the VPC, a public zone for everyone else</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Weighted routing distributes traffic across records by percentage — it doesn't separate internal-only visibility from public visibility."> Weighted routing splitting traffic between intranet and public sites</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Geolocation routing distinguishes by user location, not by whether the requester is inside a specific corporate VPC versus the public internet."> Geolocation routing based on the visitor's home country</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You need to associate a private hosted zone in Account A with a VPC that lives in Account B. What's required?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The console UI supports same-account association, but cross-account association specifically requires the CLI or API — not the console."> This can be done entirely through the Route 53 console UI</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Same-account association can use the console, CLI, or API, but associating a private hosted zone with a VPC in a different account requires the CLI or API."> Cross-account association, which requires the CLI or API</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Converting the zone to public would make it reachable from the internet, which defeats the purpose of using a private zone and isn't how cross-account association works."> Converting the private hosted zone to a public one first</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS Organizations membership alone doesn't associate a private hosted zone with a VPC — the explicit CLI/API association step is still required."> Nothing extra; Organizations membership grants this automatically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-r53-public-hosted-zones.html">← Previous: Route 53 Public Hosted Zones</a>
+      <a href="0003-cname-vs-alias-records.html">Next: CNAME vs. Route 53 Alias →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

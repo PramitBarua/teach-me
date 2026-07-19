@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – Geoproximity Routing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 11
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Geoproximity Routing</h1>
+    <p class="lesson-meta">Lesson 11 of 13 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-geoproximity.html" target="_blank">Geoproximity Routing</a></p>
+  </div>
+
+  <p><strong>Geoproximity routing</strong> is the third and last of the location-based routing policies, and the one that most directly answers "give me the record closest to this user" — using actual <strong>distance</strong>, not the estimated performance latency routing uses, and not the location-matching rules geolocation uses.</p>
+
+  <h2>Defining Resources</h2>
+  <p>You define rules for each resource: if it's an AWS resource, tag it with an <strong>AWS Region</strong>; if it's external, give it explicit <strong>latitude/longitude coordinates</strong>. Route 53 already knows where the user making the request is, so it can calculate the distance from the user to each resource and route to whichever is <strong>closest</strong>.</p>
+
+  <h2>Bias: Reshaping the Map</h2>
+  <p>The feature that sets geoproximity apart is <strong>bias</strong> — a value that expands or shrinks a resource's effective service area, applied per-resource.</p>
+
+  <ul>
+    <li><strong>Positive bias</strong> — grows a resource's effective area, pulling in traffic from further away (including from neighboring regions that would otherwise route elsewhere).</li>
+    <li><strong>Negative bias</strong> — shrinks a resource's effective area, pushing away traffic that would otherwise route to it.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Worked example</div>
+    Resources exist in the UK and Australia. Without bias, a user in Saudi Arabia (~6,700 km from the UK, 10,000+ km from Australia) would be routed to the <strong>UK</strong> resource as the closer of the two. Apply a large enough <strong>positive bias</strong> to the Australian resource, and its effective service area grows large enough to pull in Saudi Arabian traffic instead — even though the UK is still physically nearer.
+  </div>
+
+  <p>Bias is what makes geoproximity useful beyond a naive "nearest resource" calculation: it lets you deliberately shift load between resources — e.g. to relieve a resource that's over-capacity, or to prefer a Region for business reasons — while still keeping the underlying logic distance-based.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Latency vs. geolocation vs. geoproximity, in one line each</div>
+    <strong>Latency</strong>: routes to whichever Region is estimated to perform <em>fastest</em> for the user. <strong>Geolocation</strong>: routes only to resources explicitly tagged as <em>relevant</em> to the user's location — no match, no answer. <strong>Geoproximity</strong>: routes to the <em>physically closest</em> resource, adjustable with bias.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What core factor does geoproximity routing use to decide which resource to return, that distinguishes it from latency-based routing?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A fixed percentage weight per record describes weighted routing, not geoproximity, which is fundamentally about physical distance."> A fixed percentage weight assigned per resource</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Geoproximity calculates actual physical distance between the user and each resource, unlike latency routing which uses an estimated-performance database instead."> Physical distance between the user and each resource</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="ISO country/continent tagging with strict location matching describes geolocation routing, not geoproximity."> ISO country codes tagged on each record</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Health check pass/fail state can combine with geoproximity, but it isn't the core factor that determines which resource is closest to the user."> Whether the resource's health check is currently passing</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Resources exist in the UK and Australia. Without any bias applied, a user in Saudi Arabia — closer to the UK than Australia — queries the record. Which resource is returned?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Without bias, geoproximity routes purely on physical distance, and the UK is closer to Saudi Arabia than Australia is — so the UK resource is returned."> The UK resource, since it's the physically closer of the two</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Without any bias applied, geoproximity uses pure distance, and Australia is further from Saudi Arabia than the UK is — so it wouldn't be selected here."> The Australian resource, since it has more available capacity</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Geoproximity routing without bias doesn't return both resources for the client to pick — it selects the single closest one."> Both resources, for the client to choose between</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Geoproximity doesn't require an exact country match the way geolocation does — it calculates distance regardless of whether Saudi Arabia has its own explicitly tagged resource."> No answer, since Saudi Arabia has no dedicated resource</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You want traffic from the Middle East, currently routed to a UK resource by pure distance, to instead route to an under-utilized Australian resource. What should you configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Weighted routing isn't part of geoproximity's mechanism — geoproximity uses bias, not weight percentages, to reshape effective service areas."> A weighted routing record favoring the Australian resource</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A positive bias on the Australian resource expands its effective service area far enough to pull in Middle East traffic, even though the UK is physically closer — exactly the mechanism geoproximity provides for this."> A positive bias on the Australian resource's geoproximity rule</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A negative bias shrinks a resource's effective area rather than expanding it — applying it to the UK wouldn't reliably route Middle East traffic to Australia specifically."> A negative bias on the UK resource's geoproximity rule</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Geolocation routing matches by explicit location tags (country/continent), not by adjustable distance bias — it isn't the mechanism used to reshape a proximity-based service area."> A geolocation record tagged specifically for the Middle East</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-geolocation-routing.html">← Previous: Geolocation Routing</a>
+      <a href="0012-r53-interoperability.html">Next: Route 53 Interoperability →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

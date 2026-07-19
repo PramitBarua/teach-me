@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Latency Routing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 09
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Latency-Based Routing</h1>
+    <p class="lesson-meta">Lesson 09 of 13 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html" target="_blank">Choosing a Routing Policy</a></p>
+  </div>
+
+  <p>The next three lessons — latency, geolocation, and geoproximity — are the ones most likely to blur together in your head, because all three route based on where things are in the world. Keep this straight as you go: <strong>latency routing optimizes for performance</strong>, using measured network latency, not physical distance.</p>
+
+  <h2>How It Works</h2>
+  <p>Records with the same name (e.g. <code>www</code>) are each tagged with an <strong>AWS Region</strong> — one record per Region for that name. AWS separately maintains a background database of typical <strong>latency between Regions and the rest of the world</strong>. When a user resolves the record, Route 53 identifies their approximate location (via an IP lookup), consults that latency database, and returns the record for the <strong>Region with the lowest expected latency</strong> to that user.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Latency isn't measured live</div>
+    The latency database AWS uses is <strong>not real-time</strong> — it's a maintained background dataset, so it won't reflect a sudden local network problem on either end. It's a solid general-purpose optimization, not a live network probe.
+  </div>
+
+  <p>Latency routing combines with health checks: if the lowest-latency record is unhealthy, Route 53 moves on to the record with the <strong>next-lowest</strong> latency instead.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: latency vs. geoproximity</div>
+    Latency routing picks the Region that will likely feel <strong>fastest</strong> — which is not always the Region that's physically <strong>closest</strong>. Geoproximity routing (two lessons ahead) is explicitly <strong>distance</strong>-based instead. Use latency routing when the goal is user-perceived performance for a global application.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A global app has records tagged us-east-1, eu-west-1, and ap-southeast-2. A user in Japan queries the record. What does latency routing use to decide which one to return?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Latency routing doesn't use physical distance calculations — that's geoproximity routing. Latency routing consults AWS's maintained latency database instead."> The physical distance between Japan and each Region</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Latency routing consults AWS's background database of measured latency between world locations and each Region, returning the Region expected to be fastest for that user."> AWS's maintained database of measured latency to each Region</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Latency routing doesn't use ISO country/continent codes for record matching — that's geolocation routing's mechanism."> The ISO country code tagged on each record</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Weighted routing uses fixed percentage weights, unrelated to how latency routing selects a Region based on estimated latency."> A fixed percentage weight assigned to each Region</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Is AWS's latency database used for latency-based routing updated in real time as network conditions change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The transcript is explicit that this database is not real-time — it's a maintained background dataset, not a live network probe."> Yes, it re-measures actual conditions on every query</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. AWS maintains this latency database in the background; it isn't real-time and won't reflect a sudden local network issue, but it's generally good enough for performance optimization."> No, it's a background-maintained dataset, not real-time</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Latency routing doesn't rely on the Route 53 health checker fleet to measure latency in real time — a separately maintained database is used instead."> Yes, using live probes from the Route 53 health checker fleet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There is a latency database behind this routing policy — it isn't a fixed static table that never changes at all, just not continuously real-time."> No, it never updates once initially configured</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. The Region selected by latency routing for a given user turns out to have an unhealthy record (health check failing). What does Route 53 do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Latency routing doesn't return no answer when the top choice is unhealthy — it moves on to the next-best option instead."> Returns no answer until that Region's record recovers</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. When combined with health checks, if the lowest-latency record is unhealthy, Route 53 moves on to the record with the next-lowest latency instead."> Moves on to the record with the next-lowest latency</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Latency routing doesn't fall back to a random simple-routing-style pick — it specifically selects the next-lowest-latency healthy record."> Falls back to a random record, ignoring latency entirely</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Health check failures don't cause latency routing to switch its overall strategy to geolocation — it continues to use latency, just skipping the unhealthy option."> Switches the whole record to geolocation-based routing instead</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-weighted-routing.html">← Previous: Weighted Routing</a>
+      <a href="0010-geolocation-routing.html">Next: Geolocation Routing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

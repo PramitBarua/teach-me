@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – Multi-Value Routing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 07
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Multi-Value Routing</h1>
+    <p class="lesson-meta">Lesson 07 of 13 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html" target="_blank">Choosing a Routing Policy</a></p>
+  </div>
+
+  <p><strong>Multi-value routing</strong> sits between simple routing and failover routing, taking a piece of each: simple routing's "many records with the same name," combined with failover routing's health checking.</p>
+
+  <h2>How It Works</h2>
+  <p>You create multiple records with the same name (e.g. three <code>www</code> A records), each with its <strong>own health check</strong> attached. On query, Route 53 returns up to <strong>8 healthy records</strong> — if more than 8 healthy records exist, 8 are selected at random. The client then picks one itself to connect to, same as simple routing.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: what actually changes</div>
+    The health check integration is the whole point. Any record failing its check is <strong>excluded</strong> from what gets returned — clients never even see it as an option, unlike simple routing where an unhealthy resource's value is returned regardless.
+  </div>
+
+  <p>Multi-value routing gives you <strong>active-active</strong> DNS-level availability: many resources, all capable of serving requests, each independently health-checked, with unhealthy ones automatically dropped from the response. It's not a substitute for a real load balancer — there's no connection-level logic here, just which IPs get handed back — but it's a useful, low-cost way to improve availability purely through DNS.</p>
+
+  <table>
+    <thead><tr><th>Policy</th><th>Health checks?</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td>Simple</td><td>No</td><td>A single resource</td></tr>
+      <tr><td>Failover</td><td>Yes (on primary)</td><td>Active-passive, primary + backup</td></tr>
+      <tr><td>Multi-value</td><td>Yes (per record)</td><td>Many equally-capable resources, active-active</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A multi-value routing record has 10 associated values, and health checks report 9 of them healthy. How many values does a client typically receive in a single query response?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-value routing caps responses at 8 values even when more healthy records exist — it doesn't return all 9 in one response."> All 9 healthy values, since the cap only applies to unhealthy ones</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Multi-value routing returns up to 8 healthy values per query; with 9 healthy records available, 8 are selected at random."> Up to 8 of the healthy values, selected at random</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-value routing doesn't return a single top choice — it returns multiple values (up to 8) for the client to choose among, unlike a load balancer's single decision."> Just 1 value, the healthiest based on latency</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-value routing excludes unhealthy records from the response — it wouldn't return all 10 including the unhealthy one."> All 10 values, including the unhealthy one</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. What's the key functional difference between simple routing and multi-value routing when one of several records' backing resources goes down?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Neither policy limits values to exactly one per name — both can hold multiple records under the same name."> Simple routing allows only one value; multi-value allows several</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Simple routing has no health checks at all, so a down resource's value is still returned. Multi-value attaches a health check per record, excluding down resources from the response."> Multi-value excludes the down resource via its health check; simple routing doesn't</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Multi-value routing doesn't perform connection-level load balancing — it just returns a set of healthy IPs for the client to pick from, same conceptually as simple routing's client-side choice."> Simple routing load-balances connections; multi-value doesn't</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Multi-value routing works with public hosted zones the same as simple routing — hosted zone type isn't the distinguishing factor here."> Multi-value only works in private hosted zones</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which use case is the best fit specifically for multi-value routing, rather than failover routing?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single primary application server backed by an S3 static fallback page is the textbook active-passive failover routing scenario, not multi-value."> One primary app server with an S3 static page as backup</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Many equally-capable resources that should all actively serve requests, each independently health-checked, is exactly what multi-value routing is designed for."> Several equally-capable web servers, all actively serving requests</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Multi-value routing doesn't distribute traffic by explicit percentage weighting — that's weighted routing's job."> Sending a fixed 30%/70% traffic split between two app versions</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Directing users to the closest or lowest-latency Region is the job of latency-based or geoproximity routing, not multi-value."> Directing users to whichever AWS Region is closest to them</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-failover-routing.html">← Previous: Failover Routing</a>
+      <a href="0008-weighted-routing.html">Next: Weighted Routing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

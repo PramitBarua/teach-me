@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Route 53 Public Hosted Zones</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 01
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Route 53 Public Hosted Zones</h1>
+    <p class="lesson-meta">Lesson 01 of 13 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html" target="_blank">Working with Public Hosted Zones</a></p>
+  </div>
+
+  <p>A <strong>hosted zone</strong> is a DNS database for one section of the global DNS namespace — say, <code>animalsforlife.org</code>. Route 53 supports two kinds: <strong>public</strong> and <strong>private</strong>. This lesson covers public hosted zones; the next covers private.</p>
+
+  <h2>Globally Resilient by Design</h2>
+  <p>Route 53's name servers are distributed globally, all serving the same dataset — so an outage affecting a whole AWS Region doesn't stop Route 53 from functioning. Hosted zones are created automatically when you register a domain through Route 53, or you can create one separately to host a domain registered elsewhere. There's a monthly fee per hosted zone, plus a small per-query charge.</p>
+
+  <h2>How a Public Hosted Zone Is Structured</h2>
+  <p>Creating a public hosted zone allocates <strong>four Route 53 name servers</strong>, and it's on those servers that the zone file lives. Inside the zone, you create <strong>resource records</strong> — A/AAAA, MX, NS, TXT, and so on. The zone is accessible two ways:</p>
+  <ul>
+    <li>From the <strong>public internet</strong>, via those four name servers.</li>
+    <li>From inside a <strong>VPC</strong>, via the Route 53 resolver at the VPC's base <code>+2</code> address — as long as DNS resolution is enabled for that VPC.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: walking the tree</div>
+    A public query for <code>animalsforlife.org</code> doesn't go straight to Route 53. It starts at the <strong>DNS root servers</strong>, which point to the <strong>.org top-level-domain servers</strong>, which hold an entry for <code>animalsforlife.org</code> pointing at the <strong>four Route 53 name servers</strong> for that zone — only then does Route 53 actually answer. This delegation chain is called <strong>walking the tree</strong>, and it's how any public host resolves records inside your hosted zone.
+  </div>
+
+  <p>To integrate an externally-registered domain with Route 53, you create the public hosted zone in Route 53 to get its four name servers, then update the name server (NS) records for that domain at your registrar (Hover, GoDaddy, etc.) to point at them — covered in more depth in the interoperability lesson later in this module.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Why does a Route 53 public hosted zone keep answering queries even during an outage affecting an entire AWS Region?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route 53's resilience comes from its globally distributed name servers, not from Auto Scaling replacing failed hosts."> An Auto Scaling group replaces failed name servers instantly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Route 53's name servers are distributed globally and all hold the same dataset, so the service keeps functioning even if an entire Region is affected."> Its name servers are globally distributed with the same dataset</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route 53 hosted zones don't fail over to a backup Region — resilience comes from the name servers already being global by design, not a DR failover process."> Route 53 fails over the zone to a backup Region automatically</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFront caching serves content at the edge, but it isn't what makes Route 53 itself globally resilient."> CloudFront caches the DNS responses at every edge location</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An EC2 instance inside a VPC (with DNS resolution enabled) wants to query a record in a public hosted zone for a domain the company owns. How does it typically resolve this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The instance doesn't need to leave the VPC and query the internet-facing name servers directly — the VPC's own resolver handles this."> It must query one of the four public name servers over the internet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. With DNS resolution enabled, instances inside the VPC can query public hosted zones directly via the Route 53 resolver at the VPC's base +2 address."> It queries the Route 53 resolver at the VPC's base +2 address</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Public hosted zones don't require a VPN or Direct Connect to be queried from within a VPC — the built-in VPC resolver handles this natively."> It requires a VPN connection back to the four name servers</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Public hosted zones are not converted to private hosted zones for VPC access — the same zone is reachable both publicly and from the VPC via its resolver."> The public zone is automatically converted to a private zone</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A domain is registered with a third-party registrar, but you want Route 53 to host its DNS records. What's the first step?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Contacting the .org registry directly isn't how this works — the change flows through your registrar, and it needs the Route 53 name servers first."> Contact the .org registry directly to change its authoritative servers</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. You first create the public hosted zone in Route 53 to get its four allocated name servers, then update the NS records at the existing registrar to point at them."> Create a public hosted zone in Route 53 to get its four name servers</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Registering the domain again through Route 53 would create a conflict — it's already registered elsewhere; only the hosting needs to move."> Re-register the domain a second time through Route 53</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A private hosted zone is only reachable from associated VPCs, not the public internet — it wouldn't serve a domain to public visitors."> Create a private hosted zone and associate it with all VPCs</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-r53-private-hosted-zones.html">Next: Route 53 Private Hosted Zones →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

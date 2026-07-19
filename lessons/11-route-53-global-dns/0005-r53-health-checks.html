@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – Route 53 Health Checks</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 05
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Route 53 Health Checks</h1>
+    <p class="lesson-meta">Lesson 05 of 13 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/welcome-health-checks.html" target="_blank">How Route 53 Checks the Health of Your Resources</a></p>
+  </div>
+
+  <p>Health checks underpin nearly every advanced Route 53 routing policy that follows in this module. They're created and configured <strong>separately</strong> from records — not inside a record — and then referenced by whichever records need them.</p>
+
+  <h2>How a Check Runs</h2>
+  <p>Checks run from a globally distributed fleet of <strong>health checkers</strong> — so if you're checking a public-internet endpoint, don't block their traffic as if it were a bot or an attack, or you'll get false failures. There are three check mechanisms, increasing in accuracy:</p>
+
+  <table>
+    <thead><tr><th>Type</th><th>What must succeed</th></tr></thead>
+    <tbody>
+      <tr><td><strong>TCP</strong></td><td>A TCP connection completes within <strong>10 seconds</strong></td></tr>
+      <tr><td><strong>HTTP/HTTPS</strong></td><td>TCP connects within <strong>4 seconds</strong>, <em>and</em> a 2xx or 3xx status is returned within <strong>2 seconds</strong> of connecting</td></tr>
+      <tr><td><strong>HTTP/HTTPS + string matching</strong></td><td>Same as above, <em>and</em> the response body (received within a further 2 seconds) must contain a specified string within its first <strong>5,120 bytes</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>Checks run every <strong>30 seconds</strong> by default, or every <strong>10 seconds</strong> ("fast") for an added cost. Checks aren't limited to AWS targets — anything reachable by IP address on the internet can be checked.</p>
+
+  <h2>Three Kinds of Check</h2>
+  <ul>
+    <li><strong>Endpoint checks</strong> — directly test a specified IP or domain name.</li>
+    <li><strong>CloudWatch alarm checks</strong> — react to the state of a CloudWatch alarm, which can reflect deep in-OS or in-app metrics if the CloudWatch agent is involved.</li>
+    <li><strong>Calculated checks</strong> — a check <em>of other checks</em>, letting you build one health signal that represents an entire application made of multiple components.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the 18% threshold</div>
+    Route 53 aggregates results across every health checker assigned to a check. If <strong>more than 18%</strong> report an endpoint as healthy, Route 53 considers the overall check <strong>healthy</strong> — 18% or fewer, and it's <strong>unhealthy</strong>. In most configurations, records tied to an unhealthy check are simply <strong>not returned</strong> in query responses.
+  </div>
+
+  <p>Other useful knobs: a <strong>failure threshold</strong> (how many consecutive checks must pass/fail before the status flips, giving you a buffer against one-off blips), the ability to <strong>invert</strong> a check's result, and the ability to temporarily <strong>disable</strong> a check (useful during planned maintenance — the resource is then always treated as healthy). Health check state changes can also trigger a CloudWatch alarm, which can notify an SNS topic.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Out of a health check's globally distributed checkers, exactly 18% report the endpoint as healthy. Is the overall health check status healthy or unhealthy?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The threshold is 'more than 18%' — exactly 18% does not clear that bar, so the check is considered unhealthy at that exact value."> Healthy, since 18% clears the reporting threshold</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Route 53 requires more than 18% of checkers to report healthy for the overall status to be healthy — exactly 18% falls short and the check is unhealthy."> Unhealthy, since more than 18% is required, not exactly 18%</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route 53's health determination isn't undefined at any particular percentage — the rule is a clean more-than-18%-vs-18%-or-fewer split."> Undefined; Route 53 requires a tie-breaker configuration</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The 18% figure is a fixed aggregation threshold — it isn't something you configure per health check."> It depends on the failure threshold value you configured</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You want a health check that reflects the status of an application made up of several sub-components, each already individually health-checked. What check type fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An endpoint check tests one specific IP or domain name directly — it doesn't combine the results of other, separately-configured checks."> An endpoint check pointed at the main application URL</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A calculated check is a check of other checks, letting you roll up several component-level health checks into one overall application health signal."> A calculated check referencing the component health checks</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A CloudWatch alarm check reacts to a single alarm's state — it doesn't natively combine multiple separate Route 53 health checks the way a calculated check does."> A CloudWatch alarm check watching CPU utilization only</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="TCP checks only test whether a connection completes on one endpoint — they have no concept of combining multiple sub-component checks."> A TCP check against the load balancer's listener port</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You need the most accurate health check possible — verifying not just that the server responds, but that the response body contains expected application content. Which check type do you use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A TCP check only confirms a connection completes — it has no visibility into HTTP status codes or response body content at all."> A plain TCP check on the application's port</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A basic HTTP/HTTPS check verifies the status code is in the 2xx/3xx range, but doesn't inspect the response body content — string matching is needed for that."> A basic HTTP check verifying only the status code</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. HTTP/HTTPS checks with string matching verify the status code and also search the response body (first 5,120 bytes) for a specified string — the most accurate option."> An HTTP/HTTPS check configured with string matching</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A CloudWatch alarm check reacts to a separately configured alarm's state — it doesn't itself inspect an HTTP response body for content."> A CloudWatch alarm check tied to a CPU utilization alarm</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-simple-routing.html">← Previous: Simple Routing</a>
+      <a href="0006-failover-routing.html">Next: Failover Routing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Weighted Routing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 08
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Weighted Routing</h1>
+    <p class="lesson-meta">Lesson 08 of 13 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html" target="_blank">Choosing a Routing Policy</a></p>
+  </div>
+
+  <p><strong>Weighted routing</strong> is Route 53's simplest form of load balancing, and it's also the standard way to run a canary or A/B test — sending a controlled fraction of traffic to a new version of something.</p>
+
+  <h2>How the Weight Calculation Works</h2>
+  <p>Multiple records share a name (e.g. three <code>www</code> A records pointing at three EC2 instances), and each gets a <strong>record weight</strong>. Route 53 sums all the weights for that name, and returns each record with probability <code>(its weight) / (total weight)</code>.</p>
+
+  <p>Example: weights of 40, 40, and 20 sum to 100 — so the first two records are each returned 40% of the time, the third 20% of the time. The weights don't need to add up to 100; the formula (<code>record weight ÷ total weight</code>) works regardless.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: weight of zero</div>
+    Setting a single record's weight to <strong>0</strong> means it's <strong>never</strong> returned — useful for temporarily pulling a record out of rotation without deleting it. But if <strong>every</strong> record for that name has weight 0, the normal rule flips: <strong>all</strong> of them are returned.
+  </div>
+
+  <h2>Combining with Health Checks</h2>
+  <p>Weighted routing can use health checks too. If the record selected by the weight calculation turns out to be <strong>unhealthy</strong>, Route 53 skips it and repeats the selection process until a healthy record comes up. Critically, health status <strong>doesn't change the weight calculation itself</strong> — the total weight isn't recalculated to exclude unhealthy records; an unhealthy pick is just skipped and re-rolled.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Three weighted records for the same name have weights 10, 10, and 80. Roughly what fraction of queries return the record with weight 80?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Weighted routing doesn't evenly split traffic across all records regardless of weight — the weight-to-total ratio directly determines the return frequency."> About 33%, since there are 3 records total</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The total weight is 100, and 80/100 = 80% — that record is returned roughly 80% of the time."> About 80%, since 80 out of a total weight of 100</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Weighted routing doesn't automatically favor the first record listed — return frequency is purely a function of each record's weight versus the total."> About 50%, since it's the largest of the three weights</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Weight values aren't required to sum to exactly 100 to function, and a sum of 100 here doesn't make the calculation invalid — it's actually the case in this example."> This can't be calculated unless weights sum to exactly 100</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You want to temporarily stop one record in a weighted set from ever being returned, without deleting it, while the other records continue as normal. What should you do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Removing the health check would stop health-based skipping, but wouldn't stop the record from being selected by the weight calculation at all — weight, not health check presence, controls this."> Remove its health check so it's never selected</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Setting a single record's weight to 0 means it's never returned by the weight calculation, without needing to delete the record — exactly this scenario."> Set that record's weight to 0</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Setting every record's weight to 0 causes all of them to be returned — the opposite of pulling just one record out of rotation."> Set every record's weight to 0 to isolate it</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Switching to failover routing changes the entire routing policy and relationship between records — it isn't how you pull a single record out of a weighted rotation."> Switch the routing policy to failover for that record only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A weighted routing record has a health check attached, and the record selected by the weight calculation turns out to be unhealthy. What happens to the total weight used for future calculations?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The unhealthy record's weight isn't subtracted from the total — the calculation stays the same, and an unhealthy selection is simply skipped and re-rolled."> It's recalculated excluding the unhealthy record's weight</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Health checks don't change the weight calculation itself — an unhealthy pick is simply skipped and the selection process repeats until a healthy record is chosen."> It stays the same; the unhealthy pick is just skipped and re-rolled</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Weighted routing doesn't fail the query outright when a selected record is unhealthy — it retries the selection instead."> The query returns no answer until the record recovers</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="An unhealthy pick doesn't get its weight redistributed to a specific other record — the process is simply to skip and re-select from the existing weighted pool."> Its weight is transferred entirely to the next-highest-weighted record</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-multivalue-routing.html">← Previous: Multi-Value Routing</a>
+      <a href="0009-latency-routing.html">Next: Latency Routing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

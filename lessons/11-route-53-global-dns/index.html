@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 53 & Global DNS – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Route 53 & Global DNS</div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Route 53 & Global DNS</h1>
+    <p class="lesson-meta">13 lessons · ~80 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html" target="_blank">Amazon Route 53 Developer Guide</a></p>
+  </div>
+
+  <p>This module covers Route 53 end to end: how hosted zones work (public and private), the CNAME/alias distinction, every routing policy from simple through geoproximity, interoperability with third-party registrars, and DNSSEC. Routing policies are the highest-yield exam territory here — six distinct policies that are easy to confuse under time pressure.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td><a href="0001-r53-public-hosted-zones.html">Public Hosted Zones</a></td>
+        <td>Four allocated name servers, globally resilient, walking the tree from DNS root to TLD to Route 53</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td><a href="0002-r53-private-hosted-zones.html">Private Hosted Zones</a></td>
+        <td>VPC-only resolution, association requirement, split-view (split-horizon) DNS</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td><a href="0003-cname-vs-alias-records.html">CNAME vs. Route 53 Alias</a></td>
+        <td>CNAME can't be used at the zone apex; alias records can, and are free for AWS resource queries</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td><a href="0004-simple-routing.html">Simple Routing</a></td>
+        <td>Default policy, multiple values per name, the only policy with no health check support</td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td><a href="0005-r53-health-checks.html">Route 53 Health Checks</a></td>
+        <td>TCP/HTTP/HTTP+string checks, endpoint/CloudWatch/calculated types, the 18% healthy threshold</td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td><a href="0006-failover-routing.html">Failover Routing</a></td>
+        <td>Active-passive: primary + secondary, health check on the primary drives the switch</td>
+      </tr>
+      <tr>
+        <td>07</td>
+        <td><a href="0007-multivalue-routing.html">Multi-Value Routing</a></td>
+        <td>Active-active: up to 8 healthy records returned at random, unhealthy ones excluded</td>
+      </tr>
+      <tr>
+        <td>08</td>
+        <td><a href="0008-weighted-routing.html">Weighted Routing</a></td>
+        <td>Record weight ÷ total weight; weight 0 = never returned; canary/A-B testing use case</td>
+      </tr>
+      <tr>
+        <td>09</td>
+        <td><a href="0009-latency-routing.html">Latency-Based Routing</a></td>
+        <td>Routes to the Region with lowest estimated latency, using AWS's background latency database</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td><a href="0010-geolocation-routing.html">Geolocation Routing</a></td>
+        <td>Matches user location to tagged records (subdivision → country → continent → default); no match can mean no answer</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td><a href="0011-geoproximity-routing.html">Geoproximity Routing</a></td>
+        <td>Pure distance-based routing, adjustable per-resource with a bias value</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td><a href="0012-r53-interoperability.html">Route 53 Interoperability</a></td>
+        <td>Registrar vs. hosting as two separable jobs; mixing Route 53 with third-party providers</td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td><a href="0013-dnssec-with-route53.html">Implementing DNSSEC</a></td>
+        <td>KSK (KMS, us-east-1) vs. ZSK (Route 53-internal); DS record in the parent zone completes the chain of trust</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The single highest-yield cluster is telling <strong>latency, geolocation, and geoproximity</strong> routing apart under scenario pressure — latency optimizes for estimated performance, geolocation matches by tagged location and can return no answer, geoproximity is pure distance with an adjustable bias. Also worth locking in: the <strong>CNAME-can't-be-used-at-the-apex</strong> rule (Lesson 03), and the <strong>18% healthy-checker threshold</strong> (Lesson 05).
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-r53-public-hosted-zones.html">Start: Public Hosted Zones →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

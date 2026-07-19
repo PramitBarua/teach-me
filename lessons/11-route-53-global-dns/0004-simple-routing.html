@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Simple Routing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 04
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Simple Routing</h1>
+    <p class="lesson-meta">Lesson 04 of 13 · ~4 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html" target="_blank">Choosing a Routing Policy</a></p>
+  </div>
+
+  <p>Route 53 supports several <strong>routing policies</strong> — different strategies for deciding what to return when a record is queried. <strong>Simple routing</strong> is the default and, as the name says, the simplest. The next several lessons cover each of the others in turn.</p>
+
+  <h2>How It Works</h2>
+  <p>With simple routing, one record name (e.g. <code>www</code>) can hold <strong>multiple values</strong>. A client query returns <em>all</em> of those values, in random order, and the client picks one itself to connect to.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The one thing simple routing can't do</div>
+    Simple routing is the <strong>only</strong> Route 53 routing policy with <strong>no health check support</strong>. It has no idea whether the resource behind a returned value is actually up — every other routing policy covered in this module supports health checks in some form.
+  </div>
+
+  <p>Use simple routing when you're pointing at a single service — one web server, one endpoint — and don't need intelligent routing or failure awareness. For anything where availability or performance-based routing matters, you'll want one of the other policies.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A record using simple routing has 3 values, and one of the 3 servers behind those values has crashed. What happens when a client queries the record?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Simple routing has no health check support at all — it can't detect that a server has crashed and remove it from the response."> The crashed server's value is automatically excluded</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Simple routing is the one Route 53 policy with no health check support — all 3 values are returned regardless of whether the underlying resource is healthy."> All 3 values are still returned, including the crashed one</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Simple routing doesn't reorder or prioritize values based on health — it has no health awareness at all, and values are returned in random order regardless."> Only the 2 healthy values are returned, in priority order</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Simple routing doesn't fail the query outright when a server is down — it simply has no awareness of server health to act on in the first place."> The query fails since one of the servers is unreachable</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which of the following scenarios is the best fit for simple routing?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Automatic failover to a backup resource on health check failure is failover routing's job, not simple routing's — simple routing has no health check capability."> Automatic failover to a backup S3 bucket if the primary fails</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A single web server with no need for health-check-driven intelligence is exactly simple routing's use case — it's the default, no-frills policy."> A single web server with no need for health-check-based logic</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Directing traffic to the lowest-latency AWS Region is latency-based routing's job — simple routing has no concept of Region or latency."> Directing users to the AWS Region with lowest latency</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Sending a specific percentage of traffic to a canary release is a weighted routing use case, which simple routing can't express."> Sending 5% of traffic to a canary release for testing</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What's the single defining limitation that distinguishes simple routing from every other Route 53 routing policy?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Simple routing does support multiple values under the same record name — that isn't the limitation being tested here."> It supports only one value per record name</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Simple routing is the only Route 53 policy that offers no health check integration at all — every other type supports health checks in some form."> It has no support for health checks at all</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Simple routing works for both public and private hosted zones — that isn't the distinguishing limitation."> It only works inside private hosted zones</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Simple routing supports standard record types like A/AAAA — there's no restriction limiting it to CNAME only."> It only supports CNAME record types, not A records</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-cname-vs-alias-records.html">← Previous: CNAME vs. Route 53 Alias</a>
+      <a href="0005-r53-health-checks.html">Next: Route 53 Health Checks →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

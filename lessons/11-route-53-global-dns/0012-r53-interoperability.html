@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – Route 53 Interoperability</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 12
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Route 53 Interoperability</h1>
+    <p class="lesson-meta">Lesson 12 of 13 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/route-53-concepts.html" target="_blank">Amazon Route 53 Concepts</a></p>
+  </div>
+
+  <p>Registering a domain through Route 53 feels like one action, but it's actually performing <strong>two separate jobs</strong> at once. Pulling those jobs apart makes every "mixed registrar/hosting" scenario much easier to reason about.</p>
+
+  <h2>Registrar vs. Hosting: Two Different Jobs</h2>
+  <ul>
+    <li><strong>Domain registrar</strong> — accepts your registration fee (per 1 or 3 years) and liaises with the <strong>registry</strong> for the relevant top-level domain (e.g. the <code>.org</code> registry) to add your domain's entry, pointing at whichever name servers you specify.</li>
+    <li><strong>Domain hosting</strong> — allocates name servers and hosts the actual <strong>zone file</strong> (the public hosted zone) containing your records.</li>
+  </ul>
+
+  <p>When you register and host with Route 53 in the default way, both jobs happen together: Route 53 creates the hosted zone (hosting), gets its four name servers, and passes them to the registrar side of Route 53, which enters them into the <code>.org</code> registry (registrar). You pay a registration fee (registrar) and a monthly hosted-zone fee (hosting) — conceptually separate charges for conceptually separate services.</p>
+
+  <h2>Mixing Registrar and Hosting Providers</h2>
+  <table>
+    <thead><tr><th>Architecture</th><th>Registrar</th><th>Hosting</th></tr></thead>
+    <tbody>
+      <tr><td>Default / most common</td><td>Route 53</td><td>Route 53</td></tr>
+      <tr><td>Route 53 as registrar only</td><td>Route 53</td><td>Third party (e.g. Hover)</td></tr>
+      <tr><td>Route 53 as hosting only</td><td>Third party (e.g. Hover)</td><td>Route 53</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: "Route 53 as registrar only" is rarely useful</div>
+    Route 53's registrar function is fairly unremarkable on its own — most of its value is in <strong>hosting</strong>. Using Route 53 purely as a registrar while a third party hosts the zone gives up most of the benefit. The far more common real-world pattern is the <strong>reverse</strong>: <strong>hosting only</strong> — keeping an existing third-party registrar (maybe for an existing business relationship or discount) while pointing that domain's name servers at a Route 53 hosted zone to get Route 53's DNS features.
+  </div>
+
+  <p>To set up "hosting only": create a public hosted zone in Route 53 (allocating its four name servers), then update the domain's NS records at the third-party registrar to point at those four Route 53 name servers. This can be done either at initial registration or years later on an already-registered domain.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company registered its domain years ago with a third-party registrar it has a business discount with, and now wants to use Route 53's DNS routing features. What should it do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="They don't need to re-register the domain through Route 53 — the existing registrar relationship can stay in place while only the hosting moves to Route 53."> Re-register the domain through Route 53, losing the existing registrar</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. This is the 'hosting only' architecture: keep the existing registrar, create a public hosted zone in Route 53, and update the domain's NS records at the registrar to point at Route 53's four name servers."> Create a Route 53 public hosted zone and update NS records at the existing registrar</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A private hosted zone is only reachable from associated VPCs, not the public internet — it wouldn't work for a domain serving public traffic."> Create a private hosted zone and associate it with their VPCs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route 53 hosted zones don't require abandoning an existing registrar relationship — registrar and hosting are separable, and this scenario keeps the registrar unchanged."> This isn't possible without abandoning the existing registrar</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. In the "Route 53 as registrar only" architecture, where does the actual DNS zone file live?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="In this specific architecture, Route 53 is acting only as the registrar — the zone file itself lives with the third-party hosting provider, not Route 53."> On Route 53's four allocated name servers</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. When Route 53 is registrar-only, a separate third-party provider hosts the actual zone file and name servers — Route 53 just handles the registration relationship with the TLD registry."> On the third-party hosting provider's name servers</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The .org registry only stores the domain's NS delegation record — it doesn't itself host the domain's actual zone file with its resource records."> Inside the .org top-level domain registry directly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There's no split-storage arrangement between Route 53 and the third party for a single zone file — one entity hosts the actual zone, and here it's the third party."> Split evenly between Route 53 and the third party</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What are the two conceptually distinct jobs that happen together when you register and host a domain through Route 53 in the default configuration?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Health checks and routing policies are Route 53 features applied on top of an already-hosted zone — they aren't the two foundational jobs performed at registration time."> Health check configuration and routing policy selection</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Registering a domain via Route 53 combines two conceptually separate roles: the registrar (liaising with the TLD registry) and the hosting provider (allocating name servers and hosting the zone file)."> Acting as the domain registrar and acting as the domain hosting provider</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DNSSEC signing is an optional feature you enable afterward — it isn't automatically one of the two core jobs performed simply by registering a domain."> Enabling DNSSEC signing and creating a KMS key</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Public and private hosted zone creation aren't both automatically performed at registration — only a public hosted zone is created by default; private zones are a separate, optional step."> Creating a public hosted zone and a private hosted zone</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-geoproximity-routing.html">← Previous: Geoproximity Routing</a>
+      <a href="0013-dnssec-with-route53.html">Next: Implementing DNSSEC →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

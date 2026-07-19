@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – Geolocation Routing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 10
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Geolocation Routing</h1>
+    <p class="lesson-meta">Lesson 10 of 13 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html" target="_blank">Choosing a Routing Policy</a></p>
+  </div>
+
+  <p>The single most important thing to internalize about geolocation routing, repeated because it's tested so often: <strong>it is not about proximity</strong>. It's about matching a user's location to a record's tagged location — and if nothing matches, you can get <strong>no answer at all</strong>, even if a "closer" record exists elsewhere.</p>
+
+  <h2>How Records Get Tagged</h2>
+  <p>Records are tagged with one of:</p>
+  <ul>
+    <li><strong>Subdivision</strong> — a US state (the most specific level available)</li>
+    <li><strong>Country</strong> — using ISO country codes</li>
+    <li><strong>Continent</strong> — using ISO continent codes (e.g. <code>SA</code> for South America)</li>
+    <li><strong>Default</strong> — a catch-all, optional</li>
+  </ul>
+
+  <h2>The Matching Order</h2>
+  <p>When a query comes in, Route 53 determines the user's location (via IP lookup) and checks for a match in this strict order, <strong>stopping at the first match</strong>:</p>
+  <ol>
+    <li>Is there a record for the user's specific <strong>subdivision (state)</strong>? (US users only)</li>
+    <li>If not, is there a record for the user's <strong>country</strong>?</li>
+    <li>If not, is there a record for the user's <strong>continent</strong>?</li>
+    <li>If none of those match, is there a <strong>default</strong> record?</li>
+    <li>If nothing matches at all — <strong>no answer</strong> is returned.</li>
+  </ol>
+
+  <div class="callout warn">
+    <div class="callout-title">The trap: no answer, not the nearest answer</div>
+    A user in the UK with only a Canadian record available in the zone gets <strong>nothing</strong> — not the Canadian record, even though it might be the "closest" one geographically. Geolocation only returns records that are explicitly <strong>relevant</strong> to the user's actual tagged location, never a fallback based on proximity.
+  </div>
+
+  <h2>Use Cases</h2>
+  <p>Geolocation is the right tool when you need to <strong>restrict or tailor content by location</strong> — serving content only to a specific market, presenting language-specific variants, or complying with data-residency-style requirements. It's about <em>where the user legally/logically belongs</em>, not about which server is fastest to reach.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A hosted zone has geolocation records tagged only for "Canada" and "Australia" (no default record). A user in the UK queries the record. What's returned?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Geolocation doesn't return the physically nearest record when there's no exact location match — it only returns records explicitly relevant to the user's own tagged location."> The Canada record, since it's geographically closer to the UK</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. With no record tagged for the UK's subdivision, country, or continent, and no default record configured, geolocation returns no answer at all."> No answer, since nothing matches the UK and there's no default</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Geolocation doesn't fall back to simple routing behavior of returning all available records — it strictly matches by location and returns nothing if no match exists."> Both the Canada and Australia records, for the client to pick</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Geolocation matches to the continent, not a fixed hardcoded region — Europe isn't a fallback tier unless it happens to be an explicitly tagged continent record, which isn't the case here."> The Europe continent record, as the automatic regional fallback</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Records exist for "California" (subdivision), "US" (country), and "North America" (continent). A user in Texas queries the record. Which is returned?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Geolocation checks subdivision first, but only for a match on the user's own state — Texas doesn't match a California-tagged record just because both are US states."> The California subdivision record, since it's the most specific tag available</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Texas has no subdivision-level record, so Route 53 moves to the country level and finds a match on 'US' — that's returned, and the process stops there."> The US country record, since no Texas-specific record exists</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Route 53 only proceeds to the continent level if no country-level match exists — here, the US country record is a match, so the continent record is never reached."> The North America continent record, since it's the broadest match</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A match is found at the country level (US), so this doesn't fall through to no-answer — geolocation stops at the first matching level in its order."> No answer, since there's no exact Texas-tagged record</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A media company wants to serve a specific licensed video only to users physically located in the US, and something else to everyone else. Which routing policy fits, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Latency routing optimizes for performance based on network latency to AWS Regions — it has no concept of restricting content to users from a specific country."> Latency routing, since it's the most performance-optimized choice</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Geolocation routing is designed exactly for content restriction and localization by the user's actual location — tag a US record and a default for everyone else."> Geolocation routing, since it restricts content by user location</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Weighted routing distributes traffic across records by a fixed percentage — it has no awareness of the user's actual location at all."> Weighted routing, splitting traffic 50/50 by percentage</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Multi-value routing returns several healthy records at random for a client to choose from — it doesn't restrict responses based on the user's country."> Multi-value routing, to return several healthy licensed servers</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-latency-routing.html">← Previous: Latency Routing</a>
+      <a href="0011-geoproximity-routing.html">Next: Geoproximity Routing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

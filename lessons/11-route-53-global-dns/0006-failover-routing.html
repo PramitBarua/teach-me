@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – Failover Routing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Route 53 & Global DNS</a> › Lesson 06
+    </div>
+    <div class="module-tag">Route 53 & Global DNS</div>
+    <h1>Failover Routing</h1>
+    <p class="lesson-meta">Lesson 06 of 13 · ~4 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover.html" target="_blank">Creating Amazon Route 53 Health Checks (Failover)</a></p>
+  </div>
+
+  <p><strong>Failover routing</strong> is the first routing policy this module covers that actually uses health checks. It implements classic <strong>active-passive</strong> failover: one primary resource, one secondary, and DNS switches between them based on health.</p>
+
+  <h2>How It Works</h2>
+  <p>A record name (e.g. <code>www</code>) gets two records of that same name — one marked <strong>primary</strong>, one marked <strong>secondary</strong> — each pointing at a different resource. A common pattern: primary = an EC2 instance running the live application, secondary = a static S3-hosted "sorry, we're down" page.</p>
+
+  <p>A <strong>health check attaches to the primary record</strong>. While the primary is healthy, every query for <code>www</code> resolves to the primary's value. The moment the primary fails its health check, Route 53 starts returning the <strong>secondary's</strong> value instead — automatically, with no other configuration needed.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    Failover routing is for exactly one relationship: <strong>one primary, one secondary, active-passive</strong>. If you need many interchangeable resources all actively serving traffic, that's multivalue or weighted routing (next lessons) — not failover.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A failover routing record has a primary EC2 instance and a secondary S3 static site. The health check on the primary just started failing. What does Route 53 return for the next query?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Failover routing doesn't return both values simultaneously — it's a binary switch between primary and secondary based on the primary's health check."> Both the primary and secondary values, for the client to choose</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Once the primary fails its health check, Route 53 automatically starts returning the secondary's value instead — the core mechanism of failover routing."> The secondary S3 site's value</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Failover routing doesn't return a blank/NXDOMAIN response when the primary fails — that's not how this policy behaves as long as a secondary exists."> No answer at all, until the primary recovers</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Failover routing still returns the primary's value despite the failing health check — the whole point of attaching a health check to the primary is to stop doing that."> The primary's value, since it's still the designated primary</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. You need active-active load distribution across 5 interchangeable web servers, all serving live traffic simultaneously. Is failover routing the right choice?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Failover routing is specifically active-passive — one primary and one secondary — not designed for many simultaneously-active resources."> Yes, failover routing supports up to 5 active records natively</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Failover routing is strictly a primary/secondary, active-passive relationship — it isn't built for distributing traffic across many equally active resources; multivalue or weighted routing fit that need instead."> No, failover is active-passive with just one primary and secondary</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Failover routing doesn't have a mode where all records are 'primary' simultaneously — the policy is fundamentally structured around one primary and one secondary."> Yes, as long as every record is marked primary</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A health check being attached doesn't change failover routing's fundamental one-primary-one-secondary structure into an active-active one for 5 servers."> Yes, if a health check is attached to all 5 records</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In a failover routing setup, where is the health check typically attached?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The health check that drives the failover decision is attached to the primary record — the secondary doesn't need one for basic failover to work."> Only to the secondary record</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The health check generally attaches to the primary record, and its pass/fail state is what determines whether Route 53 returns the primary or secondary value."> To the primary record</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Health checks in Route 53 are configured separately and referenced by records, not attached to the hosted zone as a whole."> To the hosted zone itself, not any individual record</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Failover routing's basic mechanism uses one health check on the primary — it doesn't require separate checks on both records to function."> To both the primary and secondary records equally</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-r53-health-checks.html">← Previous: Route 53 Health Checks</a>
+      <a href="0007-multivalue-routing.html">Next: Multi-Value Routing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
