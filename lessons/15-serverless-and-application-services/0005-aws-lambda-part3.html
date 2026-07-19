@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – AWS Lambda, Part 3</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 05
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>AWS Lambda, Part 3: Invocation, Versions, and Startup</h1>
+    <p class="lesson-meta">Lesson 05 of 22 · ~11 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-invocation.html" target="_blank">Understanding Lambda Function Invocation Methods</a> · <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-versions.html" target="_blank">Manage Lambda Function Versions</a> · <a href="https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html" target="_blank">Configuring Provisioned Concurrency</a></p>
+  </div>
+
+  <h2>Three Ways to Invoke a Function</h2>
+
+  <table>
+    <thead><tr><th>Type</th><th>Who waits?</th><th>Retries</th><th>Typical trigger</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Synchronous</strong></td><td>Caller blocks for the response</td><td>Handled by the caller</td><td>CLI/API calls, API Gateway</td></tr>
+      <tr><td><strong>Asynchronous</strong></td><td>Nobody — caller gets an immediate acknowledgment</td><td>Lambda retries automatically (0–2 times)</td><td>S3 events, SNS</td></tr>
+      <tr><td><strong>Event source mapping</strong></td><td>N/A — a polling component reads on the source's behalf</td><td>Configurable per source</td><td>SQS, Kinesis, DynamoDB Streams</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Synchronous</h3>
+  <p>The caller — a human via CLI/API, or a client via API Gateway — waits for the function to finish and return success or failure. Any retry logic on failure is the <strong>caller's</strong> responsibility, not Lambda's.</p>
+
+  <h3>Asynchronous</h3>
+  <p>Used when an AWS service invokes Lambda on your behalf, e.g. S3 event notifications. The source service fires the event and moves on immediately — it never waits and never learns the outcome. Lambda handles retries itself (configurable 0–2 times) and can route persistently-failing events to a <strong>dead-letter queue</strong> or, using the newer <strong>destinations</strong> feature, to SQS, SNS, another Lambda function, or EventBridge — with separate destinations selectable for success versus failure.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: asynchronous invocations demand idempotent code</div>
+    Because Lambda may silently retry an asynchronous invocation, your function must be <strong>idempotent</strong> — running it multiple times must produce the same end state as running it once. Prefer operations that <em>set</em> a final state ("set balance to $20") over operations that <em>modify</em> a state ("add $10"), since a retried additive operation can double-apply and corrupt data.
+  </div>
+
+  <h3>Event Source Mapping</h3>
+  <p>Used for stream- and queue-based sources that don't natively push events — SQS, Kinesis Data Streams, DynamoDB Streams, and Amazon MSK. A hidden polling component (the event source mapping) reads <strong>batches</strong> of records from the source and invokes the function with an <strong>event batch</strong>.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The permissions model flips here</div>
+    With asynchronous invocation, the source pushes the event — the function's execution role generally doesn't need permissions on that source unless it needs to fetch <em>more</em> data. With event source mapping, the <strong>mapping itself uses the execution role's permissions</strong> to poll the source. Even though the function never directly calls, say, Kinesis, its execution role still needs Kinesis read permissions — because the polling happens on its behalf. This distinction is a frequently tested exam trap.
+  </div>
+  <p>Batches that consistently fail processing can be sent to an SQS queue or SNS topic for further investigation, and batch size must be tuned carefully against the 15-minute function timeout — a batch too large to finish processing in time will cause the invocation to be cut off mid-batch.</p>
+
+  <h2>Versions and Aliases</h2>
+  <dl>
+    <dt>Version</dt>
+    <dd>An immutable snapshot of a function's code <em>and</em> configuration (resources, environment variables, etc.) at the moment it's published. Once published, it never changes and has its own ARN.</dd>
+    <dt><code>$LATEST</code></dt>
+    <dd>A mutable pointer that always reflects the most recently saved code/configuration — the opposite of a published version.</dd>
+    <dt>Alias</dt>
+    <dd>A mutable, named pointer (e.g. <code>dev</code>, <code>stage</code>, <code>prod</code>) to a specific version. Repoint the alias to roll a component of your architecture forward to a new version without changing any caller's configuration.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: production traffic should target aliases, not $LATEST</div>
+    Best practice is to publish immutable versions for meaningful changes and have downstream services invoke a stable <strong>alias</strong> rather than <code>$LATEST</code> — this lets you control exactly when new code reaches production, and roll back instantly by repointing the alias.
+  </div>
+
+  <h2>Cold Starts and Warm Starts</h2>
+  <p>Lambda code executes inside a <strong>runtime environment</strong> (execution context). The first time a function runs (or runs after being idle), Lambda must provision hardware, install the runtime, and download the deployment package — a <strong>cold start</strong>, adding hundreds of milliseconds or more. If the same function is invoked again soon after, Lambda can reuse that same execution context — a <strong>warm start</strong> — skipping straight to execution.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Concurrency multiplies cold starts</div>
+    One execution context handles <strong>one invocation at a time</strong>. Twenty simultaneous invocations of a function that has no warm context available can mean twenty separate cold starts, not one. This is why bursty, highly concurrent, latency-sensitive workloads are the ones most likely to need mitigation.
+  </div>
+
+  <p><strong>Provisioned concurrency</strong> is that mitigation — you tell Lambda in advance how many execution contexts to keep pre-initialized, eliminating cold starts for that capacity. It's applied to a specific version or alias, never to <code>$LATEST</code>. Two further code-level techniques reduce cold-start impact:</p>
+  <ul>
+    <li>Reuse the <strong>/tmp</strong> space across invocations sharing a context (e.g. caching downloaded assets) — but never assume it will be there.</li>
+    <li>Declare expensive resources (database connections, SDK clients) <strong>outside</strong> the function handler — code outside the handler runs once per context and is reused by later invocations in that same context, while code inside the handler runs on every single invocation.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A Lambda function is invoked asynchronously by S3 and is retried automatically after a transient failure. The function's logic adds a fixed amount to a running total each time it runs. What problem does this design risk?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Because asynchronous invocations can be retried, an additive (non-idempotent) operation can be applied more than once for the same logical event, corrupting the running total. Functions triggered asynchronously must be idempotent — set a final state rather than incrementing one."> The running total can be double-counted by a retried invocation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 asynchronous invocation doesn't impose a cap on retry count that would cause silent data loss in this scenario — the actual risk is duplicated processing, not missed events."> Events are silently dropped after the first retry attempt</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Function memory has no bearing on how retries are counted or whether the operation is idempotent — this isn't a memory-related problem."> The function's memory allocation will be exceeded</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Execution roles govern what AWS resources a function can access — they don't determine whether retried invocations duplicate an additive operation."> The execution role will be revoked after retries</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A Lambda function processes batches of records from a Kinesis Data Stream via event source mapping. The function code never calls the Kinesis API directly. Does its execution role still need Kinesis permissions?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Kinesis doesn't push events to Lambda the way S3 does for asynchronous invocation — data must be polled, so permissions are still required somewhere in the chain."> No — Kinesis pushes events, so no permissions are needed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. With event source mapping, the polling component reads from the source using the function's execution role permissions on the function's behalf — so the role needs Kinesis read permissions even though the function code itself never calls Kinesis."> Yes — the mapping polls Kinesis using the execution role</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Resource-based policies control who may invoke the function; they don't grant the function's own access to read from an upstream Kinesis stream."> No — a resource-based policy on Kinesis covers this instead</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Provisioned concurrency only affects execution environment pre-warming for latency — it has no relationship to permissions needed to poll a Kinesis stream."> Yes — but only if provisioned concurrency has been enabled</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team wants production traffic to always call a stable, predictable function endpoint, while being able to instantly roll back a bad deployment by repointing a single setting. What should callers invoke?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="$LATEST changes every time new code is saved, which is the opposite of a stable target — it offers no rollback safety for production callers."> The function's mutable $LATEST version directly</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Calling a fixed published version bypasses the ability to roll traffic to a different version without reconfiguring every caller — that's exactly what an alias avoids."> A specific version number hardcoded in every caller</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. An alias like 'prod' is a mutable pointer to a specific immutable version — callers keep invoking the same alias while the team repoints it to roll forward or instantly roll back."> A named alias, such as 'prod', pointing at one version</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Provisioned concurrency controls pre-warmed execution environments for latency; it doesn't provide a mechanism for stable addressing or rollback of code versions."> Provisioned concurrency configured on $LATEST</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-aws-lambda-part2.html">← Previous: AWS Lambda, Part 2</a>
+      <a href="0006-cloudwatch-events-and-eventbridge.html">Next: CloudWatch Events and EventBridge →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

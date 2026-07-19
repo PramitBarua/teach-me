@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – CloudWatch Events and EventBridge</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 06
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>CloudWatch Events and EventBridge</h1>
+    <p class="lesson-meta">Lesson 06 of 22 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html" target="_blank">What Is Amazon EventBridge?</a> · <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-cwe-now-eb.html" target="_blank">EventBridge is the evolution of Amazon CloudWatch Events</a></p>
+  </div>
+
+  <p>You've already met CloudWatch for metrics and CloudWatch Logs for log ingestion. This lesson covers a third, distinct capability: a near real-time stream of <strong>system events</strong> describing changes inside AWS products and services — an instance stopping, an alarm changing state, a CloudFormation stack completing. The service that delivers this is <strong>Amazon EventBridge</strong>, and it grew out of an older feature called <strong>CloudWatch Events</strong>.</p>
+
+  <h2>The Same Idea, Two Names</h2>
+  <p>Both CloudWatch Events and EventBridge let you implement one pattern: <em>if X happens, or if it's time Y, then do Z.</em></p>
+  <dl>
+    <dt>X — the producer</dt>
+    <dd>A supported service that generates an event, such as EC2 changing an instance's state.</dd>
+    <dt>Y — the schedule</dt>
+    <dd>A specific time or recurring time period, expressed with Unix cron-style syntax.</dd>
+    <dt>Z — the target</dt>
+    <dd>Where the matched event is delivered — commonly a Lambda function, but many AWS services can be targets.</dd>
+  </dl>
+  <p>EventBridge is effectively <strong>CloudWatch Events version 2</strong>: same underlying APIs, same core architecture, but a strict superset of functionality. It can additionally ingest events from third-party SaaS applications and custom applications you build yourself, not just native AWS services.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">What actually changed vs. what stayed the same</div>
+    Architecturally, nothing about the event-bus/rule/target model changed — EventBridge reuses the CloudWatch Events API, so existing CloudWatch Events rules and code keep working. What changed is scope: EventBridge adds custom and third-party event buses, a schema registry, and richer routing, and AWS now positions EventBridge as the default choice for <em>all new</em> event-driven work, with CloudWatch Events treated as the legacy name for the same original capability. For the exam, know both names but design new answers around EventBridge.
+  </div>
+
+  <h2>Event Buses</h2>
+  <p>Both services operate on an <strong>event bus</strong> — a stream of events from supported services within an account.</p>
+  <table>
+    <thead><tr><th>Service</th><th>Event bus behavior</th></tr></thead>
+    <tbody>
+      <tr><td><strong>CloudWatch Events</strong></td><td>Exactly one bus, implicit and not exposed in the UI — it's just always there.</td></tr>
+      <tr><td><strong>EventBridge</strong></td><td>One default account bus, plus the ability to create <strong>additional custom buses</strong> for your own applications or third-party products.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Rules: Pattern Matching or Schedule</h2>
+  <p>A <strong>rule</strong> is attached to a specific bus (the account default bus unless you specify otherwise) and comes in one of two forms:</p>
+  <ul>
+    <li><strong>Pattern-matching rules</strong> — inspect events flowing across the bus and match on their structure or content.</li>
+    <li><strong>Scheduled rules</strong> — match a cron expression representing a time or range of times, firing whenever that expression is satisfied.</li>
+  </ul>
+  <p>Either way, a matched rule delivers the event to one or more configured <strong>targets</strong>. Events themselves are just JSON — for an EC2 state-change event, that JSON carries which instance changed, what state it moved to, and the timestamp, and the target (say, a Lambda function) receives that structure as its input.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: EventBridge is the default answer</div>
+    If a scenario needs to react to an AWS service state change, a schedule, or an event from a third-party SaaS product or custom application, EventBridge is the service to reach for. CloudWatch Events can technically do the AWS-native subset, but any question involving <strong>third-party or custom application events</strong> is a clear signal that the intended answer is EventBridge, not CloudWatch Events.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants to run a Lambda function automatically whenever a specific SaaS product (not an AWS service) reports a new event. Which service and concept fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudWatch Events only has a single implicit bus for AWS-native events in the account — it has no facility for ingesting third-party SaaS events."> CloudWatch Events, using its default implicit bus</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. EventBridge supports custom event buses that can receive events from third-party SaaS applications, then route them to targets like Lambda via rules."> EventBridge, using a custom event bus for the SaaS partner</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudWatch Logs handles log ingestion and storage — it has no concept of buses, rules, or routing events to targets like Lambda."> CloudWatch Logs, using a subscription filter</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudTrail records API activity for auditing purposes — it isn't the event-routing service used to trigger targets from third-party events."> CloudTrail, using a trail configured for data events</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An architect wants a rule that fires every night at 2 AM to trigger a cleanup Lambda function, regardless of any service activity. What type of rule is this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A pattern-matching rule reacts to the shape or content of events crossing the bus — it has no concept of a fixed daily time on its own."> A pattern-matching rule filtered on time fields</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A scheduled rule uses a cron-style expression to fire at a defined time or range of times, independent of any event actually occurring."> A scheduled rule using a cron expression</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There's no distinct 'target rule' category — targets are what a rule (pattern-matching or scheduled) delivers matched events to, not a rule type itself."> A target rule bound directly to the Lambda function</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A bus policy controls which accounts or principals can put events onto a bus — it doesn't define when a rule fires on a schedule."> A bus policy granting nightly invocation permissions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company has existing CloudWatch Events rules in production and wants to know if they must urgently migrate to EventBridge to avoid breakage. What's true?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS has not deprecated the CloudWatch Events API — EventBridge reuses that same API, so existing rules keep functioning without any forced cutover."> Yes, CloudWatch Events rules stop working on a fixed date</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. EventBridge is built on the same underlying API as CloudWatch Events, so existing rules and code continue to work; AWS simply recommends EventBridge for new work going forward."> No, EventBridge shares the same API, so existing rules keep working</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="There's no manual JSON export/import step required for existing rules to remain functional — the underlying API and rules are unchanged."> Only if rules are manually exported and reimported as JSON</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Custom event buses are an EventBridge-only addition used for new custom or third-party sources — they aren't required just to keep existing native rules alive."> Only after creating a custom bus for every existing rule</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-aws-lambda-part3.html">← Previous: AWS Lambda, Part 3</a>
+      <a href="0007-serverless-architecture.html">Next: Serverless Architecture →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

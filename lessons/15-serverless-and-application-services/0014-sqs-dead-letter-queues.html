@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 – SQS Dead-Letter Queues</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 14
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>SQS Dead-Letter Queues</h1>
+    <p class="lesson-meta">Lesson 14 of 22 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html" target="_blank">Using Dead-Letter Queues in Amazon SQS</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/setting-up-dead-letter-queue-retention.html" target="_blank">Setting Up DLQ Retention</a></p>
+  </div>
+
+  <p>Without intervention, a message that keeps failing processing would cycle forever: received, hidden for the visibility timeout, reappear, received again, and so on. A <strong>dead-letter queue (DLQ)</strong> breaks that loop by giving problem messages somewhere else to go.</p>
+
+  <h2>The Redrive Policy</h2>
+  <p>Every time a message is received, SQS increments its <strong>receive count</strong> attribute. A <strong>redrive policy</strong> on the source queue defines the target DLQ and a <strong>maxReceiveCount</strong> — once a message's receive count exceeds that threshold without being deleted, SQS moves it to the DLQ instead of returning it to the source queue.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    A dead-letter queue is <strong>just another SQS queue</strong> — there's no special queue type for it. What makes it a DLQ is purely that a source queue's redrive policy points at it. One DLQ can also serve as the target for multiple different source queues.
+  </div>
+
+  <p>Isolating failures this way unlocks useful patterns: alarming on any message landing in the DLQ, running isolated diagnostics against just the problem messages, and applying separate processing logic tailored to whatever's going wrong.</p>
+
+  <h2>The Retention Trap</h2>
+  <p>Every message carries an <strong>enqueue timestamp</strong> — set when it first entered the source queue — and moving a message to a DLQ does <strong>not</strong> reset that timestamp. If a message sat in the source queue for a day, and the DLQ's retention period is two days, it only survives one more day in the DLQ before being dropped for good.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Design rule: DLQ retention must exceed source retention</div>
+    Because the enqueue timestamp carries over unchanged, always configure a DLQ's retention period to be <strong>longer than</strong> the source queue's retention period — otherwise messages can be silently deleted from the DLQ before anyone has a chance to diagnose them. This is confirmed as an explicit best practice in the AWS documentation.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A queue has a redrive policy with maxReceiveCount set to 5. A message has now been received 6 times without being deleted. What happens next?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A message is not deleted just for exceeding the receive count threshold — it's moved to the configured dead-letter queue instead, not discarded."> It is permanently deleted from SQS entirely</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Once the receive count exceeds maxReceiveCount without the message being deleted, SQS moves it to the dead-letter queue defined in the redrive policy."> It is moved into the configured dead-letter queue</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Receive count and visibility timeout are independent settings — exceeding the receive count threshold doesn't itself change the visibility timeout value."> Its visibility timeout is automatically doubled</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Messages continue reappearing on the source queue only until the receive count exceeds maxReceiveCount — at that point the redrive policy routes it elsewhere instead of leaving it in place."> It stays on the source queue with no further changes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A message spent 3 days in a source queue with a 4-day retention period before being moved to a dead-letter queue with a 4-day retention period. How much longer will it survive in the DLQ?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The DLQ's retention timer isn't reset when a message arrives — the original enqueue timestamp is preserved, so the message doesn't get a fresh 4-day window."> A full 4 more days, since the DLQ timer resets on arrival</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A message isn't deleted the instant it's moved — the enqueue timestamp determines when the retention period actually expires, giving it at least some remaining time."> It is deleted immediately upon arrival in the DLQ</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The enqueue timestamp from the original source queue carries over unchanged, so with 3 of the 4-day retention period already elapsed, only 1 day remains before the message is dropped."> Only about 1 more day, since the enqueue timestamp carries over</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DLQ retention isn't unlimited by default — it still follows a configured retention period, and the carried-over enqueue timestamp still governs when the message expires."> Indefinitely, since dead-letter queues never expire messages</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team wants one shared queue to catch problem messages from three different source queues, to keep diagnostics in one place. Is this supported?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS documentation and the redrive policy model both support pointing multiple source queues at the same dead-letter queue — a separate DLQ per source is not required."> No, each source queue requires its own dedicated DLQ</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="No special queue type distinguishes a DLQ — any standard SQS queue can act as a DLQ target, and sharing one across sources is fine."> No, a shared DLQ requires a special multi-source queue type</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fan-out via SNS is a separate architectural pattern for distributing one event to multiple queues — it isn't required simply to point several source queues' redrive policies at one DLQ."> Yes, but only by fronting the DLQ with an SNS topic</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A single dead-letter queue can be configured as the redrive target for multiple different source queues, which is exactly the shared-diagnostics setup described."> Yes, a single dead-letter queue can serve multiple source queues</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0013-sqs-delay-queues.html">← Previous: SQS Delay Queues</a>
+      <a href="0015-kinesis-data-streams.html">Next: Kinesis Data Streams →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

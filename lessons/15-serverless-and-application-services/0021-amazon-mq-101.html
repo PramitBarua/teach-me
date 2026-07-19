@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>21 – Amazon MQ 101</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 21
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Amazon MQ 101</h1>
+    <p class="lesson-meta">Lesson 21 of 22 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/welcome.html" target="_blank">What Is Amazon MQ?</a> · <a href="https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/working-with-rabbitmq.html" target="_blank">Using Amazon MQ for RabbitMQ</a></p>
+  </div>
+
+  <p>Amazon MQ sits in an odd spot: conceptually it's "SNS and SQS merged together," but built on <strong>open standards</strong> instead of AWS-native APIs. Understanding <em>why</em> it exists is more useful for the exam than any deep operational detail.</p>
+
+  <h2>Why Not Just Use SNS and SQS?</h2>
+  <p>SNS gives you topics (one-to-many), SQS gives you queues (one-to-one, decoupling application components). Both are <strong>public AWS services</strong> — reachable from anywhere with network connectivity — highly scalable, and tightly integrated with the rest of AWS. For anything built natively on AWS, they're the right default.</p>
+  <p>The problem shows up when an organization already runs an <strong>on-premises</strong> messaging or queuing system built on industry standards — the <strong>JMS API</strong>, or protocols like <strong>AMQP, MQTT, OpenWire, or STOMP</strong>. SNS and SQS don't speak those protocols, so migrating without rewriting the application isn't possible.</p>
+
+  <h2>Amazon MQ: A Standards-Compliant Managed Broker</h2>
+  <p>Amazon MQ is a managed message broker service, built on managed implementations of <strong>Apache ActiveMQ</strong> and <strong>RabbitMQ</strong>. Because it speaks JMS, AMQP, MQTT, OpenWire, and STOMP, an existing standards-based system can move onto it with little to no application-code change. Unlike SNS/SQS, a single MQ deployment provides <strong>both</strong> queues and topics.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Update: RabbitMQ, not just ActiveMQ</div>
+    The source lecture describes Amazon MQ purely in terms of ActiveMQ. AWS has since added <strong>RabbitMQ as a second supported broker engine</strong> — so for a system built on RabbitMQ specifically, Amazon MQ is still the answer, not just for ActiveMQ-based systems.
+  </div>
+
+  <p>"Managed" here means something different than for SNS/SQS: you're provisioned actual <strong>broker instances</strong> — either a single instance (cheaper, fine for dev/test) or a highly available active/standby pair (for production), typically backed by shared storage replicated across Availability Zones.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The detail exam questions hinge on</div>
+    Amazon MQ is <strong>not a public service</strong> — it runs inside a <strong>VPC</strong>. Anything that needs to reach it, including an on-premises system, needs private network connectivity: a <strong>VPN or Direct Connect</strong>. It also has <strong>no native integration</strong> with other AWS services the way SNS/SQS do — services that expect to talk to SNS/SQS won't talk to MQ instead.
+  </div>
+
+  <table>
+    <thead><tr><th></th><th>SNS / SQS</th><th>Amazon MQ</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Networking</strong></td><td>Public AWS service endpoint</td><td>Private, lives inside a VPC</td></tr>
+      <tr><td><strong>Protocol</strong></td><td>AWS APIs only</td><td>JMS, AMQP, MQTT, OpenWire, STOMP</td></tr>
+      <tr><td><strong>AWS integration</strong></td><td>Deep native integration</td><td>None — it's a standalone broker</td></tr>
+      <tr><td><strong>Best for</strong></td><td>New, AWS-native workloads</td><td>Migrating an existing broker, unchanged</td></tr>
+    </tbody>
+  </table>
+
+  <p>The decision rule: default to <strong>SNS/SQS</strong> for anything new that benefits from native AWS integration. Reach for <strong>Amazon MQ</strong> only when migrating (or coexisting with) an existing messaging system that needs its application code left alone — and remember to plan the private networking, because that's the detail exam questions like to catch people on.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company is migrating an on-premises order-processing system that uses Apache ActiveMQ and the JMS API, and needs to move it to AWS with minimal changes to the application code. Which service fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Amazon MQ is a managed broker speaking JMS and other open standards, which is exactly what lets an existing ActiveMQ system move over with little to no code change."> Amazon MQ, a managed broker with JMS compatibility</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SNS is a native AWS topic API — it doesn't speak JMS, so the existing application would need to be rewritten against SNS's own API."> Amazon SNS, a public one-to-many topic service</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SQS is a native AWS queue API — like SNS, it doesn't understand JMS, so migrating onto it still requires rewriting the application."> Amazon SQS, a public one-to-one queue service</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EventBridge is a serverless AWS-native event bus — it has no JMS or ActiveMQ compatibility for a lift-and-shift style migration."> Amazon EventBridge, a serverless event bus service</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team deploys Amazon MQ, and their on-premises application — connected to AWS via Direct Connect — still can't reach the broker. What is the most likely cause?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Amazon MQ is deliberately not exposed via a public internet gateway — it's a private, VPC-resident service, so this isn't the fix needed here."> Amazon MQ requires a public internet gateway attached</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Amazon MQ doesn't use SQS permissions for broker connectivity — access is controlled through VPC networking and broker security groups, not SQS IAM policy."> The broker's IAM role is missing an SQS permission</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Amazon MQ is not a public service — it lives inside a VPC, so private connectivity (like this Direct Connect link, properly routed to the broker's VPC) must actually be configured to reach it."> Private VPC networking to the broker isn't configured yet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Amazon MQ isn't restricted to Lambda-only connections — any client speaking its supported protocols can connect, provided the private networking path exists."> Amazon MQ only accepts connections from Lambda functions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A new application, built entirely on AWS, needs simple one-to-many notification fan-out with tight integration into other AWS services for logging and permissions. What should be the default choice?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Amazon MQ works, but it lacks native AWS service integration and requires managing VPC networking — unnecessary overhead for a brand-new, AWS-native fan-out requirement."> Amazon MQ, deployed as a highly available broker pair</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. SNS is the native AWS public topic service, built for one-to-many fan-out with deep integration into other AWS services for logging, permissions, and delivery."> Amazon SNS, a native AWS public topic service</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Self-managed Kafka on EC2 means operating your own cluster and losing AWS-native integration entirely — the opposite of what a simple, integrated fan-out calls for."> Apache Kafka, self-managed on EC2 instances</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Glue is an ETL and data cataloging service — it has no role in one-to-many application notification fan-out."> AWS Glue, triggered on a scheduled EventBridge rule</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0020-aws-glue-101.html">← Previous: AWS Glue 101</a>
+      <a href="0022-amazon-appflow.html">Next: Amazon AppFlow →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

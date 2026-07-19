@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 – SQS Delay Queues</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 13
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>SQS Delay Queues</h1>
+    <p class="lesson-meta">Lesson 13 of 22 · ~4 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html" target="_blank">Amazon SQS Delay Queues</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-timers.html" target="_blank">Amazon SQS Message Timers</a></p>
+  </div>
+
+  <p>A <strong>delay queue</strong> postpones delivery of new messages to consumers. It's easy to confuse with visibility timeout — both hide a message for a period — but they solve opposite problems.</p>
+
+  <table>
+    <thead><tr><th></th><th>Visibility timeout</th><th>Delay queue</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Message starts as</strong></td><td>Visible on the queue</td><td>Invisible on the queue</td></tr>
+      <tr><td><strong>Hidden when</strong></td><td>After a consumer receives it</td><td>Immediately, when first sent</td></tr>
+      <tr><td><strong>Purpose</strong></td><td>Automatic reprocessing on failure</td><td>Deliberate delay before any consumer sees it</td></tr>
+      <tr><td><strong>Range</strong></td><td>0 sec – 12 hours (default 30 sec)</td><td>0 sec – 15 min (default 0)</td></tr>
+    </tbody>
+  </table>
+
+  <p>Set <strong>DelaySeconds</strong> on the queue itself to make every incoming message start invisible for that period — this is what makes it a delay queue rather than a normal one. You can instead set a delay per message using <strong>message timers</strong> (same 0-second to 15-minute range), useful when only some messages need the delay.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">FIFO restriction</div>
+    Per-message timers are <strong>not supported on FIFO queues</strong> — only the queue-level DelaySeconds setting works there. If a scenario needs a per-message delay on strictly ordered messages, a delay queue can't deliver that combination.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: don't confuse the two hide mechanisms</div>
+    Visibility timeout exists for <strong>error correction</strong> — recovering messages after a failed or crashed consumer. A delay queue exists to <strong>deliberately postpone</strong> processing from the start, e.g. giving upstream steps time to finish before a message becomes actionable. Same underlying mechanic (an invisible message), different trigger and different intent.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants every message added to a queue to sit unavailable to consumers for 5 minutes after being sent, giving an upstream process time to finish. What should they configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Visibility timeout only takes effect after a consumer receives a message — it does nothing to delay a message that hasn't been polled yet."> A visibility timeout of 5 minutes on the queue</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A dead-letter queue handles messages that repeatedly fail processing — it has no mechanism for postponing a message's initial visibility."> A dead-letter queue with a 5-minute retention period</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Setting DelaySeconds on the queue makes every message invisible for that period starting the moment it's sent — exactly the delay-queue behavior described."> A delay queue with DelaySeconds set to 5 minutes</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A FIFO suffix only affects ordering and exactly-once delivery guarantees — it has no relationship to delaying when a message becomes visible."> A FIFO queue name ending in .fifo</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. What's the maximum delay a message timer or a delay queue can apply to a message in Amazon SQS?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="12 hours is the maximum for visibility timeout, a completely different setting — delay queues and message timers use a much shorter maximum."> 12 hours, matching the visibility timeout maximum</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="14 days is the maximum message retention period on a queue, not the maximum delay a message can have before becoming visible."> 14 days, matching the maximum message retention</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="30 seconds is the default visibility timeout, not the maximum for delay queues or message timers, which allow a much longer maximum delay."> 30 seconds, the same as the default visibility timeout</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Both delay queues (via DelaySeconds) and per-message timers cap out at 15 minutes, with a default of 0 seconds."> 15 minutes, whether set per queue or per message</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team needs only certain urgent messages on a FIFO queue to be delayed by 2 minutes, while the rest are processed immediately. Is this achievable?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Per-message timers are not supported on FIFO queues, so an individual message's delay can't be customized — only the queue-wide DelaySeconds setting applies, affecting every message equally."> No, per-message timers aren't supported on FIFO queues</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Message timers work on standard queues, but they are explicitly unsupported on FIFO queues according to the documentation — so this configuration would not be valid on FIFO."> Yes, using a message timer on those specific messages</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Visibility timeout applies after a message is received by a consumer, not selectively before delivery, so it can't be used to create a per-message delay for only some messages."> Yes, by raising visibility timeout for those messages</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A dead-letter queue is for handling messages that fail processing repeatedly — it isn't a mechanism for selectively delaying specific messages up front."> Yes, by routing those messages to a dead-letter queue</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0012-sqs-standard-vs-fifo-queues.html">← Previous: SQS Standard vs. FIFO Queues</a>
+      <a href="0014-sqs-dead-letter-queues.html">Next: SQS Dead-Letter Queues →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

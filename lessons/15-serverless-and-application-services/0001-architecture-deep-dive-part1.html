@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Architecture Deep Dive, Part 1</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 01
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Architecture Deep Dive, Part 1: Monolith to Tiered</h1>
+    <p class="lesson-meta">Lesson 01 of 22 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/whitepapers/latest/microservices-on-aws/microservices-on-aws.html" target="_blank">Implementing Microservices on AWS</a></p>
+  </div>
+
+  <p>Before touching a single serverless AWS service, you need a mental model for how application architectures evolve — because the exam expects you to recognize <em>why</em> a design moved from one stage to the next, not just name the stages. Picture "CatTube," a video-sharing site: users <strong>upload</strong> videos, the platform <strong>processes</strong> them into multiple resolutions, and a <strong>store and manage</strong> component handles playback, playlists, and the database.</p>
+
+  <h2>Stage 1: The Monolith</h2>
+  <p>A monolithic architecture puts every component — upload, processing, store and manage — inside one single deployable unit, one codebase, typically one server. It's the simplest thing to build, but it has three defining weaknesses:</p>
+  <ul>
+    <li><strong>Fails together.</strong> Because everything shares one runtime, a fault in any one component can take down the whole application, even though the components are logically separate.</li>
+    <li><strong>Scales together.</strong> Components are tightly coupled to the same hardware, so the usual fix is <strong>vertical</strong> scaling of the entire monolith — you can't give the processing component more power without upgrading everything.</li>
+    <li><strong>Bills together.</strong> All components run continuously whether or not they're doing work. Capacity has to be provisioned for peak load on every component, all the time — the least cost-efficient shape available.</li>
+  </ul>
+
+  <h2>Stage 2: Tiered Architecture</h2>
+  <p>Splitting the monolith into separate tiers — upload, processing, store and manage — each potentially on its own server, is the first evolution. This is the same move you saw earlier in the course when the WordPress database was pulled out onto its own RDS instance while the web tier stayed on EC2.</p>
+  <p>The immediate win: each tier can now be <strong>vertically scaled independently</strong>. If processing needs more CPU, only the processing tier grows. But the tiers still talk to each other directly, instance to instance, which is fragile and doesn't scale well.</p>
+
+  <h3>Adding Load Balancers Between Tiers</h3>
+  <p>Placing an (often internal) load balancer between tiers removes the dependency on any one specific instance. The upload tier now talks to <em>the processing tier as a whole</em> via its load balancer, not to a named instance — enabling:</p>
+  <ul>
+    <li><strong>Horizontal scaling</strong> — add more processing instances behind the load balancer with zero visibility required from the tiers calling it.</li>
+    <li><strong>High availability</strong> — an unhealthy instance is simply removed from rotation; the load balancer redistributes traffic to the rest.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Load balancers fix scaling, not coupling</div>
+    Even with a load balancer in front of it, the processing tier still has to <strong>exist and respond</strong> — the upload tier makes a <strong>synchronous</strong> call and waits for an answer. Two problems remain: if processing is completely down, uploads fail too; and because the call is synchronous, the processing tier can never scale down to zero — something has to always be listening, or the next upload request fails immediately.</div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: know what each evolution actually fixes</div>
+    Monolith → tiered fixes independent <strong>vertical</strong> scaling. Tiered → load-balanced fixes <strong>horizontal</strong> scaling and availability. Neither fixes <strong>coupling</strong> — that requires decoupling the tiers with something asynchronous, which is exactly where the next lesson picks up.
+  </div>
+
+  <table>
+    <thead><tr><th>Architecture</th><th>Scaling</th><th>Coupling</th><th>Billing</th></tr></thead>
+    <tbody>
+      <tr><td>Monolith</td><td>Vertical, whole system</td><td>Fully coupled</td><td>Always-on for everything</td></tr>
+      <tr><td>Tiered</td><td>Vertical, per tier</td><td>Coupled, tier-to-tier</td><td>Always-on per tier</td></tr>
+      <tr><td>Tiered + load balancer</td><td>Horizontal, per tier</td><td>Coupled, but abstracted from specific instances</td><td>Still can't scale to zero</td></tr>
+    </tbody>
+  </table>
+
+  <p>The next lesson picks up exactly here: introducing a queue to break the synchronous dependency entirely, which is the real gateway to event-driven and serverless designs.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team runs a single-codebase application where a bug in the video-processing component crashes the entire system, including unrelated upload and playback features. Which architecture are they describing?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A monolith bundles all components into one deployable unit, so a fault in any one part can bring down the whole application — this is the defining 'fails together' weakness."> A monolithic architecture</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A tiered architecture separates components onto independent tiers precisely so a fault in one doesn't necessarily crash the others."> A tiered architecture</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An event-driven design decouples producers and consumers through an event router, so a failure in one consumer doesn't cascade to the whole system."> An event-driven architecture</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A microservice architecture isolates each capability into its own small service, which is the opposite of a single shared failure domain."> A microservice architecture</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company splits its monolith into upload, processing, and storage tiers on separate EC2 instances, but each tier still connects directly to a specific instance of the next tier. What is the main limitation that remains?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Splitting into tiers already grants independent vertical scaling per tier — that part of the problem is solved, not remaining."> Each tier still requires vertical scaling only</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Direct instance-to-instance connections mean each tier depends on one specific instance of the next — no horizontal scaling or fault tolerance is possible until a load balancer sits between them."> Tiers stay coupled to one specific instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Tiered architectures still incur ongoing charges per tier — cost isn't reduced simply by separating the tiers."> Billing drops to zero when a tier is idle</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A tiered architecture with direct instance connections doesn't add any encryption behavior — that isn't the limitation being described."> Data between tiers is left unencrypted by default</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An architecture places an internal load balancer between the upload tier and a horizontally-scaled processing tier. The upload tier still makes a synchronous call and waits for a response. What problem does this design still have?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The load balancer already solves horizontal scaling for the processing tier — that capability exists in this design."> The processing tier still cannot scale horizontally</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A load balancer actively improves availability by routing around unhealthy instances — it doesn't remove high availability."> The design still has no high availability at all</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Because the call is still synchronous, the processing tier can never scale down to zero — something must always be running to answer the upload tier's request, and total processing failure still breaks uploads."> Processing can't scale to zero, breaking uploads</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The load balancer operates independently of any specific coding language — this isn't a constraint the design introduces."> Upload and processing must share one codebase</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-architecture-deep-dive-part2.html">Next: Architecture Deep Dive, Part 2 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

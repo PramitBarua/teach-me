@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15 – Kinesis Data Streams</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 15
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Kinesis Data Streams</h1>
+    <p class="lesson-meta">Lesson 15 of 22 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/streams/latest/dev/introduction.html" target="_blank">What Is Amazon Kinesis Data Streams?</a> · <a href="https://docs.aws.amazon.com/streams/latest/dev/key-concepts.html" target="_blank">Kinesis Data Streams Terminology and Concepts</a></p>
+  </div>
+
+  <p>Kinesis and SQS get confused constantly, including on the exam — but they solve different problems. <strong>Kinesis Data Streams</strong> is a scalable streaming service built to <strong>ingest</strong> large volumes of data from many producers and make it available to many consumers, at whatever granularity each consumer needs.</p>
+
+  <h2>Shards: the Unit of Scale</h2>
+  <p>A stream starts with one <strong>shard</strong> and grows by adding more as throughput demands increase. Each shard provides fixed capacity:</p>
+  <table>
+    <thead><tr><th>Direction</th><th>Capacity per shard</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ingestion (write)</strong></td><td>1 MB per second</td></tr>
+      <tr><td><strong>Consumption (read)</strong></td><td>2 MB per second</td></tr>
+    </tbody>
+  </table>
+  <p>More shards mean more throughput and more cost — performance scales linearly because <strong>Kinesis data records</strong> (max 1 MB each) are distributed across shards.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: shard math</div>
+    If a scenario states an ingestion rate, divide by 1 MB/sec to size the shard count. A producer pushing 4.5 MB/sec of data needs at least 5 shards on the write side, regardless of how many consumers read it back.
+  </div>
+
+  <h2>Persistence: the Rolling Window</h2>
+  <p>Data ingested into a stream stays available for a default <strong>24-hour rolling window</strong> — storage for that window is included in the shard cost. This window can be extended up to <strong>365 days</strong> for additional cost, and a longer window means more data is retained and billed for at any given moment. Multiple consumers can read from anywhere within that window, each at its own pace — one might process every record in real time, another might sample once an hour for a dashboard.</p>
+
+  <h2>Kinesis vs. SQS: the Decision Lens</h2>
+  <p>When an exam question is ambiguous, ask: is this about <strong>ingesting data</strong> at scale, or about <strong>decoupling/worker pools/asynchronous messaging</strong>?</p>
+  <table>
+    <thead><tr><th></th><th>SQS</th><th>Kinesis Data Streams</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Typical producers</strong></td><td>One tier (e.g. a web app)</td><td>Many — sensors, devices, mobile apps</td></tr>
+      <tr><td><strong>Typical consumers</strong></td><td>One worker tier</td><td>Multiple, each at a different rate</td></tr>
+      <tr><td><strong>Persistence</strong></td><td>None — deleted once processed</td><td>Rolling window, up to 365 days</td></tr>
+      <tr><td><strong>Core use case</strong></td><td>Decoupling, async messaging</td><td>High-volume ingestion, analytics</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: default to SQS unless it's clearly ingestion</div>
+    If a question is about ingestion of high-volume data (sensors, clickstreams, IoT), pick Kinesis. For anything else — decoupling, worker pools, async communication — default to SQS first, and only switch if there's a strong specific reason to.
+  </div>
+
+  <p>Kinesis has no native way to persist data beyond the rolling window or deliver it directly to other services — that's the job of its sibling product, <strong>Kinesis Data Firehose</strong>, covered next.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A fleet of thousands of IoT sensors needs to stream telemetry into AWS, where several independent teams will each analyze the data at different rates. Which service fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Kinesis Data Streams is purpose-built for high-volume ingestion from many producers, with multiple consumers reading at whatever rate suits them."> Kinesis Data Streams, built for high-volume multi-consumer ingestion</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SQS is designed around one producer tier and one worker tier decoupling a workload, not thousands of independent producers feeding many different consumer rates."> An SQS standard queue, since it scales to near-infinite throughput</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An SQS FIFO queue caps out at a few thousand messages per second and is meant for strict ordering, not massive multi-producer sensor ingestion."> An SQS FIFO queue, to preserve sensor reading order</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A dead-letter queue only isolates messages that failed processing repeatedly — it has no role in ingesting live sensor telemetry at scale."> A dead-letter queue configured with a long retention period</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A Kinesis data stream needs to sustain roughly 4.5 MB/sec of incoming data. At minimum, how many shards are required on the write side?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="One shard only provides 1 MB/sec of ingestion capacity, far short of the 4.5 MB/sec needed here."> 1 shard, since a single shard handles unlimited throughput</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Each shard provides 1 MB/sec of ingestion capacity, so 4.5 MB/sec requires rounding up to at least 5 shards on the write side."> 5 shards, since each shard provides 1 MB/sec of ingestion</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This number is based on the 2 MB/sec consumption capacity per shard, not the 1 MB/sec ingestion capacity that governs the write side."> 3 shards, based on the 2 MB/sec read capacity per shard</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Shard count isn't derived from the 365-day maximum retention window — it's driven purely by required ingestion throughput."> 365 shards, matching the maximum retention window in days</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An exam question describes a single web tier sending jobs to a single worker tier, with no mention of high-volume ingestion. Following the default decision lens, which service should be assumed first?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kinesis Data Streams targets high-volume multi-producer ingestion scenarios — a single web tier feeding a single worker tier doesn't fit that pattern, and it's not the default for non-ingestion scenarios."> Kinesis Data Streams, since it can handle any workload</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kinesis Data Firehose exists to deliver stream data to storage and analytics destinations near real time — it isn't the tool for decoupling a simple web tier from a worker tier."> Kinesis Data Firehose, to buffer jobs before delivery</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. With no mention of high-volume data ingestion, the guidance is to default to SQS for decoupling and worker-pool style scenarios, only switching if there's a strong reason to."> SQS, the default choice for decoupling and worker pools</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kinesis Video Streams is specifically for ingesting live video and time-series media data — it has no relevance to a generic web-tier-to-worker-tier job queue."> Kinesis Video Streams, since it supports generic job data</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0014-sqs-dead-letter-queues.html">← Previous: SQS Dead-Letter Queues</a>
+      <a href="0016-kinesis-data-firehose.html">Next: Kinesis Data Firehose →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

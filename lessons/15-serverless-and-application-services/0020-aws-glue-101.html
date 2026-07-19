@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>20 – AWS Glue 101</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 20
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>AWS Glue 101</h1>
+    <p class="lesson-meta">Lesson 20 of 22 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/glue/latest/dg/what-is-glue.html" target="_blank">What Is AWS Glue?</a> · <a href="https://docs.aws.amazon.com/glue/latest/dg/catalog-and-crawler.html" target="_blank">Data Discovery and Cataloging in AWS Glue</a></p>
+  </div>
+
+  <p>AWS Glue is a <strong>serverless ETL</strong> (extract, transform, load) service: it moves and reshapes data between sources and destinations without you provisioning any compute. This lesson stays at the architectural level — enough for the exam, no deeper.</p>
+
+  <h2>What Glue Moves, and Where</h2>
+  <dl>
+    <dt>Source data stores</dt>
+    <dd>S3, RDS, DynamoDB, and any JDBC-compatible database (Redshift and others).</dd>
+    <dt>Source streams</dt>
+    <dd>Kinesis Data Streams, Apache Kafka.</dd>
+    <dt>Targets</dt>
+    <dd>S3, RDS, and JDBC-compatible databases.</dd>
+  </dl>
+  <p>Because Glue is serverless, AWS provisions and manages the compute pool that runs your jobs — you only pay for what a job actually consumes while it runs.</p>
+
+  <h2>The Data Catalog: Metadata Without Silos</h2>
+  <p>A <strong>data catalog</strong> is persistent metadata about your data — its structure, location, and format — combined with tools to search and manage it. AWS Glue provides exactly <strong>one data catalog per region, per account</strong>.</p>
+  <p><strong>Crawlers</strong> are the mechanism that populates it: point one at a data source with the right credentials, and it connects, infers the schema, and writes the resulting metadata into the catalog. Once that's done, data that would otherwise sit siloed inside one team's S3 bucket or database becomes <strong>visible and usable across the whole organization</strong> — a finance team can discover and query data a completely different team gathered, without ever touching the source system directly.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Who actually reads the Data Catalog</div>
+    <strong>Athena</strong>, <strong>Redshift Spectrum</strong>, <strong>EMR</strong>, and <strong>AWS Lake Formation</strong> all use the Glue Data Catalog as their source of schema metadata. Seeing any of these products alongside "schema discovery" in a question is a strong signal the answer involves Glue's catalog.
+  </div>
+
+  <h2>Glue Jobs: The ETL Part</h2>
+  <p>A <strong>Glue job</strong> extracts data from a source, runs it through a transformation script you write, and loads the result into a destination — all on a serverless, AWS-managed compute pool. Jobs can be started manually, triggered by other events, or run on an EventBridge schedule.</p>
+
+  <table>
+    <thead><tr><th>Component</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Crawler</strong></td><td>Connects to a source, infers schema, populates the Data Catalog</td></tr>
+      <tr><td><strong>Data Catalog</strong></td><td>Persistent, organization-wide metadata store — one per region, per account</td></tr>
+      <tr><td><strong>Glue Job</strong></td><td>Serverless ETL: extract, transform via script, load into a destination</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Glue vs. Data Pipeline</h2>
+  <p>AWS Data Pipeline is an older ETL product that provisions EMR clusters <em>inside your account</em> to do the work — it is not serverless. In an exam question that mentions both, keywords like <strong>serverless</strong>, <strong>ad hoc</strong>, or <strong>cost-effective</strong> point to Glue.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Current state: Data Pipeline is closed to new customers</div>
+    As of <strong>July 2024</strong>, AWS Data Pipeline no longer accepts new customers — existing users can keep running it, but AWS is directing all new ETL workloads toward Glue. What the source material frames as a future prediction is now simply the current state: for any new design, <strong>Glue is the default answer</strong>, and Data Pipeline should only appear in questions about legacy systems already using it.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company wants to run occasional, ad hoc data transformation jobs without provisioning or managing any EMR clusters, paying only for compute consumed while a job runs. Which service fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Data Pipeline orchestrates EMR clusters that run inside your account — it isn't serverless and requires cluster management, the opposite of what's needed here."> AWS Data Pipeline, orchestrating a fleet of EMR clusters</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A long-running managed EMR cluster still needs to be sized, managed, and paid for continuously — it doesn't match the ad hoc, pay-per-use requirement."> Amazon EMR, with a long-running managed cluster</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Glue is serverless — AWS manages the compute pool, and you're billed only for the resources a job consumes while it runs, which is exactly this scenario."> AWS Glue, using its serverless ETL job engine</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS Batch schedules containerized jobs on compute you still provision and manage — it isn't a purpose-built serverless ETL and catalog service like Glue."> AWS Batch, scheduling containerized transform tasks</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Athena and Redshift Spectrum both need to query the schema of data sitting in S3 without a team manually redefining table structures in each service separately. What component provides this shared, persistent metadata?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A job's transformation script defines how data is reshaped during an ETL run — it isn't the persistent, shared metadata store Athena and Redshift Spectrum query against."> A Glue job's transformation script</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The Glue Data Catalog is the persistent, shared metadata store that Athena, Redshift Spectrum, EMR, and Lake Formation all read schema information from."> The AWS Glue Data Catalog itself</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A crawler's connection setup holds credentials used to reach a source during discovery — the schema it discovers is written into the Data Catalog, which is the actual shared store."> A Glue crawler's connection setup</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An EventBridge rule can trigger a Glue job to run on a schedule, but it holds no schema metadata itself and isn't what Athena or Redshift Spectrum query."> An EventBridge scheduled rule</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A solutions architect is choosing between AWS Data Pipeline and AWS Glue for a brand-new ETL workload today. Data Pipeline stopped accepting new customers in mid-2024. Which should the architect choose?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Data Pipeline is closed to new customers as of July 2024 — existing customers can keep using it, but it can't be adopted for a brand-new workload today."> AWS Data Pipeline, since it still supports existing customers</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A directly managed EMR cluster works, but requires the team to provision and operate compute themselves — it isn't the serverless option AWS now points new ETL workloads toward."> Amazon EMR, provisioned and managed directly by the team</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Step Functions orchestrating raw Lambda code could technically work, but it means building a custom ETL engine from scratch instead of using a purpose-built managed service."> AWS Step Functions, orchestrating raw Lambda transform code</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Glue is the serverless ETL service AWS now directs all new workloads toward, especially since Data Pipeline stopped accepting new customers in 2024."> AWS Glue, the serverless ETL service AWS now recommends</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0019-amazon-cognito-user-and-identity-pools.html">← Previous: Amazon Cognito User and Identity Pools</a>
+      <a href="0021-amazon-mq-101.html">Next: Amazon MQ 101 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

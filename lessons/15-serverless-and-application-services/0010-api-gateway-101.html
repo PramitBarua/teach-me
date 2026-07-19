@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – API Gateway 101</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 10
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>API Gateway 101</h1>
+    <p class="lesson-meta">Lesson 10 of 22 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html" target="_blank">Choose Between REST APIs and HTTP APIs</a> · <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html" target="_blank">Cache Settings for REST APIs</a></p>
+  </div>
+
+  <p>API Gateway is a managed entry point that sits between applications consuming an API and the <strong>integrations</strong> that actually provide its functionality — an HTTP endpoint, a Lambda function, or a direct connection to services like DynamoDB, SNS, or Step Functions. It's highly available and scalable by default, and it's commonly the front door of a serverless architecture.</p>
+
+  <h2>Three Phases of a Request</h2>
+  <ol>
+    <li><strong>Request phase</strong> — authorizes, validates, and transforms the incoming client request into a form the integration understands.</li>
+    <li><strong>Integration</strong> — the backend (Lambda, HTTP endpoint, or direct AWS service) does the actual work.</li>
+    <li><strong>Response phase</strong> — transforms and returns the integration's output back to the client.</li>
+  </ol>
+  <p>Along the way, API Gateway can handle authorization, throttling, caching, CORS, and request/response transformation, and it integrates with CloudWatch for logs and metrics.</p>
+
+  <h2>Authentication Options</h2>
+  <table>
+    <thead><tr><th>Method</th><th>How it works</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Open</strong></td><td>No authentication at all</td></tr>
+      <tr><td><strong>Cognito user pools</strong></td><td>Client authenticates with Cognito, receives a token, API Gateway validates it natively</td></tr>
+      <tr><td><strong>Lambda authorizer</strong></td><td>Client passes a bearer token; a Lambda function validates it and returns an IAM policy plus a principal identifier, which API Gateway then enforces</td></tr>
+      <tr><td><strong>IAM</strong></td><td>Credentials passed via request headers (implementation detail beyond exam scope)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: REST API vs. HTTP API vs. WebSocket API</div>
+    API Gateway offers three product types, and picking between them is a common scenario question:
+    <ul>
+      <li><strong>REST API</strong> — the full-featured option: usage plans, API keys, per-client throttling, request validation, WAF integration, private endpoints.</li>
+      <li><strong>HTTP API</strong> — a lighter, cheaper, lower-latency option for simple Lambda or HTTP proxy integrations, with built-in CORS and automatic deployments, but fewer advanced features.</li>
+      <li><strong>WebSocket API</strong> — for persistent, two-way connections (chat apps, live dashboards) where the server needs to push data to connected clients.</li>
+    </ul>
+    Default to REST API when a scenario needs advanced governance (usage plans, WAF, private endpoints); default to HTTP API when it just needs a cheap, fast Lambda front door; pick WebSocket only when the traffic pattern is genuinely bidirectional and persistent.
+  </div>
+
+  <h2>Endpoint Types</h2>
+  <dl>
+    <dt>Edge-optimized</dt>
+    <dd>Requests route to the nearest CloudFront point of presence — best for geographically distributed clients.</dd>
+    <dt>Regional</dt>
+    <dd>No CloudFront hop; suited to clients within the same AWS Region as the API.</dd>
+    <dt>Private</dt>
+    <dd>Reachable only from inside a VPC, via an interface VPC endpoint.</dd>
+  </dl>
+
+  <h2>Stages and Canary Deployments</h2>
+  <p>Every deployment goes to a <strong>stage</strong> (e.g., <code>prod</code>, <code>dev</code>), each with its own endpoint URL, its own settings, and — because stages can point at different backing Lambda versions — effective isolation between environments. Enabling <strong>canary</strong> on a stage lets a new deployment absorb a configurable percentage of that stage's traffic before being promoted to the full base stage, or rolled back if it misbehaves.</p>
+
+  <h2>Error Codes Worth Memorizing</h2>
+  <table>
+    <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>400</strong></td><td>Generic client-side error — many possible causes</td></tr>
+      <tr><td><strong>403</strong></td><td>Access denied — an authorizer rejected the request, or WAF filtered it</td></tr>
+      <tr><td><strong>429</strong></td><td>Throttling — request rate exceeded a configured limit</td></tr>
+      <tr><td><strong>502</strong></td><td>Bad gateway — the integration returned an invalid response</td></tr>
+      <tr><td><strong>503</strong></td><td>Service unavailable — the backend is offline or overloaded</td></tr>
+      <tr><td><strong>504</strong></td><td>Integration failure — the backend didn't respond in time</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">The 29-second limit isn't as fixed as it used to be</div>
+    Every REST API integration historically had a hard <strong>29-second</strong> timeout, and exceeding it produces a 504. That's still the fixed limit for edge-optimized APIs, but since mid-2024 AWS allows raising this quota beyond 29 seconds for <strong>Regional and private REST APIs</strong>, via a Service Quotas request — potentially trading off against your account's Region-level throttle quota. Lambda's own 15-minute execution limit was never the constraint here; the API Gateway integration timeout was.
+  </div>
+
+  <h2>Caching</h2>
+  <p>Caching is configured <strong>per stage</strong>. When enabled, responses are served from the cache instead of hitting the integration on every request — reducing backend load, cost, and latency. Cache size ranges from <strong>0.5 GB up to 237 GB</strong>; default TTL is <strong>300 seconds</strong>, adjustable from 0 (disabled) up to a maximum of <strong>3,600 seconds</strong>; and cached data can be <strong>encrypted</strong>.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team needs a cheap, low-latency API in front of a single Lambda function, with no need for API keys, WAF, or private endpoints. Which API Gateway product type fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. HTTP APIs are the lower-cost, lower-latency option designed for simple Lambda or HTTP proxy integrations, and they're the right default when advanced REST API features aren't needed."> An HTTP API, since advanced REST features aren't needed</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A REST API supports the advanced features (API keys, WAF, private endpoints) this team explicitly doesn't need, and it costs more and has higher latency than an HTTP API."> A REST API, since it always costs less to run</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A WebSocket API is for persistent, bidirectional connections like chat — not a fit for a simple request/response Lambda front door."> A WebSocket API, since it supports Lambda natively</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A private API endpoint restricts access to inside a VPC via an interface endpoint — this scenario doesn't call for restricting access at all."> A private endpoint API, since it's the cheapest option</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Clients are receiving a 429 status code from an API Gateway-fronted API. What does this indicate?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A 502 indicates the integration returned an invalid response — 429 is a completely different condition tied to request rate."> The backend integration returned malformed data</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A 504 indicates the integration failed to respond in time — 429 has nothing to do with backend response timing."> The Lambda integration exceeded its response time limit</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A 429 status code specifically indicates throttling — the caller has exceeded a configured request-rate limit."> The client has exceeded a configured throttling limit</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A 403 indicates access was denied by an authorizer or WAF — 429 is specifically the throttling status code, a distinct condition."> An authorizer explicitly denied the request's access</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A production stage needs a new API version tested with a small slice of real traffic before a full rollout, with the ability to revert instantly if problems appear. What feature supports this directly in API Gateway?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Stage-level caching improves performance and reduces backend calls — it has no role in gradually shifting traffic between two versions of a deployment."> Enabling a stage cache to absorb the new traffic</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Creating a second, entirely separate stage doesn't provide gradual, adjustable traffic-splitting against the existing production stage — canary does that within one stage."> Creating a completely separate stage for the new version</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A Lambda authorizer controls request authorization — it has no mechanism for splitting traffic between deployment versions."> Configuring a Lambda authorizer on the production stage</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Canary deployments let a new version absorb an adjustable percentage of a stage's traffic, with the option to promote it fully or roll it back if it underperforms."> Enabling canary deployment on the production stage</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-step-functions.html">← Previous: Step Functions</a>
+      <a href="0011-simple-queue-service.html">Next: Simple Queue Service (SQS) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

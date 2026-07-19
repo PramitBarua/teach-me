@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Simple Notification Service (SNS)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 08
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Simple Notification Service (SNS)</h1>
+    <p class="lesson-meta">Lesson 08 of 22 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/sns/latest/dg/welcome.html" target="_blank">What Is Amazon SNS?</a> · <a href="https://docs.aws.amazon.com/sns/latest/dg/sns-common-scenarios.html" target="_blank">Common Amazon SNS Scenarios (Fanout)</a></p>
+  </div>
+
+  <p>SNS is a highly available, durable <strong>pub/sub messaging</strong> service, and a foundational building block across countless AWS architectures. It's a <strong>public</strong> service — reachable over the public AWS endpoints — so anything with network connectivity to that public zone, including a VPC configured for it, can use it.</p>
+
+  <h2>Core Entities</h2>
+  <dl>
+    <dt>Topic</dt>
+    <dd>The base entity of SNS. Permissions and most configuration live here.</dd>
+    <dt>Publisher</dt>
+    <dd>Anything that sends a message into a topic — an application, CloudWatch, CloudFormation, an Auto Scaling group.</dd>
+    <dt>Subscriber</dt>
+    <dd>Anything registered to receive messages sent to a topic. By default, a subscriber receives <em>every</em> message — though a <strong>filter policy</strong> can restrict a subscriber to only the messages relevant to it.</dd>
+  </dl>
+  <p>Messages are payloads up to <strong>256 KB</strong> — SNS is built for notifications and structured data, not for shipping large binary files.</p>
+
+  <h2>Subscriber Types</h2>
+  <table>
+    <thead><tr><th>Subscriber</th><th>Behavior</th></tr></thead>
+    <tbody>
+      <tr><td>HTTP / HTTPS endpoint</td><td>Message posted to a URL</td></tr>
+      <tr><td>Email</td><td>Message delivered to an inbox</td></tr>
+      <tr><td>SQS queue</td><td>Message added as a queue item</td></tr>
+      <tr><td>Mobile push / SMS</td><td>Delivered as a push notification or text message</td></tr>
+      <tr><td>Lambda</td><td>Function invoked with the message as its event</td></tr>
+    </tbody>
+  </table>
+  <p>A single entity can be both a publisher and a subscriber on the same topic — an API, for instance, can publish messages in and also receive messages back.</p>
+
+  <h2>The Fanout Pattern</h2>
+  <p>One SNS topic can have <strong>multiple SQS queues</strong> as subscribers. A single published message — say, "a new video needs processing" — lands in every subscribed queue simultaneously, letting several independent workers each pick up a copy and process it differently (one queue transcodes to low bitrate, another to high bitrate, a third updates a search index). One publish, many decoupled, parallel consumers.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: SNS vs. SQS, and why fanout needs both</div>
+    SNS <strong>pushes</strong> messages out to every subscriber; SQS holds messages in a queue for a single consumer (or competing consumers) to <strong>pull</strong>. They solve different problems, which is exactly why fanout combines them: SNS distributes one event to multiple independent queues, and each SQS queue then provides durable, poll-based processing and retry semantics for its own downstream consumer.
+  </div>
+
+  <h2>Reliability, Residency, and Security</h2>
+  <ul>
+    <li><strong>Delivery status</strong> is trackable for some subscriber types (HTTP/HTTPS, Lambda, SQS), and SNS performs <strong>delivery retries</strong> on failure.</li>
+    <li><strong>Regionally resilient</strong> — data is replicated across Availability Zones within the region, so an AZ failure doesn't take a topic down.</li>
+    <li><strong>Server-side encryption (SSE)</strong> is available for data at rest.</li>
+    <li><strong>Cross-account access</strong> is controlled with a <strong>topic policy</strong> — a resource policy, the same concept as an S3 bucket policy, attached directly to the topic.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A video processing event needs to trigger three independent, differently-configured workflows in parallel — low-res transcode, high-res transcode, and search indexing. What pattern fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A single SQS queue delivers each message to one consumer (or competing consumers of the same work) — it doesn't naturally replicate one message to three independent workflows."> A single SQS queue shared by all three workflows</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Lambda destinations route a function's own success/failure output — they don't fan a single incoming event out to three independent SQS-backed workflows."> A Lambda function with three configured destinations</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. This is the SNS fanout pattern — one SNS topic with three SQS queues subscribed, each receiving a copy of the message for its own independent, parallel processing."> An SNS topic with three SQS queues subscribed (fanout)</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A single EventBridge rule can have multiple targets, but the scenario as described in this SNS lesson is specifically the SNS-to-SQS fanout pattern, not an EventBridge rule."> One EventBridge rule with a single Lambda target</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A topic has ten subscribers, but one particular subscriber should only receive messages tagged with a specific attribute, not every message published. What feature enables this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A topic policy governs who is allowed to publish or subscribe to the topic — it doesn't control which individual messages a given subscriber receives."> A topic policy restricting message content by attribute</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SNS delivery retries govern how failed deliveries are retried — they have nothing to do with selectively filtering which messages a subscriber sees."> Delivery retries configured with a matching condition</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Server-side encryption protects data at rest — it has no role in determining which messages a subscriber receives."> Server-side encryption applied to the subscriber's endpoint</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A subscription filter policy lets a specific subscriber receive only the subset of messages matching defined attributes, instead of every message sent to the topic."> A subscription filter policy on that specific subscriber</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A partner company needs its own AWS account to be allowed to publish messages into your SNS topic. How do you grant this cross-account access?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Like an S3 bucket policy, an SNS topic policy is a resource policy attached to the topic, and it can grant publish permissions to a principal in another AWS account."> Attach a topic policy granting the partner account publish rights</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="IAM users are capped at 5,000 per account and aren't the mechanism for granting a different AWS account's principals access to your topic — that's what resource policies are for."> Create an IAM user in your account for the partner to use</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Enabling SSE encrypts data at rest — it doesn't grant or manage cross-account publish permissions on the topic."> Enable server-side encryption on the topic for that partner</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A subscription filter policy narrows which messages an existing subscriber receives — it doesn't grant a separate account permission to publish in the first place."> Configure a subscription filter policy for the partner's account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-serverless-architecture.html">← Previous: Serverless Architecture</a>
+      <a href="0009-step-functions.html">Next: Step Functions →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

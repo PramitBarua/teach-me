@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – SQS Standard vs. FIFO Queues</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 12
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>SQS Standard vs. FIFO Queues</h1>
+    <p class="lesson-meta">Lesson 12 of 22 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues.html" target="_blank">Amazon SQS FIFO Queues</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/high-throughput-fifo.html" target="_blank">High Throughput for FIFO Queues</a></p>
+  </div>
+
+  <p>Picture a <strong>FIFO queue</strong> as a single-lane road with no overtaking, and a <strong>standard queue</strong> as a multi-lane highway. That one image explains almost every trade-off between the two.</p>
+
+  <table>
+    <thead><tr><th></th><th>Standard queue</th><th>FIFO queue</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ordering</strong></td><td>Best effort only</td><td>Strictly preserved (first in, first out)</td></tr>
+      <tr><td><strong>Delivery</strong></td><td>At-least-once (duplicates possible)</td><td>Exactly-once processing</td></tr>
+      <tr><td><strong>Throughput</strong></td><td>Near-infinite, scales linearly</td><td>300 msg/sec, or 3,000 with batching</td></tr>
+      <tr><td><strong>Naming</strong></td><td>No restriction</td><td>Queue name must end in <code>.fifo</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>Because a FIFO queue is a single lane, its throughput is capped: <strong>300 transactions per second</strong> against the API without batching, or <strong>3,000</strong> when each transaction batches up to 10 messages. A standard queue has no such lane restriction — it scales out like adding lanes to the highway.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the .fifo suffix</div>
+    A FIFO queue's name <strong>must</strong> end with <code>.fifo</code> — this oddly specific requirement has shown up repeatedly in real exams. If a scenario mentions a queue name without that suffix, it cannot be a FIFO queue.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: at-least-once means design for duplicates</div>
+    Standard queues only guarantee <strong>at-least-once</strong> delivery — the same message can arrive twice. Any application consuming from a standard queue must be designed to handle duplicate processing (idempotency), whereas FIFO's exactly-once processing removes that burden at the cost of throughput.
+  </div>
+
+  <h2>Picking Between Them</h2>
+  <p><strong>FIFO</strong> fits workflows where order is non-negotiable: sequential command processing, ordered price adjustments in a sales workflow, or anything where processing message 2 before message 1 would produce a wrong result.</p>
+  <p><strong>Standard</strong> fits everything else where raw throughput matters more than strict order — decoupling application components, worker-pool architectures, or simply batching work for later processing.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: FIFO high throughput mode</div>
+    The course notes FIFO high throughput mode as a <strong>preview</strong> feature at time of recording. It has since reached general availability as "high throughput for FIFO queues," raising achievable throughput well beyond the 3,000 msg/sec batched baseline by partitioning message groups across more backend infrastructure. For the exam, know the baseline numbers (300 / 3,000) as the default FIFO ceiling, but be aware the higher-throughput mode now exists in production.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A finance team processes sequential price-adjustment commands where applying them out of order produces incorrect results, at a modest volume. Which queue type fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Standard queues only guarantee best-effort ordering, so two commands could be delivered out of sequence — unacceptable when order changes the outcome."> Standard queue, since it scales to near-infinite throughput</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Neither queue type integrates with Kinesis for enforcing message order — Kinesis is a separate streaming service, not an SQS ordering feature."> Standard queue paired with a Kinesis ordering stream</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Standard queues, even with a dead-letter queue attached, still only offer best-effort ordering — a DLQ handles failed messages, not sequencing."> Standard queue with a dead-letter queue for retries</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. FIFO queues guarantee strict first-in-first-out ordering, exactly matching a scenario where sequence changes the outcome of processing."> FIFO queue, since it strictly preserves message order</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application consuming from a standard SQS queue occasionally processes the same message twice. Is this expected behavior?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Standard queues only guarantee at-least-once delivery, so occasional duplicate delivery is expected, and consumers must be built to tolerate it."> Yes, standard queues only guarantee at-least-once delivery</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Standard queues never promised exactly-once delivery in the first place, so this isn't a bug or misconfiguration — it's documented, expected behavior."> No, this indicates a misconfigured queue policy</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Visibility timeout controls how long a message stays hidden after being received — setting it incorrectly doesn't cause the duplicate-delivery behavior itself, which is inherent to standard queues."> No, only an incorrect visibility timeout causes this</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Switching to a dead-letter queue changes what happens to repeatedly failing messages — it doesn't retroactively grant exactly-once delivery to a standard source queue."> Yes, but only after switching to a dead-letter queue</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A queue named <code>orders-processing</code> is described as guaranteeing exactly-once processing and strict ordering. What's wrong with this scenario?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="256 KB is the message size limit for both standard and FIFO queues — it isn't the detail that's inconsistent in this scenario."> Nothing — 256 KB message limits apply to both types</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. FIFO queue names must end in the .fifo suffix. A queue named orders-processing without that suffix cannot actually be a FIFO queue, so it can't legitimately offer exactly-once delivery and strict ordering."> The name is invalid — FIFO queues require a .fifo suffix</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A queue policy controls cross-account access permissions — it has no bearing on whether a queue can offer exactly-once, ordered delivery."> Nothing — a queue policy would fix any naming issue</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Visibility timeout governs how long a received message stays hidden — it doesn't determine whether a queue guarantees exactly-once delivery or ordering."> The visibility timeout must be set to zero for this</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-simple-queue-service.html">← Previous: Simple Queue Service (SQS)</a>
+      <a href="0013-sqs-delay-queues.html">Next: SQS Delay Queues →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

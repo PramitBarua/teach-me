@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>18 – Kinesis Video Streams</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 18
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Kinesis Video Streams</h1>
+    <p class="lesson-meta">Lesson 18 of 22 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/what-is-kinesis-video.html" target="_blank">What Is Amazon Kinesis Video Streams?</a> · <a href="https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/how-it-works.html" target="_blank">Kinesis Video Streams: How It Works</a></p>
+  </div>
+
+  <p>The rest of the Kinesis family moves discrete records and events. <strong>Kinesis Video Streams</strong> is the odd one out — built specifically to ingest live streaming <strong>media</strong>: video from security cameras, smartphones, cars, and drones, but also non-video time-serialized data like audio, thermal, depth, or radar.</p>
+
+  <h2>Ingest, Store, Consume — But Never Directly</h2>
+  <p>Once media lands in the service, it's persisted and encrypted both <strong>in transit and at rest</strong>, fully managed. Consumers then access it frame by frame, or however granularity is needed for downstream analysis.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Exam trap: you cannot access the underlying storage</div>
+    Kinesis Video Streams does not store media in its original file format on something you can browse directly — not on EBS, not on S3, not on EFS. Data is indexed and stored internally, and the <strong>only</strong> way to retrieve it is through the service's own APIs. Any exam answer suggesting you can pull the raw video off an underlying S3 bucket or EBS volume is wrong by design.
+  </div>
+
+  <h2>A Common Architecture: Live Facial Recognition</h2>
+  <p>A frequently used example ties Kinesis Video Streams to <strong>Rekognition Video</strong>:</p>
+  <ol>
+    <li>Security cameras each stream into their own Kinesis video stream — no on-premises processing hardware required.</li>
+    <li>Each stream integrates with Rekognition Video, which runs deep-learning-based facial recognition against a defined <strong>face collection</strong> of known faces.</li>
+    <li>Rekognition writes its analysis — detected faces and confidence-scored matches — to a <strong>Kinesis data stream</strong>.</li>
+    <li>A <strong>Lambda function</strong> is invoked on new records in that data stream, applies logic (known face vs. unrecognized face), and can trigger <strong>SNS</strong> to notify someone.</li>
+  </ol>
+  <p>This chains four services together — Video Streams for ingestion, Rekognition for analysis, a data stream for the analysis results, and Lambda plus SNS for the reaction — into a fully event-driven video analytics pipeline with no local hardware needed.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    If a question mentions live video streaming with analytics, or name-drops <strong>GStreamer or RTSP</strong> as the ingestion protocol, treat Kinesis Video Streams as the default answer. The course doesn't expect this to appear in deep detail on the exam — a solid architectural overview is enough.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An answer option claims a team can retrieve raw footage directly from the S3 bucket backing a Kinesis video stream. Is this a valid approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Kinesis Video Streams doesn't expose its underlying storage as a browsable S3 bucket — data is indexed internally and accessible only via the service's own APIs."> Yes, since Kinesis Video Streams backs its storage with S3</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Kinesis Video Streams indexes and stores media internally, and the only supported access path is through the service's own APIs — not through direct access to underlying EBS, S3, or EFS storage."> No, data must be retrieved only through the service's own APIs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EFS isn't the storage layer for Kinesis Video Streams, and even if it were, direct filesystem access still wouldn't be a supported retrieval method."> Yes, but only after mounting the stream as an EFS volume</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EBS isn't how Kinesis Video Streams persists media, and direct volume access isn't a supported way to retrieve stream data in any case."> Yes, by attaching the stream's EBS volume to an EC2 instance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. In the smart-home facial recognition architecture, what does Rekognition Video write its detected-face analysis into?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Rekognition writes its analysis results out to a Kinesis data stream, not back into the original video stream it was analyzing."> Back into the same Kinesis video stream being analyzed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An SQS queue isn't the destination for Rekognition's output in this architecture — a Kinesis data stream feeds the downstream Lambda function instead."> An SQS standard queue polled by a Lambda function</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Rekognition Video outputs its face-detection analysis, including confidence-matched faces, to a Kinesis data stream, which a Lambda function then consumes."> A Kinesis data stream consumed by a Lambda function</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Firehose isn't part of this architecture's analysis path — the analysis results flow into a Kinesis data stream for real-time Lambda processing, not into Firehose."> A Kinesis Firehose delivery stream targeting S3</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An exam scenario mentions ingesting live camera footage over RTSP for later deep-learning analysis. Which service should be the default consideration?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kinesis Data Streams handles generic discrete data records, not live video media ingestion protocols like RTSP or GStreamer."> Kinesis Data Streams, since it ingests any type of record</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Firehose delivers stream data near real time to storage and analytics destinations — it isn't designed to ingest live video over RTSP or GStreamer."> Kinesis Data Firehose, for near real-time video delivery</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Managed Service for Apache Flink handles real-time SQL-style stream processing of records, not the ingestion of live video over RTSP or GStreamer."> Managed Service for Apache Flink, for SQL-based video queries</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. RTSP and GStreamer are strong signals pointing to Kinesis Video Streams, which is purpose-built to ingest live video and time-serialized media for later analysis."> Kinesis Video Streams, purpose-built for live media ingestion</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0017-kinesis-data-analytics.html">← Previous: Kinesis Data Analytics</a>
+      <a href="0019-amazon-cognito-user-and-identity-pools.html">Next: Amazon Cognito User and Identity Pools →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

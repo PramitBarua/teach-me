@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – Serverless Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 07
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Serverless Architecture</h1>
+    <p class="lesson-meta">Lesson 07 of 22 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/serverless/latest/devguide/welcome.html" target="_blank">What Is Serverless Development?</a> · <a href="https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-identity.html" target="_blank">Amazon Cognito Identity Pools</a></p>
+  </div>
+
+  <p>Despite the name, serverless doesn't mean there are no servers — it means <em>you</em> manage as few of them, if any, as possible. It's a <strong>software architecture</strong>, not a hardware one, blending ideas from microservices and event-driven design: break an application into tiny, specialized pieces that start up, do one thing well, and stop.</p>
+
+  <h2>Three Defining Traits</h2>
+  <dl>
+    <dt>Stateless and ephemeral compute</dt>
+    <dd>Functions (typically Lambda) run in a clean environment every time. Any data they need is fetched at the start of execution; any result is persisted or handed off at the end. Because every environment is identical and disposable, it's trivial to scale.</dd>
+    <dt>Event-driven, not always-on</dt>
+    <dd>Nothing runs until something triggers it. Compute is billed by execution duration, so an idle serverless system costs close to nothing — the opposite of provisioning fixed capacity for peak load.</dd>
+    <dt>Consume, don't reinvent</dt>
+    <dd>Wherever a managed service exists, use it instead of writing and operating the equivalent yourself: S3 for object storage, DynamoDB for persistent data, third-party identity providers for authentication, Elastic Transcoder for media processing.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: why third-party identity providers matter</div>
+    A serverless app should avoid rolling its own user store. Beyond the admin overhead, an AWS account has a hard quota of <strong>5,000 IAM users</strong> — nowhere near enough for a public-facing application's customer base, and IAM users aren't meant for end-user application logins anyway. Federating through a provider like Google, Facebook, or corporate Active Directory sidesteps this entirely.
+  </div>
+
+  <h2>Walking Through a Serverless App: PetTube</h2>
+  <p>Julie wants to upload a video of her dog Woofie. Trace what happens, and notice that no step provisions or manages a server:</p>
+  <ol>
+    <li><strong>Static front end.</strong> Julie's browser loads HTML and JavaScript from an <strong>S3 static website</strong> bucket. The JavaScript running client-side <em>is</em> the application's front end.</li>
+    <li><strong>Authentication.</strong> The JavaScript sends Julie to a third-party identity provider (Google). On success, Google returns an identity token proving she authenticated.</li>
+    <li><strong>Credential exchange.</strong> AWS can't consume a Google token directly, so the JavaScript hands it to <strong>Cognito</strong>, which exchanges it for temporary AWS credentials.</li>
+    <li><strong>Upload.</strong> Using those temporary credentials, the browser uploads Woofie's video straight to an S3 "originals" bucket.</li>
+    <li><strong>Processing trigger.</strong> The originals bucket is configured to emit an event on object creation, invoking a <strong>Lambda</strong> function.</li>
+    <li><strong>Transcoding.</strong> That Lambda function creates jobs in <strong>Elastic Transcoder</strong>, one per output size. Each job reads the master file and writes a resized output to a transcoded bucket, and each output's location is recorded in <strong>DynamoDB</strong>.</li>
+    <li><strong>Retrieval.</strong> A second Lambda function, invoked when Julie views her media page, reads DynamoDB, finds her videos, and returns URLs the browser can use.</li>
+  </ol>
+
+  <div class="callout warn">
+    <div class="callout-title">The diagram is simplified</div>
+    A real implementation of this flow would put <strong>API Gateway</strong> in front of both Lambda functions rather than letting the browser invoke them directly — API Gateway is the standard front door for client-to-Lambda communication in serverless architectures, covered later in this module. The simplified version here is for teaching the concept, not the complete production shape.
+  </div>
+
+  <p>End to end: no EC2 instances, no self-managed database servers, and cost is incurred only for storage used and compute time actually consumed — S3, Cognito, Lambda invocation time, and Elastic Transcoder job time. Everything else is idle at zero cost.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A startup expects millions of end users and wants to avoid operating its own authentication system. Why is using IAM users for this a poor fit, beyond added admin work?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. An AWS account has a hard quota of 5,000 IAM users, far below what a consumer-facing application needs, and IAM users aren't designed for end-customer logins anyway."> An AWS account is capped at 5,000 IAM users total</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="IAM users can be granted fine-grained permissions via policies — restrictive permissions aren't the core reason they're unsuitable for millions of app users."> IAM users can only ever get read-only permissions</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="IAM users don't inherently cost more per user than other identity options — cost isn't the primary limiting factor described here."> IAM users incur a large per-user monthly charge</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="IAM already supports MFA for users, so lack of MFA support isn't the reason to avoid IAM users for this use case."> IAM users cannot be protected using MFA at all</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. In the PetTube-style flow, Julie's browser has a Google identity token after logging in. Why can't it use that token directly to call AWS APIs?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The token isn't rejected for being expired — it's a valid Google-issued token, just not one AWS services natively understand."> Google tokens expire before any AWS call completes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Browser JavaScript can absolutely make authenticated calls once it holds proper AWS credentials — the blocker isn't a general prohibition on browser calls."> Browser JavaScript can't call AWS at all</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. AWS services don't natively understand third-party identity tokens, so Cognito swaps the Google token for temporary AWS credentials the browser can actually use."> Cognito swaps the token for AWS credentials</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The originals bucket doesn't perform any identity validation itself — credential exchange happens through Cognito before the upload is attempted."> The bucket policy denies third-party tokens</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which statement best captures why a serverless architecture is close to zero cost while idle?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Serverless architectures deliberately avoid provisioning fixed EC2 capacity for peak load — that's the always-on model serverless replaces, not what it relies on."> Fixed EC2 capacity is pre-provisioned for peak load</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DynamoDB and S3 aren't free tiers with unlimited usage — cost still accrues based on usage, just usage-based rather than fixed."> DynamoDB and S3 usage is entirely free of charge</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Elastic Transcoder jobs are billed when they run, not on a flat unlimited-usage monthly plan."> Elastic Transcoder is billed as a flat monthly subscription</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Nothing runs until an event triggers it, and compute is billed by execution duration — so an idle serverless system incurs close to no compute cost at all."> Compute only runs and bills when an event triggers execution</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-cloudwatch-events-and-eventbridge.html">← Previous: CloudWatch Events and EventBridge</a>
+      <a href="0008-simple-notification-service.html">Next: Simple Notification Service (SNS) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

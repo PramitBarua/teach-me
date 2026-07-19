@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Step Functions</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 09
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>AWS Step Functions</h1>
+    <p class="lesson-meta">Lesson 09 of 22 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html" target="_blank">What Is AWS Step Functions?</a> · <a href="https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html" target="_blank">Choosing a Workflow Type</a></p>
+  </div>
+
+  <p>Step Functions exists to solve a real Lambda limitation: functions max out at a <strong>15-minute</strong> execution duration, and each invocation runs in a stateless, disposable environment. Chaining Lambda functions together to build a long-running, stateful process technically works, but it gets messy fast — there's no clean way to hold state, retry a specific step, or branch on a decision across invocations.</p>
+
+  <h2>State Machines</h2>
+  <p>Step Functions lets you define a <strong>state machine</strong> — a workflow with a start, an end, and <strong>states</strong> in between that do things, decide things, or wait on things, passing data along the way. State machines are defined using <strong>Amazon States Language (ASL)</strong>, a JSON-based format, and each state machine runs under an <strong>IAM role</strong> it assumes to interact with other AWS services.</p>
+
+  <h3>The State Types</h3>
+  <table>
+    <thead><tr><th>State</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Succeed / Fail</strong></td><td>Terminates the execution as a success or failure</td></tr>
+      <tr><td><strong>Wait</strong></td><td>Pauses for a duration or until a specific date/time</td></tr>
+      <tr><td><strong>Choice</strong></td><td>Branches the workflow down different paths based on input</td></tr>
+      <tr><td><strong>Parallel</strong></td><td>Runs multiple branches at the same time</td></tr>
+      <tr><td><strong>Map</strong></td><td>Repeats a set of steps once per item in an input list</td></tr>
+      <tr><td><strong>Task</strong></td><td>Performs one unit of actual work, integrating with services like Lambda, DynamoDB, SNS, SQS, ECS, Batch, Glue, or SageMaker</td></tr>
+    </tbody>
+  </table>
+  <p>Flow-control states (Succeed, Fail, Wait, Choice, Parallel, Map) shape the path through the workflow; only <strong>Task</strong> states actually do something, by handing off to another AWS service.</p>
+
+  <h2>Standard vs. Express</h2>
+  <table>
+    <thead><tr><th></th><th>Standard</th><th>Express</th></tr></thead>
+    <tbody>
+      <tr><td>Max duration</td><td>Up to <strong>1 year</strong></td><td>Up to <strong>5 minutes</strong></td></tr>
+      <tr><td>Best for</td><td>Long-running, auditable workflows (order processing, approvals)</td><td>High-volume event processing (IoT streams, mobile backends)</td></tr>
+      <tr><td>Execution model</td><td>Exactly-once</td><td>At-least-once</td></tr>
+      <tr><td>Default</td><td>Yes</td><td>No — must be selected explicitly</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: Standard vs. Express, at a glance</div>
+    If the scenario is long-running with steps that could take hours, days, or need human intervention, pick <strong>Standard</strong>. If it's high-volume, high-throughput, short-lived event processing — streaming, IoT ingestion — pick <strong>Express</strong>. Standard's exactly-once guarantee also makes it the safer default whenever a task must never run twice; Express trades that guarantee for scale and speed.
+  </div>
+
+  <h2>Starting an Execution</h2>
+  <p>State machines can be started from <strong>API Gateway</strong>, <strong>EventBridge</strong> rules, <strong>IoT</strong> rules, directly from a <strong>Lambda</strong> function, manually, or via the SDK/CLI — almost always as backend orchestration triggered by something else in the application.</p>
+
+  <h2>Worked Example: PetCuddletron</h2>
+  <p>Bob's cat Whiskers needs cuddle reminders. A serverless front end (S3 static site → API Gateway → Lambda) lets Bob start an execution of a state machine with a delay and a notification preference. Inside the state machine:</p>
+  <ol>
+    <li>A <strong>Wait</strong> state ("timer") pauses for the requested delay.</li>
+    <li>A <strong>Choice</strong> state branches on Bob's chosen notification method.</li>
+    <li>One of three <strong>Task</strong> states runs: invoke an email-reminder Lambda, an SMS-reminder Lambda, or both.</li>
+  </ol>
+  <p>Because the wait could exceed 15 minutes, plain Lambda chaining isn't an option here — this is exactly the scenario Step Functions is designed for.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An order-processing workflow can take several hours and must never execute the "charge card" task more than once. Which workflow type should the state machine use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Express workflows cap out at 5 minutes and use an at-least-once model, so a task could run more than once — the opposite of what's needed here."> Express, because it processes events at high volume</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Step Functions doesn't offer a 'Batch' workflow type — the two options are Standard and Express."> Batch, since order processing is a batch workload</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There's no 'Manual' workflow type in Step Functions — manual only describes one way an execution can be started, not a workflow type."> Manual, since a human approves the charge step</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Standard workflows support durations up to a year and guarantee exactly-once execution of each task, which is exactly what a multi-hour order flow with a non-repeatable charge step needs."> Standard, since it's exactly-once and long-running</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A state machine needs to run the same set of steps once for every item in an incoming list of ten orders. Which state type fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A Map state accepts a list and runs a defined set of steps once per item in that list — exactly the repeat-per-item behavior described."> Map, which iterates a set of steps over each list item</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Parallel runs multiple different branches at the same time — it's not designed to repeat one set of steps once per item in a list."> Parallel, which runs unrelated branches at once</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Choice branches down a single path based on input — it doesn't iterate over a list of items at all."> Choice, which branches based on a single input value</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Wait only pauses execution for a duration or until a timestamp — it has no concept of iterating over list items."> Wait, which pauses until each item is ready</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Within a state machine, which state type is responsible for actually performing work, such as invoking a Lambda function or writing to DynamoDB?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Succeed and Fail only terminate the execution with a final status — they don't integrate with services to perform work."> Succeed or Fail, which end the execution</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Choice only directs the execution down one of several paths based on input — it doesn't call out to other AWS services to do work."> Choice, which selects a path based on input</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Task states are the only state type that integrates with external services like Lambda, DynamoDB, SNS, or SQS to perform actual units of work."> Task, which integrates with services to do work</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Wait only pauses the workflow for a period or until a specific time — it never calls out to another service to perform work."> Wait, which pauses until a duration elapses</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-simple-notification-service.html">← Previous: Simple Notification Service (SNS)</a>
+      <a href="0010-api-gateway-101.html">Next: API Gateway 101 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

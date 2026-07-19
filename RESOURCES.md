@@ -91,3 +91,47 @@
 | R85 | Target Tracking Scaling Policies | https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-target-tracking.html | Supported metrics, recommended default |
 | R86 | Amazon EC2 Auto Scaling Lifecycle Hooks | https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html | Pending/terminating wait states, EventBridge/SNS |
 | R87 | Health Checks for Instances in an Auto Scaling Group | https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-health-checks.html | EC2 vs. ELB vs. custom checks, grace period |
+| R88 | Implementing Microservices on AWS (whitepaper) | https://docs.aws.amazon.com/whitepapers/latest/microservices-on-aws/microservices-on-aws.html | Monolith-to-microservices architectural evolution |
+| R89 | How Amazon SQS Works | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-how-it-works.html | Queue decoupling mechanics overview |
+| R90 | What Is Event-Driven Architecture? | https://aws.amazon.com/what-is/eda/ | Producers, routers, consumers pattern overview |
+| R91 | Configuring AWS Lambda Functions | https://docs.aws.amazon.com/lambda/latest/dg/lambda-functions.html | Runtimes, handlers, configuration basics |
+| R92 | Configure Lambda Function Memory | https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html | Memory-to-vCPU scaling |
+| R93 | Giving Lambda Functions Access to Resources in a VPC | https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html | VPC networking, ENI model, cold-start implications |
+| R94 | Managing Permissions in AWS Lambda | https://docs.aws.amazon.com/lambda/latest/dg/lambda-permissions.html | Execution role vs. resource-based policy |
+| R95 | Understanding Lambda Function Invocation Methods | https://docs.aws.amazon.com/lambda/latest/dg/lambda-invocation.html | Sync/async/event source mapping invocation models |
+| R96 | Manage Lambda Function Versions | https://docs.aws.amazon.com/lambda/latest/dg/configuration-versions.html | Versions and aliases |
+| R97 | Configuring Provisioned Concurrency for a Function | https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html | Eliminating cold starts |
+| R98 | What Is Amazon EventBridge? | https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html | Event buses, rules, targets |
+| R99 | EventBridge Is the Evolution of Amazon CloudWatch Events | https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-cwe-now-eb.html | What changed (and didn't) in the CloudWatch Events → EventBridge rename |
+| R100 | What Is Serverless Development? | https://docs.aws.amazon.com/serverless/latest/devguide/welcome.html | Serverless architecture overview |
+| R101 | Amazon Cognito Identity Pools | https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-identity.html | Temporary AWS credentials for authenticated/unauthenticated users |
+| R102 | What Is Amazon SNS? | https://docs.aws.amazon.com/sns/latest/dg/welcome.html | Pub/sub topics and subscriptions |
+| R103 | Common Amazon SNS Scenarios (Fanout) | https://docs.aws.amazon.com/sns/latest/dg/sns-common-scenarios.html | Fan-out pattern to multiple SQS queues/Lambda |
+| R104 | What Is AWS Step Functions? | https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html | State machines for workflow orchestration |
+| R105 | Choosing a Workflow Type (Step Functions) | https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html | Standard vs. Express workflows |
+| R106 | Choose Between REST APIs and HTTP APIs | https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html | API Gateway product type comparison |
+| R107 | Cache Settings for REST APIs | https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html | API Gateway response caching |
+| R108 | What Is Amazon SQS? | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html | SQS product overview |
+| R109 | Amazon SQS Visibility Timeout | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html | In-flight message handling |
+| R110 | Amazon SQS FIFO Queues | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues.html | Ordering and exactly-once processing |
+| R111 | High Throughput for FIFO Queues | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/high-throughput-fifo.html | Now-GA high-throughput mode |
+| R112 | Amazon SQS Delay Queues | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html | Queue-level delivery delay |
+| R113 | Amazon SQS Message Timers | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-timers.html | Per-message delay |
+| R114 | Using Dead-Letter Queues in Amazon SQS | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html | Redrive policy, maxReceiveCount |
+| R115 | Setting Up DLQ Retention | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/setting-up-dead-letter-queue-retention.html | DLQ retention configuration |
+| R116 | What Is Amazon Kinesis Data Streams? | https://docs.aws.amazon.com/streams/latest/dev/introduction.html | Real-time ingestion overview |
+| R117 | Kinesis Data Streams Terminology and Concepts | https://docs.aws.amazon.com/streams/latest/dev/key-concepts.html | Shards, partition keys, sequence numbers |
+| R118 | What Is Amazon Data Firehose? | https://docs.aws.amazon.com/firehose/latest/dev/what-is-this-service.html | Renamed from Kinesis Data Firehose (Feb 2024); buffered delivery |
+| R119 | Send Data to a Firehose Stream | https://docs.aws.amazon.com/firehose/latest/dev/basic-write.html | Producer integration |
+| R120 | What Is Amazon Managed Service for Apache Flink? | https://docs.aws.amazon.com/managed-flink/latest/java/what-is.html | Renamed from Kinesis Data Analytics (Aug 2023) |
+| R121 | Kinesis Data Analytics for SQL Applications Discontinuation | https://docs.aws.amazon.com/kinesisanalytics/latest/dev/discontinuation.html | SQL-only variant retired Jan 27, 2026 |
+| R122 | What Is Amazon Kinesis Video Streams? | https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/what-is-kinesis-video.html | Streaming video/time-series media ingestion |
+| R123 | Kinesis Video Streams: How It Works | https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/how-it-works.html | Producer/consumer architecture |
+| R124 | What Is Amazon Cognito? | https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html | Cognito product overview |
+| R125 | Amazon Cognito User Pools | https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools.html | Authentication and user directories |
+| R126 | What Is AWS Glue? | https://docs.aws.amazon.com/glue/latest/dg/what-is-glue.html | Managed ETL overview |
+| R127 | Data Discovery and Cataloging in AWS Glue | https://docs.aws.amazon.com/glue/latest/dg/catalog-and-crawler.html | Crawlers and the Glue Data Catalog |
+| R128 | What Is Amazon MQ? | https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/welcome.html | Managed ActiveMQ/RabbitMQ overview |
+| R129 | Using Amazon MQ for RabbitMQ | https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/working-with-rabbitmq.html | RabbitMQ engine support (added after course recording) |
+| R130 | What Is Amazon AppFlow? | https://docs.aws.amazon.com/appflow/latest/userguide/what-is-appflow.html | No-code SaaS-to-AWS data integration |
+| R131 | Amazon AppFlow Flows | https://docs.aws.amazon.com/appflow/latest/userguide/flows.html | Flow configuration and triggers |

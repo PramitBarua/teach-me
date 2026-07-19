@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>19 – Amazon Cognito User and Identity Pools</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 19
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Amazon Cognito: User Pools and Identity Pools</h1>
+    <p class="lesson-meta">Lesson 19 of 22 · ~12 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html" target="_blank">What Is Amazon Cognito?</a> · <a href="https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools.html" target="_blank">Amazon Cognito User Pools</a> · <a href="https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-identity.html" target="_blank">Amazon Cognito Identity Pools</a></p>
+  </div>
+
+  <p>Cognito is one of the most heavily tested non-graphical topics in the whole exam — not because it's conceptually hard, but because its two components are named in a way that actively invites confusion. Get the naming straight and the rest falls into place.</p>
+
+  <p>Cognito as a whole provides <strong>authentication</strong> (verifying who someone is), <strong>authorization</strong> (managing access to services), and <strong>user management</strong> (a serverless database of users) for web and mobile applications. It does this through two genuinely separate products that happen to share a brand name: <strong>user pools</strong> and <strong>identity pools</strong>.</p>
+
+  <h2>User Pools: Sign-In, and Nothing Else</h2>
+  <p>A user pool is a directory of users. It handles sign-up, sign-in, a built-in customizable hosted UI, multi-factor authentication, compromised-credential checks, account takeover protection, and phone/email verification. It can also run Lambda triggers for custom workflows or user migration. Sign-in can come from users stored directly in the pool, or from social identities (Facebook, Google, Amazon, Apple) and SAML identity providers — all unified into one login experience.</p>
+
+  <p>The output of a successful sign-in is a <strong>JSON Web Token (JWT)</strong>. This token proves the identity signed in successfully, and can be used to authenticate against self-managed applications and databases, or against API Gateway, which can accept JWTs directly.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The single most important fact about Cognito</div>
+    A user pool JWT <strong>cannot</strong> be used to access most AWS services. User pools are a login and identity-management system — full stop. Getting actual AWS credentials is a completely different job, done by identity pools.
+  </div>
+
+  <h2>Identity Pools: Trading Identity for AWS Credentials</h2>
+  <p>An identity pool's only job is to exchange an identity for a set of <strong>temporary AWS credentials</strong>. The identity being exchanged can be:</p>
+  <ul>
+    <li>an <strong>unauthenticated (guest)</strong> identity — no sign-in at all, useful for something like storing anonymous high scores in DynamoDB;</li>
+    <li>an <strong>authenticated external identity</strong> — a Google, Facebook, Amazon, or SAML 2.0 token; or</li>
+    <li>a <strong>user pool token</strong> — yes, a user pool is just one more type of identity an identity pool can accept.</li>
+  </ul>
+  <p>Under the hood, an identity pool has at least two configured IAM roles — one for authenticated identities, one for unauthenticated ones. When a valid identity is presented, Cognito <strong>assumes the matching role</strong> on the application's behalf, generating temporary credentials that are handed back to the app. The app's actual permissions come entirely from that role. Nothing is ever hard-coded or stored permanently.</p>
+
+  <p>Swapping any external identity-provider token for AWS credentials this way is called <strong>Web Identity Federation</strong> — a term you'll meet in both the exam and in the wild.</p>
+
+  <h2>Using Both Together</h2>
+  <p>Supporting five external providers directly in an identity pool means configuring five separate token types. Instead, route everyone through a user pool first: internal users and every social login all collapse into a single user pool token. The identity pool then only needs to trust <em>one</em> identity source — the user pool — and swaps that single token type for AWS credentials. Same outcome, far less configuration.</p>
+
+  <table>
+    <thead><tr><th></th><th>User Pool</th><th>Identity Pool</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Job</strong></td><td>Sign-up / sign-in / user directory</td><td>Swap an identity for AWS credentials</td></tr>
+      <tr><td><strong>Output</strong></td><td>JWT (JSON Web Token)</td><td>Temporary AWS credentials (via IAM role)</td></tr>
+      <tr><td><strong>Accepts</strong></td><td>Internal users, social logins, SAML</td><td>External tokens, SAML, user pool tokens, guests</td></tr>
+      <tr><td><strong>Grants AWS access?</strong></td><td>No (only self-managed apps / API Gateway)</td><td>Yes — that's its entire purpose</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Why this scales past IAM users</div>
+    IAM caps you at <strong>5,000 users per account</strong> — fine for employees, unworkable for a consumer-facing app. Identity pools issue temporary credentials to a near-unlimited number of end users, which is why they're the correct answer for web-scale, customer-facing AWS access.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A mobile app lets users sign in with corporate SAML credentials, and afterward the app needs temporary AWS credentials to write directly to a DynamoDB table. Which Cognito component produces those credentials?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A user pool's output is a JWT for sign-in — it never issues AWS credentials, no matter which identity source authenticated the user."> A Cognito User Pool, which issues a JWT for the request</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. An identity pool exchanges an authenticated identity — including a SAML login — for temporary AWS credentials by assuming a configured IAM role."> A Cognito Identity Pool, which assumes an IAM role for it</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Lambda triggers customize user pool workflows like migration or sign-up — they don't hand out AWS credentials to the application."> A Cognito User Pool, using a Lambda trigger for access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="IAM Identity Center federates workforce access to AWS accounts and the console — it isn't the Cognito component involved in this mobile app scenario."> IAM Identity Center, granting federated console access</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An architect needs users to sign up, verify their email, and sign back in through a customizable hosted UI — but the application never touches AWS services directly. Which Cognito component alone satisfies this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Guest access through an identity pool issues AWS credentials for unauthenticated users — it has nothing to do with sign-up, email verification, or a hosted sign-in UI."> An identity pool configured for guest access</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Configuring one IAM role per provider is an identity pool concern for issuing AWS credentials, not for hosting a sign-up/sign-in experience."> An identity pool with one IAM role per provider</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An identity pool would be unnecessary overhead here, since the application never needs AWS credentials — only a user pool's sign-in features are required."> Both a user pool and an identity pool together</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Sign-up, email verification, and a hosted sign-in UI are exactly what a user pool provides on its own — no identity pool is needed unless AWS credentials are required."> A user pool alone, with no identity pool needed</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An application supports sign-in via Google, Facebook, and Amazon accounts, routed through a single Cognito user pool, then exchanges the resulting token for AWS credentials via an identity pool. What is this general process of swapping an external identity for AWS credentials called?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Web Identity Federation is the name for swapping an external identity-provider token — directly, or via a user pool — for temporary AWS credentials."> Web Identity Federation</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cross-account role delegation describes assuming a role in a different AWS account — it isn't the term for exchanging an external identity for AWS credentials."> Cross-Account Role Delegation</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This isn't a real Cognito or SAML term — SAML uses assertions and bindings, but none is named this, and it doesn't describe identity-for-credential exchange."> SAML Assertion Consumer Binding</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="IAM policy simulation is a testing tool for previewing policy evaluation outcomes — unrelated to exchanging identities for credentials."> IAM Policy Simulation Exchange</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0018-kinesis-video-streams.html">← Previous: Kinesis Video Streams</a>
+      <a href="0020-aws-glue-101.html">Next: AWS Glue 101 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

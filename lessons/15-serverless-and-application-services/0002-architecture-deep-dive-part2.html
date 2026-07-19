@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – Architecture Deep Dive, Part 2</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 02
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Architecture Deep Dive, Part 2: Queues, Microservices, and Event-Driven Design</h1>
+    <p class="lesson-meta">Lesson 02 of 22 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-how-it-works.html" target="_blank">How Amazon SQS Works</a> · <a href="https://aws.amazon.com/what-is/eda/" target="_blank">What Is Event-Driven Architecture?</a></p>
+  </div>
+
+  <p>Part 1 left the tiered, load-balanced CatTube architecture with one unsolved problem: the upload tier's <strong>synchronous</strong> call to the processing tier means processing can never scale to zero, and a full processing outage breaks uploads too. A queue fixes this by breaking the direct connection entirely.</p>
+
+  <h2>Queue-Based Decoupling</h2>
+  <p>Instead of calling the processing tier directly, the upload tier now: stores the master video in <strong>S3</strong>, then places a <strong>message</strong> on a queue describing where the video lives and what needs doing. That's the whole transaction — the upload tier doesn't know or care whether anything is listening on the other end.</p>
+  <p>On the far side, an Auto Scaling group configured with <strong>min = 0, desired = 0, max = &lt;large&gt;</strong> watches <strong>queue length</strong> as its scaling metric. Messages appear → desired capacity rises above zero → instances launch, poll the queue, retrieve the referenced object from S3, process it, and delete the message. As the queue drains, the ASG scales desired capacity back down — all the way to zero when there's nothing left to do.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: this is the "scale to zero" pattern</div>
+    A queue converts a <strong>synchronous</strong> dependency into an <strong>asynchronous</strong> one. The producer (upload tier) never waits for a response, and the consumer (processing tier) can legitimately run <strong>zero instances</strong> when idle — something a direct or load-balanced synchronous call can never do. Whenever a scenario mentions unpredictable, bursty background work that should cost nothing while idle, think queue + Auto Scaling on queue length.
+  </div>
+
+  <h2>Microservices</h2>
+  <p>Keep decomposing a tiered application and you eventually reach a <strong>microservice</strong> architecture: many small, self-sufficient services, each with its own logic, its own data, and its own inputs/outputs. A real application might have hundreds or thousands of these. Each microservice is either a <strong>producer</strong> (generates data/events), a <strong>consumer</strong> (acts on data/events), or both.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">A queue per pair of services doesn't scale</div>
+    Connecting every producer microservice to every consumer microservice with its own dedicated queue works, but it turns into an unmanageable web of point-to-point queues as the number of services grows. This is the exact problem an <strong>event router</strong> solves.
+  </div>
+
+  <h2>Event-Driven Architecture</h2>
+  <p>An event is simply <strong>a state change or notable occurrence</strong> — a button click, an upload finishing (or failing), an error during order processing. In a mature event-driven design:</p>
+  <dl>
+    <dt>Producers</dt>
+    <dd>Generate events only when something actually happens. They are not constantly running or polling.</dd>
+    <dt>Event router / event bus</dt>
+    <dd>A central, highly available exchange point. Producers publish onto it; the router delivers events to whichever consumers care about them — removing the need for every service to know about every other service.</dd>
+    <dt>Consumers</dt>
+    <dd>Sit idle until an event they care about is delivered, take an action, then return to idle. Like producers, they don't consume resources while waiting.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the defining trait of event-driven = resource use only while handling events</div>
+    Contrast this with an always-on EC2 instance, which is billed continuously regardless of load. A mature event-driven system's producers and consumers consume compute <strong>only</strong> while actively handling an event — this is precisely the property that makes event-driven design the architectural foundation of <strong>serverless</strong>, covered later in this module.
+  </div>
+
+  <table>
+    <thead><tr><th>Pattern</th><th>Communication</th><th>Can scale to zero?</th></tr></thead>
+    <tbody>
+      <tr><td>Direct / load-balanced tiers</td><td>Synchronous</td><td>No — something must always answer</td></tr>
+      <tr><td>Queue-decoupled tiers</td><td>Asynchronous</td><td>Yes — consumer scales with queue length</td></tr>
+      <tr><td>Event-driven (router + bus)</td><td>Asynchronous, many-to-many</td><td>Yes — producers and consumers are both dormant by default</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An upload tier stores a file in S3 and places a message on a queue, then considers its job done without waiting for any reply. What kind of communication does this describe?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Synchronous communication requires the caller to wait for a response — this upload tier explicitly does not wait, ruling this out."> Synchronous communication with a fast timeout</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Polling would mean the upload tier repeatedly checks for a result, but here it doesn't check anything after publishing the message."> Polling communication until acknowledged</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Load-balanced calls in this module's earlier pattern are still synchronous, direct requests — not a fire-and-forget queue message."> Load-balanced synchronous forwarding</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The upload tier sends the message and moves on without waiting for any response — this is asynchronous communication, and it's what decouples the upload and processing tiers."> Asynchronous, fire-and-forget communication</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A processing fleet behind a queue is built from an Auto Scaling group with min=0, desired=0, max=200, scaling on queue length. When the queue is completely empty for an extended period, what is the ASG's instance count?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. With min and desired both set to 0, an empty queue drives desired capacity back down to 0, and the ASG terminates the last instance — this is the 'scale to zero' capability that synchronous designs can't achieve."> Zero — the ASG scales all the way down</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Nothing in this configuration keeps one instance running permanently — the minimum is explicitly 0, so it can and does reach zero."> One — a single warm instance is always kept running</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The maximum of 200 is a ceiling, not a resting state — an empty queue doesn't push the ASG toward its maximum."> 200 — the ASG defaults to its maximum capacity</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Instance count is driven entirely by queue length in this design, not by a fixed schedule that would hold a steady count."> It stays at whatever count it last scaled to</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An application has grown to dozens of microservices, and connecting every producer to every consumer with its own dedicated queue has become unmanageable. What architectural component is designed to solve exactly this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Adding more point-to-point queues is the problem being described, not the fix — it only multiplies the same management burden."> More dedicated queues, one per producer-consumer pair</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. An event router with a central event bus lets producers publish without knowing which consumers exist, and lets the router handle delivery — removing the need for a dedicated queue between every pair of services."> A central event router with an event bus</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Merging services back into fewer, larger components reverses the microservice decomposition rather than solving the communication fan-out problem."> Merging related microservices back into one tier</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single always-on EC2 instance per service reintroduces constant billing and doesn't address how producers and consumers discover each other."> One dedicated EC2 instance per microservice pair</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-architecture-deep-dive-part1.html">← Previous: Architecture Deep Dive, Part 1</a>
+      <a href="0003-aws-lambda-part1.html">Next: AWS Lambda, Part 1 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

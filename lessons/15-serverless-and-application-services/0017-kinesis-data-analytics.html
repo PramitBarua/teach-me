@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>17 – Kinesis Data Analytics</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 17
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Kinesis Data Analytics</h1>
+    <p class="lesson-meta">Lesson 17 of 22 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/managed-flink/latest/java/what-is.html" target="_blank">What Is Amazon Managed Service for Apache Flink?</a> · <a href="https://docs.aws.amazon.com/kinesisanalytics/latest/dev/discontinuation.html" target="_blank">Kinesis Data Analytics for SQL Applications Discontinuation</a></p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: this product has been renamed AND the SQL variant is now retired</div>
+    Two separate things have changed since this course was recorded. First, in <strong>August 2023</strong> AWS renamed <strong>Kinesis Data Analytics</strong> to <strong>Amazon Managed Service for Apache Flink</strong> — endpoints, APIs, and IAM policies were unaffected, purely a rebrand. Second, and more significantly: the <strong>SQL-based</strong> variant this lesson describes — with in-application streams and reference tables driven by plain SQL — was formally discontinued. AWS stopped accepting new SQL applications on <strong>October 15, 2025</strong>, and deleted all remaining SQL applications on <strong>January 27, 2026</strong> (before today's date). If you're studying this after that point, the SQL-only workflow described below <strong>no longer exists to create in the console</strong> — it survives here purely because SAA-C03 exam content may still reference the concept under its old name. The current, supported path for this use case is <strong>Managed Service for Apache Flink</strong> (using the DataStream/Table APIs or Flink Studio for interactive SQL).
+  </div>
+
+  <p>Kinesis Data Streams ingests data. Firehose delivers it near real time. What this product adds is <strong>real-time processing using SQL</strong> — queries running continuously against data as it flows through, from input streams to output streams.</p>
+
+  <h2>How the SQL Model Worked</h2>
+  <p>Conceptually, the application sits between an input stream (Kinesis Data Streams or Firehose) and an output stream (Firehose, Lambda, or Kinesis Data Streams directly). Inside the application:</p>
+  <dl>
+    <dt>In-application input stream</dt>
+    <dd>A virtual table that continuously mirrors the real external source stream</dd>
+    <dt>Reference table</dt>
+    <dd>Optional static data pulled from S3 to enrich the streaming data — e.g. player metadata alongside a raw stream of game scores</dd>
+    <dt>Application code</dt>
+    <dd>SQL queries run against the input stream table and the reference table</dd>
+    <dt>In-application output stream</dt>
+    <dd>A virtual table that mirrors results back out to the real destination stream</dd>
+    <dt>Error stream</dt>
+    <dd>Captures any records the SQL query fails to process</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the destination decides real-time vs. near real-time</div>
+    Sending output directly to <strong>Kinesis Data Streams or Lambda keeps it real-time</strong>. Sending it to <strong>Firehose (or anything Firehose delivers to)</strong> makes it near real-time, because Firehose's own buffering behavior applies downstream. The analytics processing itself is always real-time — what changes is the last hop.
+  </div>
+
+  <h2>When to Reach for This vs. a Firehose Lambda Transform</h2>
+  <p>Firehose's Lambda transform handles relatively simple per-record manipulation. This product is the answer when a scenario needs <strong>complex, SQL-expressed logic</strong> against continuously flowing data — time-series analytics, real-time leaderboards, or real-time security/ops dashboards. You pay only for data processed, but it isn't cheap, so it's reserved for scenarios that genuinely need real-time SQL over a stream rather than batch analysis after the fact.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: match the vocabulary to the era</div>
+    If an exam question says "Kinesis Data Analytics," mentally substitute "real-time SQL/stream processing service" and evaluate the scenario the same way regardless of which name is used. The architectural reasoning — input stream, optional reference data, processing logic, output stream — is what's actually being tested, not the current product branding.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A gaming company streams raw player score events and wants to enrich each event with static player metadata (name, items owned) before running real-time queries. Where does that static metadata come from?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The in-application input stream mirrors the live event data itself (the scores), not the separate static enrichment data being asked about here."> The in-application input stream, mirroring the live scores</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The error stream only captures records the SQL query failed to process — it isn't a source of static reference data for enrichment."> The in-application error stream, capturing failed records</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A reference table pulls static data from S3 — such as player metadata — to enrich the live streaming data during SQL processing."> A reference table sourced from an S3 bucket</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The output stream is where processed results go after the SQL query runs — it isn't a source of input enrichment data."> The in-application output stream, feeding results forward</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application's output is configured to deliver directly into Firehose rather than directly into a Kinesis data stream. What's the effect on the data's timing characteristics?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Firehose applies its own buffering behavior (waiting for 1 MB or 60 seconds) on the way out, so the result is not still fully real time once it passes through Firehose."> It stays fully real-time, since processing itself is real-time</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Kinesis Data Streams delivery is what keeps output real-time — Firehose specifically introduces its own buffering delay on the destination side, not the reverse."> It becomes real-time only if sent to Kinesis Data Streams instead</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Records aren't dropped due to Firehose delivery — Firehose still delivers the data, just with its characteristic buffering delay rather than discarding anything."> Records are dropped, since Firehose can't accept processed output</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Sending output to Firehose (or anything it forwards to) makes the pipeline near real-time, because Firehose's own buffering behavior applies on that last hop."> It becomes near real-time, due to Firehose's own buffering</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. As of today, a team wants to build a brand-new application using the original SQL-only workflow (in-application streams, SQL queries, reference tables) described in this lesson. What's the current reality?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Kinesis Data Analytics for SQL Applications stopped accepting new applications on October 15, 2025, and had all remaining applications deleted on January 27, 2026 — the SQL-only workflow is retired. Managed Service for Apache Flink is the supported path now."> That SQL-only workflow is retired; use Managed Flink instead</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This isn't just a rename with the old workflow intact — the SQL-only application type was actually discontinued and deleted, not merely relabeled."> It works exactly as described, just under the new Flink branding</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Firehose Lambda transforms are a different, simpler mechanism for basic per-record manipulation — they don't replicate the SQL-query-over-streams model this lesson describes."> It has been folded entirely into Firehose's Lambda transform feature</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The service wasn't merged into Kinesis Video Streams — that's an unrelated product for ingesting and analyzing video and time-series media data."> It now requires provisioning through Kinesis Video Streams first</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0016-kinesis-data-firehose.html">← Previous: Kinesis Data Firehose</a>
+      <a href="0018-kinesis-video-streams.html">Next: Kinesis Video Streams →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

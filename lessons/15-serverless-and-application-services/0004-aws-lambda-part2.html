@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – AWS Lambda, Part 2</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 04
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>AWS Lambda, Part 2: Networking, Permissions, and Logging</h1>
+    <p class="lesson-meta">Lesson 04 of 22 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html" target="_blank">Giving Lambda Functions Access to Resources in a VPC</a> · <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-permissions.html" target="_blank">Managing Permissions in AWS Lambda</a></p>
+  </div>
+
+  <h2>Two Networking Modes</h2>
+  <p>Lambda functions run in one of two networking modes, and the exam expects you to know the reach and limits of both.</p>
+
+  <table>
+    <thead><tr><th>Mode</th><th>Can reach</th><th>Cannot reach (without extra config)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Public (default)</strong></td><td>Public AWS service endpoints (e.g. DynamoDB, SQS) and the public internet</td><td>Anything inside a VPC that lacks public addressing and permissive security rules</td></tr>
+      <tr><td><strong>VPC-attached</strong></td><td>Resources inside the same VPC (subject to security groups / NACLs)</td><td>Public AWS services or the internet — unless the VPC has a NAT gateway + internet gateway, or relevant VPC endpoints</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: treat a VPC-attached Lambda like any other VPC resource</div>
+    Once attached to a VPC, a Lambda function follows the <strong>same rules as an EC2 instance</strong> in that VPC. Needs DynamoDB access from inside the VPC? Add a <strong>gateway VPC endpoint</strong>. Needs internet access? Add a <strong>NAT gateway</strong> in a public subnet plus an internet gateway on the VPC. There's no Lambda-specific shortcut — design the VPC networking exactly as you would for any other private resource.
+  </div>
+
+  <h3>How VPC Networking Actually Works Today</h3>
+  <p>Historically, each function invocation created its own <strong>elastic network interface (ENI)</strong> in the customer VPC — slow to set up and a poor fit for concurrency, since more parallel invocations meant more ENIs. AWS's current architecture instead analyzes every function in a region/account and creates <strong>one ENI per unique combination</strong> of subnets and security groups used across all functions. That ENI is created once, at configuration time (function creation or VPC-config update) — not per invocation.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">VPC-attached Lambda is no longer a performance trap</div>
+    This shared-ENI model means VPC networking no longer adds meaningful per-invocation latency or scaling limits the way it used to. The function's execution role still needs EC2 networking permissions (to create/manage those interfaces), typically via the <code>AWSLambdaVPCAccessExecutionRole</code> managed policy.
+  </div>
+
+  <h2>Two Layers of Permissions</h2>
+  <p>Lambda security has two distinct, easily confused halves:</p>
+  <dl>
+    <dt>Execution role</dt>
+    <dd>An IAM role the function assumes at runtime, governing <strong>what the function's code is allowed to do</strong> — read from DynamoDB, write to S3, and so on. Conceptually identical to an EC2 instance role.</dd>
+    <dt>Resource-based (resource) policy</dt>
+    <dd>Attached to the function itself, governing <strong>who or what is allowed to invoke it</strong> — another AWS account, or a service like S3 or SNS. Conceptually similar to an S3 bucket policy.</dd>
+  </dl>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale-transcript flag: resource-policy editing in the console</div>
+    The source lecture states resource-based policies can only be changed via the CLI or API, not the console. That is <strong>no longer accurate</strong> — the Lambda console's <strong>Configuration → Permissions → Resource-based policy</strong> panel now supports adding and viewing these statements directly. The underlying concept (execution role = what the function can do, resource policy = who can invoke it) is still exactly what the exam tests, but don't assume the console is limited to read-only here.
+  </div>
+
+  <h2>Logging and Monitoring</h2>
+  <ul>
+    <li><strong>CloudWatch Logs</strong> — all function output: your logged messages, errors, and execution duration details.</li>
+    <li><strong>CloudWatch (metrics)</strong> — invocation counts, successes, failures, retries, and latency.</li>
+    <li><strong>X-Ray</strong> — optional distributed tracing across a serverless application.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: "nothing in CloudWatch Logs" almost always means missing permissions</div>
+    A classic exam scenario: a Lambda function appears to run but produces <strong>no CloudWatch Logs output at all</strong>. The near-universal cause is that the execution role lacks the logging permissions — normally supplied by attaching the <strong>AWSLambdaBasicExecutionRole</strong> managed policy. Without it, Lambda has nowhere it's allowed to write logs to.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A Lambda function using the default networking configuration needs to read from an Aurora database sitting in a private subnet with no public addressing. What must change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A resource policy controls who can invoke the function — it has no bearing on the function's own network reachability into a VPC."> Add a resource-based policy granting Aurora access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Default public networking has no path into a private VPC subnet; the function must be attached to the VPC (with appropriate subnets and security groups) to reach Aurora directly."> Attach the function to the VPC containing Aurora</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Increasing memory only scales CPU allocation — it has no effect on network reachability into a VPC."> Increase the function's memory allocation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="X-Ray adds distributed tracing visibility; it doesn't grant or change any network path into a VPC."> Enable X-Ray tracing on the function</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A Lambda function is now attached to a VPC to reach an RDS database, but it also needs to call the DynamoDB public endpoint. With no NAT gateway in the VPC, what's the standard fix?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Detaching from the VPC would restore public networking but would then break the RDS access that required VPC attachment in the first place."> Detach the function from the VPC entirely</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A security group only controls traffic to/from the ENI — it can't provide a route to a service outside the VPC on its own."> Widen the function's security group outbound rules</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Treating the VPC-attached Lambda like any other VPC resource, a gateway VPC endpoint for DynamoDB is the standard way to reach it privately without needing internet routing."> Add a gateway VPC endpoint for DynamoDB</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Provisioned concurrency pre-warms execution environments for latency — it has nothing to do with reaching DynamoDB from inside a VPC."> Enable provisioned concurrency on the function</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A Lambda function executes successfully according to its invocation metrics, but CloudWatch Logs shows nothing at all for its executions. What's the most likely cause?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The resource-based policy governs who can invoke the function — it has no effect on whether the function can write its own execution logs."> The resource-based policy is missing a statement</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="VPC attachment affects network reachability, not the ability to write to CloudWatch Logs, which is reached via IAM permissions, not network routing in this context."> The function isn't attached to a VPC network</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="X-Ray provides distributed tracing information; it is unrelated to whether basic execution logs appear in CloudWatch Logs."> X-Ray tracing simply has not been enabled</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. This is the classic exam scenario: the execution role lacks logging permissions, normally supplied by the AWSLambdaBasicExecutionRole managed policy, so Lambda has no permission to write to CloudWatch Logs."> The execution role lacks CloudWatch Logs permissions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-aws-lambda-part1.html">← Previous: AWS Lambda, Part 1</a>
+      <a href="0005-aws-lambda-part3.html">Next: AWS Lambda, Part 3 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

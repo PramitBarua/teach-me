@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>22 – Amazon AppFlow</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 22
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Amazon AppFlow</h1>
+    <p class="lesson-meta">Lesson 22 of 22 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/appflow/latest/userguide/what-is-appflow.html" target="_blank">What Is Amazon AppFlow?</a> · <a href="https://docs.aws.amazon.com/appflow/latest/userguide/flows.html" target="_blank">Amazon AppFlow Flows</a></p>
+  </div>
+
+  <p>AppFlow is the final piece of this module, and it's a service that clicks immediately if you've ever had this exact problem: getting data out of one SaaS application and into another, or into AWS, without writing and maintaining custom integration code.</p>
+
+  <h2>Middleware, No Code Required</h2>
+  <p>AppFlow is a <strong>fully managed integration service</strong> — think of it as middleware for exchanging data between applications. It works with <strong>public SaaS endpoints</strong> by default, but can reach private sources via PrivateLink. It ships with connectors for many popular SaaS applications out of the box, and a <strong>custom connector SDK</strong> for anything it doesn't already support.</p>
+
+  <h2>The Two Building Blocks</h2>
+  <dl>
+    <dt>Connection</dt>
+    <dd>Stores the configuration and credentials needed to reach one specific application (e.g. Salesforce, Slack, Zendesk). Connections are defined <strong>separately from flows</strong>, so a single connection can be reused across many different flows.</dd>
+    <dt>Flow</dt>
+    <dd>The main unit of configuration. A flow pairs a <strong>source connector</strong> with a <strong>destination connector</strong>, plus field mappings, optional data transformations, and optional filtering/validation rules that control exactly what gets copied and what checks run along the way.</dd>
+  </dl>
+
+  <table>
+    <thead><tr><th>Component</th><th>Holds</th><th>Reused across flows?</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Connection</strong></td><td>Credentials + config for one app</td><td>Yes</td></tr>
+      <tr><td><strong>Flow</strong></td><td>Source/destination pair, field mapping, transforms, filters</td><td>No — one flow, one job</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The keyword to associate with AppFlow</div>
+    Look for scenarios describing a <strong>no-code, managed data exchange between a named SaaS application and an AWS service</strong> — syncing Salesforce contacts into Redshift, or copying Zendesk tickets into S3 for analysis. That combination points squarely at <strong>AppFlow</strong>, not Glue (general-purpose ETL between databases/streams) and not a hand-built Lambda integration.
+  </div>
+
+  <p>At a high level, that's the entire product: configure a connection to each application, build a flow that maps and optionally transforms fields between a source and a destination, and let AppFlow run the exchange — syncing data across applications or aggregating it centrally to avoid data silos. A basic architectural understanding, as covered here, is all the exam requires.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company wants to copy customer contact records from Salesforce into Amazon Redshift on a recurring schedule, using field mapping and validation, without writing custom integration code. Which service fits directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Glue is a general-purpose ETL service for databases, streams, and files — it isn't the no-code, SaaS-focused product built specifically for this kind of Salesforce integration."> AWS Glue, running a custom Spark transformation job</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Polling the Salesforce API from Lambda means writing and maintaining custom integration code — exactly what this scenario is trying to avoid."> AWS Lambda, polling the Salesforce API on a timer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EventBridge routes events between sources and targets, but it isn't built to handle SaaS-to-AWS field mapping, transformation, and validation the way AppFlow is."> Amazon EventBridge, routing Salesforce webhook events</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. AppFlow is built exactly for this: a no-code, managed flow between a SaaS source (Salesforce) and an AWS destination (Redshift), with mapping, transformation, and validation built in."> Amazon AppFlow, using a scheduled Salesforce-to-Redshift flow</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Within AppFlow, where are the credentials and configuration needed to reach Slack and Redshift stored, so they can be reused by other unrelated flows later?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A connection stores an application's credentials and configuration separately from any single flow, which is exactly what allows it to be reused across many flows."> In a connection, defined separately from any flow</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Field mapping configuration lives inside a specific flow and controls which fields go where — it isn't the reusable store of an application's credentials."> In the flow's field mapping configuration section</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AppFlow flows don't rely on Lambda triggers on the destination side for storing application credentials — that's the connection's job."> In a Lambda trigger attached to the destination</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An IAM role trust policy for AppFlow governs what AppFlow itself can assume or access within AWS — it doesn't store per-application SaaS credentials like Slack's."> In an IAM role trust policy for AppFlow itself</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team needs to connect AppFlow to a SaaS application that isn't among its built-in connectors. What allows AppFlow to support this application?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A Glue crawler discovers and catalogs schema from data stores like S3 or RDS — it has no role in connecting AppFlow to an unsupported SaaS application's API."> Deploying a Glue crawler against the SaaS API</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="There's no AWS support-case process for getting a bespoke connector built for you — the supported path is building one yourself with the provided SDK."> Requesting an AWS-built connector via a support case</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. AppFlow provides a custom connector SDK specifically so teams can build support for applications that aren't among its built-in connectors."> Building a custom connector with the connector SDK</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Identity pools exchange identities for temporary AWS credentials — they have no connection to building SaaS application connectors for AppFlow."> Using an identity pool to federate into the SaaS app</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0021-amazon-mq-101.html">← Previous: Amazon MQ 101</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Serverless & Application Services module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

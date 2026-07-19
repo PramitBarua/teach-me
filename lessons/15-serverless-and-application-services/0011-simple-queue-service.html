@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – Simple Queue Service (SQS)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 11
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Simple Queue Service (SQS)</h1>
+    <p class="lesson-meta">Lesson 11 of 22 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html" target="_blank">What Is Amazon SQS?</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html" target="_blank">Amazon SQS Visibility Timeout</a></p>
+  </div>
+
+  <p><strong>SQS</strong> provides fully managed message queues. It's a public, regional service — highly available and highly performant by design, with no replication or resiliency work for you to do. Producers send messages in; consumers poll for messages out. Neither side needs to know the other exists.</p>
+
+  <h2>How a Queue Actually Works</h2>
+  <p>A message added to a queue can be up to <strong>256 KB</strong>. Anything larger belongs in S3, with the message carrying only a link to the object — architecturally, small messages are easier to move and process at scale.</p>
+  <p>Consumers retrieve messages by <strong>polling</strong>. Critically, a poll doesn't delete a message — it hides it for a configurable <strong>visibility timeout</strong>. If the consumer finishes processing and explicitly deletes the message, it's gone for good. If it doesn't — because the job failed, or the consumer crashed outright — the message silently reappears on the queue once the timeout expires, ready for another consumer to try.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip</div>
+    <strong>Visibility timeout</strong> is the single most-tested SQS detail. It's what makes queues fault-tolerant for free: a failed consumer doesn't need to tell the queue anything went wrong — it just needs to do nothing, and the message comes back automatically.
+  </div>
+
+  <p>Problem messages that keep failing and reappearing can be routed to a <strong>dead-letter queue</strong> for separate handling — covered in full in lesson 14.</p>
+
+  <h2>Decoupling and Elastic Worker Pools</h2>
+  <p>Queues decouple application components and enable scaling on both sides independently. A classic pattern: a web tier uploads a master video to S3 and drops a message (with a link to the object, not the video itself) onto a queue. The web tier's Auto Scaling Group scales on CPU load and its job ends there.</p>
+  <p>A separate worker-tier ASG scales on <strong>queue length</strong>. As messages pile up, workers scale out, poll the queue, fetch the video, transcode it, store the result, and delete the message. If a worker or its processing fails, the message reappears after the visibility timeout and another worker picks it up. As the queue empties, the worker pool scales back in — all the way to zero.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: SNS + SQS fan-out</div>
+    An S3 event can only fire once per upload, but you often need <em>multiple</em> independent jobs from that one event (say, transcoding to 480p, 720p, and 1080p separately). The fix: publish the event to an <strong>SNS topic</strong> with one <strong>SQS queue per subscriber</strong>. Each queue gets its own copy of the message and its own independently scaling worker pool. This fan-out pattern is a favorite exam scenario — commit it to memory.
+  </div>
+
+  <h2>Polling, Cost, and Security</h2>
+  <p>SQS bills per <strong>request</strong>, not per message — one request can return 0 to 10 messages, up to 64 KB total. That distinction matters because there are two polling styles:</p>
+  <table>
+    <thead><tr><th>Style</th><th>Behavior</th><th>Cost implication</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Short polling</strong></td><td>Returns immediately, even with zero messages</td><td>An empty queue still burns a billable request on every poll</td></tr>
+      <tr><td><strong>Long polling</strong></td><td>Waits up to 20 seconds for a message to arrive before returning</td><td>Far fewer wasted requests — the recommended default</td></tr>
+    </tbody>
+  </table>
+
+  <p>Messages can sit in a queue for up to 14 days, so SQS supports <strong>server-side encryption at rest</strong> via KMS. Data is encrypted in transit by default — but remember, encryption in transit and encryption at rest are two separate, independently configured things. Access to a queue is controlled by identity policies (same account) or a <strong>queue policy</strong>, a resource policy like the ones used on S3 buckets or SNS topics — queue policies are required for granting access to a different account.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A worker instance polls an SQS queue, receives a message, and then crashes mid-processing without deleting it. What happens to that message?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Because the message was never explicitly deleted, it reappears on the queue automatically once the visibility timeout expires, ready for another worker to process."> It reappears on the queue once the visibility timeout expires</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SQS doesn't require a crash notification — the whole point of visibility timeout is that the queue recovers the message automatically with no signal needed from a failed consumer."> It stays hidden forever unless a crash signal is sent</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SQS never deletes a message just because processing failed — deletion only happens when a consumer explicitly calls delete after success."> It is deleted immediately since processing did not finish</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Messages don't move to a dead-letter queue after a single failure — that only happens once a redrive policy's maxReceiveCount threshold is exceeded."> It moves straight to a dead-letter queue right away</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team needs one S3 upload event to trigger three independent, separately scaling transcoding jobs (480p, 720p, 1080p). What architecture fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A single SQS queue gives you one stream of messages consumed once — it can't fan the same event out to three independently scaling worker pools on its own."> One SQS queue shared by all three worker pools</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Publishing the S3 event to an SNS topic with one SQS queue per subscriber fans the single event out into three independent queues, each with its own worker pool and its own scaling behavior."> One SNS topic fanning out to three separate SQS queues</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="S3 can only emit one event per upload — configuring three separate notifications for the same object event isn't how S3 event notifications work for this scenario."> Three separate S3 event notifications on the same bucket</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Lambda could process the upload, but running all three transcode sizes inside one function loses the independent, queue-length-based scaling that separate worker pools provide."> A single Lambda function handling all three sizes serially</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A queue is usually empty, and a team wants to minimize billed requests while still noticing new messages quickly. What should they configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Short polling returns immediately even on an empty queue, which means constant billable requests just to detect that nothing has arrived yet — the opposite of what's wanted here."> Short polling on a tight, continuous loop</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="SQS is priced by number of requests regardless of visibility timeout length — changing this setting doesn't reduce how many polling requests get billed."> A very long visibility timeout on every message</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Long polling waits up to 20 seconds for a message to arrive before returning, dramatically cutting the number of billable requests compared to constant short polling."> Long polling with a wait time of up to 20 seconds</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A dead-letter queue handles repeatedly failing messages — it has no effect on how often the source queue itself needs to be polled or billed."> Routing all messages directly to a dead-letter queue</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-api-gateway-101.html">← Previous: API Gateway 101</a>
+      <a href="0012-sqs-standard-vs-fifo-queues.html">Next: SQS Standard vs. FIFO Queues →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

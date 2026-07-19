@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Serverless & Application Services – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Serverless & Application Services</div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Serverless & Application Services</h1>
+    <p class="lesson-meta">22 lessons · ~178 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/lambda/latest/dg/welcome.html" target="_blank">AWS Lambda Developer Guide</a> · <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html" target="_blank">Amazon SQS Developer Guide</a></p>
+  </div>
+
+  <p>The largest module in the course so far: how architectures evolve from monoliths toward decoupled, event-driven, serverless designs, and the full catalog of AWS services that implement each piece of that picture — compute (Lambda), eventing (EventBridge, SNS, Step Functions), API delivery (API Gateway), queuing (SQS), streaming (Kinesis), identity (Cognito), and integration (Glue, Amazon MQ, AppFlow).</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><a href="0001-architecture-deep-dive-part1.html">Architecture Deep Dive, Part 1</a></td><td>Monolith → tiered architecture, and the failure modes that drive each evolution</td></tr>
+      <tr><td>02</td><td><a href="0002-architecture-deep-dive-part2.html">Architecture Deep Dive, Part 2</a></td><td>Queues, microservices, and event-driven design as the next evolution beyond tiers</td></tr>
+      <tr><td>03</td><td><a href="0003-aws-lambda-part1.html">AWS Lambda, Part 1</a></td><td>Functions, supported runtimes, memory-to-CPU scaling, and configuration basics</td></tr>
+      <tr><td>04</td><td><a href="0004-aws-lambda-part2.html">AWS Lambda, Part 2</a></td><td>VPC networking, execution role vs. resource policy, and logging</td></tr>
+      <tr><td>05</td><td><a href="0005-aws-lambda-part3.html">AWS Lambda, Part 3</a></td><td>Invocation models, versions/aliases, cold starts, and provisioned concurrency</td></tr>
+      <tr><td>06</td><td><a href="0006-cloudwatch-events-and-eventbridge.html">CloudWatch Events and EventBridge</a></td><td>EventBridge as the evolution of CloudWatch Events; rules, buses, and schema registry</td></tr>
+      <tr><td>07</td><td><a href="0007-serverless-architecture.html">Serverless Architecture</a></td><td>Composing Lambda with other managed services into a fully serverless design</td></tr>
+      <tr><td>08</td><td><a href="0008-simple-notification-service.html">Simple Notification Service (SNS)</a></td><td>Pub/sub messaging, topics, subscriptions, and fan-out patterns</td></tr>
+      <tr><td>09</td><td><a href="0009-step-functions.html">AWS Step Functions</a></td><td>State machines for orchestrating multi-step workflows; Standard vs. Express</td></tr>
+      <tr><td>10</td><td><a href="0010-api-gateway-101.html">API Gateway 101</a></td><td>REST vs. HTTP vs. WebSocket APIs, caching, throttling, and usage plans</td></tr>
+      <tr><td>11</td><td><a href="0011-simple-queue-service.html">Simple Queue Service (SQS)</a></td><td>Decoupling via queues, visibility timeout, at-least-once delivery</td></tr>
+      <tr><td>12</td><td><a href="0012-sqs-standard-vs-fifo-queues.html">SQS Standard vs. FIFO Queues</a></td><td>Ordering and exactly-once processing trade-offs vs. throughput</td></tr>
+      <tr><td>13</td><td><a href="0013-sqs-delay-queues.html">SQS Delay Queues</a></td><td>Queue-level delay vs. per-message delay timers</td></tr>
+      <tr><td>14</td><td><a href="0014-sqs-dead-letter-queues.html">SQS Dead-Letter Queues</a></td><td>Redrive policy, maxReceiveCount, and isolating repeatedly-failing messages</td></tr>
+      <tr><td>15</td><td><a href="0015-kinesis-data-streams.html">Kinesis Data Streams</a></td><td>Shards, partition keys, and real-time ingestion at scale</td></tr>
+      <tr><td>16</td><td><a href="0016-kinesis-data-firehose.html">Kinesis Data Firehose</a></td><td>Near-real-time, buffered delivery into S3/OpenSearch/Redshift with no code required</td></tr>
+      <tr><td>17</td><td><a href="0017-kinesis-data-analytics.html">Kinesis Data Analytics</a></td><td>Real-time SQL over streaming data — now Managed Service for Apache Flink</td></tr>
+      <tr><td>18</td><td><a href="0018-kinesis-video-streams.html">Kinesis Video Streams</a></td><td>Ingesting, storing, and processing streaming video and time-series media</td></tr>
+      <tr><td>19</td><td><a href="0019-amazon-cognito-user-and-identity-pools.html">Amazon Cognito: User Pools and Identity Pools</a></td><td>Authentication (user pools) vs. temporary AWS credentials (identity pools)</td></tr>
+      <tr><td>20</td><td><a href="0020-aws-glue-101.html">AWS Glue 101</a></td><td>Managed ETL, crawlers, and the Glue Data Catalog used by Athena/Redshift Spectrum</td></tr>
+      <tr><td>21</td><td><a href="0021-amazon-mq-101.html">Amazon MQ 101</a></td><td>Managed ActiveMQ/RabbitMQ for migrating existing brokers into AWS</td></tr>
+      <tr><td>22</td><td><a href="0022-amazon-appflow.html">Amazon AppFlow</a></td><td>No-code, managed data integration between SaaS apps and AWS</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The highest-yield material here is <strong>Lambda's networking and permissions model</strong> (execution role vs. resource-based policy, VPC cold-start implications), the <strong>SQS visibility timeout / dead-letter queue</strong> mechanics, <strong>SNS fan-out</strong> as the standard decoupling pattern, and <strong>Cognito user pools vs. identity pools</strong> — one of the most frequently confused pairs on the exam. Also worth knowing cold: several products in this module have been <strong>renamed or restructured</strong> since the course was recorded (EventBridge, Amazon Data Firehose, Managed Service for Apache Flink) — the underlying architecture reasoning the exam tests hasn't changed, only the branding.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-architecture-deep-dive-part1.html">Start: Architecture Deep Dive, Part 1 →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – AWS Lambda, Part 1</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 03
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>AWS Lambda, Part 1: Functions, Runtimes, and Resources</h1>
+    <p class="lesson-meta">Lesson 03 of 22 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-functions.html" target="_blank">Configuring AWS Lambda Functions</a> · <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html" target="_blank">Configure Lambda Function Memory</a></p>
+  </div>
+
+  <p>AWS Lambda is a <strong>Function-as-a-Service (FaaS)</strong> product: you provide short-running, focused code, Lambda runs it, and you're billed only for the time it actually executes. That last part is the whole point — no idle capacity, no always-on server.</p>
+
+  <h2>Functions and Runtimes</h2>
+  <p>A Lambda <strong>function</strong> is more than code — it's the code (a deployment package) plus its configuration: the <strong>runtime</strong> it uses (a specific language and version, e.g. Python 3.12), the resources allocated, and any environment variables. When a function is invoked, Lambda downloads and executes the deployment package inside a purpose-built <strong>runtime environment</strong>.</p>
+  <p>Supported runtimes span multiple versions of Python, Node.js, Java, Ruby, Go, and C#. Community and custom runtimes — built via <strong>Lambda layers</strong> — extend this to other languages such as Rust.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">"Docker" and Lambda container images are not the same thing</div>
+    For the exam, if you hear the bare term <strong>Docker</strong>, read it as traditional containerized compute (e.g. ECS) — <strong>not</strong> Lambda. Lambda does support deploying functions as <strong>container images</strong>, reusing your existing image-build tooling, but the resulting image is built specifically to run inside the Lambda execution environment. Treat "Docker" and "Lambda container images" as related but distinct concepts.
+  </div>
+
+  <h2>Memory, CPU, and Ephemeral Storage</h2>
+  <p>You directly set a function's <strong>memory</strong>, from 128 MB up to 10,240 MB. CPU is <strong>not</strong> chosen directly — it scales proportionally with memory, so more memory always means more compute, never the reverse.</p>
+
+  <table>
+    <thead><tr><th>Resource</th><th>Range / behavior</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Memory</strong></td><td>128 MB – 10,240 MB, adjustable in 1 MB steps</td></tr>
+      <tr><td><strong>vCPU</strong></td><td>Scales with memory automatically; roughly one full vCPU at 1,769 MB</td></tr>
+      <tr><td><strong>/tmp storage</strong></td><td>512 MB by default, configurable up to 10,240 MB — treat as temporary only</td></tr>
+      <tr><td><strong>Timeout</strong></td><td>Up to 900 seconds (15 minutes) maximum per invocation</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the 15-minute ceiling is non-negotiable</div>
+    A single Lambda invocation can run for <strong>at most 900 seconds (15 minutes)</strong>. There is no way to extend this for one invocation — workloads that genuinely need longer must be broken up, commonly orchestrated with <strong>Step Functions</strong>. Seeing "must run for 20+ minutes in one execution" in a scenario should immediately rule out plain Lambda.
+  </div>
+
+  <h2>Statelessness</h2>
+  <p>By default, assume every invocation gets a <strong>brand-new, clean runtime environment</strong> — nothing persists between invocations. This is a design requirement: your code must work correctly even when it has no memory of anything that happened before. (Lambda Part 3 covers the nuance — environments can sometimes be reused — but never design code that depends on that.)</p>
+
+  <h2>Execution Role</h2>
+  <p>Every function's permissions to interact with other AWS services come from its <strong>execution role</strong> — an IAM role that Lambda assumes on the function's behalf. No execution role, no access to anything beyond the function's own compute.</p>
+
+  <h2>Common Lambda Use Cases</h2>
+  <ul>
+    <li><strong>Serverless web apps</strong> — typically S3 + API Gateway + Lambda together.</li>
+    <li><strong>File processing</strong> — an S3 event (e.g. an upload) invokes a Lambda function, such as watermarking an image, billed only for the processing time.</li>
+    <li><strong>Database triggers</strong> — DynamoDB Streams invoking Lambda on insert/modify/delete.</li>
+    <li><strong>Serverless cron</strong> — EventBridge (or CloudWatch Events) invoking Lambda on a schedule, with no server sitting idle between runs.</li>
+    <li><strong>Real-time stream processing</strong> — Lambda scaling with data arriving on a Kinesis stream.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A data-processing job needs to run for a guaranteed, uninterrupted 25 minutes in a single execution. Can a single Lambda invocation do this directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Increasing memory only scales the vCPU allocation upward — it has no effect on the function timeout ceiling."> Yes, as long as memory is set to the maximum</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Provisioned concurrency addresses cold starts and pre-warmed environments — it doesn't raise the per-invocation execution time limit."> Yes, if provisioned concurrency is enabled</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A single Lambda invocation has a hard ceiling of 900 seconds (15 minutes); anything longer must be broken into multiple invocations, often orchestrated with Step Functions."> No — one invocation is capped at 15 minutes</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Custom runtimes change which language a function uses — they don't extend the fixed 900-second maximum timeout."> Yes, if a custom runtime is used instead</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants a Lambda function to have more virtual CPU available for a compute-heavy task. What setting should they change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Lambda does not offer a direct, independent vCPU selection — CPU is always derived from the memory setting instead."> A dedicated vCPU count field on the function</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The function timeout only controls how long a function is allowed to run — it has no bearing on how much CPU is allocated."> The function's configured timeout value</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The /tmp ephemeral storage setting affects disk space available during execution, not CPU allocation."> The /tmp ephemeral storage size</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Lambda allocates vCPU in proportion to configured memory — there's no separate CPU dial, so raising memory is how you get more compute."> The function's configured memory amount</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A Lambda function writes a temporary file to /tmp during one invocation and expects that file to still be present on the next, unrelated invocation. Is this a safe design?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. By default, assume every invocation runs in a brand-new, stateless environment — /tmp should only ever be treated as temporary scratch space for the current invocation, never as reliable storage across invocations."> No — assume every invocation starts in a fresh environment</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="/tmp storage is not guaranteed to be preserved across invocations by design — Lambda functions must not depend on this."> Yes — /tmp is guaranteed to persist between all invocations</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Increasing /tmp size only changes the amount of scratch space available; it doesn't change the statelessness assumption a function must be built around."> Yes, but only if /tmp is resized up to 10,240 MB</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The execution role governs permissions to other AWS services — it has no effect on whether /tmp contents persist between invocations."> Yes, if the execution role grants /tmp persistence permissions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-architecture-deep-dive-part2.html">← Previous: Architecture Deep Dive, Part 2</a>
+      <a href="0004-aws-lambda-part2.html">Next: AWS Lambda, Part 2 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

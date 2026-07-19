@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16 – Kinesis Data Firehose</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Serverless & Application Services</a> › Lesson 16
+    </div>
+    <div class="module-tag">Serverless & Application Services</div>
+    <h1>Kinesis Data Firehose</h1>
+    <p class="lesson-meta">Lesson 16 of 22 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/firehose/latest/dev/what-is-this-service.html" target="_blank">What Is Amazon Data Firehose?</a> · <a href="https://docs.aws.amazon.com/firehose/latest/dev/basic-write.html" target="_blank">Send Data to a Firehose Stream</a></p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: the product has been renamed</div>
+    The course refers to this product throughout as <strong>Kinesis Data Firehose</strong>. In February 2024, AWS renamed it to <strong>Amazon Data Firehose</strong> — a pure rebrand reflecting that it now ingests from many more sources than just Kinesis Data Streams (including Amazon MSK and 40+ other connectors). Endpoints, APIs, IAM policies, and CloudWatch metrics are all unchanged. Everything below still applies; just expect to see "Amazon Data Firehose" in current documentation and the console.
+  </div>
+
+  <p>Kinesis Data Streams ingests and holds data for a rolling window, but offers no native way to persist it permanently or hand it to other services. <strong>Firehose fills that gap</strong>: a fully managed, serverless, auto-scaling delivery service that moves streaming data into supported destinations.</p>
+
+  <h2>Near Real-Time, Not Real-Time</h2>
+  <p>This is the single most exam-relevant fact about Firehose: it is <strong>near real-time</strong>, not real-time. Firehose buffers incoming data and flushes on whichever threshold hits first — <strong>1 MB of data, or 60 seconds</strong> (both configurable, these are the general minimums). Low-volume producers typically wait out the full 60 seconds; high-volume producers flush closer to every megabyte.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: real-time vs. near real-time</div>
+    Kinesis Data Streams delivers to consumers in real time (think ~200 ms). Firehose is near real-time (think ~60 seconds), because of its buffering behavior. <strong>Any answer option involving Firehose cannot be the real-time solution</strong> — if a scenario demands true real-time delivery, Firehose is disqualified regardless of how convenient it looks otherwise.
+  </div>
+
+  <h2>Sources and Destinations</h2>
+  <p>Firehose accepts data either directly from producers, or from an upstream <strong>Kinesis data stream</strong>. On the way out, it supports:</p>
+  <ul>
+    <li><strong>Amazon S3</strong> — the most common target, for long-term storage beyond the Kinesis rolling window</li>
+    <li><strong>Amazon Redshift</strong> — delivered indirectly: Firehose stages data in an intermediate S3 bucket, then runs a Redshift <code>COPY</code> command to load it</li>
+    <li><strong>OpenSearch Service</strong> (the course refers to this by its earlier name, Elasticsearch — see callout below)</li>
+    <li><strong>Splunk</strong></li>
+    <li><strong>HTTP endpoints</strong> — for third-party providers</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: Elasticsearch → OpenSearch</div>
+    Amazon renamed its managed Elasticsearch offering to <strong>Amazon OpenSearch Service</strong> back in 2021. Where the course says "Elasticsearch" as a Firehose destination, current AWS material — and the exam — will refer to it as OpenSearch Service. The underlying delivery mechanism is unchanged.
+  </div>
+
+  <h2>Transformation with Lambda</h2>
+  <p>Firehose can invoke a <strong>Lambda function</strong> to transform records in flight before delivery — anything expressible in that function's code. This adds latency proportional to the transform's complexity, and you can optionally retain the untransformed source records in a separate backup S3 bucket.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: Firehose transforms are simpler than Kinesis Data Analytics</div>
+    Lambda-based transforms in Firehose suit relatively simple record manipulation. If a scenario needs complex, SQL-driven real-time analysis of streaming data, that's a job for Kinesis Data Analytics (next lesson) — not a Firehose Lambda transform.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A scenario requires that streaming data be delivered to consumers within roughly 200 milliseconds of arrival — true real-time delivery. Is Firehose a valid choice?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Firehose buffers data before delivery — waiting for either 1 MB or 60 seconds by default — which rules out true real-time delivery in the 200 ms range."> Yes, Firehose delivers to all destinations in real time</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Firehose's buffering behavior is inherent to how it works — a transform doesn't remove the wait for the buffer threshold to be reached before delivery."> Yes, as long as no Lambda transform is configured</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 is one of many supported destinations, but the delivery mechanism to any destination still goes through Firehose's buffering, so choosing S3 doesn't make it real time."> Yes, but only when the destination is Amazon S3</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Firehose buffers data until it hits 1 MB or 60 seconds before flushing, making it near real-time — Kinesis Data Streams is the real-time option instead."> No, Firehose is near real-time due to its buffering</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants Firehose to deliver streaming data into Amazon Redshift. How does that delivery actually happen under the hood?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Firehose stages data in an intermediate S3 bucket, then issues a Redshift COPY command to load it — the only destination in Firehose that works this indirect way."> Firehose stages data in S3, then runs a Redshift COPY command</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Redshift is the one destination that isn't a truly direct connection — Firehose always routes through an intermediate S3 bucket and a COPY command for Redshift specifically."> Firehose streams records directly into Redshift's engine</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A Lambda transform is optional and unrelated to how records reach Redshift — the Redshift path specifically uses the S3-then-COPY mechanism regardless of any transform."> A Lambda function writes each record into Redshift</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Kinesis Data Analytics is a separate product for real-time SQL processing — it isn't part of how Firehose delivers data into Redshift."> Kinesis Data Analytics converts and loads the records</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In current AWS naming, what is "Kinesis Data Firehose" now officially called, and what changed about the service itself?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Managed Service for Apache Flink is the renamed Kinesis Data Analytics, a different product entirely focused on SQL/Flink stream processing, not the delivery service being asked about."> Managed Service for Apache Flink, with an added SQL engine</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. It was renamed Amazon Data Firehose in February 2024, purely a rebrand reflecting broader source support (Kinesis, MSK, 40+ connectors) — endpoints, APIs, and behavior are unchanged."> Amazon Data Firehose, a rename with no functional changes</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="OpenSearch Service is the renamed Elasticsearch Service, a destination Firehose delivers to — not the new name of Firehose itself."> Amazon OpenSearch Service, replacing it as a destination</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The service wasn't discontinued — it was simply renamed, and it remains fully supported and actively developed under its new name."> Nothing — it was fully discontinued in early 2024</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0015-kinesis-data-streams.html">← Previous: Kinesis Data Streams</a>
+      <a href="0017-kinesis-data-analytics.html">Next: Kinesis Data Analytics →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
