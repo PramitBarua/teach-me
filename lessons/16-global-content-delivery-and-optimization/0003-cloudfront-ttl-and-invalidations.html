@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – CloudFront TTL and Invalidations</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 03
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>CloudFront TTL and Invalidations</h1>
+    <p class="lesson-meta">Lesson 03 of 10 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html" target="_blank">Manage How Long Content Stays in the Cache</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html" target="_blank">Invalidate Files to Remove Content</a></p>
+  </div>
+
+  <p>Here's the core problem this lesson solves: you update an image in your origin, but a customer near an edge location that's already cached the <em>old</em> version keeps getting served the old one — because CloudFront trusts a cached object as valid until it expires, and never checks the origin in the meantime.</p>
+
+  <h2>Validity: What "Expired" Actually Triggers</h2>
+  <p>When a cached object's <strong>TTL</strong> (time to live) elapses, it isn't discarded — it becomes <strong>stale</strong>. The next request for it makes the edge location check with the origin, which replies one of two ways:</p>
+  <ul>
+    <li><strong>304 Not Modified</strong> — origin's version matches what's cached; the existing cached copy is served, and it's marked current again (no data transfer).</li>
+    <li><strong>200 OK</strong> — origin has a newer version; that new version is transferred and replaces the cached copy.</li>
+  </ul>
+
+  <h2>Setting TTL</h2>
+  <p>TTL is a <strong>behavior-level</strong> setting (see previous lesson) with three values:</p>
+  <table>
+    <thead><tr><th>Value</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Default TTL</strong></td><td>24 hours out of the box — applies to any object with no per-object TTL specified</td></tr>
+      <tr><td><strong>Minimum TTL / Maximum TTL</strong></td><td>Don't set behavior by themselves — they clamp whatever per-object TTL a header specifies</td></tr>
+    </tbody>
+  </table>
+
+  <p>Per-object TTLs are set via headers your origin returns: <code>Cache-Control: max-age</code>, <code>Cache-Control: s-maxage</code> (both in seconds, functionally equivalent for this purpose), or <code>Expires</code> (a specific date/time). For custom origins, your app/web server sets these; for S3, they're set as <strong>object metadata</strong> via console, CLI, or API.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: min/max TTL are clamps, not defaults</div>
+    A per-object TTL below the behavior's minimum gets <strong>raised</strong> to the minimum. One above the maximum gets <strong>lowered</strong> to the maximum. Min/max TTL never take effect on their own — they only ever constrain a per-object value.
+  </div>
+
+  <h2>Invalidations: The Emergency Fix</h2>
+  <p>An <strong>invalidation</strong>, performed at the <strong>distribution</strong> level, immediately expires matching objects across every edge location the distribution uses — regardless of remaining TTL. Patterns range from a single exact path, to a wildcard within one folder, to <code>/*</code> (everything, everywhere).</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Invalidations cost the same no matter how much they match</div>
+    A wildcard invalidation matching thousands of objects costs exactly the same as invalidating one object — but it isn't free at any volume beyond the free monthly allowance, and it isn't instantaneous. Treat invalidation as a tool for <strong>correcting mistakes</strong>, not a routine part of your deployment process.
+  </div>
+
+  <h2>The Better Pattern: Versioned Filenames</h2>
+  <p>If you find yourself invalidating regularly, that's a signal to switch strategies: give updated content a <strong>new filename</strong> (e.g. <code>whiskers_v2.jpg</code> replacing <code>whiskers_v1.jpg</code>) and update your application to reference the new name. No invalidation needed — the "old" and "new" versions are simply different, independently-cached objects.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: this is a frequent scenario answer</div>
+    Versioned filenames beat invalidation on every axis the exam cares about: <strong>no cost</strong> (no invalidation calls), <strong>correct even for browser-cached copies</strong> (a new name is never affected by a client's local cache of the old one), and <strong>clean logging</strong> (you always know exactly which version served a given request). If a scenario asks for the most <em>cost-effective</em> way to roll out frequent content updates, versioned filenames is very often the intended answer.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Don't confuse this with S3 object versioning</div>
+    <strong>Versioned filenames</strong> means genuinely different object names, each cached independently forever. <strong>S3 object versioning</strong> is a different feature entirely — multiple versions stored under the <em>same</em> key — and CloudFront, by default, always serves the latest S3 object version regardless of what's cached, which does not solve the stale-cache problem the same way.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An object's TTL expires and a new request arrives. The origin reports the cached copy is still current. What response code is returned, and what happens to the cached object?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A 200 OK with a full re-transfer only happens when the origin's version actually differs from what's cached — that's not the case described here."> 200 OK; the full object is re-transferred from the origin</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. When the origin confirms the cached version still matches, a 304 Not Modified is returned, and the existing cached copy is simply marked current again — no data re-transfer needed."> 304 Not Modified; the existing cached copy is marked current</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An expired (stale) object isn't deleted outright — CloudFront checks with the origin first, and if the version matches, the existing cached copy remains in place."> The object is deleted from the edge location entirely</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFront doesn't return a 404 just because TTL expired — expiration triggers a background check with the origin, not an error to the client."> 404 Not Found, since the TTL had already expired</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A behavior has Minimum TTL = 3600 seconds. An origin sets Cache-Control: max-age=60 on a specific object. What TTL does CloudFront actually apply to that object?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The per-object value of 60 seconds is below the behavior's minimum TTL, so it gets raised — CloudFront doesn't simply honor a value below the configured floor."> 60 seconds, exactly as the origin specified</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Minimum TTL acts as a clamp — a per-object TTL below it gets raised to the minimum, so the object is treated as having a 3600-second TTL."> 3600 seconds, since the minimum TTL clamps the lower per-object value</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Objects aren't rejected from caching for having a low TTL — the minimum TTL setting simply raises the effective value rather than blocking caching entirely."> The object isn't cached at all due to the conflicting values</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFront doesn't average the two values — the minimum TTL is a strict floor, and a per-object value below it is raised to exactly the minimum."> 1830 seconds, the average of the two values</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A media company updates thumbnail images several times a day and wants the most cost-effective way for customers to always see the latest version without stale-cache issues. What should they do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Frequent, repeated invalidations at this volume add ongoing cost and aren't instantaneous — invalidation is meant for correcting occasional mistakes, not routine multiple-times-daily updates."> Run a full /* invalidation every time a thumbnail changes</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Giving each updated thumbnail a new filename avoids invalidation costs entirely, sidesteps browser-cache staleness, and keeps clean per-version logging — the standard cost-effective pattern for frequent updates."> Use versioned filenames and update the app to reference the new name</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 object versioning stores multiple versions under the same key, but CloudFront serves the latest version by default regardless of what's cached — it doesn't solve the stale-edge-cache problem the way versioned filenames do."> Enable S3 object versioning on the underlying bucket</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Lowering the default TTL increases how often the origin gets checked, adding load and reducing cache-hit benefits — it doesn't eliminate the underlying staleness problem as cleanly or cheaply as versioned filenames."> Lower the default TTL on the behavior to 0 seconds</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-cloudfront-behaviors.html">← Previous: CloudFront Behaviors</a>
+      <a href="0004-acm.html">Next: AWS Certificate Manager (ACM) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

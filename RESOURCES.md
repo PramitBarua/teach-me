@@ -135,3 +135,17 @@
 | R129 | Using Amazon MQ for RabbitMQ | https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/working-with-rabbitmq.html | RabbitMQ engine support (added after course recording) |
 | R130 | What Is Amazon AppFlow? | https://docs.aws.amazon.com/appflow/latest/userguide/what-is-appflow.html | No-code SaaS-to-AWS data integration |
 | R131 | Amazon AppFlow Flows | https://docs.aws.amazon.com/appflow/latest/userguide/flows.html | Flow configuration and triggers |
+| R132 | What Is Amazon CloudFront? | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html | CDN overview |
+| R133 | How CloudFront Delivers Content | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowCloudFrontWorks.html | Cache hit/miss, origin fetch flow |
+| R134 | Cache Behavior Settings | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesCacheBehavior.html | Distribution vs. behavior-level configuration |
+| R135 | Manage How Long Content Stays in the Cache (Expiration) | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html | TTL, min/max clamping, Cache-Control headers |
+| R136 | Invalidate Files to Remove Content | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html | Invalidation paths, pricing |
+| R137 | What Is AWS Certificate Manager? | https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html | ACM overview, generate vs. import |
+| R138 | Requirements for Using SSL/TLS Certificates with CloudFront | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cnames-and-https-requirements.html | us-east-1 requirement, viewer/origin protocols |
+| R139 | Restrict Access to an Amazon S3 Origin | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html | OAC (current) vs. OAI (legacy) |
+| R140 | Serve Private Content with Signed URLs and Signed Cookies | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PrivateContent.html | Private behavior architecture |
+| R141 | Decide to Use Signed URLs or Signed Cookies | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-choosing-signed-urls-cookies.html | One object vs. many objects |
+| R142 | Differences Between CloudFront Functions and Lambda@Edge | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-choosing.html | Lightweight viewer-side vs. full edge compute |
+| R143 | Customize at the Edge with Lambda@Edge | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html | Four hook points, runtime limitations |
+| R144 | What Is AWS Global Accelerator? | https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html | Anycast IPs, AWS global network |
+| R145 | Add Custom Headers to Origin Requests | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/add-origin-custom-headers.html | Securing custom (non-S3) origins |

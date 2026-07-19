@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – AWS Global Accelerator</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 10
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>AWS Global Accelerator</h1>
+    <p class="lesson-meta">Lesson 10 of 10 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html" target="_blank">What Is AWS Global Accelerator?</a></p>
+  </div>
+
+  <p>Every hop on the public internet adds delay, variability, and a chance of failure — and customers physically far from your infrastructure inevitably route through more hops. <strong>Global Accelerator</strong> solves this differently from CloudFront: instead of caching content closer to customers, it gets the <strong>AWS network itself</strong> closer to them, as early in the journey as possible.</p>
+
+  <h2>Anycast IPs: The Core Mechanism</h2>
+  <p>A Global Accelerator gets <strong>two static Anycast IP addresses</strong>. Unlike a normal (<strong>unicast</strong>) IP, which identifies exactly one device, an <strong>Anycast</strong> IP is advertised simultaneously from <strong>many Global Accelerator edge locations worldwide</strong> — and the public internet's core routers automatically send a client to whichever advertising location is <strong>closest to that client</strong>.</p>
+
+  <p>Once traffic reaches that nearest edge location — still over the unpredictable public internet, but for the <em>shortest possible distance</em> — it transits the rest of the way to your actual infrastructure over <strong>AWS's own private global network</strong>: dedicated fiber links between Regions, managed and capacity-planned entirely by AWS.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: what actually improves</div>
+    Global Accelerator doesn't make the public internet faster — it <strong>minimizes how much of the journey happens on it</strong>. The public-internet leg shrinks to "client → nearest edge location," and everything after that runs on AWS's own dedicated, high-quality network instead of best-effort public routing.
+  </div>
+
+  <h2>Global Accelerator vs. CloudFront: The Distinction That Matters</h2>
+  <p>Both products move part of the AWS network closer to customers, and both aim to improve global performance — which is exactly why they get confused. The actual difference is fundamental:</p>
+
+  <table>
+    <thead><tr><th></th><th>CloudFront</th><th>Global Accelerator</th></tr></thead>
+    <tbody>
+      <tr><td>Layer</td><td>Content delivery (caching)</td><td>Network (raw packet routing)</td></tr>
+      <tr><td>Protocols</td><td>HTTP / HTTPS only</td><td><strong>Any TCP or UDP</strong> application</td></tr>
+      <tr><td>Caches content?</td><td>Yes</td><td><strong>No — never caches anything</strong></td></tr>
+      <tr><td>Understands HTTP content?</td><td>Yes (headers, cookies, paths)</td><td>No — has no concept of HTTP/HTTPS at all</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the fast filter</div>
+    See <strong>caching, signed URLs, HTTP/HTTPS-specific behavior</strong> in a question? → <strong>CloudFront</strong>. See <strong>TCP or UDP</strong> (especially non-HTTP protocols) and <strong>global network performance</strong> with no mention of caching? → <strong>Global Accelerator</strong>. When in doubt, remember Global Accelerator is a pure network product — it cannot make content-aware decisions at all.
+  </div>
+
+  <p>Global Accelerator can also route to whichever of <strong>multiple infrastructure locations</strong> is closest to a given customer — e.g. directing London traffic to European infrastructure and Australian traffic to Asia-Pacific infrastructure, all from the same pair of Anycast IPs.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An application uses a custom UDP-based game protocol and needs the best possible global network performance for players worldwide. Which product fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFront only handles HTTP and HTTPS traffic — it has no ability to accelerate a custom UDP-based protocol."> CloudFront, configured with a UDP-compatible behavior</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Global Accelerator works with any TCP or UDP application, making it the right fit for a custom UDP game protocol needing global performance optimization."> Global Accelerator, since it supports any TCP or UDP application</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route 53 latency-based routing directs DNS resolution toward the lowest-latency Region, but it doesn't optimize the actual network path the way Global Accelerator's Anycast/AWS-backbone architecture does."> Route 53 latency-based routing alone</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Lambda@Edge only runs in the context of CloudFront distributions handling HTTP/HTTPS traffic — it isn't applicable to a UDP-based game protocol."> Lambda@Edge attached to a CloudFront distribution</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A question describes a scenario needing signed URLs and content caching for a media website. Which product does this describe?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Signed URLs and content caching are CloudFront-specific capabilities — Global Accelerator never caches anything and has no concept of HTTP-level features like signed URLs."> CloudFront</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Global Accelerator never caches content and has no concept of signed URLs — those are CloudFront-specific, HTTP-layer features."> Global Accelerator</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Neither CloudFront nor Global Accelerator alone would require both being used together for this scenario — signed URLs and caching are fully within CloudFront's own feature set."> Both products used together are required</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Origin Access Control is a CloudFront sub-feature for securing S3 origins — it isn't the product being described by caching and signed URLs generally."> Origin Access Control configured independently</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. How does Global Accelerator's Anycast IP mechanism actually improve performance for a customer far from your infrastructure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Global Accelerator doesn't cache anything at any edge location — that's CloudFront's mechanism, not Global Accelerator's."> It caches content at the nearest edge location</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Anycast routing sends the customer to whichever advertising edge location is physically closest, minimizing the public-internet leg, and the rest of the journey travels over AWS's own dedicated global network instead of the public internet."> It routes them to the nearest edge location, then uses AWS's private global network for the rest of the journey</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Anycast IPs are static and shared across edge locations — Global Accelerator doesn't allocate a new unique IP to each individual customer."> It assigns the customer a dedicated unicast IP address</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Global Accelerator doesn't compress or otherwise alter application data — it's a network routing optimization, not a data transformation feature."> It compresses application data before transmission</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-lambda-at-edge.html">← Previous: Lambda@Edge</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Global Content Delivery & Optimization module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

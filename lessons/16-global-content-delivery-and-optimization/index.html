@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Content Delivery & Optimization – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Global Content Delivery & Optimization</div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>Global Content Delivery & Optimization</h1>
+    <p class="lesson-meta">10 lessons · ~79 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html" target="_blank">Amazon CloudFront Developer Guide</a> · <a href="https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html" target="_blank">AWS Global Accelerator Developer Guide</a></p>
+  </div>
+
+  <p>This module covers CloudFront end to end — architecture, caching/TTL, certificates, origins, and both layers of content security (origin-side and viewer-side) — plus edge compute (Lambda@Edge and CloudFront Functions) and Global Accelerator, the network-layer counterpart to CloudFront's content-delivery layer.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><a href="0001-cloudfront-architecture.html">CloudFront Architecture</a></td><td>Origins, distributions, edge locations, regional edge caches; behaviors hold the real config</td></tr>
+      <tr><td>02</td><td><a href="0002-cloudfront-behaviors.html">CloudFront Behaviors</a></td><td>What's distribution-level vs. behavior-level, and why that split matters</td></tr>
+      <tr><td>03</td><td><a href="0003-cloudfront-ttl-and-invalidations.html">CloudFront TTL and Invalidations</a></td><td>TTL headers, min/max clamping, invalidation cost, versioned filenames as the better pattern</td></tr>
+      <tr><td>04</td><td><a href="0004-acm.html">AWS Certificate Manager (ACM)</a></td><td>Regional lock-in, EC2 unsupported, CloudFront always needs us-east-1</td></tr>
+      <tr><td>05</td><td><a href="0005-cloudfront-and-ssl-tls.html">CloudFront and SSL/TLS</a></td><td>Viewer vs. origin protocol, no self-signed certs, SNI (free) vs. dedicated IP (paid)</td></tr>
+      <tr><td>06</td><td><a href="0006-cloudfront-origin-types-and-architecture.html">CloudFront Origin Types</a></td><td>S3 origins vs. custom origins, origin groups for failover</td></tr>
+      <tr><td>07</td><td><a href="0007-securing-cloudfront-and-s3-using-oai.html">Securing CloudFront and S3</a></td><td>OAC (current) vs. OAI (legacy) for S3; custom headers/IP allow-listing for custom origins</td></tr>
+      <tr><td>08</td><td><a href="0008-private-distribution-and-behaviors.html">Private Distributions and Behaviors</a></td><td>Signed URLs (one object) vs. signed cookies (many objects); trusted key groups</td></tr>
+      <tr><td>09</td><td><a href="0009-lambda-at-edge.html">Lambda@Edge (and CloudFront Functions)</a></td><td>Four hook points, A/B testing and migration use cases, plus the newer CloudFront Functions option</td></tr>
+      <tr><td>10</td><td><a href="0010-global-accelerator.html">AWS Global Accelerator</a></td><td>Anycast IPs, AWS backbone network, and how it differs from CloudFront</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The highest-yield facts here: <strong>ACM certificates for CloudFront must always be in us-east-1</strong> (Lesson 04) — this is tested relentlessly; <strong>versioned filenames beat cache invalidation</strong> for cost-effective frequent updates (Lesson 03); <strong>signed URL = one object, signed cookie = many objects</strong> (Lesson 08); and cleanly distinguishing <strong>CloudFront (HTTP/HTTPS caching) from Global Accelerator (any TCP/UDP, no caching)</strong> (Lesson 10) — one of the most commonly confused product pairs on the exam.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-cloudfront-architecture.html">Start: CloudFront Architecture →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Private Distribution and Behaviors: Signed URLs vs. Signed Cookies</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 08
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>Private Distribution and Behaviors: Signed URLs vs. Signed Cookies</h1>
+    <p class="lesson-meta">Lesson 08 of 10 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PrivateContent.html" target="_blank">Serve Private Content with Signed URLs and Signed Cookies</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-choosing-signed-urls-cookies.html" target="_blank">Decide to Use Signed URLs or Signed Cookies</a></p>
+  </div>
+
+  <p>Previous lessons secured the <strong>origin-fetch</strong> side (preventing bypass of CloudFront). This lesson secures the <strong>viewer</strong> side: making sure only authorized customers can retrieve specific content <em>through</em> CloudFront at all.</p>
+
+  <h2>Public vs. Private Behaviors</h2>
+  <p>A distribution's default behavior starts <strong>public</strong> — any viewer can request anything it covers. Adding a <strong>signer</strong> to a behavior flips it to <strong>private</strong>: from then on, only requests carrying a valid <strong>signed URL</strong> or <strong>signed cookie</strong> are served; everything else is denied. Since this is a per-behavior setting, one distribution routinely mixes public behaviors (general app traffic) with private ones (premium/sensitive content).</p>
+
+  <h2>Trusted Signers (Legacy) vs. Trusted Key Groups (Current)</h2>
+  <table>
+    <thead><tr><th></th><th>Trusted signer (legacy)</th><th>Trusted key group (current, preferred)</th></tr></thead>
+    <tbody>
+      <tr><td>Managed by</td><td>AWS account root user, via a CloudFront key</td><td>Flexible IAM-adjacent management, via the CloudFront API</td></tr>
+      <tr><td>Key capacity</td><td>Limited</td><td>Higher number of public keys supported</td></tr>
+      <tr><td>Recommendation</td><td>Legacy — avoid for new work</td><td>Use this for all new deployments</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Signed URLs vs. Signed Cookies</h2>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the one-line distinguisher</div>
+    A <strong>signed URL</strong> grants access to exactly <strong>one object</strong>. A <strong>signed cookie</strong> can grant access to a <strong>group of objects</strong> (e.g. every file under a path, or every file of a type) without needing a unique URL per file. If a scenario needs one-off access to a single file, that's a signed URL; if it needs ongoing access to many files at once, that's a signed cookie.
+  </div>
+
+  <table>
+    <thead><tr><th>Use signed URLs when…</th><th>Use signed cookies when…</th></tr></thead>
+    <tbody>
+      <tr><td>Only one object needs to be protected</td><td>Many objects need protecting under one grant</td></tr>
+      <tr><td>The client doesn't support cookies</td><td>You want to preserve your application's existing URL format (cookies don't alter the URL the way signed URLs do)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Putting It Together: A Worked Architecture</h2>
+  <p>A mobile app has a public behavior (general app operations, via API Gateway + Lambda) and a private behavior (sensitive media, via an S3 origin). The user authenticates (e.g. via a third-party identity provider), a Lambda "signer" function validates their access rights, and — because the distribution's private behavior has trusted key groups configured — that function generates a <strong>signed cookie</strong> granting access to their permitted images. The app then includes that cookie on every subsequent request; CloudFront validates it before allowing the origin fetch.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Private behaviors don't replace origin security</div>
+    A private behavior only controls the <strong>viewer</strong> side. The <strong>origin</strong> (e.g. that S3 bucket) still needs OAI/OAC (Lesson 07) so it can't be reached directly, bypassing CloudFront's signed-cookie check entirely. Both layers are required for genuinely secure private content.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An application needs to grant a logged-in user ongoing access to an entire folder of premium images, without generating a unique link for every single image. What should it use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A signed URL grants access to exactly one object — using one per image in a whole folder would be unwieldy for ongoing access to many files."> A signed URL generated for each image individually</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A signed cookie can grant access to a group of objects at once — exactly the case of ongoing access to a whole folder of images without per-file URLs."> A signed cookie granting access to the whole folder</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A trusted signer alone doesn't grant access — it's the entity capable of creating signed URLs/cookies, but the actual grant of access still comes from the signed artifact itself."> A trusted signer configured directly on the S3 bucket policy</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Origin Access Control secures the origin against bypass — it doesn't grant a specific viewer access to private content; that's the job of signed URLs/cookies on the behavior."> An Origin Access Control applied to the behavior</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A client device/application doesn't support cookies at all, but needs access to one specific protected video file. What should be used?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Clients that don't support cookies must use signed URLs — and a signed URL is naturally suited to granting access to exactly one object anyway."> A signed URL for that specific file</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A signed cookie can't be used at all if the client doesn't support cookies — this rules it out regardless of how many files need protecting."> A signed cookie scoped to just that one file</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A trusted signer/key group is the entity that creates signed URLs or cookies — the client itself still needs the resulting signed artifact, and cookies are off the table here."> A trusted key group assigned directly to the client</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Custom headers are the mechanism for securing a custom (non-S3) origin against bypass — they don't grant a specific viewer access to private content."> A custom header the client includes with its own request</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A distribution's private behavior uses signed cookies backed by trusted key groups, and its S3 origin has no OAI/OAC configured at all. What's the security gap?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Trusted key groups being legacy isn't the issue — trusted key groups are actually the current, preferred mechanism; the gap described is about origin security, not signer type."> Trusted key groups are legacy and should be trusted signers instead</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A private behavior only secures the viewer side — without OAI/OAC locking down the S3 bucket, someone could bypass CloudFront entirely and access the bucket directly, skipping the signed-cookie check."> The S3 bucket can still be accessed directly, bypassing the signed cookie check</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Signed cookies aren't limited to a single object — that's the defining characteristic of signed URLs, not a gap in this scenario."> Signed cookies can only protect a single object, which is a limitation here</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Custom headers are the technique for securing custom (non-S3) origins — for an S3 origin, OAI/OAC is the applicable mechanism, not custom headers."> Custom headers should be added to the S3 origin instead</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-securing-cloudfront-and-s3-using-oai.html">← Previous: Securing CloudFront and S3</a>
+      <a href="0009-lambda-at-edge.html">Next: Lambda@Edge →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

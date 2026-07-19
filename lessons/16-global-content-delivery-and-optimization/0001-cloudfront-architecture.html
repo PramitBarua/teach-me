@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – CloudFront Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 01
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>CloudFront Architecture</h1>
+    <p class="lesson-meta">Lesson 01 of 10 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html" target="_blank">What Is Amazon CloudFront?</a></p>
+  </div>
+
+  <p>Serve content from a single Region and every distant customer pays for it in <strong>latency and transfer speed</strong> — data has to physically travel further, every single time it's requested. <strong>CloudFront</strong> is AWS's content delivery network (CDN): it fixes this by caching content on infrastructure physically close to customers, worldwide.</p>
+
+  <h2>Core Vocabulary</h2>
+  <dl>
+    <dt>Origin</dt>
+    <dd>Where your content actually lives — either an <strong>S3 bucket</strong> or a <strong>custom origin</strong> (anything else with a web server and a publicly routable IPv4 address). A single CloudFront configuration can use one or more origins.</dd>
+    <dt>Distribution</dt>
+    <dd>The unit of configuration in CloudFront. You configure a distribution, then deploy it out to the CloudFront network. Nearly everything is configured here, directly or indirectly.</dd>
+    <dt>Edge location</dt>
+    <dd>Small, numerous, globally-distributed points of presence — <strong>200+</strong> at last count — where content is actually cached. Mostly storage, with a little compute bolted on for specific features. You cannot deploy EC2 instances to an edge location.</dd>
+    <dt>Regional edge cache</dt>
+    <dd>Bigger and less numerous than edge locations. They cache less-frequently-accessed content that still benefits from being closer to customers than the origin, and sit architecturally between edge locations and the origin.</dd>
+  </dl>
+
+  <h2>How a Request Actually Flows</h2>
+  <p>A distribution gets a unique domain name ending in <code>cloudfront.net</code> (you can also attach your own custom domain). When a customer requests an object:</p>
+  <ol>
+    <li>Their request hits their <strong>nearest edge location</strong>.</li>
+    <li><strong>Cache hit</strong> — the object is already cached there → returned immediately. Best case: fast, low latency.</li>
+    <li><strong>Cache miss</strong> — not cached locally → the edge location checks its <strong>regional edge cache</strong>.</li>
+    <li>Still missing → an <strong>origin fetch</strong> retrieves it from the origin, populating both the regional cache and the local edge location on the way back.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: read-only caching</div>
+    CloudFront is for <strong>download-style operations only</strong> — there is no write caching. Any upload goes <strong>directly to the origin</strong>, never through the CloudFront cache layer. This distinction shows up directly in exam questions testing whether you understand CloudFront's read/write scope.
+  </div>
+
+  <h2>Distributions Don't Directly Hold Configuration — Behaviors Do</h2>
+  <p>It's tempting to assume origins attach directly to a distribution. They don't. A distribution contains one or more <strong>behaviors</strong>, and it's the <em>behavior</em> that points at an origin. Every distribution starts with one default behavior (a wildcard <code>*</code> pattern matching everything), but you can add more specific behaviors — e.g. a path pattern of <code>img/*</code> — which take priority over the default when matched.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Why this distinction matters</div>
+    Nearly every setting you might assume lives "on the distribution" — TTL, origin selection, public vs. private access — actually lives on a <strong>behavior</strong>. Since a distribution can have many behaviors, different paths within the same distribution can have entirely different configurations. This architecture is the foundation for everything covered in the rest of this module.
+  </div>
+
+  <p>CloudFront also integrates with <strong>ACM</strong> (AWS Certificate Manager) for SSL/TLS — covered in depth two lessons ahead.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An application allows users to upload profile photos. Where does that upload traffic go when the app is served through CloudFront?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFront performs no write caching — uploads are never cached or routed through the edge cache layer, regardless of which edge location is nearest."> The nearest edge location, then cached there</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. CloudFront is download-only — any upload/write traffic goes directly to the origin, bypassing the CloudFront cache entirely."> Directly to the origin, bypassing the cache layer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Regional edge caches only hold cached copies of downloadable content — they don't act as a staging area for uploads."> The regional edge cache, then synced to the origin later</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFront doesn't reject uploads outright — it simply doesn't cache them; they're passed through to the origin."> It's rejected; CloudFront distributions don't support uploads</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A CloudFront distribution needs different cache settings and a different origin for requests under /videos/* versus everything else. Where is this actually configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Origins aren't directly attached to the distribution itself — they're selected from within a behavior, which is the layer that actually holds this configuration."> Directly on the distribution, via two separate origin settings</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A path-pattern-matched behavior (e.g. /videos/*) plus the default behavior gives each path its own origin and cache configuration — behaviors sit between distributions and origins."> Two behaviors: one default, one matching the /videos/* path</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Regional edge caches are AWS-managed infrastructure for caching less-frequently-accessed content — they aren't a place you configure per-path routing rules."> Two regional edge caches, one per path pattern</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A single edge location serves all cached content for nearby customers regardless of path — edge locations aren't individually configured per path pattern."> Two separate edge locations, one for each path</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Two customers in different cities, both served by different edge locations, request the same object for the first time ever globally. The first customer's edge location does an origin fetch. What's most likely to happen for the second customer's request shortly after?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Each edge location has its own local cache — the first customer's edge location doesn't automatically push the object to every other edge location."> Their edge location already has it cached from the first request</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The first fetch populates the regional edge cache on its way back, so the second customer's edge location — even though it's a cache miss locally — is likely to find the object in the regional edge cache rather than needing a full origin fetch."> A cache miss locally, but likely a hit at the regional edge cache</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFront doesn't skip the object for a second customer — it resolves the request via cache hit, regional cache, or origin fetch depending on what's cached where."> The request fails, since the object was already served once</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFront doesn't require an S3 object to be manually duplicated between edge locations — caching propagation happens automatically through the regional edge cache mechanism."> The origin must manually replicate the object to every edge location</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-cloudfront-behaviors.html">Next: CloudFront Behaviors →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

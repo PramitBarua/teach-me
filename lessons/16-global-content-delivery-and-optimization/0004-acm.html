@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – AWS Certificate Manager (ACM)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 04
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>AWS Certificate Manager (ACM)</h1>
+    <p class="lesson-meta">Lesson 04 of 10 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html" target="_blank">What Is AWS Certificate Manager?</a></p>
+  </div>
+
+  <p><strong>ACM</strong> generates, imports, stores, and deploys SSL/TLS certificates — the mechanism behind HTTPS's server identity verification and in-transit encryption. It underpins nearly every AWS certification and shows up constantly in exam questions diagnosing "why can't this service use this certificate."</p>
+
+  <h2>Public vs. Private, Generate vs. Import</h2>
+  <p>ACM can act as a <strong>public</strong> certificate authority (issuing certificates trusted by public browsers/devices) or a <strong>private</strong> one (for internal use — clients must be explicitly configured to trust it).</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: who's responsible for renewal</div>
+    If ACM <strong>generates</strong> a certificate for you, it handles <strong>automatic renewal</strong> — no ongoing action needed. If you <strong>import</strong> a certificate from an external source, <strong>you're responsible for renewing it</strong> (with that external source) and re-importing the new one. This distinction is tested directly and often.
+  </div>
+
+  <h2>Only Certain Services Can Use ACM</h2>
+  <p>Certificates are stored encrypted and only ever deployed to <strong>ACM-integrated services</strong> — in practice, this mainly means <strong>CloudFront</strong> and <strong>load balancers</strong>.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">EC2 is explicitly not supported</div>
+    You <strong>cannot use ACM certificates directly with EC2</strong>. Since EC2 is self-managed compute (you have root access), AWS has no way to secure the certificate's transfer and storage the way it can for a fully-managed service. If you need a certificate on an EC2 instance, it has to be installed manually. This is one of the most reliably-tested ACM facts on the exam.
+  </div>
+
+  <h2>ACM Is Regional — With One Special Case</h2>
+  <p>ACM is a <strong>regional service</strong>: a certificate generated or imported in one Region is <strong>locked to that Region</strong> and cannot be used cross-Region. To use a certificate on a load balancer in <code>ap-southeast-2</code>, that certificate must exist in ACM <em>in <code>ap-southeast-2</code></em> — no exceptions for regional services.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: CloudFront's one exception</div>
+    CloudFront is global, but from ACM's perspective, treat a CloudFront distribution as if it lives in <strong>us-east-1 (N. Virginia)</strong>. Any certificate used by a CloudFront distribution must be requested or imported in <strong>us-east-1</strong>, regardless of where your other infrastructure or customers are. Generate it in any other Region, and CloudFront simply can't use it. This single fact — "CloudFront certificates: always us-east-1" — is worth memorizing verbatim; it comes up repeatedly.
+  </div>
+
+  <p>Once deployed to a supported service, the certificate establishes trust between customers and that service — a load balancer in a Region, or a CloudFront distribution's edge locations worldwide (the distribution pushes the certificate out to every edge location it uses, regardless of their physical Region).</p>
+
+  <div class="callout warn">
+    <div class="callout-title">S3 doesn't use ACM at all</div>
+    S3 handles its own certificate management when acting as a CloudFront origin — you never apply an ACM certificate to an S3 bucket, and you can't change the certificate S3 itself presents.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants to apply an ACM certificate directly to a fleet of EC2 instances to simplify certificate management. Is this possible?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="ACM explicitly does not support deploying certificates directly to EC2 — since EC2 is self-managed with root access, AWS can't guarantee secure certificate storage the way it can for supported managed services."> Yes, ACM deploys certificates to EC2 like any other service</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. EC2 is explicitly unsupported by ACM because it's self-managed compute with root access — the certificate must be installed manually on each instance instead."> No, EC2 isn't supported; the certificate must be installed manually</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Import vs. generate affects who's responsible for renewal — it doesn't unlock EC2 support, which is unsupported regardless of certificate origin."> Yes, but only if the certificate was imported rather than generated</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A private CA doesn't change EC2's fundamental lack of ACM integration — public vs. private CA mode doesn't affect which services ACM can deploy to."> Yes, but only using a private certificate authority</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company imports a certificate from an external certificate authority into ACM for use with a load balancer. Who is responsible for renewing that certificate before it expires?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Automatic renewal only applies to certificates ACM itself generates — imported certificates remain the customer's responsibility to renew."> ACM automatically renews any certificate stored in the service</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. When a certificate is imported rather than ACM-generated, renewal is the customer's responsibility — typically renewing with the external CA and re-importing."> The customer, since imported certificates aren't auto-renewed by ACM</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The load balancer service doesn't manage certificate renewal — ACM is the layer that would handle renewal automatically only for certificates it generated itself."> The load balancer service automatically requests renewal</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS Support doesn't handle proactive certificate renewal as a routine service — the customer is responsible for imported certificates."> AWS Support proactively renews all imported certificates</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company's infrastructure runs entirely in ap-southeast-2. They generate a certificate in ACM in ap-southeast-2 and want to use it with a CloudFront distribution. Will this work?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFront specifically requires certificates in us-east-1, regardless of where the rest of the infrastructure or customers are located — a certificate generated in any other Region can't be used with CloudFront."> Yes, since the certificate matches the Region of their infrastructure</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. CloudFront is treated as living in us-east-1 from ACM's perspective — a certificate generated in ap-southeast-2 cannot be used with a CloudFront distribution; it must be requested or imported in us-east-1 instead."> No; a new certificate must be generated specifically in us-east-1</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ACM certificates can't be copied or moved between Regions after creation — a fresh certificate must be requested or imported directly in us-east-1."> Yes, as long as the certificate is copied to us-east-1 afterward</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFront's us-east-1 requirement for certificates isn't something a support ticket can override — it's a fixed architectural requirement of the service."> No, this requires an AWS Support ticket to enable cross-Region use</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-cloudfront-ttl-and-invalidations.html">← Previous: CloudFront TTL and Invalidations</a>
+      <a href="0005-cloudfront-and-ssl-tls.html">Next: CloudFront and SSL/TLS →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

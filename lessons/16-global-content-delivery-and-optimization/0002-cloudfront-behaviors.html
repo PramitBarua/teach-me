@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – CloudFront Behaviors</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 02
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>CloudFront Behaviors: What Lives Where</h1>
+    <p class="lesson-meta">Lesson 02 of 10 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesCacheBehavior.html" target="_blank">Cache Behavior Settings</a></p>
+  </div>
+
+  <p>The previous lesson established that behaviors, not distributions, hold most of the real configuration. This lesson draws the exact line: what's set once, at the distribution level, versus what's set per-behavior and can differ across paths within the same distribution.</p>
+
+  <h2>Set on the Distribution</h2>
+  <table>
+    <thead><tr><th>Setting</th><th>What it controls</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Price class</strong></td><td>Which edge locations the distribution deploys to — all of them (best performance), or a cheaper subset (e.g. US/Canada/Europe only)</td></tr>
+      <tr><td><strong>WAF association</strong></td><td>Attaching a Web Application Firewall Web ACL to the whole distribution</td></tr>
+      <tr><td><strong>Alternate domain names</strong></td><td>Custom domains beyond the default <code>*.cloudfront.net</code> name</td></tr>
+      <tr><td><strong>SSL certificate type &amp; security policy</strong></td><td>Which certificate and TLS security policy the distribution uses</td></tr>
+      <tr><td><strong>Supported HTTP versions, logging on/off</strong></td><td>Distribution-wide protocol and logging settings</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Price class is a real trade-off</div>
+    Restricting a distribution to fewer edge locations genuinely reduces cost, but at the cost of worse performance for customers outside those regions. It's a legitimate answer to "how do I reduce CloudFront cost" questions — just know it trades away global performance to do it.
+  </div>
+
+  <h2>Set on a Behavior (and Can Differ Per-Path)</h2>
+  <table>
+    <thead><tr><th>Setting</th><th>What it controls</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Origin / origin group</strong></td><td>Which origin this path pattern is served from</td></tr>
+      <tr><td><strong>Viewer protocol policy</strong></td><td>HTTP allowed, HTTP→HTTPS redirect, or HTTPS-only, between viewer and edge</td></tr>
+      <tr><td><strong>Allowed HTTP methods</strong></td><td>Which methods (GET, POST, etc.) this path accepts</td></tr>
+      <tr><td><strong>Cache settings</strong> (legacy or cache/origin-request policies)</td><td>What's used as the cache key — headers, query strings, cookies</td></tr>
+      <tr><td><strong>Min/Max/Default TTL</strong></td><td>Covered in full next lesson</td></tr>
+      <tr><td><strong>Restrict viewer access</strong></td><td>Whether this specific behavior requires signed URLs/cookies (private) — covered in Lessons 07–08</td></tr>
+      <tr><td><strong>Field-level encryption, compression, Lambda@Edge associations</strong></td><td>All per-behavior</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the two facts to memorize cold</div>
+    <strong>All caching controls are behavior-level</strong>, and <strong>restrict viewer access (private content) is behavior-level</strong> — meaning one distribution can mix public and private paths freely. These two facts alone resolve a large share of CloudFront scenario questions about "can I have different X for different paths."
+  </div>
+
+  <h2>Trusted Key Groups vs. Trusted Signers</h2>
+  <p>When restricting a behavior, you specify a <strong>trusted authorization</strong> source: <strong>trusted key groups</strong> (current, recommended) or <strong>trusted signers</strong> (legacy). Seeing either term in an exam question is a signal that a private/restricted behavior is involved — covered fully in Lesson 08.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A distribution needs /premium/* content to require signed cookies, while everything else stays public. Where is this configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Restrict viewer access is a per-behavior setting, not a distribution-wide toggle — a distribution can't be split into public/private zones purely at the distribution level."> On the distribution, using a single restrict-access toggle</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Restrict viewer access is set per-behavior, so a /premium/* behavior can require signed cookies while the default behavior remains public — exactly this scenario."> On the /premium/* behavior specifically, leaving the default public</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Price class controls which edge locations a distribution deploys to — it has nothing to do with restricting access to specific content."> Via the distribution's price class setting</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="WAF is a layer 7 firewall associated at the distribution level for filtering malicious traffic — it isn't the mechanism for requiring signed cookies on specific paths."> Via a WAF rule attached to the whole distribution</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A cost-conscious team wants to reduce their CloudFront bill and is willing to accept worse performance for customers outside North America and Europe. What should they change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Price class is set at the distribution level and controls which edge locations the distribution deploys to — restricting to fewer regions reduces cost at the expense of performance elsewhere."> The distribution's price class</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="TTL settings control how long objects stay cached, affecting origin load and freshness — they don't restrict which edge locations a distribution is deployed to."> The default behavior's TTL settings</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Trusted key groups control who can generate signed URLs/cookies for private content — unrelated to which edge locations a distribution uses."> The trusted key group associated with the distribution</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Allowed HTTP methods control which request types (GET/POST/etc.) a behavior accepts — this has no bearing on edge location deployment or cost."> The allowed HTTP methods on the default behavior</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An exam question mentions a CloudFront distribution using "trusted key groups." What does that term signal?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Price class is about edge location deployment scope and cost — trusted key groups have nothing to do with that setting."> The distribution is using a reduced price class for cost savings</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Trusted key groups (the current, recommended mechanism) or trusted signers (legacy) indicate a behavior is restricted, requiring signed URLs or signed cookies for access."> A behavior is restricted, requiring signed URLs or signed cookies</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Field-level encryption is a separate, distinct behavior-level feature — trusted key groups specifically indicate restricted/private content access."> Field-level encryption is enabled on that behavior</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Trusted key groups don't relate to which HTTP methods a behavior allows — that's a separate, unrelated behavior setting."> The behavior only accepts GET and HEAD HTTP methods</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-cloudfront-architecture.html">← Previous: CloudFront Architecture</a>
+      <a href="0003-cloudfront-ttl-and-invalidations.html">Next: CloudFront TTL and Invalidations →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

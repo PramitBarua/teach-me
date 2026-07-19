@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – Securing CloudFront and S3 Using OAI/OAC</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 07
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>Securing the Origin: OAI/OAC and Custom Origin Locking</h1>
+    <p class="lesson-meta">Lesson 07 of 10 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html" target="_blank">Restrict Access to an Amazon S3 Origin</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/add-origin-custom-headers.html" target="_blank">Add Custom Headers to Origin Requests</a></p>
+  </div>
+
+  <p>This lesson secures the <strong>origin-fetch side</strong> of the delivery path: making sure customers can only reach your content <em>through</em> CloudFront, never by bypassing it and hitting the origin directly.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: OAC has superseded OAI</div>
+    This lesson's source material teaches <strong>Origin Access Identity (OAI)</strong> as the primary mechanism, correctly noting a newer alternative existed. Since then, AWS has made that alternative — <strong>Origin Access Control (OAC)</strong> — the clearly recommended approach: it supports all buckets including opt-in Regions, S3 server-side encryption with KMS (SSE-KMS), and dynamic requests (PUT/POST/DELETE), none of which OAI supports. <strong>OAI is now the legacy option.</strong> The architecture and exam-relevant reasoning below apply to both — only the specific feature name differs — but for anything you build today, reach for OAC.
+  </div>
+
+  <h2>S3 Origins: Origin Access Identity / Control</h2>
+  <p>An <strong>OAI</strong> (or its modern equivalent, an <strong>OAC</strong>) is a special identity — not an IAM user or role, but sharing some characteristics of both — that you associate with a CloudFront distribution. Once associated, requests from that distribution's edge locations to the S3 origin <em>are</em> that identity, which can then be referenced in the bucket policy.</p>
+
+  <p>The standard pattern:</p>
+  <ol>
+    <li>Create the OAI/OAC and associate it with the distribution.</li>
+    <li>Add an <strong>explicit allow</strong> for that identity in the bucket policy.</li>
+    <li>Add nothing else — the bucket's <strong>implicit deny</strong> now blocks every other access path, including direct public requests to the bucket.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: one identity per distribution is the manageable default</div>
+    OAIs/OACs can technically be shared across multiple distributions and buckets, but the transcript's own practical advice holds: use <strong>one per distribution</strong> for long-term manageability of permissions.
+  </div>
+
+  <h2>Custom Origins: No OAI/OAC — Two Other Options</h2>
+  <p>OAI/OAC only works for genuine S3 origins. For custom origins (EC2, on-prem, anything else), lock things down using either or both of:</p>
+
+  <table>
+    <thead><tr><th>Method</th><th>How it works</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Custom headers</strong></td><td>CloudFront injects a secret header value on every origin request; the origin is configured to reject any request missing it. Since the whole path can run over HTTPS, this header can't be observed or faked in transit.</td></tr>
+      <tr><td><strong>IP allow-listing</strong></td><td>AWS publishes CloudFront's edge location IP ranges; configure a traditional firewall in front of the custom origin to allow only those ranges.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: match the mechanism to the origin type</div>
+    <strong>S3 origin → OAI/OAC.</strong> <strong>Custom origin → custom headers and/or IP allow-listing.</strong> If a question describes securing a custom (non-S3) origin and offers OAI/OAC as an answer choice, it's a distractor — that mechanism doesn't apply outside S3 origins.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants a new CloudFront distribution to serve private content from an S3 bucket, using SSE-KMS encryption, while blocking any direct public access to the bucket. Which mechanism should they use today?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="OAI doesn't support S3 server-side encryption with KMS (SSE-KMS) — this requirement specifically points to OAC, the current recommendation."> Origin Access Identity (OAI), the long-standing approach</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Origin Access Control (OAC) supports SSE-KMS encrypted buckets, all Regions including opt-in ones, and dynamic requests — capabilities OAI lacks, making it the current recommendation."> Origin Access Control (OAC), the current recommendation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Custom headers are the mechanism for securing custom (non-S3) origins — for an S3 origin, OAC is the appropriate and simpler mechanism."> A custom header checked by an S3 bucket policy condition</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="IP allow-listing via a firewall is a custom-origin technique — S3 doesn't sit behind a customer-managed firewall in this architecture."> IP allow-listing on a firewall in front of the S3 bucket</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A CloudFront distribution uses a custom origin running on an on-premises web server. The team wants to guarantee only CloudFront can reach it. Which approach(es) apply?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="OAI/OAC only works for genuine S3 origins — it has no applicability to a custom, non-S3 origin like an on-premises web server."> Configure an Origin Access Control (OAC) on the web server</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. For custom origins, the standard approaches are a CloudFront-injected custom header the origin requires, and/or firewall rules allow-listing CloudFront's published edge IP ranges."> Custom headers and/or firewall rules allow-listing CloudFront's IP ranges</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A bucket policy is an S3-specific mechanism — it has no relevance to securing a non-S3 custom origin like an on-premises server."> An S3 bucket policy referencing the origin's identity</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A field-level encryption configuration protects specific sensitive data fields in transit — it doesn't restrict which clients can reach the origin at the network level."> A field-level encryption configuration on the behavior</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In the standard OAI/OAC pattern for securing an S3 origin, what makes direct public access to the bucket fail once configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The setup described doesn't require an explicit deny statement for the public — it relies on the bucket's implicit deny once only the OAI/OAC is explicitly allowed."> An explicit deny statement targeting all public IP ranges</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Once the OAI/OAC is explicitly allowed in the bucket policy and nothing else is, the bucket's implicit deny blocks every other access path, including direct public requests."> The bucket's implicit deny, since only the OAI/OAC is explicitly allowed</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This pattern doesn't rely on disabling S3 static website hosting — the access control comes from the bucket policy and OAI/OAC association, not the hosting feature."> Disabling static website hosting on the bucket entirely</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A custom header check is the custom-origin technique — for an S3 origin using OAI/OAC, the identity itself (via the bucket policy) is what enforces the restriction, not a header."> A custom header CloudFront injects that S3 validates</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-cloudfront-origin-types-and-architecture.html">← Previous: CloudFront Origin Types</a>
+      <a href="0008-private-distribution-and-behaviors.html">Next: Private Distributions and Behaviors →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

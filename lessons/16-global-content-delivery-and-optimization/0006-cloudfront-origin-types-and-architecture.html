@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – CloudFront Origin Types and Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 06
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>CloudFront Origin Types and Architecture</h1>
+    <p class="lesson-meta">Lesson 06 of 10 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesOrigin.html" target="_blank">Origin Settings</a></p>
+  </div>
+
+  <p>CloudFront recognizes a few categories of origin: <strong>S3 buckets</strong>, AWS Elemental MediaPackage/MediaStore endpoints (out of scope here), and <strong>everything else</strong> — any ordinary web server, called a <strong>custom origin</strong>.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">An S3 bucket can be either type</div>
+    A plain S3 bucket used as an origin is an <strong>S3 origin</strong>. But enable <strong>static website hosting</strong> on that same bucket and point CloudFront at the website endpoint, and CloudFront now treats it as a <strong>custom origin</strong> — with a completely different, more limited feature set. The feature you get depends entirely on <em>how</em> you point at the bucket, not just that it's S3 underneath.
+  </div>
+
+  <h2>S3 Origins: Simplest to Integrate</h2>
+  <table>
+    <thead><tr><th>Configurable</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Origin path</td><td>Restrict to a sub-path within the bucket instead of the top level</td></tr>
+      <tr><td>Origin access</td><td>Restrict the bucket to CloudFront-only access — via OAC (current) or OAI (legacy) — covered next lesson</td></tr>
+      <tr><td>Protocol matching</td><td>Viewer protocol and origin protocol are <strong>always matched</strong> — no independent choice</td></tr>
+      <tr><td>Custom headers</td><td>Pass through to the origin, same as custom origins</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Custom Origins: More Configuration, More Control</h2>
+  <p>Anything that isn't a plain S3 origin gets a richer, more granular set of options:</p>
+  <table>
+    <thead><tr><th>Configurable</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Minimum origin SSL protocol</td><td>The floor TLS version CloudFront will use talking to your origin — pick the newest your origin supports for maximum security</td></tr>
+      <tr><td>Origin protocol policy</td><td>HTTP-only, HTTPS-only, or <strong>match viewer</strong> (independently choosable, unlike S3)</td></tr>
+      <tr><td>HTTP/HTTPS port</td><td>Custom origins can bind services to non-standard ports; S3 has no concept of configurable ports</td></tr>
+      <tr><td>Custom headers</td><td>Same as S3 — also doubles as a security mechanism (next lesson)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: custom ports/protocols → custom origin</div>
+    Any exam question mentioning <strong>configurable ports</strong>, an independently-set <strong>origin protocol policy</strong>, or a <strong>minimum origin SSL protocol</strong> is describing a <strong>custom origin</strong> — S3 origins don't expose any of these, since S3 handles the underlying connection natively.
+  </div>
+
+  <h2>Origin Groups: Resilience Across Origins</h2>
+  <p>With two or more origins configured on a distribution, you can combine them into an <strong>origin group</strong> and point a behavior at the <em>group</em> instead of a single origin — giving that behavior automatic resilience (failover) across multiple origins, all from within a single distribution.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An S3 bucket has static website hosting enabled, and a CloudFront behavior points at that website endpoint. How does CloudFront treat this origin?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Once static website hosting is enabled and CloudFront points at that endpoint, it's treated as a custom origin, not a simple S3 origin — the feature set changes accordingly."> As a standard S3 origin, with the usual S3-specific options</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Pointing CloudFront at an S3 static website hosting endpoint makes CloudFront treat the bucket as a custom origin, unlocking custom-origin options like independent protocol policy and custom ports, while losing S3-specific features like OAI/OAC."> As a custom origin, with the custom-origin feature set</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="MediaStore is a separate, distinct AWS product for media storage — enabling static website hosting on an S3 bucket doesn't reclassify it as a MediaStore container endpoint."> As a MediaStore container endpoint</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFront doesn't reject this configuration — it's a fully supported origin type, just classified as custom rather than S3."> CloudFront rejects the configuration; this isn't a valid origin</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team needs CloudFront to connect to their origin over HTTPS on a non-standard port (8443) regardless of what protocol the viewer used. What kind of origin must this be?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A plain S3 origin has no concept of configurable ports — S3 doesn't expose port selection as a setting at all."> An S3 origin, using the origin path setting for the port</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Configurable ports and an independently-set origin protocol policy (not tied to the viewer protocol) are custom-origin-only features."> A custom origin, since only custom origins expose port configuration</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Origin groups provide resilience/failover across multiple origins — they don't unlock port configuration for an individual origin."> Any origin, as long as it's part of an origin group</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="MediaPackage is a separate media-workflow product, unrelated to configuring arbitrary HTTPS ports on a general-purpose origin."> A MediaPackage channel endpoint specifically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A distribution has two independent origins (a primary and a backup web server) and needs a single behavior to automatically fail over between them. What should be configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single origin path just scopes into a sub-folder of one origin — it doesn't provide failover between two entirely separate origins."> A single origin path pointing at both servers</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Combining two or more origins into an origin group, and pointing the behavior at that group, gives automatic resilience/failover across the origins."> An origin group containing both origins, used by the behavior</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Two separate behaviors would split traffic by path pattern, not provide automatic failover between a primary and backup for the same content."> Two separate behaviors, one for each origin</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A minimum origin SSL protocol setting controls the TLS version used to connect to an origin — it has no role in failover between multiple origins."> A minimum origin SSL protocol set to match both servers</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-cloudfront-and-ssl-tls.html">← Previous: CloudFront and SSL/TLS</a>
+      <a href="0007-securing-cloudfront-and-s3-using-oai.html">Next: Securing CloudFront and S3 →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

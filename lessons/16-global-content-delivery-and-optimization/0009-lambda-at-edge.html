@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Lambda@Edge</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 09
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>Lambda@Edge (and CloudFront Functions)</h1>
+    <p class="lesson-meta">Lesson 09 of 10 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html" target="_blank">Customize at the Edge with Lambda@Edge</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-choosing.html" target="_blank">Differences Between CloudFront Functions and Lambda@Edge</a></p>
+  </div>
+
+  <p><strong>Lambda@Edge</strong> runs lightweight Lambda functions directly at CloudFront edge locations, letting you programmatically adjust traffic between viewer and origin — without touching the origin application itself.</p>
+
+  <h2>Four Hook Points</h2>
+  <p>Every CloudFront interaction breaks into four legs, and a Lambda@Edge function can attach to any of them:</p>
+  <table>
+    <thead><tr><th>Hook</th><th>Runs</th><th>Typical limits</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Viewer request</strong></td><td>After the edge location receives the viewer's request</td><td>128 MB memory, 5-second timeout</td></tr>
+      <tr><td><strong>Origin request</strong></td><td>Before CloudFront forwards the request to the origin</td><td>Standard Lambda limits, 30-second timeout</td></tr>
+      <tr><td><strong>Origin response</strong></td><td>After CloudFront receives the origin's reply</td><td>Standard Lambda limits, 30-second timeout</td></tr>
+      <tr><td><strong>Viewer response</strong></td><td>Before CloudFront returns the response to the viewer</td><td>128 MB memory, 5-second timeout</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Edge-specific limitations vs. normal Lambda</div>
+    Only <strong>Node.js and Python</strong> runtimes are supported, there's <strong>no VPC access</strong> (functions run in the AWS public zone), and <strong>Lambda layers aren't supported</strong>. The exact numeric limits matter less than recognizing this is a deliberately constrained execution environment — don't expect full Lambda feature parity.
+  </div>
+
+  <h2>What It's Actually Used For</h2>
+  <ul>
+    <li><strong>A/B testing</strong> — a viewer request function rewrites the requested URL to serve one of several image/content variants, based on a percentage split or other logic, with no redirect and no URL change visible to the user.</li>
+    <li><strong>Gradual origin migration</strong> — an origin request function incrementally shifts a weighted percentage of traffic from an old S3 origin to a new one, adjustable over time without touching the distribution config.</li>
+    <li><strong>Device-based customization</strong> — serving different object quality/resolution based on the requesting device's capabilities (e.g. high-DPI screens getting higher-DPI assets).</li>
+    <li><strong>Country-based customization</strong> — an origin request function adjusting what's returned based on the viewer's country.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: architecture over syntax</div>
+    You won't be asked to write Lambda@Edge code for this exam — you need to recognize the <strong>architecture</strong> (which of the four hooks fits a given scenario) and the <strong>category of use case</strong> it solves (A/B testing, migration, personalization by device/location).
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Not covered in the original course material: CloudFront Functions</div>
+    Since this lesson was recorded, AWS introduced a second, lighter-weight edge compute option: <strong>CloudFront Functions</strong>. It's worth knowing both exist and when each applies:
+    <table style="margin-top:0.75rem">
+      <thead><tr><th></th><th>CloudFront Functions</th><th>Lambda@Edge</th></tr></thead>
+      <tbody>
+        <tr><td>Language</td><td>JavaScript only</td><td>Node.js or Python</td></tr>
+        <tr><td>Hook points</td><td>Viewer request / viewer response only</td><td>All four hooks</td></tr>
+        <tr><td>Startup</td><td>Sub-millisecond, extremely high scale</td><td>Heavier cold-start profile</td></tr>
+        <tr><td>Best for</td><td>Cache-key normalization, header manipulation, simple redirects/rewrites, lightweight auth token checks</td><td>Anything needing origin-side hooks, filesystem access, or the request body</td></tr>
+      </tbody>
+    </table>
+    Rule of thumb for the exam: <strong>simple, viewer-side-only logic</strong> → CloudFront Functions is now the better-fit answer; anything needing an <strong>origin-side hook</strong> or heavier logic → Lambda@Edge. You <strong>cannot</strong> combine both on the same viewer request/response event, but any other combination of the two is fine.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants to gradually shift traffic from an old S3 origin to a new one over several weeks, adjusting the percentage split without redeploying the distribution each time. Which Lambda@Edge hook fits this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A viewer response function runs on the way back to the viewer, after the origin has already been contacted — it's too late in the flow to redirect which origin gets used."> Viewer response, adjusting the returned content</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. An origin request function runs before CloudFront forwards the request to the origin, letting it redirect a weighted percentage of traffic toward the new origin over time."> Origin request, redirecting a weighted percentage of traffic</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A viewer request function only sees the request as it arrives from the client — it doesn't have origin-forwarding context needed to redirect between two different origins."> Viewer request, rewriting the requested path</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An origin response function runs after the origin has already replied — by that point the origin selection has already happened, too late to redirect traffic between origins."> Origin response, modifying the returned headers</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team needs simple, high-scale cache-key normalization logic that only ever touches the viewer request and viewer response — nothing origin-side. What's the better-fit modern option?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Lambda@Edge works, but for simple viewer-side-only logic at very high scale, CloudFront Functions is the lighter-weight, better-fit modern option with sub-millisecond startup."> Lambda@Edge, using the viewer request and viewer response hooks</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. CloudFront Functions is purpose-built for exactly this: lightweight, viewer-side-only logic like cache-key normalization, at extremely high scale with sub-millisecond startup."> CloudFront Functions, since it's built for lightweight viewer-side logic</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A CloudFront behavior's cache policy configures caching keys declaratively, but doesn't provide custom code-based normalization logic the way an edge function does."> A CloudFront behavior's cache policy alone, without any function</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Origin Access Control secures the origin against direct bypass — it has no role in cache-key normalization or viewer-side logic."> An Origin Access Control configured on the behavior</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A function needs to read the full request body and access the local filesystem as part of its logic. Which edge compute option supports this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Lambda@Edge supports filesystem access and full request bodies (particularly at origin-facing hooks); CloudFront Functions is deliberately limited to lightweight viewer-side logic and doesn't support these."> Lambda@Edge, which supports filesystem access and request bodies</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFront Functions is intentionally lightweight — it doesn't support filesystem access or full request body access, unlike Lambda@Edge."> CloudFront Functions, which supports both natively</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Combining CloudFront Functions and Lambda@Edge on the same viewer event isn't supported — and this scenario doesn't call for combining them anyway, since Lambda@Edge alone covers the requirement."> Both combined on the same viewer request event</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Neither edge compute option is called 'Origin Access Function' — that isn't a real CloudFront feature."> Neither; this requires a separate Origin Access Function feature</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-private-distribution-and-behaviors.html">← Previous: Private Distributions and Behaviors</a>
+      <a href="0010-global-accelerator.html">Next: AWS Global Accelerator →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

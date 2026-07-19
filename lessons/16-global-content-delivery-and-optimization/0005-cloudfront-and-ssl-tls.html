@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – CloudFront and SSL/TLS</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Global Content Delivery & Optimization</a> › Lesson 05
+    </div>
+    <div class="module-tag">Global Content Delivery & Optimization</div>
+    <h1>CloudFront and SSL/TLS</h1>
+    <p class="lesson-meta">Lesson 05 of 10 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cnames-and-https-requirements.html" target="_blank">Requirements for Using SSL/TLS Certificates with CloudFront</a></p>
+  </div>
+
+  <p>Every CloudFront distribution gets a default <code>*.cloudfront.net</code> domain, and HTTPS works on it immediately using a shared default certificate covering <code>*.cloudfront.net</code>. The moment you want your <strong>own</strong> custom domain, things get more involved — and that's what this lesson works through.</p>
+
+  <h2>Two Separate Connections, Two Sets of Certificate Rules</h2>
+  <p>Every CloudFront request actually involves <strong>two</strong> connections: the <strong>viewer protocol</strong> (customer ↔ edge location) and the <strong>origin protocol</strong> (edge location ↔ origin). Both sides have the same hard requirement:</p>
+
+  <div class="callout warn">
+    <div class="callout-title">No self-signed certificates, ever</div>
+    Both the viewer-side and origin-side certificates must be <strong>publicly trusted</strong> — self-signed certificates are <strong>not supported</strong> anywhere in a CloudFront architecture. Each certificate must also match the DNS name actually being used on that side of the connection.
+  </div>
+
+  <table>
+    <thead><tr><th>Origin type</th><th>Certificate requirement</th></tr></thead>
+    <tbody>
+      <tr><td><strong>S3 origin</strong></td><td>None needed — S3 manages this natively, and you can't change it</td></tr>
+      <tr><td><strong>Application Load Balancer</strong></td><td>Publicly trusted cert, generated externally or via ACM</td></tr>
+      <tr><td><strong>Custom origin</strong> (EC2, on-prem)</td><td>Publicly trusted cert, applied manually — <strong>not</strong> ACM-manageable, since ACM doesn't support these</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Adding a Custom Domain</h2>
+  <p>To use an <strong>alternate domain name</strong>, you need a certificate matching that name attached to the distribution — <strong>whether or not you even use HTTPS</strong>, since it's also how CloudFront verifies you actually control the domain. That certificate must come from <strong>ACM in us-east-1</strong> (previous lesson) or be imported there.</p>
+
+  <p>On a behavior, you choose how HTTP vs. HTTPS is handled: allow both, redirect HTTP → HTTPS, or HTTPS-only (rejecting HTTP entirely).</p>
+
+  <h2>SNI vs. Dedicated IP: Why CloudFront Charges Extra for Old Browsers</h2>
+  <p>This is a genuinely old problem worth understanding, because the "why" is what the exam tests. TLS encryption happens at a lower layer than HTTP — before the browser ever sends the hostname it's requesting. Historically, that meant a server presenting a certificate had no way to know <em>which</em> site's certificate to present when multiple HTTPS sites shared one IP — so every HTTPS site needed its <strong>own dedicated IP</strong>.</p>
+
+  <p>The 2003 fix was <strong>SNI</strong> (Server Name Indication): an extension letting the client state which hostname it wants <em>during</em> the TLS handshake, so the server can return the matching certificate. This is what lets one IP serve many independent HTTPS sites.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the cost trade-off</div>
+    Serving HTTPS via a custom certificate using <strong>SNI is free</strong> and is the standard, default approach. Only if you must support <strong>pre-2003, non-SNI-capable browsers/clients</strong> do you need CloudFront to allocate a <strong>dedicated IP</strong> per edge location for your distribution — historically priced around <strong>$600/month per distribution</strong> (verify current CloudFront pricing for the exact figure; this has been a stable, well-known number for years but always confirm before quoting it to a client). If a question doesn't mention legacy/pre-2003 clients, SNI is almost certainly the intended answer.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A CloudFront distribution uses a self-signed certificate on its custom EC2 origin, reasoning that traffic between the edge location and origin is "internal" and doesn't need a real cert. Will this work?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Self-signed certificates are not supported anywhere in a CloudFront architecture, including the origin side — this isn't a viewer-side-only requirement."> Yes, self-signed certificates are fine on the origin side</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. CloudFront requires publicly trusted certificates on both the viewer side and the origin side — self-signed certificates are never supported, regardless of which connection they're used on."> No, both viewer-side and origin-side certificates must be publicly trusted</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="ACM specifically does not support EC2 as a target for certificate deployment — self-signed status doesn't change that limitation either way."> Yes, as long as the self-signed certificate is issued via ACM</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 origins don't need any certificate applied at all since S3 handles this natively — that's unrelated to whether a custom EC2 origin can use a self-signed certificate."> Yes, since S3 origins don't require any certificate at all</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A distribution needs to serve HTTPS to a custom domain, and all customers use modern, current browsers. What's the standard, no-extra-cost way to configure this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Dedicated IPs cost extra and are only needed to support pre-2003, non-SNI-capable clients — not required for modern browsers."> A dedicated IP per edge location, at extra monthly cost</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. SNI is free and is the standard way modern browsers negotiate which certificate to present on a shared IP — no dedicated IP or extra cost needed."> SNI-based certificate serving, at no additional cost</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A self-signed certificate is never valid for CloudFront regardless of browser support — this isn't a legitimate option here."> A self-signed certificate matching the custom domain</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="ACM itself doesn't charge extra for serving certificates via SNI on CloudFront — the additional charge specifically applies to the dedicated-IP legacy-client option."> An ACM premium tier certificate at additional monthly cost</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Why couldn't a single IP address historically serve multiple independent HTTPS websites, each with its own certificate, before SNI existed?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Host headers work at the HTTP (application) layer, which happens after the TLS handshake — they weren't the missing piece for multi-certificate support at the TLS layer."> HTTP host headers didn't exist yet at that point in time</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. TLS negotiation happens before the HTTP layer even engages, so without SNI the server had no way to know which site's certificate to present — meaning one IP could only serve one HTTPS certificate."> TLS negotiation happens before HTTP, so the server had no way to know which certificate to present</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DNS resolution to an IP address isn't the limiting factor here — many domains could already resolve to the same IP; the problem was specifically about certificate selection during the TLS handshake."> DNS could only resolve one domain name per IP address</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Certificate authorities didn't limit how many certificates could be issued per IP — the constraint was a TLS protocol limitation in presenting the right certificate, which SNI later solved."> Certificate authorities restricted one certificate per IP address by policy</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-acm.html">← Previous: AWS Certificate Manager (ACM)</a>
+      <a href="0006-cloudfront-origin-types-and-architecture.html">Next: CloudFront Origin Types →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
