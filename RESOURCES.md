@@ -149,3 +149,12 @@
 | R143 | Customize at the Edge with Lambda@Edge | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html | Four hook points, runtime limitations |
 | R144 | What Is AWS Global Accelerator? | https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html | Anycast IPs, AWS global network |
 | R145 | Add Custom Headers to Origin Requests | https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/add-origin-custom-headers.html | Securing custom (non-S3) origins |
+| R146 | Logging IP Traffic Using VPC Flow Logs | https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html | Flow log architecture, destinations |
+| R147 | Flow Log Records | https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html | Record fields, accept/reject fields |
+| R148 | Enable Outbound IPv6 Traffic Using an Egress-Only Internet Gateway | https://docs.aws.amazon.com/vpc/latest/userguide/egress-only-internet-gateway.html | IPv6-only, NAT-equivalent outbound-only gateway |
+| R149 | Gateway Endpoints | https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html | S3/DynamoDB private access, prefix lists |
+| R150 | Gateway Endpoints for Amazon S3 | https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html | S3-specific gateway endpoint detail, now IPv6-capable |
+| R151 | Configure an Interface Endpoint | https://docs.aws.amazon.com/vpc/latest/privatelink/interface-endpoints.html | AZ-scoped ENIs, DNS names |
+| R152 | Connect Your VPC to Services Using AWS PrivateLink | https://docs.aws.amazon.com/vpc/latest/userguide/endpoint-services-overview.html | PrivateLink underlying mechanism |
+| R153 | What Is VPC Peering? | https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html | Peering overview, non-transitive |
+| R154 | How VPC Peering Connections Work | https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-basics.html | Route tables, CIDR overlap restriction |

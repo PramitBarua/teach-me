@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced VPC Networking – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Advanced VPC Networking</div>
+    <div class="module-tag">Advanced VPC Networking</div>
+    <h1>Advanced VPC Networking</h1>
+    <p class="lesson-meta">5 lessons · ~37 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html" target="_blank">Amazon VPC User Guide</a></p>
+  </div>
+
+  <p>This module builds on VPC Basics with five topics that round out real-world and exam-tested VPC architecture: observability (flow logs), IPv6-specific outbound access, both types of private service access (gateway and interface endpoints), and connecting separate VPCs together (peering).</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><a href="0001-vpc-flow-logs.html">VPC Flow Logs</a></td><td>Metadata only, not real-time; VPC/subnet/ENI attachment levels; reading accept/reject pairs</td></tr>
+      <tr><td>02</td><td><a href="0002-egress-only-internet-gateway.html">Egress-Only Internet Gateway</a></td><td>The IPv6 equivalent of NAT gateway's outbound-only behavior</td></tr>
+      <tr><td>03</td><td><a href="0003-vpc-endpoints-gateway.html">VPC Endpoints: Gateway Endpoints</a></td><td>S3/DynamoDB only, prefix lists in route tables, automatically multi-AZ</td></tr>
+      <tr><td>04</td><td><a href="0004-vpc-endpoints-interface.html">VPC Endpoints: Interface Endpoints</a></td><td>PrivateLink, DNS-based, one endpoint per AZ needed, security groups apply</td></tr>
+      <tr><td>05</td><td><a href="0005-vpc-peering.html">VPC Peering</a></td><td>Exactly two VPCs, never transitive, no overlapping CIDRs</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The highest-yield facts here: <strong>gateway endpoints are automatically multi-AZ, interface endpoints are not</strong> (Lessons 03–04) — this distinction is tested directly and often; <strong>VPC peering is never transitive</strong>, and <strong>overlapping CIDRs block peering entirely</strong> (Lesson 05); and flow logs are <strong>metadata-only and not real-time</strong> (Lesson 01) — a frequent source of trick questions.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-vpc-flow-logs.html">Start: VPC Flow Logs →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

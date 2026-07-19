@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – VPC Flow Logs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced VPC Networking</a> › Lesson 01
+    </div>
+    <div class="module-tag">Advanced VPC Networking</div>
+    <h1>VPC Flow Logs</h1>
+    <p class="lesson-meta">Lesson 01 of 05 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html" target="_blank">Logging IP Traffic Using VPC Flow Logs</a></p>
+  </div>
+
+  <p><strong>VPC Flow Logs</strong> record details of traffic flowing through your VPC. The single most important fact to internalize first:</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Metadata only, never packet contents</div>
+    Flow logs capture <strong>packet metadata</strong> — source/destination IP, source/destination port, protocol, packet size, accept/reject — never the actual <strong>contents</strong> of a packet. If a scenario needs to inspect payload data, flow logs are the wrong tool; you'd need something like a packet sniffer running on an instance instead.
+  </div>
+
+  <h2>Three Levels of Attachment</h2>
+  <p>Flow logs attach as virtual monitors at one of three levels, each capturing everything <strong>from that point downward</strong>:</p>
+  <table>
+    <thead><tr><th>Level</th><th>Captures</th></tr></thead>
+    <tbody>
+      <tr><td><strong>VPC</strong></td><td>Every network interface in every subnet in the VPC</td></tr>
+      <tr><td><strong>Subnet</strong></td><td>Every network interface in that specific subnet</td></tr>
+      <tr><td><strong>Network interface (ENI)</strong></td><td>Just that one interface</td></tr>
+    </tbody>
+  </table>
+
+  <p>You can also filter by traffic type: <strong>accepted only</strong>, <strong>rejected only</strong>, or <strong>all</strong>.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: flow logs are not real time</div>
+    There's a genuine delay between traffic occurring and it appearing in flow log data — flow logs are <strong>not a real-time telemetry source</strong>. If a question needs real-time visibility into traffic flow, flow logs are the wrong answer regardless of how they're configured.
+  </div>
+
+  <h2>Destinations</h2>
+  <p>Flow log data can be delivered to <strong>S3</strong> or <strong>CloudWatch Logs</strong> (Amazon Data Firehose is also now supported as a third destination). S3 suits direct file access and integration with your own or third-party tooling; CloudWatch Logs suits programmatic access, streaming to other destinations, and console-based review. Logs landing in S3 can be queried with <strong>Athena</strong> — a schema-on-read SQL engine billed only for the data actually scanned, useful when a data team needs formal, ad hoc querying over flow log history.</p>
+
+  <h2>Reading a Flow Log Record</h2>
+  <p>Each record is a row with fields including source/destination IP, source/destination port, <strong>protocol number</strong> (ICMP = 1, TCP = 6, UDP = 17), and the <strong>accept/reject</strong> action.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: reading accept/reject pairs tells you which firewall acted</div>
+    <strong>Security groups are stateful</strong> — an allowed request's response is automatically allowed, so you'll typically see just <strong>one</strong> log line per conversation. <strong>NACLs are stateless</strong> — request and response are evaluated independently, so a NACL blocking only the return leg produces <strong>two</strong> lines: an accept (request) and a reject (response). Seeing an accept immediately followed by a reject for what looks like the same flow is the signature of a NACL interfering with an otherwise-permitted security group conversation.
+  </div>
+
+  <h2>What's Never Logged</h2>
+  <p>Flow logs exclude: traffic to the <strong>instance metadata service</strong>, <strong>DHCP</strong> traffic, <strong>Amazon time server</strong> traffic, and (Windows-only) traffic to the <strong>Amazon license server</strong>. These are excluded unconditionally — no configuration option brings them back.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A security team wants to inspect the actual payload contents of suspicious packets flowing through a VPC. Can VPC Flow Logs provide this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Flow logs never capture packet contents — only metadata like IPs, ports, protocol, and accept/reject status."> Yes, flow logs capture full packet contents by default</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Flow logs only ever capture metadata — source/destination IP and port, protocol, size, accept/reject — never the packet's actual contents. A packet sniffer would be needed for payload inspection."> No, flow logs only capture metadata, never packet contents</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Enabling flow logs at the ENI level changes the scope (one interface) rather than the depth of what's captured — content is never captured regardless of level."> Yes, but only if flow logs are enabled at the ENI level</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Routing flow logs to S3 instead of CloudWatch Logs changes the storage destination, not what data is captured — payload content is never included either way."> Yes, but only when the destination is S3 rather than CloudWatch</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. In a VPC flow log, a request from an external IP shows one "ACCEPT" line, immediately followed by a "REJECT" line for what looks like the return traffic of the same conversation. What does this pattern typically indicate?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A security group alone being misconfigured would typically produce just one line (since SGs are stateful) — this two-line accept/reject pattern is the signature of a stateless NACL blocking the return leg."> A misconfigured security group alone, with no NACL involved</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The security group (stateful) allowed the request, producing one accept, but a NACL (stateless) is separately evaluating and rejecting the response leg — producing the second, reject line."> A security group allowed the request, but a NACL is blocking the response</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Flow logs don't retroactively alter or duplicate entries for a delayed delivery — this two-line pattern reflects two genuinely separate evaluation events (stateful vs. stateless firewalls), not a delivery artifact."> A delayed flow log delivery duplicating the same log entry</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This pattern isn't Athena-specific — it appears in the raw flow log records themselves regardless of whether Athena is used to query them."> Athena misinterpreting a single accepted connection</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A data team wants to run ad hoc, formal SQL queries against months of flow log history stored in S3, paying only for the data actually scanned per query. What should they use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudWatch Logs Insights queries data stored in CloudWatch Logs, not S3 — and this scenario specifically describes querying flow logs already stored in S3."> CloudWatch Logs Insights, querying the S3 bucket directly</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Athena is a schema-on-read, ad hoc SQL query engine that reads directly from S3, billing only for the data scanned per query — exactly this use case."> Amazon Athena, querying the flow logs directly in S3</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Enabling real-time flow log delivery isn't an available flow log configuration — flow logs inherently have a delay, and this doesn't address the ad hoc SQL querying requirement anyway."> Enabling real-time flow log delivery to bypass the delay</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A packet sniffer captures raw packet contents on a live instance — it isn't a tool for querying historical flow log metadata already stored in S3."> Installing a packet sniffer on every monitored instance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-egress-only-internet-gateway.html">Next: Egress-Only Internet Gateway →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

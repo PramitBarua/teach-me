@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – Egress-Only Internet Gateway</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced VPC Networking</a> › Lesson 02
+    </div>
+    <div class="module-tag">Advanced VPC Networking</div>
+    <h1>Egress-Only Internet Gateway</h1>
+    <p class="lesson-meta">Lesson 02 of 05 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/egress-only-internet-gateway.html" target="_blank">Enable Outbound IPv6 Traffic Using an Egress-Only Internet Gateway</a></p>
+  </div>
+
+  <p>This gateway exists to solve one specific problem: giving <strong>IPv6</strong> instances the same "outbound-only" behavior that a NAT gateway gives IPv4 instances — because NAT itself doesn't work for IPv6.</p>
+
+  <h2>Why NAT Doesn't Help Here</h2>
+  <p>With IPv4, a private instance has no publicly routable address at all — a <strong>NAT gateway</strong> lets it initiate outbound connections and receive responses, while remaining completely unreachable from anything trying to connect <em>in</em>.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Every IPv6 address in AWS is publicly routable</div>
+    There's no such thing as a "private" IPv6 address the way there is for IPv4. That means a plain internet gateway lets IPv6 traffic flow <strong>both ways</strong> — out <em>and</em> in — for every IPv6-enabled instance, unless something else restricts it. NAT can't fix this because NAT is fundamentally an IPv4-only workaround for address scarcity, a problem IPv6 doesn't have.
+  </div>
+
+  <h2>The Fix</h2>
+  <p>An <strong>egress-only internet gateway</strong> allows IPv6 traffic to be <strong>initiated outbound</strong> and its responses to return, while blocking any connection <strong>initiated from the internet</strong> — precisely mirroring what a NAT gateway does for IPv4, but built for IPv6 addressing.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: architecture is identical to a normal IGW</div>
+    An egress-only internet gateway is <strong>highly available and auto-scaling by design</strong>, exactly like a regular internet gateway — the architecture doesn't differ. What differs is purely <strong>how you use it</strong>: create it, attach it to the VPC, then add a default IPv6 route (<code>::/0</code>) in the relevant route table(s) pointing at it. It's a stateful device, so return traffic for an outbound-initiated connection is automatically permitted.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Gateway type</th><th>IPv4</th><th>IPv6</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Internet Gateway</strong></td><td>Bidirectional (with a public IP)</td><td>Bidirectional — in and out both allowed</td></tr>
+      <tr><td><strong>NAT Gateway</strong></td><td>Outbound-initiated only</td><td>Not applicable — NAT doesn't work with IPv6</td></tr>
+      <tr><td><strong>Egress-Only Internet Gateway</strong></td><td>Not applicable — IPv4-only concept doesn't apply</td><td>Outbound-initiated only</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants IPv6-enabled EC2 instances to reach software update servers on the internet, but never be reachable from inbound internet-initiated connections. Why can't a NAT gateway solve this for IPv6?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="NAT gateways don't have a hard instance-count limit that rules out IPv6 use — the actual problem is architectural: NAT is fundamentally an IPv4 concept."> NAT gateways can only support a limited number of instances</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. NAT exists to work around IPv4 address scarcity by translating private to public addresses — a problem IPv6 doesn't have, since every IPv6 address in AWS is already publicly routable. NAT gateways simply don't work with IPv6."> NAT is fundamentally an IPv4 concept and doesn't work with IPv6 at all</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="NAT gateways aren't Region-restricted in a way that specifically blocks IPv6 use — the actual limitation is that NAT doesn't function with IPv6 addressing at all."> NAT gateways are only available in specific AWS Regions</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Cost isn't the blocking factor here — NAT gateways are simply architecturally incompatible with IPv6 traffic, regardless of price."> NAT gateways are too expensive for IPv6 traffic volumes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A VPC has IPv6-enabled instances behind a plain internet gateway with no other filtering. What's true about their exposure to the public internet?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A plain internet gateway allows IPv6 traffic bidirectionally — inbound connections from the internet aren't blocked by the gateway itself; some other filtering (like a security group) would be needed."> They're safe; internet gateways automatically block inbound IPv6</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Since all IPv6 addresses in AWS are publicly routable, a plain internet gateway allows connections both out and in — meaning these instances are reachable from the internet unless something else restricts them."> They can be reached by inbound connections initiated from the internet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A plain internet gateway doesn't distinguish IPv4 vs. IPv6 in terms of blocking inbound access — IPv6 is fully bidirectional through a standard IGW just like IPv4 with a public address."> They're only reachable via IPv4, never IPv6, through this gateway</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A plain internet gateway doesn't require an egress-only gateway to also be present — both types are independent, and this scenario describes just a standard IGW with full bidirectional IPv6 access."> They require an egress-only gateway to be attached as well</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which best describes the architectural relationship between an egress-only internet gateway and a standard internet gateway?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="An egress-only internet gateway is highly available and scales automatically, exactly like a standard internet gateway — that part of the architecture is identical."> It's a single point of failure, unlike a standard internet gateway</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The underlying architecture (high availability, automatic scaling) is identical to a standard internet gateway — what differs is purely how it's used: it only permits outbound-initiated IPv6 traffic and its responses."> Architecturally identical (HA, auto-scaling); it just restricts traffic direction for IPv6</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="An egress-only internet gateway doesn't require a NAT gateway to also be present — it functions independently as the IPv6 equivalent of NAT's outbound-only behavior."> It requires a NAT gateway to be deployed alongside it</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Egress-only internet gateways aren't AZ-scoped in a way that limits them to one Availability Zone — like a standard IGW, they operate across all AZs the VPC uses."> It only operates within a single Availability Zone</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-vpc-flow-logs.html">← Previous: VPC Flow Logs</a>
+      <a href="0003-vpc-endpoints-gateway.html">Next: VPC Endpoints (Gateway) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

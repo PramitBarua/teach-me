@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – VPC Peering</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced VPC Networking</a> › Lesson 05
+    </div>
+    <div class="module-tag">Advanced VPC Networking</div>
+    <h1>VPC Peering</h1>
+    <p class="lesson-meta">Lesson 05 of 05 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html" target="_blank">What Is VPC Peering?</a></p>
+  </div>
+
+  <p><strong>VPC peering</strong> creates a private, encrypted network link between two VPCs — same account or different accounts, same Region or cross-Region (with some cross-Region limitations).</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Two facts to memorize cold</div>
+    <strong>1. One peering connection links exactly two VPCs — never more.</strong> <strong>2. Peering is not transitive.</strong> If A is peered with B, and B is peered with C, there is <em>no</em> connectivity between A and C. You cannot route through an intermediary VPC. Full mesh connectivity between <em>N</em> VPCs requires a separate peering connection for <strong>every pair</strong> — 3 VPCs need 3 peers, 4 VPCs need 6, and it grows fast.
+  </div>
+
+  <h2>Required Configuration</h2>
+  <p>Creating the peering connection itself only creates a <strong>logical gateway object</strong> in both VPCs — it doesn't establish connectivity by itself. Three things must all be in place:</p>
+  <ol>
+    <li>The <strong>peering connection</strong> (and acceptance by the peer VPC's owner).</li>
+    <li><strong>Route table entries</strong> in the relevant subnets of both VPCs, pointing the peer's CIDR range at the peering connection object.</li>
+    <li><strong>Security groups / NACLs</strong> on both sides actually permitting the traffic.</li>
+  </ol>
+
+  <div class="callout warn">
+    <div class="callout-title">Overlapping CIDRs break peering entirely</div>
+    Two VPCs with <strong>overlapping IP address ranges cannot be peered</strong> — full stop. This is exactly why planning non-overlapping CIDRs across all your VPCs from the start matters, even for VPCs with no immediate peering plans.
+  </div>
+
+  <h2>Useful Extras</h2>
+  <ul>
+    <li><strong>DNS resolution across the peer</strong> — an optional setting that lets public DNS hostnames of instances in the peered VPC resolve to their <strong>private</strong> IP addresses, so the same names work whether or not the target is in a peered VPC.</li>
+    <li><strong>Security group referencing</strong> — for <strong>same-Region</strong> peers only, you can reference the peer's security group ID directly in your own rules (the same nesting trick used within a single VPC). Cross-Region peers must instead reference specific IP ranges.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: peering vs. Transit Gateway</div>
+    Peering's non-transitive limitation is precisely the problem <strong>Transit Gateway</strong> solves (a separate, more feature-rich hub-and-spoke product covered elsewhere). If a scenario needs many VPCs to all communicate through a single hub without an exploding number of point-to-point connections, that's pointing toward Transit Gateway, not more peering connections.
+  </div>
+
+  <p>Traffic across a peering connection is always encrypted; cross-Region peered traffic transits AWS's own global backbone network rather than the public internet — the same security and performance profile Global Accelerator relies on (previous module).</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. VPC A is peered with VPC B, and VPC B is peered with VPC C. Can an instance in VPC A directly communicate with an instance in VPC C using only these two peering connections?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="VPC peering is explicitly not transitive — connectivity through an intermediary VPC (B, in this case) does not happen automatically, no matter how the route tables in B are configured."> Yes, as long as VPC B's route tables allow the pass-through traffic</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. VPC peering is never transitive — A-to-B and B-to-C connections don't create an A-to-C path. A direct peering connection between A and C would be required."> No, peering is not transitive; a direct A-C peering connection is required</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Security groups control what traffic is permitted, but they can't create transitive routing across VPCs that peering itself doesn't support — the underlying network path simply doesn't exist without a direct A-C peer."> Yes, but only if security groups are configured correctly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="DNS resolution settings affect how hostnames resolve within already-connected peered VPCs — they don't create transitive connectivity through an intermediary VPC."> Yes, if DNS resolution across the peer is enabled on both connections</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Two VPCs both use the CIDR range 10.0.0.0/16. A team wants to create a VPC peering connection between them. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Overlapping CIDR ranges are a hard blocker for VPC peering — this isn't something a route table workaround can fix, since routing depends on unambiguous, non-overlapping address ranges."> It works, but only specific subnets can be routed via careful route tables</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. VPCs with overlapping CIDR ranges cannot be peered at all — this is a hard architectural limitation, which is why non-overlapping CIDR planning across all VPCs matters from the start."> It's not possible; overlapping CIDR ranges block peering entirely</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="NAT isn't a mechanism VPC peering uses to resolve address conflicts — overlapping CIDRs simply prevent the peering connection from being usable, with no NAT-based workaround available."> It works automatically; AWS NATs the overlapping ranges</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Peering doesn't require converting one VPC to IPv6 to resolve an IPv4 CIDR overlap — the two VPCs simply cannot be peered together as configured."> It works only if one VPC switches entirely to IPv6</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company has 5 VPCs in the same Region and wants every VPC to be able to communicate directly with every other VPC, using only VPC peering. How many peering connections are needed, and is there a better alternative?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="5 VPCs needing full mesh connectivity require 10 pairwise connections (5 choose 2), not 5 — one peer per VPC wouldn't achieve full mesh given peering's non-transitive nature."> 5 connections; Transit Gateway isn't relevant at this scale</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Full mesh connectivity between 5 VPCs requires 10 pairwise peering connections (since peering isn't transitive), and at this scale Transit Gateway is generally the better, more manageable hub-and-spoke alternative."> 10 connections; Transit Gateway is a more scalable alternative</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single peering connection can only ever link exactly two VPCs — it's not possible to connect all 5 VPCs with just one connection."> 1 connection, since peering can link multiple VPCs at once</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Full mesh connectivity requires more than 4 connections given peering's non-transitive nature — a simple hub arrangement with 4 spokes wouldn't let every VPC reach every other VPC directly."> 4 connections, using one VPC as a central hub</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-vpc-endpoints-interface.html">← Previous: VPC Endpoints (Interface)</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Advanced VPC Networking module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

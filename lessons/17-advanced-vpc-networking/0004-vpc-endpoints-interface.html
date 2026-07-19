@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – VPC Endpoints: Interface Endpoints</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced VPC Networking</a> › Lesson 04
+    </div>
+    <div class="module-tag">Advanced VPC Networking</div>
+    <h1>VPC Endpoints: Interface Endpoints</h1>
+    <p class="lesson-meta">Lesson 04 of 05 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/interface-endpoints.html" target="_blank">Configure an Interface Endpoint</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/endpoint-services-overview.html" target="_blank">Connect Your VPC to Services Using AWS PrivateLink</a></p>
+  </div>
+
+  <p><strong>Interface endpoints</strong> solve the same problem gateway endpoints do — private access to a public AWS service — for essentially <strong>everything else</strong>. The mechanism, though, is architecturally unrelated to gateway endpoints, and the differences are exactly what the exam tests.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Not highly available by default — this is the opposite of gateway endpoints</div>
+    An interface endpoint is a genuine <strong>elastic network interface</strong>, placed in <strong>one specific subnet</strong> — meaning one specific AZ. Lose that AZ, lose that endpoint's availability. To be resilient across multiple AZs, you need <strong>one interface endpoint per AZ</strong> you use. Compare this directly against the previous lesson: gateway endpoints are automatically multi-AZ; interface endpoints are not, ever, without you deliberately building it that way.
+  </div>
+
+  <h2>What Interface Endpoints Are Built On: AWS PrivateLink</h2>
+  <p><strong>PrivateLink</strong> is the underlying technology — it's what lets an AWS service (or a supported third-party service) be injected directly into your VPC as network interfaces inside your own subnets. Interface endpoints are essentially "PrivateLink for AWS services," but the same PrivateLink mechanism is also how third-party vendors can offer their own products for private, in-VPC consumption — valuable in regulated environments needing private access to external SaaS-style services with no additional networking infrastructure.</p>
+
+  <table>
+    <thead><tr><th></th><th>Gateway endpoint</th><th>Interface endpoint</th></tr></thead>
+    <tbody>
+      <tr><td>Mechanism</td><td>Route table + prefix list</td><td>ENI + <strong>DNS</strong></td></tr>
+      <tr><td>Services</td><td>S3, DynamoDB only</td><td>Everything else (S3 now optionally too — see below)</td></tr>
+      <tr><td>High availability</td><td>Automatic, all AZs</td><td>Manual — one endpoint per AZ needed</td></tr>
+      <tr><td>Security groups?</td><td>No — it's not a network interface</td><td><strong>Yes</strong> — it's an ENI, so SGs apply directly</td></tr>
+      <tr><td>Protocol/IP support</td><td>N/A</td><td>TCP only, IPv4 only</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">S3 is now also available via interface endpoint</div>
+    Historically S3 and DynamoDB were gateway-endpoint-only, and everything else used interface endpoints. That's since changed: <strong>S3 can now be accessed via either</strong> gateway or interface endpoints. <strong>DynamoDB remains gateway-endpoint-only.</strong> Where a choice exists, a gateway endpoint is generally simpler (free, automatically HA) — interface endpoints add value mainly where you specifically need security-group-level control or cross-VPC/PrivateLink-style access patterns.
+  </div>
+
+  <h2>DNS: How Traffic Actually Finds the Endpoint</h2>
+  <p>Every interface endpoint gets DNS names: a <strong>regional</strong> name (works across every AZ, resolves to whichever interface makes sense) and a <strong>zonal</strong> name per AZ (resolves to that specific interface). Either can be used directly by applications updated to reference them — no other configuration required.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: Private DNS removes the need to modify applications</div>
+    Enabling <strong>Private DNS</strong> (on by default today) creates a Route 53 <strong>private hosted zone</strong> associated with the VPC that <strong>overrides the service's normal public DNS name</strong> to resolve to the interface endpoint's private IP instead. The practical effect: applications that were never touched, still using the default public service DNS name (e.g. <code>sns.us-east-1.amazonaws.com</code>), automatically route through the interface endpoint — no code changes, no redeployment.
+  </div>
+
+  <p>Without Private DNS, only applications explicitly reconfigured to use the endpoint-specific DNS name benefit — anything still resolving the default public name goes out via the internet gateway as normal (and fails entirely from a fully private subnet with no internet path).</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A VPC uses 3 Availability Zones and needs highly available access to AWS Secrets Manager via an interface endpoint. What must be configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Unlike gateway endpoints, a single interface endpoint is placed in one specific subnet/AZ — it isn't automatically multi-AZ."> One interface endpoint total; it's automatically multi-AZ</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Interface endpoints are AZ-scoped ENIs, not automatically highly available — one endpoint per AZ is required for resilience across all 3 AZs."> One interface endpoint per AZ, so three in total</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Interface endpoints don't require an accompanying gateway endpoint — the two are independent mechanisms, and Secrets Manager isn't even a gateway-endpoint-supported service."> A single interface endpoint plus a gateway endpoint as backup</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A NAT gateway isn't required alongside an interface endpoint — interface endpoints work independently for private, in-VPC access without needing NAT."> A NAT gateway in each AZ alongside the interface endpoint</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An interface endpoint for SNS has Private DNS enabled. An application that was never modified still resolves sns.us-east-1.amazonaws.com, the default public service name. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Private DNS specifically overrides the default public DNS name to resolve to the interface endpoint — the application doesn't need to be updated to use an endpoint-specific name to benefit."> It fails, since only the endpoint-specific DNS name works</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Private DNS overrides the default public service DNS name within the VPC to resolve to the interface endpoint's private IP — so even unmodified applications automatically route through the endpoint."> It transparently resolves to the interface endpoint's private IP</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Private DNS doesn't route traffic out via the internet gateway — its entire purpose is to keep this traffic private, routing it to the interface endpoint instead."> It routes out via the internet gateway as before</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Private DNS resolution doesn't require security group changes to take effect — DNS override happens regardless of security group configuration, though SGs still control actual traffic to the ENI."> It requires a security group update before DNS resolution works</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team wants to restrict which specific EC2 instances can reach an interface endpoint, using network-level filtering rules. Is this possible?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Interface endpoints are genuine ENIs, which security groups can be directly applied to — this is one of the clear advantages over gateway endpoints, which can't use security groups at all."> No, endpoints of any kind don't support security groups</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Because an interface endpoint is a real network interface, security groups can be applied to it directly — unlike gateway endpoints, which aren't network interfaces and can't use security groups."> Yes, since interface endpoints are ENIs that security groups attach to</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Interface endpoint access control isn't limited to endpoint policies alone — since it's a genuine ENI, security groups provide network-level filtering that gateway endpoints (which use only endpoint policies) can't offer."> Only via an endpoint policy, not network-level filtering</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="NACLs operate at the subnet level and aren't the mechanism specifically designed for per-instance filtering to an interface endpoint — security groups, directly attachable to the endpoint's ENI, are the intended tool here."> Only by placing the endpoint in a separate subnet with a NACL</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-vpc-endpoints-gateway.html">← Previous: VPC Endpoints (Gateway)</a>
+      <a href="0005-vpc-peering.html">Next: VPC Peering →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

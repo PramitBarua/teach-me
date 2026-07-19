@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – VPC Endpoints: Gateway Endpoints</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Advanced VPC Networking</a> › Lesson 03
+    </div>
+    <div class="module-tag">Advanced VPC Networking</div>
+    <h1>VPC Endpoints: Gateway Endpoints</h1>
+    <p class="lesson-meta">Lesson 03 of 05 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html" target="_blank">Gateway Endpoints</a></p>
+  </div>
+
+  <p>S3 and DynamoDB are <strong>public</strong> AWS services — reaching them normally means a public IP, a NAT gateway, or some other path through an internet gateway. A <strong>gateway endpoint</strong> removes that requirement entirely: private-only resources in a private-only VPC can reach these two services without any internet-facing infrastructure at all.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Only two services, ever</div>
+    Gateway endpoints support exactly <strong>two</strong> services: <strong>S3</strong> and <strong>DynamoDB</strong>. Nothing else uses this mechanism — everything else that needs private access uses an <strong>interface endpoint</strong> instead (next lesson).
+  </div>
+
+  <h2>How It Actually Works: Prefix Lists, Not Interfaces</h2>
+  <p>A gateway endpoint doesn't place anything inside a subnet. Instead, associating it with subnets adds a <strong>prefix list</strong> — a logical, AWS-maintained object representing the target service's IP ranges — to those subnets' <strong>route tables</strong>, with the gateway endpoint as the target. Traffic destined for that prefix list simply routes out via the endpoint instead of an internet/NAT gateway.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: gateway endpoints are highly available by default</div>
+    A gateway endpoint is a <strong>VPC-level logical gateway object</strong> — it does not live in any specific subnet or AZ, and is highly available across every AZ the VPC uses automatically. This is the single biggest architectural difference from interface endpoints, which are genuinely AZ-scoped (next lesson).
+  </div>
+
+  <h2>Access Control: Endpoint Policies</h2>
+  <p>An <strong>endpoint policy</strong> attached to the gateway endpoint restricts what it can be used to reach — e.g. only specific S3 buckets rather than the entire service. Combine this with an S3 <strong>bucket policy</strong> that only accepts requests arriving via that specific endpoint, and you get a fully private bucket: nothing outside the VPC (and, within the VPC, nothing outside the endpoint policy's allowlist) can touch it.</p>
+
+  <h2>Scope Limits</h2>
+  <ul>
+    <li><strong>Same-Region only</strong> — a gateway endpoint in <code>us-east-1</code> cannot be used to reach an S3 bucket in <code>ap-southeast-2</code>.</li>
+    <li><strong>Same-VPC only</strong> — a gateway endpoint is only usable from the VPC it's associated with; it isn't reachable from peered VPCs or anywhere else outside that one VPC.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the fully-private, high-security VPC scenario</div>
+    Any question describing a <strong>heavily regulated environment</strong> needing a VPC with <strong>no internet gateway and no NAT gateway</strong> at all, that still needs to reach S3 or DynamoDB, is describing a <strong>gateway endpoint</strong>. This architecture is close to impossible to achieve any other way.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A fully private VPC (no internet gateway, no NAT gateway) needs its instances to read from an S3 bucket. What should be configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A NAT gateway would require an internet gateway too, reintroducing the internet-facing infrastructure this fully private VPC is specifically avoiding."> A NAT gateway, so instances can reach S3 over the internet</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A gateway endpoint for S3 gives fully private instances a route to S3 via a prefix list in the route table, with no internet gateway or NAT gateway required at all."> A gateway endpoint for S3, associated with the relevant subnets</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Assigning public IPs would go against the 'fully private' requirement, and still wouldn't work without an internet gateway in place regardless."> Public IP addresses assigned directly to the instances</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An interface endpoint would also work technically for S3 today, but the classic, most direct answer for this exact scenario (and the one the course emphasizes) is a gateway endpoint — plus interface endpoints require one per AZ for HA, unlike a gateway endpoint's automatic HA."> An interface endpoint is the only valid option for S3 access</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A VPC spans 3 Availability Zones and has a gateway endpoint for DynamoDB associated with subnets in all 3 AZs. If one AZ fails, what happens to DynamoDB access from the other two?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A gateway endpoint is a VPC-level logical object, not tied to any single AZ — it doesn't fail along with one Availability Zone."> It fails everywhere, since the gateway endpoint isn't AZ-redundant</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Gateway endpoints are highly available across every AZ the VPC uses by design — they aren't placed in any single subnet or AZ, so the failure of one AZ doesn't affect endpoint access from the others."> It continues working; gateway endpoints are highly available by design</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A gateway endpoint doesn't require manual failover configuration to remain available across AZs — that resilience is automatic and built-in."> It requires manual failover configuration to keep working</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A gateway endpoint doesn't need to be recreated after an AZ failure — its high availability is automatic, unlike the AZ-scoped nature of interface endpoints."> The gateway endpoint must be manually recreated in the surviving AZs</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company wants a private VPC to access only two specific S3 buckets used for software updates, not the entire S3 service, and wants the S3 bucket itself to reject any access that doesn't come via this path. What two things should they configure together?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A security group can't restrict access at the S3-bucket level, and IAM alone doesn't create the network-path restriction that ties access to arriving specifically via the gateway endpoint."> A security group on the gateway endpoint and an IAM user policy</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. An endpoint policy restricts what the gateway endpoint can be used to reach (e.g. just those two buckets), and an S3 bucket policy requiring requests to arrive via that specific endpoint closes off any other access path."> An endpoint policy on the gateway endpoint, and a matching S3 bucket policy</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A NACL is a subnet-level network filter and doesn't understand S3-specific bucket-level restrictions — it can't scope access down to two specific buckets."> A NACL on the private subnets and S3 default encryption</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A route table entry alone (without an endpoint policy and bucket policy) directs traffic through the endpoint but doesn't restrict which buckets can be reached or reject non-endpoint access."> A route table entry pointing at the internet gateway</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-egress-only-internet-gateway.html">← Previous: Egress-Only Internet Gateway</a>
+      <a href="0004-vpc-endpoints-interface.html">Next: VPC Endpoints (Interface) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
