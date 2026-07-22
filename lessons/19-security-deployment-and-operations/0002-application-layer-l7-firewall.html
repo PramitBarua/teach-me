@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – Application Layer (L7) Firewalls</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Security, Deployment and Operations</a> › Lesson 02
+    </div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>Application Layer (L7) Firewalls</h1>
+    <p class="lesson-meta">Lesson 02 of 9 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-rules-engines.html" target="_blank">AWS Network Firewall: stateless and stateful rules engines</a></p>
+  </div>
+
+  <p>This lesson is deliberately <strong>generic and vendor-agnostic</strong> — it's about what an application-layer (layer 7) firewall <em>is</em>, conceptually, regardless of vendor. AWS's own concrete L7 firewall product, <strong>WAF</strong>, gets its own lesson next; nothing WAF-specific belongs here.</p>
+
+  <div class="callout">
+    <div class="callout-title">Why this lesson leans so heavily on the diagrams</div>
+    The source material flags almost <strong>every single point</strong> below as exam-critical — not one or two highlights, but essentially the whole topic. So rather than treating a couple of callouts as a supplement to ordinary prose, this lesson is structured directly around those flagged points. If it reads like a tight, quotable checklist, that's intentional.
+  </div>
+
+  <h2>Where We Start: Layer 3/4 Firewalls</h2>
+  <p>Picture a firewall protecting Catagram — a wildly popular app for sharing pictures of cats — sitting between a laptop and the server. At <strong>layer 3 and 4</strong>, the firewall only sees <strong>packets and segments</strong>: IP addresses and ports. It sees two separate flows — a <strong>request</strong> from laptop to server, and a <strong>response</strong> from server to laptop — and because the firewall operates only at layers 3 and 4, <strong>the request and response are different and unrelated</strong> to it. Each needs its own rule; the firewall has no notion that they're two halves of the same conversation.</p>
+
+  <h2>Adding Layer 5: Session Awareness</h2>
+  <p>Enhance that firewall with <strong>layer 5 (session)</strong> capability, and the picture changes: now the <strong>request and response can be considered as part of one session</strong>. That's a small-sounding change with real payoff — it <strong>reduces admin overhead</strong> (one rule instead of two) and <strong>allows for more "contextual" security</strong>, since response traffic can now be treated differently precisely because it's understood as a reply to a request already in flight, rather than an unrelated new flow.</p>
+  <p>Critically, in both cases — layer 3/4 only, or layer 3/4/5 — the firewall understands <strong>nothing above the layer it operates at</strong>. Everything above that is opaque: to a layer 5 firewall, HTTP payload is just undifferentiated data. A cat picture, a dog picture, and malware all look identical. That blindness to application content is exactly the gap layer 7 firewalls close.</p>
+
+  <h2>Layer 7: Application-Aware Inspection</h2>
+  <p>A layer 7 firewall keeps the same packet flow, but adds real understanding of the <strong>application protocol itself</strong> — HTTP, in the running example. Because it understands the protocol's structure — headers, hosts, data — it can <strong>identify normal or abnormal requests</strong>, which means it can defend against <strong>protocol-specific attacks and weaknesses</strong> that lower-layer firewalls simply cannot see.</p>
+  <p>That protocol awareness lets it act on content in ways no lower-layer firewall can: <strong>data at L7 can be inspected and blocked, replaced, or tagged</strong> — for example flagging or removing adult content, spam, or off-topic material. Back in Catagram terms: cat pictures are welcome, dog pictures might be borderline ("okish"), sheep might count as spam, and outright malware gets blocked outright. The firewall can even swap disallowed content for something acceptable rather than just dropping it. Taken further, this same visibility is what lets a firewall <strong>identify, block, and adjust specific applications</strong> — recognizing and acting on something like Facebook traffic specifically, not just "HTTP traffic" in general.</p>
+
+  <h2>The Mechanic That Makes It Possible: HTTPS Termination</h2>
+  <p>None of this application-content inspection works on an encrypted stream — so for an HTTPS connection, the firewall has to sit inside the encryption, not just alongside it. <strong>Encryption (HTTPS) is terminated (decrypted) on the L7 firewall</strong>: from the client's point of view, it appears to be talking directly to the server, but the original HTTPS tunnel actually ends at the firewall. The firewall then opens a <strong>new encrypted L7 connection between itself and the backend server</strong>. Both endpoints experience this as fully transparent — but in the middle, for the moment the traffic sits at the firewall, it's plain, unencrypted HTTP that the firewall can freely inspect, filter, or modify before it's re-encrypted and sent on.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — the capability build-up, and what makes it possible</div>
+    Think of this as a progressive build: <strong>L3/4</strong> (packets, ports, no session concept) → add <strong>L5</strong> (session awareness, request/response linked) → add <strong>L7</strong> (application-protocol awareness). The mechanic that makes L7 inspection of encrypted traffic possible at all is <strong>decrypt-inspect-re-encrypt</strong>: HTTPS terminates at the firewall, gets inspected as plain HTTP, and a fresh encrypted connection carries it onward to the backend.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — L7 firewalls add, they never subtract</div>
+    A <strong>layer 7 firewall keeps all of the layer 3, 4, and 5 features</strong> it started with — it's a strict superset, not a replacement. On top of that base, it can additionally react to <strong>layer 7 elements</strong>: DNS names in use, the rate of connections, specific content, headers — whatever the particular L7 protocol it understands exposes. Some L7 firewalls only understand HTTP; others add protocols like SMTP (email). The limit is purely what the firewall's software supports, not the underlying architecture.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A firewall operating only at layers 3 and 4 is inspecting traffic between a client and a server. How does it treat the request and the response?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Treating request and response as one linked session is exactly what layer 5 (session) capability adds — plain layer 3/4 inspection does not do this."> As one linked session, needing only a single rule</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. At layer 3/4 the firewall sees packets and segments only, with no session concept, so the request and the response are viewed as different and unrelated flows."> As two different, unrelated flows of traffic</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Layer 3/4 firewalls have no visibility into application content at all, so they cannot inspect HTTP headers regardless of direction."> As HTTP headers it can inspect in either direction</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Layer 3/4 firewalls do not perform content-based blocking of specific applications — that level of awareness requires layer 7 capability."> As traffic it blocks whenever a specific application is detected</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An L7 firewall needs to inspect the content of an HTTPS connection between a client and a backend server. What actually happens to the encrypted traffic at the firewall?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="L7 firewalls cannot inspect application content while it remains encrypted — some form of decryption at the firewall is required to see inside an HTTPS stream."> The firewall inspects the encrypted bytes directly without decrypting them</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The original HTTPS connection terminates at the firewall, exposing plain HTTP for inspection, and a new encrypted connection is created between the firewall and the backend."> HTTPS is terminated at the firewall, then re-encrypted toward the backend</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="L7 firewalls don't require the backend to drop encryption entirely — a fresh encrypted connection is established from the firewall to the backend, not a plaintext one."> The backend connection is downgraded permanently to plain HTTP</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Session-layer (L5) awareness alone does not expose application content — inspecting HTTPS payload specifically requires the L7 termination-and-re-encryption mechanic."> Layer 5 session tracking alone exposes the HTTP payload</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team upgrades their perimeter firewall from layer 3/4/5 capability to full layer 7 capability. What happens to its existing layer 3/4/5 features?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Layer 7 capability is additive, not a replacement — a layer 7 firewall keeps all of its layer 3, 4, and 5 features rather than losing them."> They are removed, since layer 7 inspection replaces them</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A layer 7 firewall keeps all layer 3, 4, and 5 features it already had, and additionally gains the ability to react to layer 7 elements like content, headers, and rate."> They are retained fully, and layer 7 elements are added on top</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Layer 3/4/5 features aren't put into a degraded or optional state after an L7 upgrade — they continue operating exactly as before, alongside the new L7 awareness."> They become optional add-ons that must be separately re-enabled</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Session awareness isn't disabled by adding L7 capability — an L7 firewall is a strict superset that keeps session tracking active alongside application-layer inspection."> Session awareness is disabled in favor of protocol awareness</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-aws-secrets-manager.html">← Previous: AWS Secrets Manager</a>
+      <a href="0003-web-application-firewall-waf.html">Next: Web Application Firewall (WAF) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

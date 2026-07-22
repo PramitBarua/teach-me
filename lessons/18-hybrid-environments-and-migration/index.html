@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hybrid Environments and Migration – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Hybrid Environments and Migration</div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Hybrid Environments and Migration</h1>
+    <p class="lesson-meta">16 lessons · ~126 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html" target="_blank">AWS Direct Connect User Guide</a></p>
+  </div>
+
+  <p>This module covers connecting AWS to the outside world: on-premises networks, existing directories, and bulk data. It splits into three arcs — <strong>private connectivity</strong> (BGP → IPSec → Site-to-Site VPN → Direct Connect ×3 → Transit Gateway), <strong>storage and data movement</strong> (Storage Gateway's three modes, the Snow family, DataSync), and <strong>hybrid identity and file systems</strong> (Directory Service, FSx ×2, Transfer Family).</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><a href="0001-border-gateway-protocol-101.html">Border Gateway Protocol (BGP) 101</a></td><td>Autonomous systems, AS-path, shortest-path-wins, AS-path prepending — the foundation under DX and dynamic VPNs</td></tr>
+      <tr><td>02</td><td><a href="0002-ipsec-vpn-fundamentals.html">IPSec VPN Fundamentals</a></td><td>IKE Phase 1 (auth + Diffie-Hellman) vs. Phase 2 (cipher negotiation); policy-based vs. route-based VPNs</td></tr>
+      <tr><td>03</td><td><a href="0003-aws-site-to-site-vpn.html">AWS Site-to-Site VPN</a></td><td>VGW/CGW architecture, partial vs. full HA, static vs. dynamic (BGP) VPNs, the 1.25 Gbps cap</td></tr>
+      <tr><td>04</td><td><a href="0004-direct-connect-concepts.html">Direct Connect (DX): Concepts</a></td><td>DX is a port allocation at a third-party-owned location; AWS/customer/comms-partner cages; VIF types</td></tr>
+      <tr><td>05</td><td><a href="0005-direct-connect-resilience.html">Direct Connect (DX): Resilience</a></td><td>The 7-SPOF baseline and the progression to maximum resilience (two locations × two ports × two premises)</td></tr>
+      <tr><td>06</td><td><a href="0006-direct-connect-public-vif-and-vpn-encryption.html">Direct Connect: Public VIF + VPN Encryption</a></td><td>Why VPN-over-DX needs a public VIF; VPN vs. MACsec; DX + VPN resilience pattern</td></tr>
+      <tr><td>07</td><td><a href="0007-transit-gateway.html">Transit Gateway</a></td><td>Solves peering's non-transitive full-mesh explosion; transitive routing hub; cross-account/region peering</td></tr>
+      <tr><td>08</td><td><a href="0008-storage-gateway-volume.html">Storage Gateway: Volume Gateway (Stored & Cached)</a></td><td>iSCSI raw block volumes; stored = on-prem primary (backup/DR); cached = S3 primary (capacity extension)</td></tr>
+      <tr><td>09</td><td><a href="0009-storage-gateway-tape-vtl.html">Storage Gateway: Tape Gateway (VTL)</a></td><td>iSCSI virtual tape library backed by S3, virtual tape shelf backed by Glacier/Deep Archive</td></tr>
+      <tr><td>10</td><td><a href="0010-storage-gateway-file.html">Storage Gateway: File Gateway</a></td><td>NFS/SMB bucket shares; S3 is the primary copy, not the local cache — the key contrast with Volume Gateway</td></tr>
+      <tr><td>11</td><td><a href="0011-snowball-snowball-edge-and-snowmobile.html">Snowball, Snowball Edge & Snowmobile</a></td><td>Multi-site moderate volumes → Snowball/Edge; single massive site → Snowmobile (now a retired product)</td></tr>
+      <tr><td>12</td><td><a href="0012-directory-service.html">AWS Directory Service</a></td><td>Default to Simple AD; Managed Microsoft AD for real-AD/trust needs; AD Connector for zero-data-in-AWS proxying</td></tr>
+      <tr><td>13</td><td><a href="0013-datasync.html">AWS DataSync</a></td><td>Task/agent/location model for reliable, scheduled, bandwidth-throttled transfer — not for one-time bulk moves</td></tr>
+      <tr><td>14</td><td><a href="0014-fsx-for-windows-file-server.html">FSx for Windows File Server</a></td><td>Native Windows file shares over SMB, real AD integration, VSS self-service restores, DFS</td></tr>
+      <tr><td>15</td><td><a href="0015-fsx-for-lustre.html">FSx for Lustre</a></td><td>HPC/ML file system; Scratch (max performance, no replication) vs. Persistent (single-AZ replication)</td></tr>
+      <tr><td>16</td><td><a href="0016-aws-transfer-family.html">AWS Transfer Family</a></td><td>SFTP/FTPS/FTP/AS2 access to S3/EFS; three endpoint types trade off protocol support against access control</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    Storage Gateway mode selection is the single highest-yield topic here — the keyword heuristic is <strong>"volume" → Volume Gateway, "tape" → Tape Gateway (VTL), "file"/NFS/SMB → File Gateway</strong> (Lessons 08–10), and within Volume Gateway, <strong>backup/DR language → stored mode, capacity/extension language → cached mode</strong>. Direct Connect resilience (Lesson 05) and the VGW/CGW partial-vs-full-HA distinction (Lesson 03) both show up as "spot the remaining single point of failure" questions. Transit Gateway's <strong>transitive routing</strong> (Lesson 07) is what separates it from VPC peering. And for hybrid identity, remember the decision order in Lesson 12: <strong>Simple AD by default, Managed Microsoft AD for real-AD/trust needs, AD Connector when directory data can never touch AWS.</strong>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">This module has more stale-vs-current corrections than most</div>
+    Several products in this module have moved meaningfully since the course was recorded — most notably, the <strong>entire Snow family closed to new customers in November 2025</strong> (Lesson 11), and <strong>Simple AD closes to new customers on July 30, 2026</strong> (Lesson 12) — a date worth knowing if directory decisions are on the table soon. Each affected lesson flags its own correction inline; the exam still tests the course's architectural reasoning even where the underlying product availability has changed.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-border-gateway-protocol-101.html">Start: Border Gateway Protocol (BGP) 101 →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

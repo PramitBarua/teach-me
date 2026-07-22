@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 – FSx for Windows File Server</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 14
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>FSx for Windows File Server</h1>
+    <p class="lesson-meta">Lesson 14 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/fsx/latest/WindowsGuide/performance.html" target="_blank">FSx for Windows File Server Performance</a></p>
+  </div>
+
+  <p><strong>FSx for Windows File Server</strong> is a fully managed, <strong>native</strong> Windows file system — not an emulation of one. It's one of the core products AWS offers to properly support Windows workloads in the cloud.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">You consume shares, not servers — same mental model as RDS</div>
+    Just as RDS gives you a database endpoint while hiding the underlying database server, FSx for Windows File Server gives you <strong>file shares</strong> as your unit of consumption. The servers behind those shares are managed entirely by AWS and never exposed to you directly.
+  </div>
+
+  <h2>Active Directory Integration</h2>
+  <p>FSx for Windows needs a directory as its user store, but critically, it is <strong>not tied to the Directory Service product</strong>. It can integrate with either:</p>
+  <ul>
+    <li>AWS Managed Microsoft AD (via Directory Service), or</li>
+    <li>A <strong>self-managed</strong> Active Directory — running on-premises <em>or</em> inside AWS.</li>
+  </ul>
+  <p>This matters for enterprises that already run their own AD: FSx can point straight at that existing, normal AD implementation without any Directory Service product being involved at all.</p>
+
+  <h2>Deployment and Access</h2>
+  <p>FSx for Windows can be deployed <strong>single-AZ</strong> or <strong>multi-AZ</strong> — the choice affects which network interfaces are used to reach it. Even in single-AZ mode, data is replicated within that AZ for resilience to hardware failure; multi-AZ adds full cross-AZ high availability. File systems are reachable from within a VPC, and also over <strong>VPC peering</strong>, <strong>VPN</strong>, and <strong>Direct Connect</strong> — useful for large enterprises with dedicated private links into their VPC.</p>
+
+  <h2>Native Windows Features</h2>
+  <p>Because it's a true native Windows file system, FSx for Windows carries capabilities you won't find on EFS:</p>
+  <ul>
+    <li><strong>Deduplication</strong> — reduces redundant data on disk.</li>
+    <li><strong>DFS (Distributed File System)</strong> — natively groups and scales out file shares into a single enterprise-wide structure.</li>
+    <li><strong>VSS (Volume Shadow Copy Service)</strong> — lets users right-click a file or folder, view previous versions, and restore themselves — no administrator involvement required.</li>
+    <li><strong>Native NTFS-style Windows permissions</strong> — the same permission model Windows admins already know.</li>
+    <li><strong>Encryption</strong> — at rest via KMS, plus optional encryption in transit.</li>
+  </ul>
+  <p>Shares are accessed the familiar Windows way: <code>\\filesystem-id.animalsforlife.org\catpix</code>. Services that need Windows-native storage, such as WorkSpaces, can point directly at an FSx share.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: SMB / Windows / AD → FSx; NFS / Linux → EFS</div>
+    This is the single highest-yield fact for this topic. If a question mentions <strong>SMB</strong>, a <strong>native Windows file server</strong>, or <strong>Active Directory integration</strong>, the answer is FSx for Windows File Server. EFS uses <strong>NFS</strong> and is only accessible from Linux/Unix EC2 instances or Linux on-premises servers — it has no Windows story at all. If the scenario also frames it as avoiding the admin overhead of running a self-managed Windows Server EC2 instance, that reinforces FSx as the answer.
+  </div>
+
+  <h2>Performance</h2>
+  <p>FSx for Windows delivers sub-millisecond latency, with per-file-system throughput capacity you select at creation and can scale later. Current AWS documentation puts the selectable range at roughly <strong>32 MB/s up to 12 GB/s</strong>, paired with IOPS scaling up to the hundreds of thousands. The exact ceiling isn't something the exam expects you to memorize — what matters is that FSx scales to serious enterprise performance requirements, not that you can quote the exact top figure.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A financial services firm runs its own on-premises Active Directory and wants a managed Windows file share accessible from EC2 instances in their VPC, without deploying AWS Managed Microsoft AD. Is this possible?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="FSx for Windows does not require the Directory Service product — it can integrate directly with a self-managed Active Directory, whether that AD runs on-premises or inside AWS."> No, FSx for Windows requires AWS Managed Microsoft AD specifically</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. FSx for Windows can integrate with a self-managed Active Directory running on-premises or in AWS — it does not require the Directory Service product to be involved at all."> Yes, FSx for Windows can integrate directly with self-managed on-premises AD</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EFS is a Linux-oriented NFS file system with no native Active Directory or SMB integration — it isn't the product for this Windows-and-AD scenario."> No, this scenario requires EFS instead, since it supports any directory source</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Multi-AZ deployment mode controls high availability across Availability Zones — it has no bearing on whether self-managed on-premises AD can be used as the directory source."> Yes, but only if the file system is deployed in multi-AZ mode</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An exam question describes users right-clicking a file on a network share, viewing previous versions, and restoring an earlier copy themselves without contacting IT. Which FSx for Windows feature does this describe?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DFS is about grouping and scaling out file shares across a distributed structure — it doesn't provide the previous-version, user-driven restore capability described here."> Distributed File System (DFS)</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. VSS (Volume Shadow Copy Service) is exactly this feature — it lets users browse and restore previous versions of files or folders themselves, with no administrator involvement."> Volume Shadow Copy Service (VSS)</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Deduplication reduces redundant data stored on disk — it's unrelated to end users browsing or restoring previous file versions."> Deduplication</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="KMS encryption at rest protects stored data from unauthorized access — it has nothing to do with restoring previous versions of a file."> KMS encryption at rest</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A question describes a shared file system accessed over SMB by Windows desktops, needing native NTFS-style permissions. Which service should you pick, and why not the alternative?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EFS is built around the NFS protocol for Linux/Unix clients — it has no native SMB or Windows permission model, making it the wrong fit for this scenario."> EFS, because it supports any protocol including SMB</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. SMB and native Windows permissions are the defining keywords pointing to FSx for Windows File Server; EFS is NFS-based and Linux-only, so it can't serve this requirement."> FSx for Windows File Server, because EFS only supports NFS for Linux clients</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="FSx for Lustre is built for Linux-based high-performance computing workloads with POSIX permissions — it doesn't offer SMB access or Windows-native permissions."> FSx for Lustre, because it offers the highest raw throughput</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Storage Gateway File Gateway presents an S3-backed NFS or SMB share primarily for hybrid/on-premises access patterns — it isn't the managed native-Windows-file-server product this scenario calls for."> Storage Gateway File Gateway, because it presents shares over SMB too</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0013-datasync.html">← Previous: AWS DataSync</a>
+      <a href="0015-fsx-for-lustre.html">Next: FSx for Lustre →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

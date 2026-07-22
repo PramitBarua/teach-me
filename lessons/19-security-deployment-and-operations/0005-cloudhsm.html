@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – CloudHSM</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Security, Deployment and Operations</a> › Lesson 05
+    </div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>CloudHSM</h1>
+    <p class="lesson-meta">Lesson 05 of 9 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/cloudhsm/latest/userguide/cluster-architecture.html" target="_blank">AWS CloudHSM cluster architecture</a> · <a href="https://aws.amazon.com/cloudhsm/faqs/" target="_blank">AWS CloudHSM FAQs</a></p>
+  </div>
+
+  <p><strong>CloudHSM</strong> does the same broad job as <strong>KMS</strong> — creating, managing, and securing cryptographic key material — but the two products differ in ways that matter a lot for the exam. This lesson is fundamentally about one thing: given a scenario, can you tell which of the two you need? A handful of keywords settle it almost every time.</p>
+
+  <h2>KMS, Briefly, as the Point of Comparison</h2>
+  <p>KMS is AWS's native key management service. It integrates tightly with other AWS services for encryption, all access is controlled with ordinary <strong>IAM permissions</strong>, and all operations go through <strong>standard AWS APIs</strong>. Behind the scenes, KMS is backed by <strong>hardware security modules (HSMs)</strong> — but it's a <strong>shared, multi-tenant service</strong>. Your slice is isolated, but AWS manages the underlying hardware and software, and other accounts share the same fleet.</p>
+
+  <h2>CloudHSM: True Single-Tenant Hardware</h2>
+  <p>CloudHSM gives you a dedicated, single-tenant HSM appliance hosted in AWS. AWS provisions the hardware and handles maintenance, but the tamper-resistant partition that actually stores and uses your keys is something <strong>AWS has zero access to</strong>. If you lose your own access to a CloudHSM, that's it — there is no AWS-side rescue. You can reprovision new hardware, but the key material itself is unrecoverable.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">FIPS 140: the standard has moved on since this course was recorded</div>
+    The classic exam-prep framing is "FIPS 140-2 Level 3 → CloudHSM; KMS is overall Level 2, with only some internal parts at Level 3." That distinction still holds structurally, but the underlying <strong>standard itself has shifted from FIPS 140-2 to FIPS 140-3</strong>. AWS's current documentation states that CloudHSM's newest hardware generation (the hsm2m.medium instance type) is validated to <strong>FIPS 140-3 Level 3</strong>, and that KMS's HSMs are now also validated under <strong>FIPS 140-3 Security Level 3</strong> — while the KMS product as a whole remains FIPS 140-2 Level 2 overall (that "overall" framing is about the certification boundary, not the underlying hardware). If an exam question was written against the older course material, expect FIPS 140-2 wording; if it reflects current AWS docs, expect FIPS 140-3. Either way, the decision logic is unchanged: <strong>Level 3 for the whole appliance → CloudHSM.</strong>
+  </div>
+
+  <h2>The Access-Method Distinction</h2>
+  <p>This is the second pillar of the decision, and it's just as important as the compliance level:</p>
+  <table>
+    <thead><tr><th>Need</th><th>Product</th></tr></thead>
+    <tbody>
+      <tr><td>AWS-native integration via IAM and standard AWS APIs</td><td><strong>KMS</strong></td></tr>
+      <tr><td>Industry-standard cryptographic APIs — <strong>PKCS#11</strong>, Java Cryptography Extensions (<strong>JCE</strong>), Microsoft CryptoNG (<strong>CNG</strong>)</td><td><strong>CloudHSM</strong></td></tr>
+    </tbody>
+  </table>
+  <p>KMS isn't accessible through these industry-standard APIs by design, and CloudHSM isn't accessed through ordinary AWS API calls by design. If you see any of PKCS#11, JCE, or CNG named in a scenario, that's CloudHSM.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The three facts to over-learn</div>
+    Build a hard association between these keyword triggers and CloudHSM: <strong>FIPS 140 Level 3 for the whole appliance</strong>, <strong>industry-standard crypto APIs (PKCS#11 / JCE / CNG)</strong>, and <strong>true single-tenant hardware with zero AWS access to key storage</strong>. If a question instead emphasizes AWS-native integration and IAM permissions, that points to KMS.
+  </div>
+
+  <h2>Architecture: An AWS-Managed VPC Injected Into Yours</h2>
+  <p>CloudHSM appliances don't run inside a VPC you control. They live in an AWS-managed CloudHSM VPC you never see. To reach them, AWS injects one <strong>elastic network interface (ENI) per HSM node</strong> into your own VPC — one ENI per Availability Zone used. A single HSM is not itself highly available, so achieving HA means deploying multiple HSMs as a <strong>cluster</strong>, at least one per AZ; once clustered, the nodes automatically replicate keys, policies, and configuration among themselves.</p>
+  <p>Any EC2 instance that needs to talk to the cluster must have the <strong>CloudHSM client</strong> installed — a background process that lets the instance reach the HSM cluster over its injected ENIs and then use PKCS#11, JCE, or CNG against it.</p>
+
+  <h2>Where CloudHSM Specifically Wins</h2>
+  <ul>
+    <li><strong>Client-side encryption before S3 upload</strong> — CloudHSM has no native S3 SSE integration, so this means encrypting objects locally before they ever reach S3, not integrating with S3's own encryption.</li>
+    <li><strong>SSL/TLS offload</strong> from web servers — dedicated crypto hardware handles the cryptographic load more cheaply and efficiently than general-purpose EC2 instances doing it themselves.</li>
+    <li><strong>Oracle Transparent Data Encryption (TDE)</strong> — Oracle databases can use CloudHSM via industry-standard APIs to manage the keys behind TDE.</li>
+    <li><strong>Private keys for a self-run certificate authority</strong> — CloudHSM can hold and protect a CA's private key material.</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">Custom keystore: blending both worlds</div>
+    KMS supports a <strong>custom keystore</strong> feature that lets KMS use a CloudHSM cluster as its backing key store. This gives you CloudHSM's dedicated, single-tenant hardware together with KMS's native AWS integration — but for exam purposes, keep using the keyword triggers above to decide between plain KMS and plain CloudHSM first.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A financial services firm must encrypt data using a hardware appliance validated at FIPS 140 Level 3 for the entire unit, not just an internal component. Which service satisfies this on its own?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. CloudHSM is validated at FIPS 140 Level 3 as a whole appliance, whereas KMS's overall certification boundary sits at Level 2 even though some internal HSM components reach Level 3."> CloudHSM, since it's Level 3 across the whole appliance</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="KMS is only Level 2 overall as a certified product — some internal components reach Level 3, but the product as a whole does not meet this requirement on its own."> KMS, since its overall certification meets this bar</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="S3 server-side encryption uses KMS or AWS-managed keys under the hood and doesn't independently carry a Level 3 whole-appliance certification."> S3 server-side encryption, since it wraps KMS internally</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Both services rely on HSMs somewhere in their stack, but only one of them is certified at Level 3 for the complete appliance, not merely for the underlying hardware component."> Either service, since both rely on HSMs internally</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team needs to manage keys for an Oracle database's Transparent Data Encryption feature, which talks to key storage using PKCS#11. Which AWS service is designed for this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="KMS is accessed through standard AWS APIs and IAM permissions, not through industry-standard cryptographic APIs like PKCS#11 — that access pattern is CloudHSM's design point."> KMS, accessed through standard AWS APIs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. PKCS#11 is one of the industry-standard cryptographic APIs (alongside JCE and CNG) that CloudHSM exposes, making it the natural fit for non-AWS-native software like Oracle TDE."> CloudHSM, accessed through PKCS#11</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="S3 server-side encryption is a storage feature for S3 objects, not a key-management target for an external database's encryption engine."> S3 server-side encryption, configured on the bucket</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS Secrets Manager stores and rotates secrets like credentials — it isn't the cryptographic key-storage backend that TDE integrates with via PKCS#11."> Secrets Manager, storing the database credentials</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An architect needs highly available CloudHSM access from EC2 instances spread across two Availability Zones. What must be true of the deployment?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single HSM is not itself a highly available device — high availability requires multiple HSMs configured together as a cluster, at least one per AZ."> A single HSM instance is sufficient across both AZs</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. HA requires a cluster of at least two HSMs, one per AZ, each injected into the customer VPC via its own ENI, with instances load-balancing across the interfaces."> A cluster with an HSM node in each AZ, each injected via its own ENI</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudHSM appliances run in an AWS-managed VPC that customers cannot see or configure directly — they're reached via injected ENIs, not by placing the appliance itself in the customer VPC."> The HSM appliance deployed directly inside the customer VPC</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard AWS API calls and IAM roles don't reach CloudHSM at all — instances need the CloudHSM client installed and use industry-standard APIs like PKCS#11, JCE, or CNG instead."> Instances calling CloudHSM via standard AWS SDK calls</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-aws-shield.html">← Previous: AWS Shield</a>
+      <a href="0006-aws-config.html">Next: AWS Config →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

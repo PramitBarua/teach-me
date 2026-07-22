@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Amazon Inspector</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Security, Deployment and Operations</a> › Lesson 08
+    </div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>Amazon Inspector</h1>
+    <p class="lesson-meta">Lesson 08 of 9 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html" target="_blank">What is Amazon Inspector?</a> · <a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-cis.html" target="_blank">CIS scans for Amazon EC2 instance operating systems</a></p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">The source material describes a retired product generation</div>
+    The original course narration describes what the industry now calls <strong>Inspector Classic</strong>: manually-run assessments over a fixed duration (15 minutes, 1, 8, 12 hours, or a day), a choice between agent-based and agentless network assessments, and rule packages you select yourself. <strong>Inspector Classic reached end of support on May 20, 2026</strong> — its console and resources are no longer reachable at all as of this lesson. AWS relaunched Inspector in December 2021 around a completely different, <em>continuous</em> model, and has kept extending it since. This lesson teaches the <strong>current</strong> architecture, verified against AWS's current documentation, while still flagging the legacy concepts in case an exam question was written against the older framing.
+  </div>
+
+  <h2>Current Inspector: Continuous, Not Scheduled</h2>
+  <p>Modern Amazon Inspector automatically discovers eligible resources and <strong>continually scans</strong> them — no duration to pick, no assessment template to run manually. It covers three resource types:</p>
+  <ul>
+    <li><strong>EC2 instances</strong> — operating system and installed software</li>
+    <li><strong>Container images in Amazon ECR</strong></li>
+    <li><strong>Lambda functions</strong></li>
+  </ul>
+  <p>Newly launched instances, functions, and eligible container images pushed to ECR are detected and scanned automatically. Inspector also <strong>rescans automatically</strong> in response to events that could introduce a new vulnerability — installing a new package, applying a patch, or a new CVE being published that affects an already-scanned resource. You never have to trigger this yourself.</p>
+
+  <h2>CVE Matching Is Still Core — and Still a Strong Keyword</h2>
+  <p>Package vulnerability scanning against the <strong>Common Vulnerabilities and Exposures (CVE)</strong> database remains central to the product. Findings reference specific CVE IDs, and Inspector calculates a risk score (in CVSS format) that adjusts the underlying National Vulnerability Database score for your actual environment — for example, lowering the severity of a finding if the vulnerable instance has no open network path to the internet.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristics that still hold</div>
+    <strong>CVE mentioned → Inspector.</strong> <strong>Vulnerability scanning of container images in ECR or of Lambda functions → Inspector.</strong> These associations survive the product's architectural relaunch untouched — they're the safest keywords to anchor on regardless of which generation a question was written against.
+  </div>
+
+  <h2>EC2 Scanning: SSM Agent, With an Agentless Fallback</h2>
+  <p>Current Inspector uses the <strong>AWS Systems Manager (SSM) Agent</strong> already running on an instance to collect its software inventory for agent-based scanning — there is no separate, Inspector-specific agent to install as there was in Classic. Where an instance doesn't have the SSM Agent deployed, Inspector can fall back to an <strong>agentless</strong> scan mode instead, so coverage doesn't strictly depend on agent installation.</p>
+
+  <h2>Network Reachability: Now Built Into Continuous EC2 Scanning</h2>
+  <p>The transcript's <strong>network reachability</strong> concept — assessing end-to-end exposure of an instance to public networks by examining route tables, security groups, NACLs, gateways, peering, and more — is still very much alive, but it's no longer a separate rules package you opt into with or without an agent, the way Classic worked. In current Inspector, network reachability analysis runs as part of the same continuous, automatic EC2 scanning, requiring no agent, and its results are correlated directly into the CVE risk score rather than reported as a standalone finding type.</p>
+
+  <h2>CIS Benchmarks: Back, but Structured Differently</h2>
+  <p>The transcript cuts off mid-definition of CIS (Center for Internet Security) Benchmarks — a set of host-hardening configuration best practices. In current Inspector, CIS Benchmark scanning returned in January 2024 as <strong>CIS scans</strong>: you target EC2 instances by tag, choose a benchmark level (Level 1 or Level 2), and run the scan on a schedule you define.</p>
+
+  <div class="callout">
+    <div class="callout-title">The one real trap here</div>
+    Unlike CVE and network-reachability scanning, which are continuous and automatic, <strong>CIS scans are configured and scheduled by you</strong> — closer in spirit to how Classic's assessments worked. If a question asks whether Inspector's vulnerability scanning is "always on," the answer is yes for CVE and network exposure; CIS Benchmark scanning is the one area that still asks you to define a scan configuration.
+  </div>
+
+  <h2>Findings and Integration</h2>
+  <p>Findings publish to <strong>EventBridge</strong> for near-real-time automation, and if <strong>Security Hub CSPM</strong> is active, Inspector also publishes findings there for a broader security-posture view alongside other services like Macie and GuardDuty. Multi-account environments can designate a <strong>delegated administrator</strong> through AWS Organizations, the same administrator/member pattern used by Macie and GuardDuty.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A security report calls out unpatched software with a specific published CVE ID affecting a running EC2 instance. Which AWS service produced this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. CVE-based package vulnerability scanning is core Amazon Inspector functionality, and it remains one of the strongest keyword associations for the exam."> Amazon Inspector, since CVE matching is core to it</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Macie is a data-classification service focused on discovering sensitive data in S3 — it doesn't scan instances for software vulnerabilities or CVEs."> Amazon Macie, since it scans instance file systems</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS Config tracks configuration change history and compliance drift — it doesn't perform CVE-based vulnerability scanning of installed packages."> AWS Config, since it tracks resource configuration</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="GuardDuty is a continuous threat-detection service based on anomalous behavior and threat intelligence — it isn't the source of CVE-based package vulnerability findings."> Amazon GuardDuty, since it monitors account activity</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants Lambda functions and container images pushed to ECR automatically checked for vulnerabilities, without scheduling anything manually. Does current Amazon Inspector support this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Current Inspector automatically discovers eligible Lambda functions and ECR container images and continually scans them — no manual scheduling required, unlike the legacy Classic model."> Yes, both are auto-discovered and continually scanned</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This describes the old Inspector Classic model of manually-run, duration-based assessments — current Inspector no longer works this way for these resource types."> No, both require a manually-run, duration-based assessment</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Both Lambda functions and ECR container images are supported resource types for continuous scanning in current Inspector, not just one of the two."> Only ECR images qualify; Lambda isn't a supported target</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Both Lambda functions and ECR container images are supported resource types for continuous scanning in current Inspector, not just one of the two."> Only Lambda functions qualify; ECR images aren't supported</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An EC2 instance has no AWS Systems Manager Agent installed. Can Amazon Inspector still scan it for vulnerabilities?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Current Inspector can fall back to an agentless scan mode for instances without the SSM Agent, so coverage doesn't strictly require agent installation."> Yes, Inspector can fall back to an agentless scan mode</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The SSM Agent isn't strictly mandatory — Inspector supports an agentless fallback for instances that don't have it deployed."> No, the SSM Agent is a strict, mandatory requirement</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Current Inspector doesn't use a separate Inspector-specific agent the way Classic did — it relies on the SSM Agent when present, with an agentless fallback otherwise."> No, a dedicated Inspector-specific agent must be installed</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Scanning coverage for EC2 doesn't depend on enabling Security Hub — that service aggregates findings but isn't a substitute for Inspector's own scanning agent logic."> Yes, but only if Security Hub CSPM is separately enabled</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-amazon-macie.html">← Previous: Amazon Macie</a>
+      <a href="0009-amazon-guardduty.html">Next: Amazon GuardDuty →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – Transit Gateway</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 07
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Transit Gateway</h1>
+    <p class="lesson-meta">Lesson 07 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html" target="_blank">What is AWS Transit Gateway?</a></p>
+  </div>
+
+  <p><strong>Transit Gateway (TGW)</strong> is a network transit hub — a highly available, scalable regional virtual router that connects VPCs to each other and to on-premises networks via Site-to-Site VPN and Direct Connect. It's designed to remove the complexity that plagues large hybrid network architectures.</p>
+
+  <h2>The Problem It Solves</h2>
+  <p>Consider a company with four VPCs (A, B, C, D) and a corporate office, all needing full, highly available connectivity to each other, using only tools covered so far:</p>
+  <ul>
+    <li><strong>VPC-to-VPC:</strong> peering isn't transitive, so a full mesh between 4 VPCs needs <strong>6 peering connections</strong>.</li>
+    <li><strong>Office-to-VPCs, partial HA:</strong> each of the 4 VPCs needs two VPN tunnels to a single customer gateway — <strong>8 tunnels</strong> — but that single customer gateway is itself a single point of failure.</li>
+    <li><strong>Office-to-VPCs, full HA:</strong> add a second customer gateway (ideally a separate premises and internet connection), doubling to <strong>16 tunnels</strong> total.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Full mesh complexity explodes as you scale</div>
+    This design already needs 6 peering connections plus 16 VPN tunnels for just four VPCs and one office — and every additional VPC or premises makes the required connection count grow faster still. It's a huge amount of overhead to plan, implement, and maintain, and it becomes unmanageable well before you reach a "real" enterprise network size.
+  </div>
+
+  <h2>How Transit Gateway Changes This</h2>
+  <p>TGW replaces point-to-point sprawl with a single hub. You connect things to it using <strong>attachments</strong>:</p>
+  <ul>
+    <li><strong>VPC attachments</strong> — like interface endpoints, these require a subnet in each Availability Zone you want the TGW to use inside that VPC.</li>
+    <li><strong>Site-to-Site VPN attachments</strong> — the TGW becomes the AWS-side termination point, so each customer gateway connects back to just the one TGW instead of to every VPC individually.</li>
+    <li><strong>Direct Connect gateway attachments</strong> — lets physical, private connectivity reach the same hub too.</li>
+  </ul>
+  <p>With attachments to VPCs A, B, C, D and to both customer gateways, the same level of high availability is preserved (still four AZ-diverse tunnels at the AWS side), but the number of connections to plan and manage drops dramatically — and every VPC can now reach every other VPC and the on-premises office through one device.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: transitive routing is the key differentiator</div>
+    A Transit Gateway <strong>supports transitive routing</strong> — traffic can flow between any two attachments as long as appropriate routes exist — which is exactly what VPC peering cannot do. If a scenario needs many networks to all reach each other without an exploding full-mesh connection count, that points to Transit Gateway, not more peering or more point-to-point VPNs.
+  </div>
+
+  <h2>Further Capabilities</h2>
+  <ul>
+    <li><strong>TGW peering</strong> — transit gateways can peer with other transit gateways across <strong>Regions and accounts</strong>, riding the AWS global network for predictable cross-Region latency instead of the public internet.</li>
+    <li><strong>Sharing via AWS RAM</strong> — Resource Access Manager lets a single transit gateway be shared across multiple AWS accounts.</li>
+    <li><strong>Route tables</strong> — a TGW starts with a default route table governing traffic between attachments, but you can create <strong>multiple route tables</strong> to build more complex, segmented routing topologies (for example, isolating certain VPCs from others even though they share the same hub).</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Three high-yield facts to memorize</div>
+    1. Transit Gateway supports <strong>transitive routing</strong> (VPC peering does not). 2. It can <strong>peer cross-Region and cross-account</strong>. 3. It's <strong>shareable via AWS RAM</strong>. These three facts, together with the attachment types (VPC, VPN, Direct Connect gateway), cover the large majority of exam angles on this topic.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company has 6 VPCs that all need to communicate with each other and with an on-premises office, and the number of VPCs is expected to keep growing. Using only VPC peering and point-to-point VPNs is becoming unmanageable. What should they adopt?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="More peering connections only add to the full-mesh complexity problem already described — peering is non-transitive, so this makes management harder as the VPC count grows, not easier."> Add more VPC peering connections to complete the full mesh</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Transit Gateway replaces the full-mesh sprawl with a single hub: VPC, VPN, and Direct Connect gateway attachments all route through it, and because it supports transitive routing, every attachment can reach every other attachment without pairwise connections."> Migrate to a Transit Gateway with attachments for each VPC and the office</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A second customer gateway on-premises improves resilience for VPN termination but does nothing to reduce the underlying full-mesh connection count between VPCs and the office."> Add a second customer gateway on-premises for redundancy</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Security group referencing controls what traffic is permitted within already-connected networks — it doesn't create connectivity or reduce the number of peering and VPN connections required."> Use security group referencing across all VPC peering connections</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. VPC A and VPC C are both attached to the same Transit Gateway, but neither is directly peered nor attached to each other in any other way. Can an instance in VPC A reach an instance in VPC C?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This describes exactly what Transit Gateway attachments enable — this isn't a limitation, it's the core capability being tested."> No, Transit Gateway only connects each VPC to on-premises networks</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Transit Gateway supports transitive routing, so any two attachments — including two VPC attachments — can reach each other through the hub as long as the route tables permit it, with no direct peering required."> Yes, as long as appropriate routes exist in the TGW route tables</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A direct peering connection between A and C is unnecessary once both are attached to the same Transit Gateway — that's the whole point of its transitive routing capability."> No, a direct VPC peering connection between A and C is still required</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS RAM is used to share a Transit Gateway across different AWS accounts — it isn't required for two VPCs already attached to the same TGW to route between each other."> Only if the Transit Gateway is shared via AWS RAM first</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A global company has Transit Gateways in two different Regions, owned by two different AWS accounts, and wants traffic between them to stay off the public internet with predictable latency. What should they configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="VPC peering connects two VPCs directly, not two Transit Gateways in different accounts and Regions — it doesn't apply to this hub-to-hub scenario."> A VPC peering connection between the two Transit Gateways</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Site-to-Site VPN is generally used to reach on-premises customer gateways, not to connect two Transit Gateways together, and it would route over the internet rather than the AWS backbone by default."> A Site-to-Site VPN tunnel linking the two Transit Gateways</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Transit Gateway peering works across both Regions and accounts, and peered traffic travels over the AWS global network rather than the public internet, giving predictable cross-Region latency."> Transit Gateway peering, which works across Regions and accounts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A Direct Connect gateway attachment brings physical on-premises connectivity into a Transit Gateway — it isn't the mechanism for connecting two Transit Gateways to each other."> A Direct Connect gateway attachment on each Transit Gateway</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-direct-connect-public-vif-and-vpn-encryption.html">← Previous: Direct Connect: Public VIF + VPN Encryption</a>
+      <a href="0008-storage-gateway-volume.html">Next: Storage Gateway: Volume Gateway (Stored & Cached) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

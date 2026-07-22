@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16 – AWS Transfer Family</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 16
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>AWS Transfer Family</h1>
+    <p class="lesson-meta">Lesson 16 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/transfer/latest/userguide/create-server-in-vpc.html" target="_blank">Create a Server in a Virtual Private Cloud — AWS Transfer Family</a></p>
+  </div>
+
+  <p><strong>AWS Transfer Family</strong> is a managed file transfer service that lets you access <strong>S3</strong> and <strong>EFS</strong> using legacy or non-native transfer protocols — without running any server infrastructure yourself. It's the answer whenever an existing workflow or client can't be changed to speak S3's or EFS's native APIs, but can speak FTP, FTPS, SFTP, or AS2.</p>
+
+  <h2>The Four Protocols</h2>
+  <table>
+    <thead><tr><th>Protocol</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><strong>FTP</strong></td><td>File Transfer Protocol — legacy, <strong>unencrypted</strong>. Niche usage today.</td></tr>
+      <tr><td><strong>FTPS</strong></td><td>FTP with <strong>TLS</strong> encryption added on top.</td></tr>
+      <tr><td><strong>SFTP</strong></td><td>File transfer over <strong>SSH</strong>. The most commonly used of the four in practice.</td></tr>
+      <tr><td><strong>AS2</strong></td><td>Applicability Statement 2 — a niche protocol for structured business-to-business data, common in supply chain / EDI / payment workflows with built-in compliance requirements.</td></tr>
+    </tbody>
+  </table>
+
+  <p>Identity can be handled through <strong>built-in identities</strong>, <strong>AWS Directory Service</strong>, or a <strong>custom identity provider</strong> built with Lambda and API Gateway. A related feature, <strong>Managed File Transfer Workflows</strong>, is a serverless workflow engine that triggers actions — like notifications or tagging — automatically when a file is uploaded.</p>
+
+  <h2>Endpoint Types: The Highest-Yield Content Here</h2>
+  <p>Servers in Transfer Family expose one of three endpoint types, and the differences between them are the most exam-tested part of this whole topic.</p>
+
+  <table>
+    <thead><tr><th>Endpoint type</th><th>Protocols</th><th>IP address</th><th>Access control</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Public</strong></td><td>SFTP only</td><td>Dynamic — use DNS, not the raw IP</td><td>None — no security group / NACL control</td></tr>
+      <tr><td><strong>VPC, internet-facing</strong></td><td>SFTP, FTPS, AS2</td><td>Static (Elastic IP)</td><td>Security group / NACL controllable</td></tr>
+      <tr><td><strong>VPC, internal only</strong></td><td>SFTP, FTPS, <strong>FTP</strong>, AS2</td><td>Static</td><td>Security group / NACL controllable</td></tr>
+    </tbody>
+  </table>
+
+  <p>Both VPC endpoint types are reachable from the internet (if internet-facing) or the VPC, plus anything connected to that VPC over <strong>Direct Connect or VPN</strong>. The public endpoint is simplest to set up — nothing to configure in the way of networking — but comes with real trade-offs: SFTP only, a changing IP, and no way to restrict who connects with a security group or NACL.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Why plain FTP only works on the internal-only endpoint</div>
+    FTP is unencrypted, so AWS restricts it to the <strong>VPC internal-only</strong> endpoint type — the one option that never touches the public internet. It makes no sense to expose an unencrypted protocol on a public or internet-facing endpoint, so AWS simply doesn't allow it there.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic: match the protocol requirement to the endpoint constraint</div>
+    When a scenario names a required protocol, check it against endpoint capability: need <strong>plain FTP</strong>? Only VPC internal-only supports it. Need <strong>security-group-level access control</strong>? Rule out the public endpoint type — it offers none. Need the <strong>simplest possible setup with no VPC work</strong> and only SFTP is required? Public endpoint fits. Also remember: FTP and FTPS require <strong>Directory Service or a custom identity provider</strong> — built-in identities alone aren't enough for those two protocols.
+  </div>
+
+  <h2>Other Practical Details</h2>
+  <ul>
+    <li>Transfer Family servers are <strong>multi-AZ</strong>.</li>
+    <li>Billing is <strong>per provisioned-server-hour plus data transferred</strong> — no upfront cost.</li>
+    <li>Back-end access to S3 or EFS is granted to the Transfer Family server via <strong>IAM roles</strong>.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A legacy on-premises application can only speak plain, unencrypted FTP and must upload files into an S3 bucket. Which Transfer Family endpoint type supports this, and from where can it be reached?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The public endpoint type supports SFTP only — plain FTP isn't available there at all, regardless of reachability concerns."> The public endpoint, reachable from anywhere on the internet</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="FTP isn't available on the internet-facing VPC endpoint either — that type supports SFTP, FTPS, and AS2, but not plain unencrypted FTP."> The VPC internet-facing endpoint, reachable via its Elastic IP</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Plain FTP is only supported on the VPC internal-only endpoint type, since it never touches the public internet — reachable from within the VPC or from networks connected via Direct Connect or VPN."> The VPC internal-only endpoint, reachable from the VPC or via Direct Connect/VPN</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AS2 is a distinct B2B protocol from FTP — this scenario specifically needs plain FTP support, and AS2-only endpoints don't provide that."> Any endpoint type configured for AS2, since AS2 subsumes FTP</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A security team requires that only specific external IP ranges be allowed to connect to a Transfer Family SFTP server, enforced via a security group. Which endpoint type(s) can satisfy this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The public endpoint type has no security group or NACL controls at all — access can't be restricted this way on a public endpoint."> The public endpoint, since SFTP is its only supported protocol</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Both VPC endpoint types (internet-facing and internal-only) support security group and NACL-based access control — the public endpoint type does not."> A VPC endpoint, either internet-facing or internal-only</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="No Transfer Family endpoint type supports NACL/security-group filtering purely through DNS configuration — access control is enforced through VPC networking constructs on the VPC endpoint types."> Any endpoint type, by restricting the DNS hostname used to connect</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This requirement doesn't depend on which identity provider is configured — access control by IP is a networking-layer feature tied to the endpoint type, not the identity source."> None; IP-based access control isn't available on any Transfer Family endpoint</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team wants to deploy a Transfer Family FTPS server using only built-in identities, with no Directory Service and no custom identity provider. Will this configuration work?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="FTPS specifically requires Directory Service or a custom identity provider — built-in identities alone aren't sufficient for FTP or FTPS, unlike SFTP which does support built-in identities."> Yes, built-in identities work with every supported protocol equally</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. FTP and FTPS both require Directory Service or a custom identity provider — built-in identities alone are not supported for these two protocols."> No, FTPS requires Directory Service or a custom identity provider</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Switching to the public endpoint type wouldn't resolve this — the public endpoint only supports SFTP in the first place, and the identity-provider requirement is separate from endpoint type."> Yes, as long as the server uses the public endpoint type</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Managed File Transfer Workflows handle post-upload processing like notifications and tagging — they don't satisfy the identity-provider requirement for FTPS authentication."> Yes, as long as Managed File Transfer Workflows are enabled</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0015-fsx-for-lustre.html">← Previous: FSx for Lustre</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Hybrid Environments and Migration module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

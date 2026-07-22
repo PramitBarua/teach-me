@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – AWS Config</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Security, Deployment and Operations</a> › Lesson 06
+    </div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>AWS Config</h1>
+    <p class="lesson-meta">Lesson 06 of 9 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html" target="_blank">What Is AWS Config?</a> · <a href="https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config.html" target="_blank">Evaluating Resources with AWS Config Rules</a></p>
+  </div>
+
+  <p>AWS Config is frequently misunderstood, and the exam exploits exactly that misunderstanding. Its core job is simple: <strong>record configuration change history</strong> for resources in an account. It is not a permissions product, and it is not a protection product.</p>
+
+  <h2>What Config Actually Records</h2>
+  <p>Once enabled, Config monitors every resource's configuration. Every time a resource changes, a <strong>configuration item</strong> is created, capturing the <strong>pre-change state</strong>, the <strong>post-change state</strong>, the resource's <strong>relationships</strong> to other resources, and <strong>who made the change</strong>. If you added a rule to a security group attached to an EC2 instance, Config would capture the before and after state of the rule, the fact that it changed, who changed it, and the attachment to that instance.</p>
+  <p>All of this is stored in a standard format inside an S3 bucket known as the <strong>config bucket</strong>, accessible either directly or through the Config API. Config is a <strong>regional</strong> service, but it supports <strong>cross-region and cross-account aggregation</strong> so a security team can review compliance across an entire organization from one place.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Config never prevents anything</div>
+    This is the single most exam-tested fact about the service: <strong>AWS Config is a detective control, not a preventive one.</strong> It can define what "compliant" looks like and can identify when a resource drifts from that standard, but it can never stop the non-compliant change from happening in the first place. If an exam question asks "does Config prevent X," the answer is always no — it only detects and reports X after the fact.
+  </div>
+
+  <h2>Config Rules: From Recording to Evaluating</h2>
+  <p>The recorder and config bucket are the standard, always-on part of the product. <strong>Config Rules</strong> are the optional layer that adds real power. A rule can be <strong>AWS-managed</strong> (predefined) or <strong>custom</strong>, with custom rules evaluated by a <strong>Lambda</strong> function that you write. Each rule evaluates matching resources and marks them <strong>compliant</strong> or <strong>non-compliant</strong> against the standard the rule defines — for example, a list of allowed security group ports. Adding a disallowed port doesn't get blocked, but Config Rules will flag the resulting resource as non-compliant.</p>
+
+  <h2>Closing the Loop: From Passive Recording to Active Response</h2>
+  <p>Config alone only records and evaluates. Turning that into action needs other services layered on top:</p>
+  <table>
+    <thead><tr><th>Mechanism</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SNS</strong></td><td>Notifies people or systems about a stream of changes or compliance state changes</td></tr>
+      <tr><td><strong>EventBridge</strong></td><td>Reacts to a compliance state change and invokes a target for remediation</td></tr>
+      <tr><td><strong>Lambda</strong> (via EventBridge)</td><td>Flexible, code-driven remediation — well suited to account-level fixes</td></tr>
+      <tr><td><strong>SSM Automation documents</strong></td><td>Remediation targeted at a specific instance's configuration</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Detective now, remediation later</div>
+    Think of the full pipeline as: <strong>resource changes → config item recorded → Config Rule evaluates compliance → SNS notifies and/or EventBridge triggers Lambda or SSM Automation to fix it.</strong> The remediation is real, but it's always <strong>event-driven and after the fact</strong> — never a block at the moment of change. That's what keeps Config in the "detective" category even once remediation is wired up.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team enables an AWS Config rule that flags security groups allowing inbound port 23. An engineer then opens port 23 on a security group anyway. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Config Rules never block the underlying change — Config is a detective control, not a preventive one, so the change always goes through."> The change is blocked and port 23 is never opened</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Config never prevents the change itself — it records the new configuration and marks the resource non-compliant against the rule, after the fact."> The change succeeds and the resource is marked non-compliant</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Config doesn't grant or revoke IAM permissions as part of rule evaluation — that's outside its scope entirely."> IAM automatically revokes the engineer's permissions</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Config doesn't roll back changes on its own; any reversal would require a separate remediation action you configure yourself, such as Lambda or SSM Automation."> The security group instantly reverts to its prior state</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company wants non-compliant EC2 instances automatically patched via an SSM Automation document whenever AWS Config detects drift. What's the correct integration path?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Config Rules alone only evaluate and record compliance state — they don't directly invoke SSM Automation without an event-routing layer in between."> Config Rules alone, with no other services involved</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Config sends the compliance-state change to EventBridge, which then invokes a target — here, an SSM Automation document to remediate the specific instance."> Config compliance change → EventBridge → SSM Automation document</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SNS delivers notifications to people or applications — it isn't itself a mechanism for invoking an SSM Automation document as remediation."> Config compliance change → SNS directly invoking SSM</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The config bucket only stores historical configuration data in S3 — it has no built-in trigger mechanism for launching remediation actions."> The config bucket triggering S3 event notifications</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A security team wants to review configuration compliance across every account in their organization from a single place. Does AWS Config support this, given that it's a regional service?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Config does support this use case — cross-region and cross-account aggregation is a built-in capability, not something requiring an unrelated separate product."> No, a completely separate product is required</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Config operates per region and per account by default, but it explicitly supports cross-region and cross-account aggregation for exactly this kind of organization-wide view."> Yes, via Config's cross-region and cross-account aggregation</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Being regional doesn't mean data can never be combined — Config's aggregation feature is specifically designed to combine data from multiple regions and accounts."> No, regional scope makes aggregation impossible</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Aggregation isn't limited only to accounts within a single Config Rule's evaluation — it's a distinct aggregator capability spanning regions and accounts more broadly."> Yes, but only for accounts sharing one Config Rule</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-cloudhsm.html">← Previous: CloudHSM</a>
+      <a href="0007-amazon-macie.html">Next: Amazon Macie →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

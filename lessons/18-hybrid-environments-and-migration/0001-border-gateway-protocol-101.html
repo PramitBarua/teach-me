@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Border Gateway Protocol (BGP) 101</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 01
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Border Gateway Protocol (BGP) 101</h1>
+    <p class="lesson-meta">Lesson 01 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/routing-and-bgp.html" target="_blank">Direct Connect routing policies and BGP communities</a></p>
+  </div>
+
+  <p><strong>BGP</strong> (Border Gateway Protocol) is a routing protocol — a system for deciding how data flows from a source to a destination across a network of networks. BGP itself is a huge topic, far beyond exam scope, but you need the high-level shape of it because two AWS hybrid-networking products, <strong>Direct Connect</strong> and <strong>dynamic (BGP-based) VPNs</strong>, both rely on it. This lesson is a conceptual foundation for the lessons that follow — nothing more.</p>
+
+  <h2>Autonomous Systems</h2>
+  <p>BGP is built from <strong>autonomous systems (AS)</strong> — self-managed networks controlled by a single entity. An AS might be one router or an entire enterprise network with complex internal routing; from BGP's perspective, it's a <strong>black box</strong>. BGP doesn't care what happens inside an AS, only how traffic gets in and out of it.</p>
+  <p>Every AS is allocated an <strong>autonomous system number (ASN)</strong> by IANA. ASNs are generally 16 bits, ranging from 0–65,535. Most of that range is public and directly allocated by IANA; the range <strong>64,512–65,534</strong> is private, reserved for private peering arrangements without formal allocation.</p>
+
+  <div class="callout">
+    <div class="callout-title">Peering is manual, exchange is automatic</div>
+    BGP runs over TCP port 179, and it's reliable — it includes error correction and flow control. But a BGP relationship between two autonomous systems is never automatic; someone has to configure that peering deliberately. Once peered, though, the two ASes automatically exchange what they know about network topology, and that knowledge propagates outward to each AS's other peers — which is how routing information spreads across the entire internet.
+  </div>
+
+  <h2>Path-Vector Behavior and the AS Path</h2>
+  <p>BGP is a <strong>path-vector protocol</strong>: peers exchange the <strong>best</strong> known path to a destination, not every path they know. That path is called the <strong>AS path</strong> — the sequence of autonomous systems traffic must cross to reach a destination. Critically, BGP has <strong>no concept of link speed or link condition</strong>. It only compares path length. Given a choice between a fast link with a longer AS path and a slow link with a shorter AS path, default BGP behavior always prefers the <strong>shorter path</strong>, regardless of actual performance.</p>
+
+  <h3>EBGP vs. IBGP</h3>
+  <table>
+    <thead><tr><th>Term</th><th>Scope</th></tr></thead>
+    <tbody>
+      <tr><td><strong>IBGP</strong></td><td>Routing <em>within</em> a single autonomous system</td></tr>
+      <tr><td><strong>EBGP</strong></td><td>Routing <em>between</em> different autonomous systems</td></tr>
+    </tbody>
+  </table>
+  <p>Hybrid AWS architectures mostly care about EBGP, since that's the type used when an on-premises network peers with AWS.</p>
+
+  <h2>The Mental Model: Shortest AS Path Wins</h2>
+  <p>Picture three sites in a ring, each its own autonomous system, each peered with the other two:</p>
+  <table>
+    <thead><tr><th>Site</th><th>ASN</th><th>Link to neighbor</th></tr></thead>
+    <tbody>
+      <tr><td>Brisbane</td><td>200</td><td>1 Gbps fiber to Adelaide · 5 Mbps satellite to Alice Springs</td></tr>
+      <tr><td>Adelaide</td><td>201</td><td>1 Gbps fiber to Brisbane · 1 Gbps fiber to Alice Springs</td></tr>
+      <tr><td>Alice Springs</td><td>202</td><td>1 Gbps fiber to Adelaide · 5 Mbps satellite to Brisbane</td></tr>
+    </tbody>
+  </table>
+  <p>Once all three peer with each other, each site learns two ways to reach every other site: a <strong>direct</strong> path and an <strong>indirect</strong> path through the third site. Brisbane can reach Alice Springs directly over the satellite link (AS path length: 1 hop) or indirectly via Adelaide over fiber (AS path length: 2 hops). By default, BGP prefers the <strong>shorter</strong> AS path — so Brisbane would route to Alice Springs over the slow, high-latency satellite link, purely because it's fewer AS hops, even though the fiber route via Adelaide is objectively better.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">AS-path prepending: making a path look artificially worse</div>
+    To fix this, an administrator can use <strong>AS-path prepending</strong> — repeating your own ASN multiple times in the advertised path to make it look artificially longer than it physically is. BGP still only compares path <em>length</em>, so a prepended satellite path (now "3 hops" instead of 1) loses to the genuinely shorter-looking fiber path via Adelaide, and traffic shifts onto the better link. This is a real, exam-relevant technique for de-prioritizing a backup or lower-quality link without touching the underlying physical topology.
+  </div>
+
+  <p>This is also what gives ring-style BGP topologies their resilience: because every site learns both a direct and an indirect route to every other site, if one link or site fails, traffic automatically re-routes over the surviving path — no manual reconfiguration required.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Why this matters for AWS</div>
+    You will not be asked to hand-trace AS paths on the exam. What matters is the mental model: <strong>autonomous systems peer, exchange the shortest known path, and BGP picks routes by path length alone</strong> — never by speed or latency. Keep this in mind going forward, because both <strong>Direct Connect</strong> and <strong>dynamic Site-to-Site VPNs</strong> (covered in upcoming lessons) use BGP to exchange routes between your on-premises network and AWS.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An autonomous system has two paths to a destination: a 1 Gbps link with a 2-hop AS path, and a 5 Mbps link with a 1-hop AS path. Which will BGP prefer by default?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="BGP has no concept of link speed at all — it never compares bandwidth when choosing between paths, only AS-path length."> The 1 Gbps link, because BGP always prefers higher bandwidth</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. BGP is a path-vector protocol that only compares AS-path length, ignoring link speed and condition entirely. The 1-hop path wins by default even though it's far slower."> The 5 Mbps link, because BGP only compares AS-path length</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="BGP doesn't measure or react to latency directly — its route selection is based purely on AS-path length, not measured link quality."> Whichever link currently has lower measured latency</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="BGP route selection isn't based on splitting traffic across both paths by default — it selects a single preferred path based on AS-path length."> Both links equally, since BGP load-balances by default</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A network administrator wants a slow, high-latency satellite backup link to only be used when the primary fiber link fails, without physically changing the network. What BGP technique achieves this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="BGP has no mechanism for tagging a link's speed for comparison purposes — it only ever compares AS-path length, never a declared bandwidth value."> Tagging the satellite link with a lower declared bandwidth value</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Switching from EBGP to IBGP changes whether routing happens within or between autonomous systems — it doesn't influence which of two external paths gets preferred."> Switching the satellite connection from EBGP to IBGP</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. AS-path prepending repeats the local ASN in the advertised path, making it look artificially longer, so peers prefer the genuinely shorter path instead — exactly this use case."> AS-path prepending, to make the satellite path look artificially longer</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Assigning a private ASN changes numbering, not path length — it has no effect on which path BGP selects as shortest."> Assigning the satellite link a private ASN in the 64,512–65,534 range</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Two routers in different companies want to exchange routing information directly with each other using BGP. What must happen first?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="BGP peering relationships are never established automatically just because two routers are network-reachable — someone must deliberately configure the peering."> Nothing; BGP peers automatically discover reachable neighbors</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A BGP peering relationship between two autonomous systems must always be manually configured before any route exchange can begin — it is never automatic."> A BGP peering relationship must be manually configured between them</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ASNs identify autonomous systems for BGP purposes, but merging into a single ASN isn't how peering between separate companies' networks works — each keeps its own AS and they peer with each other."> Both companies must merge their networks under one shared ASN</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AS-path prepending is a technique for influencing route preference after peering exists — it has nothing to do with establishing the initial peering relationship."> Each router must prepend its ASN before any connection is made</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-ipsec-vpn-fundamentals.html">Next: IPSec VPN Fundamentals →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

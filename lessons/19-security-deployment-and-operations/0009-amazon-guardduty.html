@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Amazon GuardDuty</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Security, Deployment and Operations</a> › Lesson 09
+    </div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>Amazon GuardDuty</h1>
+    <p class="lesson-meta">Lesson 09 of 9 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html" target="_blank">What is Amazon GuardDuty?</a> · <a href="https://docs.aws.amazon.com/guardduty/latest/ug/guardduty-features-activation-model.html" target="_blank">Feature names for protection plans in GuardDuty</a></p>
+  </div>
+
+  <p><strong>GuardDuty</strong> is a continuous, account-wide threat-detection service. Once enabled, it never stops running: it uses machine learning, anomaly detection, and threat-intelligence feeds against ingested account activity to surface <strong>findings</strong> — unexpected or unauthorized activity. Critically, you don't hand-define what "normal" looks like; GuardDuty learns your account's behavior patterns itself. You can still influence it — allow-listing known-good IPs, for instance — but the baseline is learned, not configured.</p>
+
+  <h2>Multi-Account Architecture</h2>
+  <p>Like Macie and Inspector, GuardDuty uses an <strong>administrator/member account</strong> model with a single pane of management: enable GuardDuty in one account to make it the administrator, then invite other accounts to become members, all managed centrally.</p>
+
+  <h2>Data Sources: The Transcript's List Is Now Only the Starting Point</h2>
+  <p>The original course narration lists four data sources feeding GuardDuty: <strong>DNS logs</strong> (via Route 53), <strong>VPC Flow Logs</strong>, <strong>CloudTrail management events</strong>, and <strong>CloudTrail S3 data events</strong>. These are still accurate — they remain part of what AWS now calls GuardDuty's <strong>foundational data sources</strong> (alongside EKS audit logs, ingested automatically the moment GuardDuty is enabled).</p>
+
+  <div class="callout warn">
+    <div class="callout-title">GuardDuty has grown well beyond the transcript's four sources</div>
+    Current AWS documentation confirms GuardDuty now offers a set of optional, separately-enabled <strong>protection plans</strong> layered on top of the foundational sources — each covering a specific workload type: <strong>S3 Protection</strong> (S3 data events), <strong>EKS Protection</strong> (audit logs and runtime activity), <strong>ECS Runtime Monitoring</strong> and <strong>EC2 Runtime Monitoring</strong>, <strong>Malware Protection</strong> (covering EC2/EBS volumes, S3 object uploads, and AWS Backup data), <strong>RDS Protection</strong> (Aurora and RDS login activity), and <strong>Lambda Protection</strong> (network activity logs). AWS's current docs also show a newer <strong>AI Protection</strong> plan covering CloudTrail data events from Bedrock, Bedrock AgentCore, and SageMaker AI. If a question names any of these newer workload types — EKS, RDS, Lambda, malware on EBS, or AI services — GuardDuty is still very likely the right answer, even though the original course material predates all of them.
+  </div>
+
+  <h2>Architecture: Findings to Response</h2>
+  <p>Ingested data sources plus threat-intelligence feeds are analyzed together to generate findings. Findings route to <strong>EventBridge</strong>, which can drive:</p>
+  <ul>
+    <li><strong>SNS</strong> notifications to a team or an external security management system</li>
+    <li><strong>Lambda</strong>-driven automatic remediation — for example, adding an explicit deny rule to a network ACL in response to a suspected intrusion</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic: three "AWS finds problems for you" services, one job each</div>
+    These three services get confused with each other because they all surface security findings automatically — but each has a distinct lane:
+  </div>
+  <table>
+    <thead><tr><th>Service</th><th>What it actually does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>GuardDuty</strong></td><td>Continuous, ML/threat-intel-driven anomaly detection across the whole account — not a scan you trigger, not a data-classification tool</td></tr>
+      <tr><td><strong>Macie</strong></td><td>Discovers and classifies sensitive <em>data</em> specifically inside S3</td></tr>
+      <tr><td><strong>Inspector</strong></td><td>Vulnerability and CVE scanning of compute — EC2, ECR images, Lambda functions</td></tr>
+    </tbody>
+  </table>
+  <p>If a scenario is about unusual account behavior, credential misuse, or an unexpected network connection — with no mention of scanning packages or classifying stored data — that's GuardDuty.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An account shows an unusual API call pattern suggesting a compromised credential is being used from an unfamiliar location, with no manual scan ever triggered. Which service is designed to catch this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. GuardDuty continuously analyzes account activity using ML and threat intelligence to spot unexpected behavior like this, without requiring any manually triggered scan."> GuardDuty, since it continuously detects anomalous activity</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Macie's job is discovering and classifying sensitive data inside S3 objects — it doesn't analyze account-wide API call patterns for anomalous behavior."> Macie, since it classifies sensitive account data</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Inspector scans compute resources — EC2, ECR images, Lambda functions — for vulnerabilities, not account-wide API behavior for anomalies."> Inspector, since it scans for compromised credentials</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Config tracks configuration changes and compliance drift over time — it doesn't perform behavioral anomaly detection on API activity."> AWS Config, since it tracks all account API calls</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company running EKS, RDS, and Lambda workloads wants GuardDuty coverage tailored to each of these services specifically. What must they do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The four foundational sources from the original course material (DNS, VPC Flow Logs, CloudTrail management and S3 data events) don't cover EKS, RDS, or Lambda-specific activity — those need their own protection plans."> Rely on the four original foundational data sources alone</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. GuardDuty now offers dedicated, separately-enabled protection plans for these workload types — EKS Protection, RDS Protection, and Lambda Protection — layered on top of the foundational sources."> Enable the EKS, RDS, and Lambda protection plans</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Amazon Inspector scans for software vulnerabilities in compute resources — it doesn't provide GuardDuty's workload-specific threat-detection protection plans."> Switch entirely from GuardDuty to Amazon Inspector</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS Config Rules evaluate configuration compliance — they don't add GuardDuty's threat-detection coverage for these specific workload types."> Configure custom AWS Config rules for each workload</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A GuardDuty finding indicates a likely intrusion attempt, and the security team wants an automatic explicit deny added to a network ACL in response. What ties the finding to that remediation?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="SNS is a notification mechanism for people or systems — it doesn't itself modify a network ACL as a remediation action."> SNS directly modifying the network ACL on its own</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. GuardDuty findings route to EventBridge, which can invoke a Lambda function that performs the remediation — such as adding an explicit deny rule to a NACL."> The finding routes to EventBridge, which invokes a Lambda function</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="GuardDuty doesn't modify network resources directly from a finding — remediation is handled through EventBridge and a target service like Lambda."> GuardDuty edits the NACL directly from the finding</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS Config Rules evaluate resource compliance against defined standards — they aren't the mechanism connecting a GuardDuty finding to an automated NACL change."> A Config Rule triggers the NACL change automatically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links"><a href="0008-amazon-inspector.html">← Previous: Amazon Inspector</a><span></span></div>
+    <p style="margin-top:1.5rem">You've completed the Security, Deployment and Operations module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

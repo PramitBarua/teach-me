@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Storage Gateway: Tape Gateway (VTL)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 09
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Storage Gateway: Tape Gateway (VTL)</h1>
+    <p class="lesson-meta">Lesson 09 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/storagegateway/latest/tgw/WhatIsStorageGateway.html" target="_blank">What Is Tape Gateway?</a> · <a href="https://docs.aws.amazon.com/storagegateway/latest/tgw/resource-gateway-limits.html" target="_blank">AWS Storage Gateway Quotas</a></p>
+  </div>
+
+  <p><strong>Tape Gateway</strong>, also called <strong>VTL mode</strong> (Virtual Tape Library), is the Storage Gateway mode built for one specific job: letting an organization keep its existing tape-based backup software and infrastructure, while replacing the physical tape hardware underneath it with AWS storage.</p>
+
+  <h2>Physical tape backup, briefly</h2>
+  <p>To appreciate what Tape Gateway replaces, it helps to know the physical vocabulary first. Enterprise tape backup uses several distinct pieces of equipment:</p>
+  <table>
+    <thead><tr><th>Component</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Tape drive</strong></td><td>Reads from or writes to a single inserted tape — sequential access only, not random access like disk</td></tr>
+      <tr><td><strong>Tape loader / robot</strong></td><td>A mechanical arm that inserts, removes, and swaps tapes between the drive and storage slots</td></tr>
+      <tr><td><strong>Tape library</strong></td><td>A rack-mounted unit containing one or more drives, one or more loaders, and slots for tapes not currently in a drive</td></tr>
+      <tr><td><strong>Tape shelf</strong></td><td>Any storage location that isn't the library — typically an off-site, third-party facility for disaster resilience</td></tr>
+    </tbody>
+  </table>
+  <p>A common tape format is <strong>LTO</strong> (Linear Tape Open); the transcript's LTO9 generation stores 24 TB of data uncompressed per tape, up to roughly 60 TB compressed. The on-premises backup server talks to the tape library over <strong>iSCSI</strong>, which exposes the tape drives and a media changer (another name for the loader/robot) as devices. Running this yourself means capex for the hardware and software, plus ongoing opex for licensing, maintenance, and staff — and moving tapes to off-site shelf storage for resilience costs both money and time.</p>
+
+  <h2>How Tape Gateway replaces it</h2>
+  <p>Tape Gateway keeps the business premises and the backup server, but swaps the physical tape library for the Storage Gateway appliance. Critically, the appliance presents itself over iSCSI exactly like a physical tape library — a media changer plus tape drives — so the backup software cannot tell the difference. This is deliberate: <strong>little to no change is required to existing backup software</strong> beyond pointing it at the gateway.</p>
+  <p>Behind that iSCSI interface, the gateway keeps an upload buffer and local cache (much like Volume Gateway in cached mode) so backups happen at LAN speed locally, while data uploads to AWS in the background. On the AWS side, the Storage Gateway endpoint presents two capabilities:</p>
+  <ul>
+    <li><strong>Virtual Tape Library (VTL)</strong> — an AWS-hosted tape library, backed by <strong>S3</strong>, holding "active" virtual tapes.</li>
+    <li><strong>Virtual Tape Shelf (VTS)</strong> — backed by <strong>S3 Glacier Flexible Retrieval or S3 Glacier Deep Archive</strong>, for virtual tapes that have been exported out of the library.</li>
+  </ul>
+  <p>Exporting a tape in the backup software is the virtual equivalent of physically ejecting it and driving it to off-site storage: the gateway archives it from the VTL into the VTS, moving the underlying data from S3 into Glacier or Glacier Deep Archive. Glacier suits data you may still need to retrieve occasionally; Glacier Deep Archive suits long-term retention you expect to rarely or never touch (for example, for legal reasons). Either way, retrieving an archived tape moves it back from the VTS into the VTL, where the gateway can serve it again.</p>
+
+  <div class="callout">
+    <div class="callout-title">Capacity numbers worth memorizing</div>
+    A virtual tape can be sized from <strong>100 GiB up to 15 TiB</strong>. A single gateway supports up to <strong>1,500 virtual tapes</strong> in its VTL, totaling up to <strong>1 PiB</strong> of active library capacity. Once a tape is archived into the VTS, though, it no longer counts against that 1,500-tape / 1 PiB limit — archive capacity is effectively unlimited.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">A number that's drifted since the course was recorded</div>
+    Adrian's lesson ties the (then-current) 5 TiB maximum virtual tape size to S3's 5 TB maximum object size, calling it "not a coincidence" — both limits matched because tapes are literally stored as S3 objects. AWS has since raised the maximum virtual tape size to <strong>15 TiB</strong>, while S3's single-object maximum has stayed at 5 TB. The underlying mechanism (a virtual tape backed by one S3 object) still holds, but the two numbers no longer match — don't expect a modern exam to test "tape size equals S3 object size" as a hard equivalence.
+  </div>
+
+  <h2>Why use it</h2>
+  <p>Tape Gateway supports a few distinct architectural goals: keep an existing backup system running but swap expensive physical tape infrastructure for economical AWS storage; extend limited on-premises tape capacity into AWS alongside existing hardware; or support a migration, where historical tape backups move onto the gateway so the physical tape hardware can be decommissioned entirely, with the gateway itself (and a backup server) able to run from within AWS for any future restores.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic</div>
+    Whenever a scenario mentions <strong>tape</strong>, a tape library, tape backup software, or tape-based restore, the answer is <strong>Tape Gateway / VTL mode</strong> — essentially without exception at the associate level.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company runs enterprise backup software that writes to a physical tape library over iSCSI. They want to move to AWS without changing their backup software. Which Storage Gateway mode fits, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Volume Gateway presents iSCSI block volumes to servers, not a tape library and media changer — it wouldn't be recognized by tape backup software as a tape target."> Volume Gateway, because it also uses iSCSI for its connections</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Tape Gateway presents an iSCSI media changer and tape drives that look identical to a physical tape library, so existing backup software needs little to no change."> Tape Gateway, because it presents an iSCSI media changer and drives identical to a physical library</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="File Gateway exposes S3 as NFS or SMB file shares — it has no tape or media-changer emulation and wouldn't be recognized by tape backup software."> File Gateway, because it exposes S3 as a mountable file share</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS Snowball is a physical data-transfer device, not an ongoing iSCSI-connected backup target — it doesn't emulate a tape library for continuous backup software use."> Snowball, because it physically ships tape data into AWS</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A backup administrator exports a virtual tape from the Tape Gateway's library using their backup software. What actually happens to the underlying data?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Exporting a tape doesn't delete it — it archives it into the Virtual Tape Shelf, moving the data into Glacier or Glacier Deep Archive rather than removing it."> The tape's data is permanently deleted to free up library capacity</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Exporting moves the virtual tape from the VTL (backed by S3) into the VTS (backed by Glacier or Glacier Deep Archive), mirroring how a physical tape gets ejected and shipped off-site."> The tape moves from the VTL into the VTS, and its data moves from S3 into Glacier</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Exported tapes don't move to EBS snapshots — Tape Gateway's archive tier is Glacier or Glacier Deep Archive, reached through the Virtual Tape Shelf, not EBS."> The tape's data is converted into an EBS snapshot for long-term storage</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The gateway doesn't replicate the tape to another on-premises gateway on export — the data moves into AWS's archive storage tier, not to another physical site."> The tape's data is replicated to a second on-premises tape gateway</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A gateway currently has 1,400 virtual tapes totaling 950 TiB sitting in its Virtual Tape Library. The backup team wants to keep ingesting new tapes without hitting a capacity wall. What's the most effective long-term approach, given the VTL's limits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single gateway's VTL is capped at 1,500 tapes and 1 PiB — deleting old backups isn't necessary if tapes can instead be archived, which removes them from that limit entirely."> Delete the oldest tapes permanently once the 1,500-tape limit is close</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Archiving a tape moves it from the VTL into the VTS (Glacier/Glacier Deep Archive), and archived tapes no longer count toward the 1,500-tape or 1 PiB VTL limits, freeing up room for new active tapes."> Export inactive tapes to the Virtual Tape Shelf so they stop counting against the VTL limit</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Tape Gateway's VTL is capped at 1,500 tapes and 1 PiB per gateway regardless of the individual tape size chosen — larger tapes don't raise that ceiling."> Increase each virtual tape's size so fewer tapes are needed in total</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Tape Gateway has no setting that raises the 1,500-tape VTL ceiling for a single gateway — the way past it is archiving tapes out to the VTS, not a configuration change."> Contact AWS Support to raise the 1,500-tape VTL quota on the gateway</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-storage-gateway-volume.html">← Previous: Storage Gateway: Volume Gateway (Stored & Cached)</a>
+      <a href="0010-storage-gateway-file.html">Next: Storage Gateway: File Gateway →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

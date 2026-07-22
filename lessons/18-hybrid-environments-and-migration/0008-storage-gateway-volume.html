@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Storage Gateway: Volume Gateway (Stored & Cached)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 08
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Storage Gateway: Volume Gateway (Stored &amp; Cached)</h1>
+    <p class="lesson-meta">Lesson 08 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/storagegateway/latest/vgw/StorageGatewayConcepts.html" target="_blank">How Volume Gateway Works</a> · <a href="https://docs.aws.amazon.com/storagegateway/latest/vgw/resource-gateway-limits.html" target="_blank">AWS Storage Gateway Quotas</a></p>
+  </div>
+
+  <p><strong>Storage Gateway</strong> acts as a bridge between on-premises storage and AWS, usually running as a virtual machine on-premises (a hardware appliance is also available). Locally it presents storage over <strong>iSCSI</strong>, <strong>NFS</strong>, or <strong>SMB</strong>; on the AWS side it integrates with EBS, S3, and Glacier. It's used for migrations, data center capacity extension, storage tiering, DR, and replacing legacy tape backup.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — flagged in the course diagram: iSCSI is the Volume Gateway keyword</div>
+    Both modes of <strong>Volume Gateway</strong> present <strong>raw block storage over iSCSI</strong> — exactly like traditional SAN/NAS hardware, so on-premises servers can build a file system on top just as they always have. If an exam question mentions <strong>iSCSI</strong> or <strong>raw block devices</strong> in a Storage Gateway context, think Volume Gateway first.
+  </div>
+
+  <h2>Stored Mode: On-Premises Is Primary</h2>
+  <p>In <strong>stored mode</strong>, the gateway presents volumes over iSCSI, and <strong>all data lives on local on-premises storage</strong> as the primary, authoritative copy. Writes also land in a local <strong>upload buffer</strong>, from which the gateway asynchronously copies data to AWS — over the internet or a public VIF — landing in S3 as <strong>EBS snapshots</strong>. This happens continuously in the background with no manual intervention.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — flagged in the course diagram: stored mode is backup and DR, not capacity relief</div>
+    Because every byte still lives on local storage, stored mode is excellent for <strong>full-disk backup and disaster recovery</strong> — the resulting EBS snapshots can restore a volume or seed a brand-new EBS volume, giving strong RPO/RTO. What it <strong>does not</strong> do is extend on-premises capacity: since the primary copy of every volume still consumes local storage, running low on local disk space is a problem stored mode cannot fix.
+  </div>
+
+  <h2>Cached Mode: AWS Is Primary</h2>
+  <p>In <strong>cached mode</strong> the relationship inverts. <strong>S3 becomes the primary, authoritative store</strong> for all volume data — specifically an <strong>AWS-managed area of S3</strong> that isn't visible as a normal bucket through the S3 console or API. Only the <strong>frequently accessed working set</strong> is kept locally, in cache storage and the upload buffer, for low-latency access.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — flagged in the course diagram: cached mode enables data center extension</div>
+    Because only the working set is stored locally, a gateway with a modest amount of local cache can address <strong>hundreds of terabytes to a petabyte</strong> of AWS-backed data while consuming only a fraction of that locally. This is what enables a <strong>data center extension</strong> architecture — a business at capacity can keep serving its data at local-area-network speeds for hot data, while the bulk of it actually lives in AWS.
+  </div>
+
+  <h2>Capacity Figures</h2>
+  <p>Verified against current AWS Storage Gateway documentation — these match the course figures exactly, with no drift to flag:</p>
+  <table>
+    <thead><tr><th>Mode</th><th>Max volumes / gateway</th><th>Max size per volume</th><th>Max total per gateway</th></tr></thead>
+    <tbody>
+      <tr><td>Stored</td><td>32</td><td>16 TiB</td><td>512 TiB</td></tr>
+      <tr><td>Cached</td><td>32</td><td>32 TiB</td><td>1,024 TiB (1 PiB)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">The exam heuristic that ties it together</div>
+    If a Storage Gateway question uses the keyword <strong>"volume,"</strong> default to <strong>Volume Gateway</strong>. From there, language about <strong>backup or disaster recovery</strong> points to <strong>stored mode</strong>; language about <strong>capacity relief or data center extension</strong> points to <strong>cached mode</strong>. Both modes create EBS snapshots and both use iSCSI — the difference is purely which side (on-premises or S3) holds the authoritative primary copy.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company's on-premises server room is completely full and cannot add more disks, but the business wants to keep presenting large volumes to its application servers over iSCSI as if capacity were unlimited. Which Storage Gateway mode fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Stored mode keeps a full primary copy of every volume on local on-premises storage — it cannot relieve a local capacity shortage, since local disk usage grows with every byte written."> Volume Gateway in stored mode</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Cached mode makes S3 the primary store for all volume data, keeping only frequently accessed data locally in cache storage — enabling a data center extension architecture that addresses far more capacity than local disks alone provide."> Volume Gateway in cached mode</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Storage Gateway doesn't offer a mode that presents raw iSCSI volumes without designating either on-premises storage or S3 as the primary copy — every Volume Gateway deployment is either stored or cached."> Volume Gateway with no local storage requirement at all</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Storage Gateway offers stored mode and cached mode for volumes; there isn't a distinct 'hybrid' mode that blends the two behaviors."> Volume Gateway in a hybrid stored-and-cached mode</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company wants full-disk backups of its on-premises servers with strong RPO/RTO, and needs the ability to spin up a full EBS-based copy of a server in AWS for disaster recovery. Which mode, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. In stored mode all data is kept locally as the primary copy and is asynchronously backed up to AWS as EBS snapshots — ideal for full-disk backup, and those snapshots can seed new EBS volumes for DR."> Stored mode, because snapshots taken from local primary data enable DR</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cached mode is built around minimizing local storage by keeping only hot data locally — it's designed for capacity extension, not around producing full local-primary backups for DR."> Cached mode, because it minimizes on-premises storage during backup</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Storage Gateway's Volume Gateway modes are stored and cached — there isn't a separate 'snapshot mode,' and full-disk backup capability comes specifically from stored mode's local-primary architecture."> Snapshot mode, because it's purpose-built for EBS-only backups</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cached mode keeps only the working set locally, which is well suited to capacity extension but not to guaranteeing a full, complete local-primary copy for full-disk backup and DR purposes."> Cached mode, because it guarantees the fastest possible DR failover</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A gateway is configured for cached-mode volumes and a team wants to browse the underlying primary data directly through the S3 console to verify it. What should they expect?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cached-mode primary data does live in S3, but it sits in an AWS-managed area that isn't exposed as a normal bucket — it can't be browsed through the standard S3 console or API."> They can browse it normally, since cached-mode data is a standard S3 bucket</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Cached mode stores primary data in an AWS-managed area of S3 that isn't visible as an ordinary bucket — it's only accessible and manageable through the Storage Gateway console or API, not the S3 console."> They cannot browse it directly; it lives in an AWS-managed S3 area only visible via Storage Gateway</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cached mode's primary copy is in S3, not on-premises — on-premises storage in this mode holds only the cached working set, not the authoritative primary data."> They can browse it on-premises instead, since that's where primary data lives in cached mode</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Cached-mode data isn't stored as Glacier archives — it's block-level volume data held in an AWS-managed S3 area, distinct from standard S3 storage classes a user could browse."> They can browse it through Glacier, since cached data is archived there</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-transit-gateway.html">← Previous: Transit Gateway</a>
+      <a href="0009-storage-gateway-tape-vtl.html">Next: Storage Gateway: Tape Gateway (VTL) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

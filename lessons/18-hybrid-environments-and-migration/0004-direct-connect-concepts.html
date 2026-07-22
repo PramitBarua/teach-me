@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Direct Connect (DX): Concepts</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 04
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Direct Connect (DX): Concepts</h1>
+    <p class="lesson-meta">Lesson 04 of 16 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html" target="_blank">What is Direct Connect?</a> · <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/Colocation.html" target="_blank">Requesting cross connects at Direct Connect locations</a></p>
+  </div>
+
+  <p><strong>Direct Connect (DX)</strong> is a dedicated physical network connection into an AWS Region. Ordering a Direct Connect from AWS gets you a <strong>port allocation at a DX location</strong> — nothing more. AWS doesn't run a cable to your building; it's on you to physically connect to that port, either yourself or through a comms partner.</p>
+
+  <h2>Three Physical Locations</h2>
+  <p>Think of a Direct Connect architecture as three distinct physical places:</p>
+  <ol>
+    <li><strong>Your business premises</strong> — with a customer premises router.</li>
+    <li><strong>A DX location</strong> — a facility housing DX infrastructure.</li>
+    <li><strong>An AWS Region</strong> — the destination, connected to its nearby DX location(s) by AWS's own resilient, high-speed links.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — flagged in the course diagram: DX locations are not AWS-owned</div>
+    A DX location is <strong>not an AWS-owned building</strong>. It's typically a large, third-party-operated regional data center in which AWS leases space — the <strong>AWS cage</strong> — to house its own DX routers. Your organization (or your comms partner) separately leases its own space in the same facility. This distinction — AWS is a <em>tenant</em> at the DX location, not the owner — is easy to assume wrong and worth remembering precisely as stated.
+  </div>
+
+  <h2>Cages and Cross Connects</h2>
+  <p>Inside the DX location:</p>
+  <ul>
+    <li>The <strong>AWS cage</strong> holds the AWS DX routers — the service endpoints.</li>
+    <li>If you're a large organization with your own footprint at the location, you rent a <strong>customer cage</strong> housing your own DX-capable router.</li>
+    <li>If you don't have (or want) your own space there, a <strong>communications/network partner</strong> rents a <strong>comms partner cage</strong> instead.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — flagged in the course diagram: comms partners extend the connection for you</div>
+    If you don't have your own equipment or cage at the DX location, a <strong>communications/network partner</strong> can extend the connection from the DX location into your business premises on your behalf, using their own presence there. You don't need a physical footprint at the DX location yourself to use Direct Connect — the comms-partner-cage pattern exists precisely to cover that gap.
+  </div>
+
+  <p>Whichever cage your router sits in, connecting it to the AWS DX router requires ordering a <strong>cross connect</strong> — the physical fiber cable within the DX location linking your port (or your partner's port) to the AWS DX port. If a comms partner is involved, they're also responsible for extending that connectivity onward to your actual premises.</p>
+
+  <h2>Port Speeds and Billing</h2>
+  <p>The transcript's course-era speed options were <strong>1 Gbps, 10 Gbps, or 100 Gbps</strong>. <strong>AWS has since added a 400 Gbps dedicated connection option</strong> at select locations, so current published speeds for dedicated connections span 1/10/100/400 Gbps (hosted connections, provisioned through a DX partner, support additional finer-grained speeds below 1 Gbps too). Billing has two components: an <strong>hourly port charge</strong> (based on location and speed) plus a charge for <strong>outbound</strong> data transfer — inbound data transfer is free.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Provisioning time and resilience — know these cold</div>
+    Direct Connect is <strong>slow to provision</strong> — AWS needs time to allocate the port, and if the physical cabling from the DX location to your premises doesn't already exist, laying it can take <strong>weeks to months</strong>. And because it's ultimately one physical cable, DX has <strong>no built-in resilience</strong>: cut the cable and the connection is down. Any redundancy has to be deliberately designed in with multiple, physically separate Direct Connects — a topic covered in the next lesson.
+  </div>
+
+  <h2>Why Choose Direct Connect</h2>
+  <p>Because it's a dedicated physical link that bypasses the public internet, DX offers <strong>low and consistent latency</strong> and the <strong>highest achievable throughput</strong> for hybrid connectivity — a dedicated port largely guarantees you can hit close to its rated speed, unlike an IPSec VPN, which adds encryption overhead and transits shared internet paths.</p>
+
+  <h2>Virtual Interfaces (VIFs)</h2>
+  <p>A single physical DX connection is logically divided using <strong>virtual interfaces</strong>. There are three types, at a conceptual level for now:</p>
+  <table>
+    <thead><tr><th>VIF type</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Private VIF</strong></td><td>Connects to a virtual private gateway attached to a VPC — access to private AWS resources</td></tr>
+      <tr><td><strong>Public VIF</strong></td><td>Reaches AWS public-zone services (e.g. S3, SQS) using their public IP ranges</td></tr>
+      <tr><td><strong>Transit VIF</strong></td><td>Connects to a Transit Gateway — covered in depth in a later lesson</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-title">DX cannot reach the public internet</div>
+    Direct Connect gives you paths to AWS <strong>private</strong> services (via a private VIF) and AWS <strong>public-zone</strong> services (via a public VIF) — but never the general public internet. If you need internet access over a DX-connected network, you have to add your own proxy or other networking appliance to provide it; DX itself simply doesn't do that.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A solutions architect assumes a Direct Connect location is an AWS-owned facility, since AWS DX routers live there. Is this assumption correct?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="DX locations are typically third-party-operated data centers where AWS rents space, not facilities AWS owns outright."> Yes; AWS owns and operates every DX location outright</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A DX location is generally a third-party-operated data center in which AWS leases space — the AWS cage — for its DX routers. AWS is a tenant there, not the owner of the building."> No; AWS typically leases cage space in a third-party facility</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AWS owns AWS Regions, but a DX location and an AWS Region are distinct physical places — DX location ownership doesn't follow from Region ownership."> Yes, but only for locations attached to AWS-owned Regions</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Comms partner cage ownership is a separate detail about customer-side space, and it doesn't change the fact that DX locations overall are third-party-owned facilities, not AWS-owned ones."> No; DX locations are owned by comms partners exclusively</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A small company wants to use Direct Connect but has no equipment or leased space of its own at the nearest DX location. What's the standard way to still get connected?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS never extends the physical connection into your premises directly — a DX order only provides a port allocation at the DX location itself."> AWS extends the physical cable directly to their premises for free</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A communications/network partner can rent a comms partner cage at the DX location and extend connectivity from there into the customer's premises on their behalf — exactly this pattern."> A communications partner extends the connection from its own cage</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A DX order is a physical port allocation, not a virtual, cageless service — some physical cage (yours or a partner's) is always part of the architecture."> Direct Connect works over the public internet without any cage</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Public VIFs give access to AWS public-zone services once connectivity exists — they don't substitute for the physical cage/cross-connect needed to reach the DX location in the first place."> A public VIF replaces the need for any physical cage entirely</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An application team wants to reach both a private S3 bucket path and a VPC-hosted database over Direct Connect, and also wants general internet browsing to work over the same link. Which part of this is not possible with DX alone?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A private VIF is exactly the mechanism DX uses to reach VPC-hosted private resources like a database — this part works fine over Direct Connect."> Reaching the VPC-hosted database, since DX has no private VIF option</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A public VIF is exactly the mechanism DX uses to reach AWS public-zone services like S3 — this part works fine over Direct Connect."> Reaching the S3 bucket path, since DX has no public VIF option</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Direct Connect provides access to AWS private and public-zone services, but never the general public internet — a proxy or other networking appliance would need to be added separately to provide that."> General internet browsing, since DX cannot reach the public internet</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="None of these three requirements is impossible except the internet browsing one — private and public AWS service access are both standard, supported DX use cases via private and public VIFs."> None of these; all three work identically over a single VIF</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-aws-site-to-site-vpn.html">← Previous: AWS Site-to-Site VPN</a>
+      <a href="0005-direct-connect-resilience.html">Next: Direct Connect (DX): Resilience →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

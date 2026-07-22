@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – AWS Directory Service</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 12
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>AWS Directory Service</h1>
+    <p class="lesson-meta">Lesson 12 of 16 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/directoryservice/latest/admin-guide/what_is.html" target="_blank">What Is AWS Directory Service?</a> · <a href="https://docs.aws.amazon.com/directoryservice/latest/admin-guide/directory_microsoft_ad.html" target="_blank">AWS Managed Microsoft AD</a></p>
+  </div>
+
+  <p>A <strong>directory</strong> stores identity and asset information — users, groups, computer objects, server objects, file shares — arranged in a hierarchical, tree-like structure usually called a <strong>domain</strong>. Multiple domains grouped together form a <strong>forest</strong>. Directories let corporate IT centrally manage identity: join laptops, desktops, and servers to a single directory, and the same username and password works everywhere. <strong>Microsoft Active Directory</strong> (Active Directory Domain Services, ADDS) is the dominant standard; <strong>Samba</strong> is a well-known open-source alternative that provides only partial compatibility with it.</p>
+
+  <p><strong>AWS Directory Service</strong> is AWS's managed directory offering — roughly the same relationship to Active Directory that RDS has to databases: AWS runs it, patches it, and makes it highly available across multiple subnets and Availability Zones, removing the admin overhead of running your own domain controllers. It's a private, VPC-based service. Some AWS services can optionally use a directory (Windows EC2 instances can join one for login and centralized management); others require one outright — <strong>Amazon WorkSpaces</strong> is the standard example, since a virtual desktop has to authenticate its users against a registered directory.</p>
+
+  <p>Directory Service offers three modes, and picking between them is really an exam-style decision problem.</p>
+
+  <h2>Simple AD — the default</h2>
+  <p>Simple AD is the cheapest, simplest mode: an open-source directory powered by <strong>Samba 4</strong>, aiming for broad Active Directory compatibility without being a real AD implementation. It comes in two sizes — <strong>Small</strong> (up to ~500 users) and <strong>Large</strong> (up to ~5,000 users) — and supports user accounts, group memberships, group policies, EC2 domain join, and Kerberos-based SSO. It integrates with a modest set of AWS applications: <strong>WorkSpaces, WorkDocs, WorkMail</strong>, and Management Console sign-in.</p>
+  <p>Simple AD is designed to run <strong>in isolation</strong> — it has no on-premises integration and cannot form trust relationships with another domain.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Two facts that have moved since this course was recorded — worth knowing right now</div>
+    <strong>Simple AD's compatibility list is narrower than the transcript describes.</strong> Current AWS docs explicitly state Simple AD does <em>not</em> support Amazon RDS for SQL Server or Oracle, Amazon FSx, Amazon Chime, IAM Identity Center, MFA, or schema extensions — several of which older material (including this course) lists as working. Treat WorkSpaces, WorkDocs, WorkMail, and console sign-in as the safe, current answer set.<br><br>
+    <strong>Simple AD itself is being closed to new customers on July 30, 2026.</strong> Existing Simple AD directories keep full functionality indefinitely, but after that date nobody can create a new one — AWS steers new customers toward AWS Managed Microsoft AD or AD Connector instead. The exam's "always default to Simple AD" framing is still the right theoretical answer today, but treat this as a service in its sunset window, not a long-term default to recommend in practice.
+  </div>
+
+  <h2>AWS Managed Microsoft AD</h2>
+  <p>This mode is an <strong>actual implementation of Microsoft Active Directory</strong> — not an emulation, not Samba-based. It's used when an application genuinely requires real AD features such as <strong>schema extensions</strong>, or when it needs software like <strong>Microsoft SharePoint or SQL Server</strong> that expects a full AD deployment underneath it.</p>
+  <p>Beyond running as a self-contained directory in AWS, it can also establish a <strong>two-way trust relationship</strong> with an existing on-premises Active Directory, over a VPN or Direct Connect link. Because the AWS-side directory is fully functional on its own, if that private connection drops, AWS services relying on the directory keep working — only cross-directory trust operations are affected.</p>
+
+  <div class="callout">
+    <div class="callout-title">A version number worth updating</div>
+    The transcript describes AWS Managed Microsoft AD as running <strong>Windows Server 2012 R2</strong> — true when the course was recorded. Current AWS documentation confirms it now runs on <strong>Windows Server 2019</strong> (AWS auto-upgraded existing directories starting in 2023). The architectural facts — real AD, schema extensions, two-way trust — are unchanged; only the underlying Windows Server version has moved on.
+  </div>
+
+  <h2>AD Connector</h2>
+  <p>AD Connector is pure proxy — it stores <strong>zero directory data</strong> in AWS. You point it at an existing on-premises Active Directory over a VPN or Direct Connect link, and it forwards authentication requests from AWS services back to that on-premises directory. AWS services that require "a directory" see the connector and treat it as one, without knowing or caring that requests are actually being proxied elsewhere.</p>
+  <p>Because nothing is stored in AWS, AD Connector requires the on-premises directory and the private connection to it to be <strong>working at all times</strong> — if either fails, the connector fails along with it, and every AWS service depending on it stops authenticating.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic — decision order</div>
+    <strong>Default to Simple AD</strong> for isolated directory needs with no on-premises integration. <strong>Move to Managed Microsoft AD</strong> only when an application needs a real AD schema, or when a trust relationship with on-premises AD is required. <strong>Use AD Connector</strong> only when directory data must never be stored in AWS at all — you already have an on-premises directory and simply want AWS services to use it.
+  </div>
+
+  <table>
+    <thead><tr><th>Mode</th><th>Directory data stored in AWS?</th><th>On-prem trust / integration</th></tr></thead>
+    <tbody>
+      <tr><td>Simple AD</td><td>Yes (Samba 4, isolated)</td><td>None</td></tr>
+      <tr><td>AWS Managed Microsoft AD</td><td>Yes (real AD)</td><td>Optional two-way trust over VPN/DX</td></tr>
+      <tr><td>AD Connector</td><td>No — pure proxy</td><td>Required, continuously, or it fails</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A startup needs Amazon WorkSpaces for 200 employees, has no existing on-premises directory, and needs nothing beyond basic user and group management. Which Directory Service mode fits, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. With no on-premises directory to integrate with and only basic needs at a small user count, Simple AD is the default, lowest-cost fit."> Simple AD, since there's no on-premises directory and requirements are basic</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Managed Microsoft AD is justified by needing real AD schema support or an on-premises trust relationship — neither applies here, so it's more than this scenario needs."> AWS Managed Microsoft AD, since it's the most fully featured option</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AD Connector requires an existing on-premises directory to proxy to — this startup has none, so there's nothing for a connector to point at."> AD Connector, since it avoids storing any directory data in AWS</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="WorkSpaces requires a registered AWS directory of some kind; skipping Directory Service isn't an option when a service like WorkSpaces mandates one."> No Directory Service is needed since WorkSpaces manages its own logins</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company is deploying SharePoint on EC2, which requires genuine Active Directory schema extensions, and also wants a trust relationship with their existing on-premises AD over Direct Connect. Which mode is required?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Simple AD is Samba-based, doesn't support schema extensions, and cannot form trust relationships with another domain — it can't meet either requirement here."> Simple AD, since it offers the broadest Active Directory compatibility</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. AWS Managed Microsoft AD is a real Active Directory implementation supporting schema extensions, and it can form a two-way trust with an on-premises AD over Direct Connect or VPN."> AWS Managed Microsoft AD, since it's a real AD implementation with trust support</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AD Connector stores no directory data of its own and can't host schema extensions — it only proxies to an existing directory, which doesn't satisfy a schema-extension requirement."> AD Connector, since it can proxy schema requests to on-premises AD</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="IAM roles govern AWS API permissions, not Active Directory schema extensions or domain trust relationships — they don't substitute for a real AD implementation here."> IAM roles configured with a custom Active Directory policy</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company already runs a mature on-premises Active Directory and wants a handful of AWS services to authenticate against it, but company policy forbids storing any directory data — even a replica — inside AWS. Which mode satisfies this, and what's the trade-off?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Simple AD creates and stores its own independent Samba-based directory in AWS — it doesn't proxy to an existing on-premises directory, so it would violate the no-data-in-AWS requirement."> Simple AD, configured to sync read-only copies of on-premises users</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Managed Microsoft AD stores a full, real Active Directory instance inside AWS, even when trust with on-premises AD is configured — that directly violates the no-data-in-AWS requirement."> AWS Managed Microsoft AD with a one-way trust to on-premises AD</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. AD Connector stores zero directory data in AWS and purely proxies requests back to the on-premises directory — the trade-off is that it depends entirely on that connectivity and directory staying available."> AD Connector; the trade-off is total dependence on the on-premises link staying up</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="IAM Identity Center federates workforce identities for AWS access but isn't the Directory Service mode being asked about, and doesn't itself avoid the need for one of the three directory modes here."> IAM Identity Center, replacing the need for Directory Service entirely</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-snowball-snowball-edge-and-snowmobile.html">← Previous: Snowball, Snowball Edge & Snowmobile</a>
+      <a href="0013-datasync.html">Next: AWS DataSync →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

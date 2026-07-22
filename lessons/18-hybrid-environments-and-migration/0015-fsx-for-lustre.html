@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15 – FSx for Lustre</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 15
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>FSx for Lustre</h1>
+    <p class="lesson-meta">Lesson 15 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html" target="_blank">Deployment and Storage Class Options for FSx for Lustre File Systems</a></p>
+  </div>
+
+  <p><strong>FSx for Lustre</strong> is a managed implementation of the Lustre file system — built for Linux, using <strong>POSIX-style permissions</strong>, and designed for high-performance computing: machine learning, big data processing, and financial modeling. It scales to hundreds of GB/s of throughput with sub-millisecond latency.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic: which FSx?</div>
+    <strong>Windows / SMB</strong> keywords → FSx for Windows File Server. <strong>Lustre / HPC / machine learning / SageMaker / POSIX / big-data-processing</strong> keywords → FSx for Lustre. This distinction, not Lustre's internals, is the testable core of the topic.
+  </div>
+
+  <h2>Deployment Types: Scratch vs. Persistent</h2>
+  <p>The classic exam-tested framing is a choice between two deployment types:</p>
+  <table>
+    <thead><tr><th>Deployment type</th><th>Performance</th><th>Resilience</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Scratch</strong></td><td>Maximum raw performance</td><td><strong>No replication.</strong> A hardware failure loses the data on the affected server — other data on the file system is unaffected.</td><td>Short-term / temporary workloads where raw speed matters more than durability.</td></tr>
+      <tr><td><strong>Persistent</strong></td><td>High, but tuned for durability over peak speed</td><td>Replicated <strong>within a single AZ</strong> (not multi-AZ) and self-healing — AWS automatically replaces failed hardware.</td><td>Longer-term workloads that need resilience against hardware failure, but not a full AZ outage.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Persistent's high availability stops at the AZ boundary</div>
+    Persistent's replication happens <strong>within one Availability Zone only</strong>. It protects you from hardware failure, but not from the loss of that entire AZ. Lustre is fundamentally a single-AZ file system in both deployment types — that's part of how it delivers such extreme performance.
+  </div>
+
+  <p>Both deployment types support backing up file system data to S3, either manually or automatically, with a configurable retention window of <strong>0–35 days</strong> (0 disables automatic backups, matching the pattern used elsewhere in AWS).</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale-vs-current: AWS has added more generations since this framing</div>
+    Current AWS documentation describes a richer picture than plain "Scratch vs. Persistent": there are now <strong>Scratch 1 / Scratch 2</strong> and <strong>Persistent 1 / Persistent 2</strong> generations, plus three storage classes (<strong>SSD</strong>, <strong>HDD</strong>, and <strong>Intelligent-Tiering</strong>). Notably, <strong>Persistent 2 file systems using the Intelligent-Tiering storage class now replicate data across multiple Availability Zones</strong> — a real exception to the "Persistent is single-AZ only" rule above for that specific configuration. The Scratch-vs-Persistent, single-AZ mental model above is still the right level of depth for SAA-C03, but don't be surprised if newer AWS material frames it with more nuance.
+  </div>
+
+  <h2>Architecture: MDTs, OSTs, and the S3 Repository</h2>
+  <p>A Lustre file system splits stored data into two kinds of targets:</p>
+  <ul>
+    <li><strong>Metadata Target (MDT)</strong> — stores file names, timestamps, and permissions. There is exactly <strong>one</strong> per file system.</li>
+    <li><strong>Object Storage Targets (OSTs)</strong> — store the actual file data, striped across multiple ~1.17 TiB units. Splitting data across many OSTs is how Lustre achieves its performance.</li>
+  </ul>
+  <p>The file system is deployed into a client-managed VPC, reachable through a <strong>single Availability Zone / single ENI</strong> — the same private-networking access pattern as EFS and FSx for Windows (including reachability over VPN and Direct Connect, bandwidth permitting).</p>
+
+  <p>Optionally, you can associate the file system with an S3 <strong>repository</strong> (an S3 bucket) at creation time.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">S3 repository objects are lazy-loaded, not synced</div>
+    When a repository is attached, S3 objects <strong>appear</strong> in the Lustre namespace immediately — but they are not actually present in the file system until a client first accesses them. That first access triggers a <strong>lazy load</strong> from S3 into Lustre. There is no automatic two-way sync: changes made inside the Lustre file system are pushed back to the S3 repository only when you explicitly run <code>hsm_archive</code>. Think of Lustre and the S3 bucket as two genuinely separate stores that you can bridge on demand, not a live mirror.
+  </div>
+
+  <h2>Performance Model: Baseline + Burst Credits</h2>
+  <p>Throughput is expressed per TiB of provisioned storage, with a baseline level and the ability to burst above it using a credit system — you earn credits while running below baseline and spend them while bursting above it, conceptually similar to <strong>EBS burst credits</strong>, just at much higher scale and with a more parallel architecture. Persistent deployments offer multiple baseline throughput tiers per TiB, giving you a cost/performance dial to turn.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A machine learning team needs a POSIX-compliant, sub-millisecond-latency file system for a short-lived batch training job, and doesn't care about hardware-failure resilience. Which FSx for Lustre deployment type fits, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Scratch is built for maximum raw performance on short-term workloads and accepts no replication — exactly matching a temporary job that doesn't need resilience."> Scratch, since it maximizes performance and resilience isn't a requirement</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Persistent trades some peak performance for AZ-local replication and self-healing — appropriate for longer-term resilient workloads, but not the best match when the job is short-lived and resilience isn't needed."> Persistent, since it always outperforms Scratch for ML workloads</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="FSx for Windows uses SMB and a native Windows file system with no POSIX permission model — it doesn't fit this Linux/HPC-style requirement at all."> FSx for Windows File Server, since it offers the widest protocol support</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EFS is an NFS-based, general-purpose Linux file system without the extreme sub-millisecond HPC throughput profile that Lustre is purpose-built to deliver."> Amazon EFS, since it natively supports POSIX permissions too</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An FSx for Lustre file system uses the Persistent deployment type and is associated with an S3 repository. A client reads a file that has never been accessed before. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Repository association doesn't pre-load or continuously sync every object into Lustre — objects only become truly present in the file system once a client actually accesses them."> Nothing extra; every repository object is already fully present in Lustre</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Objects in an associated S3 repository appear in the Lustre namespace immediately but are only actually pulled into the file system the first time a client accesses them — a lazy load, not an upfront sync."> The object is lazy-loaded from S3 into the file system at that first access</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Loading data on first access doesn't require manually running hsm_archive — that command is used for pushing file system changes back to S3, not for pulling objects in."> The read fails until an administrator manually runs hsm_archive</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Lustre and its S3 repository aren't kept in continuous two-way sync — there's no background replication process running between them."> The file system starts a background two-way sync with the entire bucket</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team using the Persistent deployment type of FSx for Lustre wants to understand their resilience against a full Availability Zone outage. What should they expect?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Persistent's replication and self-healing operate within a single Availability Zone only — Lustre file systems, in both deployment types, are fundamentally single-AZ, so a full AZ outage isn't automatically covered."> Full protection; Persistent replicates data across multiple AZs automatically</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Persistent's replication and self-healing protect against hardware failure within a single AZ, not the loss of the entire AZ — Lustre is a single-AZ file system by design, which is part of how it achieves such high performance."> No AZ-level protection; replication and self-healing are confined to one AZ</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Switching to the Scratch deployment type would remove replication and self-healing entirely, making resilience worse, not better, and it still wouldn't add multi-AZ protection."> They should switch to Scratch, which offers multi-AZ resilience</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 backups protect against data loss by restoring from a point-in-time snapshot, but they don't make the live Persistent file system itself resilient to an AZ outage in real time."> Full protection, as long as automatic S3 backups are enabled</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0014-fsx-for-windows-file-server.html">← Previous: FSx for Windows File Server</a>
+      <a href="0016-aws-transfer-family.html">Next: AWS Transfer Family →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

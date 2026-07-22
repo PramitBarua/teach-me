@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – Snowball, Snowball Edge & Snowmobile</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 11
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Snowball, Snowball Edge & Snowmobile</h1>
+    <p class="lesson-meta">Lesson 11 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html" target="_blank">What Is AWS Snowball Edge?</a> · <a href="https://docs.aws.amazon.com/snowball/latest/developer-guide/snowball-edge-availability-change.html" target="_blank">AWS Snowball Edge Availability Change</a></p>
+  </div>
+
+  <p>The <strong>Snow family</strong> — Snowball, Snowball Edge, and Snowmobile — moves large amounts of data physically in or out of AWS, for the cases where uploading over the internet (or even Direct Connect) is too slow or too impractical. These are physical devices: suitcase-sized units, or, for Snowmobile, an entire shipping container on a truck. You order one, load it (or AWS pre-loads it with your requested data), and ship it back.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Product lineup has changed since this course was recorded</div>
+    The exam still tests the three-tier mental model below — Snowball (storage only) → Snowball Edge (storage + compute) → Snowmobile (single massive site) — and that reasoning is exactly what associate-level questions expect. But the real-world product catalog has moved on: the original 50 TB/80 TB storage-only <strong>Snowball</strong> device and <strong>Snowcone</strong> are retired, <strong>Snowmobile</strong> was discontinued around 2024, and as of <strong>November 2025 the entire Snow family is closed to new customers</strong> — only existing customers can still order Snowball Edge devices. AWS now points new customers toward <strong>AWS DataSync</strong> (online transfer) or the <strong>AWS Data Transfer Terminal</strong> (physical, in-person transfer) instead. Keep the architecture reasoning below for the exam, but don't expect to actually be able to order a classic Snowball or a Snowmobile today.
+  </div>
+
+  <h2>Snowball — storage only</h2>
+  <p>Snowball is a pure storage device: <strong>50 TB or 80 TB</strong> capacity, connected using <strong>1 Gb or 10 Gb</strong> physical networking. All data at rest on a Snowball is encrypted with <strong>KMS</strong>. Ordering one is a physical process — you log a job, AWS ships a device, you fill it, you ship it back — so it's never instant.</p>
+  <p>The economical sweet spot for Snowball is roughly <strong>10 TB to 10 PB</strong> of data. Below that range, an internet or Direct Connect transfer is usually simpler; well above it, a single Snowball stops being the right tool. A key architectural trick: you can order <strong>multiple devices to multiple premises</strong> at once — for example, ten Snowballs shipped to ten different offices, each ingesting data locally before being shipped back.</p>
+
+  <h2>Snowball Edge — storage and compute</h2>
+  <p>Snowball Edge adds <strong>compute capability</strong> on top of storage, plus faster networking (10 Gb over RJ45, 10/25 Gb over SFP, or 45/50/100 Gb over QSFP+, depending on what your site can use). It comes in three variants:</p>
+  <table>
+    <thead><tr><th>Variant</th><th>Resources</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Storage Optimized</strong></td><td>80 TB storage, 24 vCPUs, 32 GiB RAM; an optional EC2-capable configuration adds 1 TB of local SSD to actually run instances</td></tr>
+      <tr><td><strong>Compute Optimized</strong></td><td>100 TB storage plus 7.68 TB of PCI-attached NVMe, 52 vCPUs, 208 GiB RAM</td></tr>
+      <tr><td><strong>Compute Optimized with GPU</strong></td><td>Same as Compute Optimized, plus GPU capability for scientific analysis, modeling, or other parallel workloads</td></tr>
+    </tbody>
+  </table>
+  <p>Choose Snowball Edge over plain Snowball whenever a site needs to <strong>process data as it's ingested</strong> (rather than just move it), or when the larger capacity and faster networking will meaningfully shorten how long data takes to load before shipping the device back.</p>
+
+  <h2>Snowmobile — one truck, one site</h2>
+  <p>Snowmobile is, literally, a shipping container mounted on a truck, driven to your premises and plugged into data-center-grade power and networking. A single Snowmobile can move up to <strong>100 PB</strong> of data. It was reserved for the largest, single-site migrations — think a full data center migration north of 10 PB.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic: single site vs. multiple sites</div>
+    A Snowmobile is <strong>one physical truck</strong> — it cannot be split across sites, so it only ever makes sense for a <strong>single location</strong> with a genuinely enormous amount of data. If a scenario has <strong>multiple sites</strong>, each with a moderate amount of data, the answer is <strong>Snowball or Snowball Edge, ordered as multiple devices</strong> — never Snowmobile. If a scenario has a <strong>single site with more than roughly 10 PB</strong>, Snowmobile is the one built for that scale.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A retailer has 12 regional warehouses, each with roughly 40 TB of local inventory data that needs to move into AWS, and no meaningful internet uplink at any site. What's the best-fit approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Snowmobile is a single truck that serves one site at a time — it can't be split across 12 separate warehouses, so it doesn't fit a multi-site scenario like this."> Order one Snowmobile and drive it between all 12 warehouses in turn</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Ordering multiple Snowball (or Snowball Edge) devices to multiple premises at once is exactly the supported pattern for moderate per-site data volumes across many locations."> Order a Snowball or Snowball Edge device to each of the 12 warehouses</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="With no meaningful internet uplink at any site, an internet-based transfer is exactly the impractical option this scenario is designed to rule out."> Have each warehouse upload directly to S3 over the internet</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Direct Connect is a dedicated network link typically provisioned to one location over time — it doesn't fit a scenario needing rapid ingestion from 12 sites with no existing connectivity."> Provision a Direct Connect connection at each warehouse</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A single data center is being fully decommissioned, with roughly 40 PB of data that must move into AWS as part of the migration. Historically, which product was purpose-built for this scenario, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A single Snowball tops out at 80 TB and suits an economical range up to about 10 PB — far short of a single-site 40 PB migration."> A single Snowball device, since it can be ordered with extra capacity</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Snowball Edge fits multi-site moderate volumes well, but at 40 PB from one single location, it isn't the product purpose-built for that scale."> Several Snowball Edge devices shipped to the one data center in sequence</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Snowmobile, a single truck-mounted container capable of up to 100 PB, was purpose-built for exactly this: one site, an enormous single-location data volume well above 10 PB."> Snowmobile, since it's built for single-site transfers well above 10 PB</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Tape Gateway backs up to S3 and Glacier via iSCSI over time — it isn't designed as a one-time bulk physical transfer mechanism for a data center decommission of this scale."> Tape Gateway, since it can archive unlimited amounts of data over time</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A remote mining site needs to run real-time analytics on sensor data as it's collected, with only occasional connectivity back to AWS for periodic bulk uploads. Which product family member fits, and what's missing from the plain Snowball option that makes it unsuitable here?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Plain Snowball is storage-only; it has no onboard compute, so it can't run analytics workloads on the data as it's collected — that's exactly the gap Snowball Edge fills."> Plain Snowball; it includes enough onboard compute for lightweight analytics</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Snowball Edge adds compute (vCPUs, RAM, and optionally GPU) on top of storage, so workloads can process data locally at the site — something plain, storage-only Snowball can't do."> Snowball Edge; plain Snowball has no compute capability to run local processing</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Snowmobile is a single-truck, single-site bulk transfer device with no relevance to intermittent-connectivity edge compute — it's also not designed for this kind of remote, ongoing operation."> Snowmobile; it's designed specifically for remote sites with poor connectivity</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Tape Gateway needs a working iSCSI connection to an on-premises backup server and continuous uploads to AWS — it doesn't run local compute and isn't designed for intermittent-connectivity remote sites."> Tape Gateway; it can run analytics locally while caching to Glacier</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-storage-gateway-file.html">← Previous: Storage Gateway: File Gateway</a>
+      <a href="0012-directory-service.html">Next: AWS Directory Service →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

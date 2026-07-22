@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – Amazon Macie</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Security, Deployment and Operations</a> › Lesson 07
+    </div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>Amazon Macie</h1>
+    <p class="lesson-meta">Lesson 07 of 9 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/macie/latest/user/what-is-macie.html" target="_blank">What is Amazon Macie?</a> · <a href="https://docs.aws.amazon.com/macie/latest/user/mdis-reference-quick.html" target="_blank">Quick reference: managed data identifiers by type</a></p>
+  </div>
+
+  <p>S3 is one of the most widely used AWS services precisely because it's so easy to host huge quantities of data at scale — and that popularity, combined with how easy it is to misconfigure a bucket into being public, has made accidental S3 data exposure a persistent risk. <strong>Amazon Macie</strong> is the purpose-built answer: a data security and privacy service for discovering, classifying, and monitoring <strong>sensitive data in S3</strong>.</p>
+
+  <h2>Discovery Jobs and Data Identifiers</h2>
+  <p>You point Macie at specific buckets by creating a <strong>discovery job</strong> — scheduled, running on whatever cadence you choose. Each job assesses bucket contents against <strong>data identifiers</strong>:</p>
+  <table>
+    <thead><tr><th>Type</th><th>How it works</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Managed data identifiers</strong></td><td>AWS-built, using pattern matching plus machine learning; cover PII, PHI, financial data, and credentials across many countries and regions</td></tr>
+      <tr><td><strong>Custom data identifiers</strong></td><td>Your own regular expressions, refined with optional <strong>keywords</strong> that must appear within a definable <strong>maximum match distance</strong>, and optional <strong>ignore words</strong> that suppress an otherwise-matching result</td></tr>
+    </tbody>
+  </table>
+  <p>A custom identifier might match a company's employee-ID pattern — letters, a dash, then eight digits — refined so it only counts as a match near the keyword "Employee ID" and doesn't fire on an unrelated coincidental match.</p>
+
+  <h2>Two Categories of Findings</h2>
+  <p>Running a job produces <strong>findings</strong>, and Macie splits them cleanly into two categories:</p>
+  <div class="callout">
+    <div class="callout-title">Policy findings vs. sensitive data findings</div>
+    <strong>Policy findings</strong> fire when a bucket's <em>security posture gets worse after Macie was enabled</em> — block-public-access turned off, bucket encryption disabled, a bucket made public, or a bucket shared outside the organization. <strong>Sensitive data findings</strong> fire when Macie actually matches sensitive <em>content</em> inside objects — exposed credentials, financial data, personal or health data, or multiple types matched in one object. One category is about configuration drift; the other is about what's actually sitting in the objects.
+  </div>
+
+  <h2>Multi-Account Architecture</h2>
+  <p>Macie supports a multi-account model: one <strong>administrator account</strong> manages Macie across <strong>member accounts</strong>, set up either through <strong>AWS Organizations</strong> or by explicitly inviting individual accounts. Once linked, buckets across every member account can be evaluated the same way from the administrator account.</p>
+
+  <h2>From Finding to Response</h2>
+  <p>Findings can be reviewed interactively in the console or in <strong>Security Hub</strong>, or routed to <strong>EventBridge</strong> for event-driven automation — for example, a Lambda function that automatically re-enables block-public-access the moment a policy finding reports it was disabled.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic</div>
+    Any question about discovering, classifying, or automatically reacting to <strong>sensitive data specifically inside S3</strong> points to Macie. If the scenario is about vulnerability scanning of compute, that's Inspector; if it's about broad account-wide threat detection, that's GuardDuty — Macie's lane is S3 data content and bucket posture, specifically.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. After Macie is enabled on a bucket, someone disables the bucket's default encryption setting. Which type of finding does this generate?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A sensitive data finding is about matched content inside objects, not about a change to the bucket's security configuration."> A sensitive data finding, since encryption relates to content</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A policy finding fires when a bucket's security posture gets worse after Macie was enabled — disabling default encryption is a textbook example."> A policy finding, since bucket security posture worsened</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Macie does generate a finding for this — it's a policy finding, reflecting the reduced security posture of the bucket."> No finding at all, since encryption isn't object content</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This scenario has nothing to do with regular-expression matching — it's a configuration change on the bucket, which Macie tracks as a policy finding."> A custom identifier finding, matched via regex rules</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company needs Macie to detect its proprietary employee ID format, a pattern not covered by any built-in category like PII or financial data. What should they configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Managed data identifiers only cover the built-in categories AWS ships — PII, PHI, financial data, credentials, and similar — not a company's proprietary internal format."> A managed data identifier, since it covers all data types</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A custom data identifier lets you define your own regular expression, optionally refined with keywords and a maximum match distance, for exactly this kind of proprietary pattern."> A custom data identifier, built from a regular expression</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Discovery jobs schedule and run identifiers against buckets — they don't themselves define the pattern to match, so a job alone won't detect a new proprietary format."> A discovery job configured with no identifiers attached</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Security Hub aggregates findings from services like Macie for review — it doesn't provide pattern-matching capability of its own for proprietary data formats."> Security Hub, configured to scan the buckets directly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A security team manages Macie for 12 AWS accounts from one central account, without using AWS Organizations. How is this multi-account setup achieved?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Macie doesn't require AWS Organizations — explicit invitation is the alternative path to the same administrator/member relationship."> It cannot be done without AWS Organizations enabled</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Macie supports linking accounts either through AWS Organizations or by explicitly inviting individual accounts, which then become member accounts under the administrator."> The central account explicitly invites each of the 12 accounts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Sharing IAM roles isn't how Macie's multi-account model works — the actual mechanism is the administrator/member relationship via Organizations or invitation."> Each account shares an IAM role with the central account</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Findings from member accounts are visible to the administrator account, not the reverse — and this still requires the administrator/member relationship to be established first."> Each account subscribes to the central account's findings feed</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-aws-config.html">← Previous: AWS Config</a>
+      <a href="0008-amazon-inspector.html">Next: Amazon Inspector →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

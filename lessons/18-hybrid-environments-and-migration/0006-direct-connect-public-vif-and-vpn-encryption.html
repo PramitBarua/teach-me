@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – Direct Connect: Public VIF + VPN Encryption</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 06
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Direct Connect: Public VIF + VPN Encryption</h1>
+    <p class="lesson-meta">Lesson 06 of 16 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/WorkingWithVirtualInterfaces.html" target="_blank">Direct Connect virtual interfaces and hosted virtual interfaces</a></p>
+  </div>
+
+  <p>A Site-to-Site VPN gives you an <strong>encrypted, authenticated tunnel</strong> — true whether it runs over the public internet or over Direct Connect. Running the VPN over Direct Connect adds low, consistent latency on top of that encryption, giving you great performance <em>and</em> great security together.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Why a "private" VPC needs a public VIF</div>
+    Many students expect a <strong>private VIF</strong> here, since the target is a private VPC. But a private VIF only reaches <strong>private IP addresses</strong>. A VPN connects to <strong>public IP addresses</strong> owned by a virtual private gateway or transit gateway — AWS provisions VPN endpoints with public addressing in two Availability Zones. Because you're reaching public-zone IPs, you need a <strong>public VIF</strong>, regardless of what's logically behind that endpoint. Always ask <em>what IP address you're actually connecting to</em>, not what the traffic is ultimately destined for.
+  </div>
+
+  <h2>VPN Is Transit-Agnostic</h2>
+  <p>The VPN configuration itself doesn't change based on transit — only how you reach the endpoint differs:</p>
+  <ul>
+    <li>Over the <strong>public internet</strong> — many hops, variable latency.</li>
+    <li>Over a <strong>public VIF</strong> on Direct Connect — Direct Connect's low, consistent latency, same encrypted tunnel.</li>
+  </ul>
+  <p>You can even reach VPN endpoints for virtual private gateways in <strong>other AWS Regions</strong> across the same public VIF, riding the AWS global network — a common way to deliver global encrypted transit between VPCs and a single business network connection.</p>
+
+  <h2>VPN vs. MACsec: Different Problems, Not Competitors</h2>
+  <table>
+    <thead><tr><th></th><th>VPN (IPSec)</th><th>MACsec</th></tr></thead>
+    <tbody>
+      <tr><td>Encryption scope</td><td>End-to-end: customer gateway → VGW/TGW</td><td>Single hop: DX router → customer router</td></tr>
+      <tr><td>Transit</td><td>Public internet or public VIF</td><td>Direct Connect cross-connect only</td></tr>
+      <tr><td>Throughput</td><td>Limited by crypto overhead</td><td>Designed for terabit-class speeds</td></tr>
+      <tr><td>Vendor support</td><td>Wide (most routers support IPSec)</td><td>Narrower (fewer switches support it)</td></tr>
+    </tbody>
+  </table>
+  <p>A VPN encrypts the full path from your on-premises customer gateway all the way to the AWS-side gateway. MACsec only encrypts the single local-area-network hop between your router and the AWS DX router at the cross-connect. Neither replaces the other — they solve different layers of the problem.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: a common resilience pattern</div>
+    A frequent real-world design: <strong>primary</strong> path is Direct Connect carrying an IPSec VPN (performance plus encryption), <strong>backup</strong> path is a completely separate internet connection also carrying its own IPSec VPN. Because a VPN can be stood up in minutes purely in software, teams often start with VPN-only connectivity and add Direct Connect later — either keeping the VPN in place for ongoing encryption, using it purely as a failover path, or both.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An architect wants to run an IPSec VPN over Direct Connect into a private VPC's virtual private gateway. Which type of virtual interface is required?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A private VIF only reaches private IP addresses inside a VPC — but the VPN connects to a public IP address owned by the virtual private gateway, so a private VIF cannot reach it."> A private VIF, because the destination VPC is private</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The VPN endpoint on the virtual private gateway uses public IP addresses in AWS's public zone. Reaching a public IP requires a public VIF, even though the traffic ultimately lands in a private VPC."> A public VIF, because the VPN endpoint uses public IP addresses</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Direct Connect gateway attachments serve a different purpose — associating multiple virtual interfaces or accounts — and don't substitute for the public VIF needed to reach the VPN endpoint's public IP."> Neither; a Direct Connect gateway attachment replaces the VIF entirely</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A transit VIF is used for attaching to a transit gateway over private addressing in certain topologies, not for reaching the public IP addresses that a VPN endpoint uses."> A transit VIF, because transit gateways always require it</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team needs terabit-class encrypted throughput on the single hop between their router and the AWS DX router at the cross-connect. Which technology fits, and why not the alternative?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A VPN encrypts end-to-end from customer gateway to VGW/TGW and carries meaningful crypto overhead, limiting throughput well below terabit-class speeds — it's the wrong fit for this single-hop, high-throughput requirement."> A VPN, because it offers the widest vendor support</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. MACsec encrypts the single local hop between the customer router and the AWS DX router and is designed for terabit-class speeds — exactly matching this requirement, unlike a VPN's higher crypto overhead."> MACsec, because it's a single-hop technology built for very high throughput</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Public VIFs control which AWS IP ranges are reachable, not whether encryption or throughput requirements are met — this alone doesn't provide the needed single-hop encryption."> A public VIF alone, since it inherently encrypts DX traffic</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A private VIF provides private IP reachability over Direct Connect but includes no encryption mechanism by itself, and doesn't address the throughput requirement described."> A private VIF, since private traffic is automatically encrypted</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company wants encrypted connectivity available within minutes while a Direct Connect order is still being provisioned, then wants to keep encryption in place permanently once DX is live. What's the recommended pattern?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="MACsec requires the Direct Connect cross-connect to already exist, so it can't provide connectivity before DX is provisioned — it doesn't address the immediate-availability requirement."> Deploy MACsec first, then migrate to a VPN once DX arrives</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A VPN can be stood up in minutes in software over the public internet, providing immediate encrypted connectivity. Once DX is live, the same VPN can continue running over the public VIF for ongoing encryption, as a backup, or both."> Stand up a VPN immediately, then optionally keep it running over DX later</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Waiting for the Direct Connect order to finish before adding any encryption contradicts the requirement for encrypted connectivity within minutes, not after a lengthy provisioning process."> Wait for Direct Connect provisioning, then add encryption afterward</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A private VIF has no built-in encryption capability and cannot be provisioned before the underlying Direct Connect connection exists, so it doesn't meet the immediate-availability requirement either."> Provision a private VIF immediately for encrypted access</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-direct-connect-resilience.html">← Previous: Direct Connect (DX): Resilience</a>
+      <a href="0007-transit-gateway.html">Next: Transit Gateway →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

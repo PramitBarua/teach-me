@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – IPSec VPN Fundamentals</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 02
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>IPSec VPN Fundamentals</h1>
+    <p class="lesson-meta">Lesson 02 of 16 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/tunnel-configure.html" target="_blank">Configure tunnel options for AWS Site-to-Site VPN</a></p>
+  </div>
+
+  <p><strong>IPSec</strong> is a group of protocols that work together to build secure, encrypted tunnels across an otherwise insecure network — most commonly, the public internet. It connects two <strong>peers</strong> (routers) so that traffic between two networks — say, an on-premises data center and a VPC — is authenticated and encrypted in transit. Onlookers on the internet in between see only ciphertext: they can't read it, and they can't tamper with it undetected.</p>
+
+  <h2>Interesting Traffic</h2>
+  <p>IPSec tunnels aren't permanently up. They're built on demand around the concept of <strong>interesting traffic</strong> — traffic matching a defined set of rules (network prefixes, or more specific traffic types). When interesting traffic appears, a tunnel is established to carry it. When interesting traffic stops, the tunnel is eventually torn down, ready to be rebuilt the next time it's needed.</p>
+
+  <h2>A Quick Refresher: Symmetric vs. Asymmetric Encryption</h2>
+  <p><strong>Symmetric encryption</strong> is fast and cheap to run, but both sides need the <em>same</em> key — and securely distributing that shared key is the hard problem. <strong>Asymmetric encryption</strong> is slower, but solves that problem: a public key encrypts data that only the matching private key can decrypt, so the public key can be shared freely while the private key never leaves its owner. Most secure internet protocols follow the same pattern: use asymmetric encryption briefly to safely exchange a symmetric key, then switch to fast symmetric encryption for the actual bulk of the traffic. IPSec follows exactly this pattern, split across two phases.</p>
+
+  <h2>IKE Phase 1: Slow, Heavy, Establishes Trust</h2>
+  <p><strong>IKE</strong> (Internet Key Exchange — versions 1 and 2 exist, with v2 newer and more capable) governs how keys get exchanged. <strong>Phase 1</strong> is the expensive part:</p>
+  <ol>
+    <li>The two peers <strong>authenticate</strong> to each other, using a pre-shared key or certificates — this step proves identity, it does not yet involve encryption keys.</li>
+    <li>Each side runs <strong>Diffie-Hellman key exchange (DH)</strong>: each generates a private key and a derived public key, the public keys are exchanged, and each side independently combines its own private key with the other's public key to compute the <strong>same shared DH key</strong> — without that key ever having crossed the network.</li>
+    <li>The DH key is used to derive a <strong>phase 1 symmetric key</strong>, which secures an <strong>IKE Security Association (SA)</strong> — the phase 1 tunnel.</li>
+  </ol>
+
+  <h2>IKE Phase 2: Fast, Built on Phase 1</h2>
+  <p><strong>Phase 2</strong> runs inside the phase 1 tunnel and is comparatively lightweight, because the heavy asymmetric work is already done:</p>
+  <ol>
+    <li>Using the phase 1 symmetric key to protect the negotiation, each peer advertises which cipher suites it supports; the peers agree on a shared method.</li>
+    <li>A new, dedicated <strong>symmetric IPSec key</strong> is derived (built on the DH key material and the phase 2 negotiation) — this key is what actually encrypts and decrypts interesting traffic.</li>
+    <li>The result is a pair of <strong>IPSec Security Associations</strong> — one per direction — which together form the phase 2 (IPSec) tunnel, running on top of the phase 1 tunnel.</li>
+  </ol>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Why split into two phases at all?</div>
+    Because phase 1 is slow and phase 2 is fast, splitting them is a deliberate efficiency win: the phase 2 (IPSec) tunnel can be torn down when interesting traffic stops and <strong>rebuilt quickly on top of the same, still-standing phase 1 tunnel</strong> — without repeating the expensive authentication and Diffie-Hellman work. Only if the phase 1 tunnel itself goes down does that heavy setup need to happen again.
+  </div>
+
+  <h2>Policy-Based vs. Route-Based VPNs</h2>
+  <p>Both VPN styles use the same phase 1 / phase 2 mechanics underneath — they differ in <strong>how they classify interesting traffic</strong> and how many security associations that produces.</p>
+  <table>
+    <thead><tr><th>Type</th><th>Matches on</th><th>SA pairs</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Route-based</strong></td><td>Network prefix (e.g. send 192.168.0.0/24 over this tunnel)</td><td>One SA pair per prefix — simpler to configure</td></tr>
+      <tr><td><strong>Policy-based</strong></td><td>Rules matching specific traffic types</td><td>One SA pair per matched rule — more flexible, more configuration</td></tr>
+    </tbody>
+  </table>
+  <p>With a policy-based VPN, different traffic types to the <em>same</em> network (say, infrastructure management traffic, CCTV feeds, and financial data) can each get their own SA pair with independently tuned security settings. A route-based VPN keeps it simple: one prefix, one SA pair, all traffic to that prefix treated identically.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Two facts worth memorizing cold</div>
+    <strong>1.</strong> Phase 1 authenticates and derives shared key material via Diffie-Hellman; phase 2, built on top of phase 1, negotiates the cipher and derives the key actually used to encrypt data. <strong>2.</strong> Route-based VPNs match by prefix (one SA pair per prefix, simple); policy-based VPNs match by rule (one SA pair per rule, flexible but more complex). AWS Site-to-Site VPN, covered next, is route-based.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An IPSec phase 2 (IPSec) tunnel is torn down after a period of no interesting traffic. New interesting traffic then appears. What has to happen to re-establish encrypted communication?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Phase 1 does not need to be rebuilt if it's still standing — that's precisely why splitting into two phases matters. Only phase 2 needs to be re-established."> Both phase 1 and phase 2 must be rebuilt from scratch again</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. As long as the phase 1 (IKE) tunnel is still up, a new phase 2 tunnel can be established quickly on top of it, skipping the slow authentication and Diffie-Hellman work."> Only phase 2 needs rebuilding, reusing the existing phase 1 tunnel</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Diffie-Hellman key exchange belongs to phase 1, and it doesn't need to be rerun for a new phase 2 tunnel as long as phase 1 is still standing."> Diffie-Hellman key exchange must run again before any traffic flows</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Peer authentication is a phase 1 activity — it only needs to happen again if the phase 1 tunnel itself has gone down, not for every new phase 2 tunnel."> Peer authentication must be repeated before any traffic flows</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A security team wants CCTV traffic, financial system traffic, and general infrastructure traffic between the same two sites to each use independently configured security settings and separate security associations. Which VPN model fits this requirement?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Route-based VPNs use one SA pair per network prefix — all traffic types to that prefix share the same SA pair, so they can't get independent per-type settings."> Route-based VPN, matching all traffic by destination prefix</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Policy-based VPNs match interesting traffic by rule, and each matched rule gets its own SA pair — allowing independently tuned security settings per traffic type, exactly this scenario."> Policy-based VPN, with a separate rule and SA pair per traffic type</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="IKE version alone (v1 vs v2) governs the key exchange protocol version, not whether traffic types get separate, independently configured security associations."> Either model works identically, since IKE version determines this</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Phase 1 tunnels aren't duplicated per traffic type in either model — phase 1 establishes one shared foundation that phase 2 then builds on."> Route-based VPN, using a separate phase 1 tunnel per traffic type</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. During IKE phase 1, why do both peers use Diffie-Hellman key exchange rather than simply transmitting a symmetric key directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Diffie-Hellman isn't chosen for speed — it's actually the slow, heavy part of the process. Its purpose is secure key derivation, not performance."> Because it's faster than transmitting a symmetric key directly</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Transmitting a symmetric key directly over an insecure network risks exposure. Diffie-Hellman lets each side independently derive the same shared key using its own private key and the other's public key — the shared key itself never crosses the network."> So each side derives the same shared key without transmitting it</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Diffie-Hellman key exchange is a phase 1 activity focused on key derivation — cipher suite negotiation for bulk data transfer happens afterward, in phase 2."> Because it negotiates which cipher suite phase 2 will use</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Diffie-Hellman is used regardless of whether the VPN is route-based or policy-based — that distinction affects how interesting traffic is matched, not whether phase 1 key exchange happens."> Because it's only required for policy-based VPN connections</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-border-gateway-protocol-101.html">← Previous: Border Gateway Protocol (BGP) 101</a>
+      <a href="0003-aws-site-to-site-vpn.html">Next: AWS Site-to-Site VPN →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

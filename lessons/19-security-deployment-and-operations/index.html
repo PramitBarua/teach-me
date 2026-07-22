@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security, Deployment and Operations – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Security, Deployment and Operations</div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>Security, Deployment and Operations</h1>
+    <p class="lesson-meta">9 lessons · ~72 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/whitepapers/latest/aws-security-incident-response-guide/welcome.html" target="_blank">AWS Security Incident Response Guide</a></p>
+  </div>
+
+  <p>This module covers AWS's dedicated security and compliance services: secrets and encryption key management (Secrets Manager, CloudHSM), perimeter defense (application-layer firewall theory, WAF, Shield), and the three "AWS finds problems for you" detective services that are easy to blur together — configuration drift (Config), sensitive data exposure (Macie), vulnerability scanning (Inspector), and account-wide threat detection (GuardDuty).</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><a href="0001-aws-secrets-manager.html">AWS Secrets Manager</a></td><td>"Secrets"/"rotation"/"RDS" keywords point here, not Parameter Store; Lambda-driven rotation kept in sync with the consuming product</td></tr>
+      <tr><td>02</td><td><a href="0002-application-layer-l7-firewall.html">Application Layer (L7) Firewalls</a></td><td>Vendor-agnostic theory: L3/4 → +L5 session awareness → +L7 protocol awareness; HTTPS terminate-inspect-re-encrypt is what makes it possible</td></tr>
+      <tr><td>03</td><td><a href="0003-web-application-firewall-waf.html">Web Application Firewall (WAF)</a></td><td>Web ACLs, rule groups/rules, WCU capacity, regular vs. rate-based rules (no "allow" for rate-based)</td></tr>
+      <tr><td>04</td><td><a href="0004-aws-shield.html">AWS Shield</a></td><td>Standard is free and automatic; Advanced protections must be explicitly enabled per resource</td></tr>
+      <tr><td>05</td><td><a href="0005-cloudhsm.html">CloudHSM</a></td><td>FIPS 140-3 Level 3 + industry-standard crypto APIs (PKCS#11/JCE/CNG) → CloudHSM; AWS-native integration → KMS</td></tr>
+      <tr><td>06</td><td><a href="0006-aws-config.html">AWS Config</a></td><td>Detective, never preventive — records configuration history and compliance drift, doesn't block anything</td></tr>
+      <tr><td>07</td><td><a href="0007-amazon-macie.html">Amazon Macie</a></td><td>S3-specific sensitive-data discovery; policy findings (posture got worse) vs. sensitive data findings (content matched)</td></tr>
+      <tr><td>08</td><td><a href="0008-amazon-inspector.html">Amazon Inspector</a></td><td>Continuous CVE/vulnerability scanning of EC2, ECR images, and Lambda — a fully rearchitected product since the course was recorded</td></tr>
+      <tr><td>09</td><td><a href="0009-amazon-guardduty.html">Amazon GuardDuty</a></td><td>Continuous ML/threat-intel anomaly detection account-wide — not a scan you trigger, not a data-classification tool</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    Lesson 02's application-layer firewall theory is unusually dense with exam-flagged material in the source diagrams — the L3/4/5/7 capability build-up and the HTTPS terminate-inspect-re-encrypt mechanic are worth knowing cold. For the three "AWS finds problems for you" services that blur together, anchor on what each one actually scans: <strong>Config</strong> = configuration/compliance drift (detective only, never blocks a change), <strong>Macie</strong> = sensitive data inside S3, <strong>Inspector</strong> = CVE/vulnerability scanning of EC2/ECR/Lambda, <strong>GuardDuty</strong> = account-wide anomalous behavior via ML and threat intel. And remember Secrets Manager's tell: rotation, especially paired with RDS, is the keyword that beats Parameter Store every time (Lesson 01).
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Two services here have changed architecture since the course was recorded</div>
+    <strong>Amazon Inspector</strong> (Lesson 08) was completely rearchitected in December 2021 — the course describes the retired "Inspector Classic" (manual, duration-based assessments), while current Inspector runs continuous, automatic scanning via the SSM Agent. Inspector Classic itself reached end of support on May 20, 2026. <strong>Amazon GuardDuty</strong> (Lesson 09) has also added several protection plans (EKS, RDS, Lambda, Malware Protection, Runtime Monitoring, and an AI Protection plan for Bedrock/SageMaker) well beyond the four data sources the course describes. Both lessons teach the current architecture and flag the gap explicitly.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-aws-secrets-manager.html">Start: AWS Secrets Manager →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

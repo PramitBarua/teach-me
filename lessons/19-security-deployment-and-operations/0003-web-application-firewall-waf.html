@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – Web Application Firewall (WAF)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Security, Deployment and Operations</a> › Lesson 03
+    </div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>Web Application Firewall (WAF)</h1>
+    <p class="lesson-meta">Lesson 03 of 9 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/waf/latest/developerguide/aws-waf-capacity-units.html" target="_blank">Web ACL capacity units (WCUs) in AWS WAF</a> · <a href="https://aws.amazon.com/waf/pricing/" target="_blank">AWS WAF Pricing</a></p>
+  </div>
+
+  <p><strong>WAF</strong> is AWS's concrete implementation of the layer 7 firewall concept from the last lesson — a firewall that understands application protocols like HTTP and HTTPS. WAF protects <strong>CloudFront</strong> (a global service) as well as <strong>Application Load Balancers, AppSync, and API Gateway</strong> (regional resources). That global-versus-regional split matters immediately: a Web ACL built for a regional resource must be created <strong>in the same region</strong> as that resource, whereas a CloudFront Web ACL is global.</p>
+
+  <h2>The Web ACL: WAF's Core Unit</h2>
+  <p>The <strong>Web Access Control List (Web ACL)</strong> is the actual unit of configuration in WAF — it's what you associate with a protected resource, and association is what turns WAF protection on for that resource. A Web ACL starts with a <strong>default action</strong> — allow or block — applied to any traffic that no rule matches. Which default you choose depends on your posture: block everything by default and explicitly allow known-good traffic, or allow everything by default and explicitly block known-bad traffic.</p>
+  <p>The resource-to-Web-ACL relationship is asymmetric: <strong>one resource has exactly one Web ACL, but one Web ACL can be associated with many resources</strong>. A CloudFront Web ACL can't be attached to a regional resource, or vice versa, and Web ACLs currently aren't usable with AWS Outposts. Associating a Web ACL with a resource can take a while — CloudFront in particular has to push the change out to edge locations — but adjusting a Web ACL that's already associated is much quicker.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">WCU is not DynamoDB WCU</div>
+    <strong>Web ACL Capacity Units (WCU)</strong> measure the compute complexity of the rules inside a Web ACL — nothing to do with <strong>DynamoDB's Write Capacity Units</strong>, which happen to share the same acronym. Every rule and rule group consumes some number of WCUs based on its complexity — a simple size check costs less than a regex match. Historically the exam framed this as a default cap of 1,500 WCU per Web ACL, raisable via a support ticket; current AWS documentation shows this has moved on — see the note below.
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Fact check: the WCU ceiling has moved</div>
+    Current AWS documentation confirms the <strong>maximum capacity for a Web ACL is now 5,000 WCU</strong>, available without a support ticket. The figure of <strong>1,500 WCU still matters</strong>, though — it's now the <em>pricing</em> threshold: usage up to 1,500 WCU is included in the base Web ACL price, and usage beyond that incurs additional tiered charges. So "1,500" survives in the current docs, just with a different meaning than a hard ceiling.
+  </div>
+
+  <h2>Rule Groups vs. Rules</h2>
+  <p><strong>Rule groups</strong> are containers of rules, added into Web ACLs to allow grouped administration — they carry no default action of their own; that still comes from the Web ACL. Rule groups can be <strong>AWS-managed, marketplace-provided, customer-owned (yours), or service-owned</strong> (created on your behalf by services like Shield or Firewall Manager). AWS-managed rule groups are <strong>mostly free</strong>, with notable exceptions: <strong>Bot Control</strong> and <strong>Fraud Control</strong> carry their own extra fees. Marketplace rule groups generally carry a subscription cost too. A rule group's WCU capacity is fixed at creation and reused by every Web ACL that references it.</p>
+  <p>A <strong>rule</strong> itself has three parts: <strong>type</strong>, <strong>statement</strong>, and <strong>action</strong>.</p>
+  <table>
+    <thead><tr><th>Part</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Type</strong></td><td><strong>Regular</strong> (matches if something occurs) or <strong>rate-based</strong> (matches if something occurs at a certain rate — e.g. 5,000 requests in 5 minutes)</td></tr>
+      <tr><td><strong>Statement</strong></td><td>The match criteria — country, IP, label, headers, cookies, query parameters, URI path, query string, HTTP method, or request body</td></tr>
+      <tr><td><strong>Action</strong></td><td>What WAF does on a match</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The body-inspection limit</div>
+    When a statement matches against the <strong>request body</strong>, WAF only ever inspects the <strong>first 8,192 bytes</strong> of it — a specific, quotable exam fact.
+  </div>
+
+  <p>Match types on a statement include exact match, starts-with, ends-with, contains, and regular expressions. Multiple statements can be combined with AND/OR/NOT logic for more complex conditions.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Rate-based rules have no "allow" — and it's logical</div>
+    Regular rules can act with <strong>allow, block, count, or CAPTCHA</strong>. Rate-based rules only offer <strong>block, count, or CAPTCHA</strong> — there is no allow. This makes sense once you think about intent: a rate-based rule exists specifically to react when traffic crosses a threshold, and "allow" is never a meaningful reaction to that condition.
+  </div>
+
+  <p>Optional <strong>custom responses</strong> can accompany block (a custom body or header) or allow/count/CAPTCHA (custom header only) — headers are prefixed <code>x-amzn-waf-</code> so your own application can react to them. Optional <strong>labels</strong> let one rule mark traffic so a later rule in the same Web ACL can act on that label. Labels are internal to WAF and never persist outside a single Web ACL.</p>
+
+  <div class="callout">
+    <div class="callout-title">Labels only survive if processing continues</div>
+    Labels only propagate when a rule's action lets processing <strong>continue</strong> — that's <strong>count or CAPTCHA</strong>. If a rule's action <strong>stops</strong> processing — <strong>allow or block</strong> — no further rules run against that traffic, so any label added by that rule is moot for later rules in the chain.
+  </div>
+
+  <h2>Logging and Event-Driven Response</h2>
+  <p>WAF can log to <strong>S3</strong> (roughly a five-minute delivery delay), <strong>CloudWatch Logs</strong>, or <strong>Kinesis Data Firehose</strong>. Firehose is the path to near-real-time reaction: it can feed S3 Events, Lambda, Athena, and EventBridge, letting you build an automated feedback loop that extracts actionable intelligence from traffic and updates Web ACLs without a human in the loop — for example, pulling in a public list of known-bad IPs on an EventBridge schedule.</p>
+
+  <h2>Pricing</h2>
+  <p>Verified against the current AWS WAF pricing page — the transcript's headline figures still match: <strong>$5/month per Web ACL</strong>, <strong>$1/month per rule or rule group</strong>, and <strong>$0.60 per million requests</strong> processed. On top of that, <strong>Bot Control</strong>, <strong>CAPTCHA/Challenge</strong>, and <strong>Fraud Control</strong> (account takeover and account creation protection) each carry their own separate monthly and per-request/per-attempt fees, and any marketplace rule groups add their own subscription cost. As the course itself notes, these figures are subject to change — always confirm against the live pricing page or the AWS Pricing Calculator before relying on a specific number.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A solutions architect is reviewing a Web ACL and sees it's approaching its WCU limit. A colleague assumes this is related to DynamoDB throughput and suggests provisioning more write capacity. What's the correct clarification?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="WCU in a Web ACL context has nothing to do with DynamoDB throughput — provisioning DynamoDB write capacity would not change a Web ACL's rule complexity budget at all."> They're right; provisioning DynamoDB write capacity resolves it</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Web ACL Capacity Units measure the compute complexity of WAF rules and rule groups — a completely separate concept from DynamoDB's write capacity units, despite sharing an acronym."> WCU here means Web ACL Capacity Units, unrelated to DynamoDB capacity</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Web ACL's WCU usage is driven by the complexity of its own rules and rule groups, not by any DynamoDB table it might be near in an architecture diagram."> WCU is shared between DynamoDB tables and Web ACLs in the same account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Rule count alone doesn't determine WCU usage — each rule's complexity determines its own WCU cost, and this has no connection to DynamoDB capacity planning."> WCU only tracks the number of rules, so DynamoDB is irrelevant either way</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants a rule that responds when a single IP address makes more than 5,000 requests in five minutes, and they want that response to include the option to simply allow the traffic through unmodified. What should they expect?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Rate-based rules never offer allow as an available action — only block, count, or CAPTCHA are valid, since allow makes no sense as a reaction to exceeding a rate threshold."> A rate-based rule supports allow, block, count, and CAPTCHA equally</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Rate-based rules support only block, count, or CAPTCHA — allow is not a valid action for this rule type, since the entire purpose of a rate-based rule is to react when a threshold is exceeded."> A rate-based rule cannot use allow; only block, count, or CAPTCHA apply</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Regular rules do support allow, but the scenario describes rate-based matching (a threshold over time), which is a distinct rule type with its own restricted action set."> Only regular rules support rate thresholds, and they include allow</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Rate-based rules are not restricted to block only — count and CAPTCHA are also valid actions, just not allow."> A rate-based rule can only ever block; no other action is valid</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A rule inspects the body of incoming POST requests for a specific string, but requests with a large JSON payload aren't being matched even though the string is present near the end of a 20 KB body. Why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="WAF's body inspection limit applies regardless of content type — a large JSON body is subject to the same byte cap as any other request body."> WAF never inspects JSON bodies, only plain text bodies</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. WAF only inspects the first 8,192 bytes of a request body — content past that point, including a string near the end of a 20 KB payload, is never evaluated."> WAF only inspects the first 8,192 bytes of the request body</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Body inspection isn't gated behind rate-based rules — regular rules can and do inspect the request body directly, subject to the byte-size limit."> Body inspection only works with rate-based rules, not regular rules</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="WCU capacity governs how much rule complexity a Web ACL can hold, not how many bytes of a request body get inspected at runtime — that limit is fixed regardless of WCU budget."> The Web ACL has run out of available WCU capacity for this rule</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-application-layer-l7-firewall.html">← Previous: Application Layer (L7) Firewalls</a>
+      <a href="0004-aws-shield.html">Next: AWS Shield →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

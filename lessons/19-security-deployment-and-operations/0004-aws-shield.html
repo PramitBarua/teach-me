@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – AWS Shield</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Security, Deployment and Operations</a> › Lesson 04
+    </div>
+    <div class="module-tag">Security, Deployment and Operations</div>
+    <h1>AWS Shield</h1>
+    <p class="lesson-meta">Lesson 04 of 9 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://aws.amazon.com/shield/pricing/" target="_blank">AWS Shield Pricing</a> · <a href="https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-health-checks.html" target="_blank">Health-based detection with Shield Advanced and Route 53</a></p>
+  </div>
+
+  <p><strong>AWS Shield</strong> protects internet-connected environments against <strong>distributed denial-of-service (DDoS)</strong> attacks. It comes in two tiers — <strong>Standard</strong> and <strong>Advanced</strong> — with a large gap in capability between them.</p>
+
+  <h2>A Quick Recap: Three DDoS Categories</h2>
+  <table>
+    <thead><tr><th>Category</th><th>OSI layer</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Network volumetric</strong></td><td>Layer 3</td><td>Overwhelming the target with raw network data</td></tr>
+      <tr><td><strong>Network protocol</strong></td><td>Layer 4</td><td>SYN floods — many spoofed connections left open, exhausting connection capacity without touching CPU or memory</td></tr>
+      <tr><td><strong>Application layer</strong></td><td>Layer 7</td><td>Flooding a cheap-to-request, expensive-to-serve endpoint — e.g. a search feature — with legitimate-looking requests</td></tr>
+    </tbody>
+  </table>
+  <p>Shield's two tiers map fairly directly onto this: Standard focuses on the lower layers, while Advanced's WAF integration extends coverage up to layer 7.</p>
+
+  <h2>Shield Standard</h2>
+  <p>Shield Standard is <strong>free for every AWS customer</strong> and applies <strong>automatically</strong> — there's nothing to configure. It protects the perimeter of the network, whether that's traffic entering a VPC in a region or traffic hitting the AWS edge network. It defends against common <strong>layer 3 and layer 4</strong> attacks, and its protection is strongest when traffic flows through <strong>Route 53, CloudFront, or Global Accelerator</strong>. Standard offers little in the way of proactive capability or explicit configuration — it just works quietly in the background.</p>
+
+  <h2>Shield Advanced</h2>
+  <p>Shield Advanced is a <strong>commercial product</strong>. Verified against the current AWS Shield pricing page, it costs <strong>$3,000/month</strong>, billed <strong>per AWS Organization</strong> (per payer account covering every linked account) rather than per individual account — so multiple accounts needing Advanced-level protection should sit under one Organization to share a single subscription. The fee is part of a <strong>1-year commitment</strong> (roughly $36,000/year), plus separate charges for data transferred out during covered usage.</p>
+  <p>Advanced extends coverage well beyond Standard: <strong>CloudFront, Route 53, Global Accelerator, Elastic IPs (EC2), and Application, Classic, and Network Load Balancers</strong> are all covered.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Protections are not automatic</div>
+    Unlike Shield Standard, Shield Advanced protections must be <strong>explicitly enabled per resource</strong> — either directly in Shield Advanced or through an <strong>AWS Firewall Manager Shield Advanced policy</strong>. Subscribing to Advanced does not itself protect anything; a classic true/false exam trap.
+  </div>
+
+  <h2>The Non-Technical Benefits</h2>
+  <p>Two of Shield Advanced's most important benefits aren't about technical capability at all:</p>
+  <ul>
+    <li><strong>Cost protection</strong> — reimbursement for costs incurred from attack-driven scaling (for example, an EC2 Auto Scaling event triggered by attack load), conditional on the resource type being covered <em>and</em> protection having actually been enabled on it beforehand.</li>
+    <li><strong>Proactive engagement via the Shield Response Team (SRT)</strong> — the SRT contacts you directly when an attack appears to be affecting availability or performance, often before you've reached out yourselves. Using this requires contact details to be set up in advance.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">SRT proactive engagement has a prerequisite</div>
+    Proactive engagement <strong>requires health-based detection</strong> — Route 53 health checks associated with the protected resource — to be configured <strong>first</strong>. Without a health check reporting resource health, the SRT has no reliable signal to act on. This dependency (health checks before proactive engagement) is worth remembering as its own fact, separate from cost protection's own prerequisite (the resource type must be covered and protection enabled).
+  </div>
+
+  <h2>Other Shield Advanced Capabilities</h2>
+  <ul>
+    <li><strong>WAF integration</strong> — Shield Advanced uses WAF to implement its layer 7 protections, and a Shield Advanced subscription includes the basic WAF fees needed for that integration.</li>
+    <li><strong>Advanced real-time metrics and reports</strong> — available via the Shield Advanced console, API, and CloudWatch.</li>
+    <li><strong>Health-based detection</strong> — beyond being an SRT prerequisite, it also reduces false positives generally, by grounding attack detection in actual resource health rather than traffic patterns alone.</li>
+    <li><strong>Protection groups</strong> — group resources together and manage protection at the group level, with membership criteria defined so new matching resources are automatically included, cutting down per-resource admin overhead.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company subscribes their AWS Organization to Shield Advanced but takes no further action. What level of protection do their ALBs and Elastic IPs now have?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Shield Advanced protections are never automatic — subscribing alone does not protect any resource. Explicit enablement per resource is required first."> Full Shield Advanced protection, since subscribing enables it everywhere</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Shield Standard's automatic layer 3/4 protection is separate from Advanced and applies regardless of any Advanced subscription — but Advanced itself grants nothing without explicit enablement."> Shield Standard protection only, because Advanced needs a support ticket</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Shield Advanced protections must be explicitly enabled per resource, either directly in Shield Advanced or via an AWS Firewall Manager Shield Advanced policy — subscribing on its own does nothing."> No Advanced protection yet; it must be explicitly enabled per resource</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Cost protection isn't the mechanism that turns on DDoS mitigation itself, and it has its own separate prerequisites around resource coverage and enablement."> Protection covering only cost reimbursement, not mitigation</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A customer wants the Shield Response Team to proactively reach out during a suspected attack, using AWS Shield Advanced's proactive engagement feature. What must be in place first?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Protection groups organize resources for group-level management; they aren't a prerequisite specifically for proactive engagement or SRT contact."> A protection group covering every resource in the account</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Proactive engagement depends on health-based detection — a Route 53 health check associated with the protected resource — configured before the SRT can reliably act on availability or performance signals."> Health-based detection using an associated Route 53 health check</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cost protection eligibility is a separate benefit with its own conditions around resource coverage — it isn't what enables the SRT's proactive contact capability."> Confirmation that cost protection has already been claimed once</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="WAF integration supports layer 7 mitigation actions but isn't the specific prerequisite for the SRT reaching out proactively — that depends on health-based detection instead."> A WAF Web ACL attached to every protected resource</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An attacker floods a public search endpoint with millions of cheap, legitimate-looking requests that are each expensive for the backend to answer. Which DDoS category and OSI layer does this describe?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Volumetric attacks work by overwhelming raw network capacity at layer 3, not by exploiting an expensive application feature at layer 7."> Network volumetric attack, operating at layer 3</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Protocol attacks like SYN floods exhaust connection state at layer 4 using spoofed, never-completed connections, not expensive application-level requests."> Network protocol attack, operating at layer 4</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Cheap-to-request but expensive-to-serve application functionality being flooded is the defining example of an application layer (layer 7) DDoS attack."> Application layer attack, operating at layer 7</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This scenario is one of the three standard DDoS categories Shield addresses; it isn't some separate class outside layers 3, 4, or 7."> None of these; it falls outside Shield's three attack categories</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-web-application-firewall-waf.html">← Previous: Web Application Firewall (WAF)</a>
+      <a href="0005-cloudhsm.html">Next: CloudHSM →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

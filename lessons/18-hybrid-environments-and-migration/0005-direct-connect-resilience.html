@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – Direct Connect (DX): Resilience</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 05
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Direct Connect (DX): Resilience</h1>
+    <p class="lesson-meta">Lesson 05 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/disaster-recovery-resiliency.html" target="_blank">Resilience in AWS Direct Connect</a></p>
+  </div>
+
+  <p>A typical Direct Connect deployment has several physical components: your <strong>AWS Region</strong> (always assumed highly available), a <strong>DX location</strong> (a data center housing AWS DX routers), your <strong>customer (or provider) DX router</strong> at that same location, a <strong>cross-connect</strong> cable joining the two routers, an <strong>extension</strong> cable carrying the connection back to your <strong>customer premises</strong>, and a <strong>customer premises router</strong> at the far end.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">DX is not resilient by default — it's just physical hardware</div>
+    A single, simply-ordered Direct Connect has <strong>seven single points of failure</strong>: the DX location, the AWS DX router, the cross-connect cable, the customer DX router, the extension cable, the customer premises, and the customer premises router. Every one of these is a physical thing that can fail in isolation. Direct Connect is a flexible product that <em>can</em> be made highly resilient — but only if you deliberately architect it that way.
+  </div>
+
+  <h2>Step 1: Two DX Ports, One Location, One Premises</h2>
+  <p>The first improvement is ordering <strong>two DX connections into the same DX location</strong>. AWS provisions these onto <strong>separate DX routers</strong>, and you cross-connect each into a separate customer DX router, extended to two customer premises routers at a single customer premises.</p>
+  <p>This tolerates a failure of either DX router, cross-connect, or extension — but two major single points of failure remain: the <strong>DX location itself</strong> (if it fails, both paths are lost) and the <strong>single customer premises</strong> (same problem on the other end).</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The hidden single point of failure: shared cable routes</div>
+    Even with two extensions running between the DX location and your premises, both physical cables often follow the <strong>same duct or trench</strong> — the same sidewalk, the same conduit. Roadworks or a single dig can sever both "independent" connections at once. Ordering two connections doesn't guarantee physically diverse paths; you have to verify the routing.
+  </div>
+
+  <h2>Step 2: Two DX Locations, Two Customer Premises</h2>
+  <p>The next evolution uses <strong>two entirely different DX locations</strong>, each with one DX port cross-connected to one customer DX router, extended to <strong>two separate customer premises</strong> — ideally geographically spread out.</p>
+  <p>This tolerates the failure of an entire DX location on the AWS side, or an entire premises on the customer side, because each path now has independent start and end points. The only remaining outage scenario is a <strong>full location failure combined with a hardware failure</strong> in the one remaining path.</p>
+
+  <h2>Step 3: Maximum Resilience</h2>
+  <p>The gold-standard architecture combines both ideas: <strong>two DX locations</strong>, and at <em>each</em> location, <strong>two DX ports on separate equipment</strong> with two customer DX routers, all extended to <strong>two customer premises</strong>, each with dual customer routers.</p>
+  <p>This tolerates a full DX location failure <em>and</em> a hardware failure in the surviving location's remaining pair, because the extensions between two different physical buildings on each side naturally follow separate routes. There is no single component anywhere in the path whose failure takes down connectivity.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip: the AWS Direct Connect Resiliency Toolkit mirrors this progression</div>
+    AWS's own connection wizard, the Direct Connect Resiliency Toolkit, formalizes this build-up into named models — from development/test (no SLA) up through high resiliency and maximum resiliency (two locations, multiple connections each). If a question describes a resilience requirement, map it back to how many locations and how many ports per location are involved; that's the pattern being tested. A Site-to-Site VPN can also serve as a backup transit path for Direct Connect, covered elsewhere.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An architecture uses two DX ports at a single DX location, cross-connected to two customer DX routers, both extended into a single customer premises. What is the biggest remaining risk?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This architecture already tolerates the failure of one DX router or one cross-connect, since there are two independent paths through the location — that's precisely the improvement this design adds over a single connection."> A single DX router failure takes down all connectivity</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The DX location and the customer premises are each still single points of failure — if either one fails entirely, both paths through it are lost, regardless of the two ports and two routers inside them."> The shared DX location or the shared customer premises failing entirely</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The AWS Region side is always treated as highly available and connected to DX locations with redundant, high-performance networking — it isn't the weak point this architecture introduces."> The AWS Region losing connectivity to the DX location</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A single cross-connect cable failing is tolerated here, since there are two independent cross-connects between the two router pairs."> A single cross-connect cable being physically cut</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company orders two Direct Connect extensions between one DX location and its single office, expecting full redundancy. Both connections fail at once during nearby roadworks. What most likely explains this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS DX routers being provisioned onto separate hardware is exactly what happens when you order two connections into the same location — that part of the design was correct and isn't what caused the outage."> AWS provisioned both connections onto the same physical DX router</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The two extension cables between the DX location and the single premises can easily share the same physical duct or route — a hidden single point of failure that roadworks or digging can sever at once, even though the connections looked independent on paper."> Both extension cables likely shared the same physical duct or cable route</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Direct Connect performance and resilience are unrelated to encryption settings — a lack of encryption doesn't cause a physical outage like this."> Direct Connect was not configured with IPSec encryption</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The scenario describes two connections into one DX location extended to one premises, not two separate DX locations — location diversity isn't what's missing here, path diversity in the extension cabling is."> The two DX locations used incompatible router hardware</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which architecture achieves Direct Connect's maximum level of resilience, tolerating both a full DX location failure and a subsequent hardware failure in the surviving location?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single DX port at one location with one customer premises router is the least resilient baseline — it carries all seven single points of failure with no redundancy anywhere."> One DX port at one location, one customer premises router</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Two ports at one location still leaves the shared DX location and shared customer premises as single points of failure — better than one port, but not maximum resilience."> Two DX ports at one location, extended to one customer premises</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="One port per location with one premises each is the high-resilience tier — it tolerates a full location failure, but not an additional hardware failure in the surviving path."> One DX port at each of two locations, one customer premises each</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Two DX locations, each with two DX ports and two customer routers, extended to two customer premises with dual routers, is the maximum resilience design — it tolerates a full location failure plus a hardware failure in the remaining location."> Two DX locations, each with two DX ports, extended to two customer premises</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-direct-connect-concepts.html">← Previous: Direct Connect (DX): Concepts</a>
+      <a href="0006-direct-connect-public-vif-and-vpn-encryption.html">Next: Direct Connect: Public VIF + VPN Encryption →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

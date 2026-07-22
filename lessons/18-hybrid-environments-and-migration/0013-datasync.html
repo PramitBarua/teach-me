@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 – AWS DataSync</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 13
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>AWS DataSync</h1>
+    <p class="lesson-meta">Lesson 13 of 16 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/datasync/latest/userguide/datasync-limits.html" target="_blank">AWS DataSync Quotas</a></p>
+  </div>
+
+  <p><strong>AWS DataSync</strong> is a managed data transfer service that moves data into or out of AWS, end-to-end. Before DataSync existed, this job fell to manual uploads/downloads or to physical devices like Snowball and Snowball Edge. DataSync instead automates the whole process electronically — scheduling, retrying, validating, and throttling on your behalf.</p>
+
+  <p>Typical use cases: <strong>migrating</strong> data into AWS, moving data in for processing and back out again, <strong>archiving</strong> into cost-effective storage, and supporting <strong>disaster recovery / business continuity</strong> plans.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">This is a light exam topic — scope your effort accordingly</div>
+    The course author is explicit that DataSync shows up in at most a couple of unique questions on the current exam, and those questions test whether you can pick DataSync over alternatives — not its internal configuration detail. Focus on architecture and the "when do I use this" heuristic, not implementation minutiae.
+  </div>
+
+  <h2>Three Architectural Components</h2>
+  <table>
+    <thead><tr><th>Component</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Task</strong></td><td>The job definition — what's being synced, the schedule, any bandwidth throttle, and the two locations involved (source and destination).</td></tr>
+      <tr><td><strong>Agent</strong></td><td>Software installed on-premises, typically as a VM on your virtualization platform (e.g. VMware). It speaks <strong>NFS or SMB</strong> to your local storage, so it can integrate with almost any SAN/NAS.</td></tr>
+      <tr><td><strong>Location</strong></td><td>Either end of a task. On-premises locations are NFS or SMB shares; AWS-side locations include <strong>S3</strong>, <strong>EFS</strong>, and <strong>FSx for Windows File Server</strong>.</td></tr>
+    </tbody>
+  </table>
+
+  <p>The flow: the on-premises agent talks NFS/SMB to your existing storage, then communicates with a DataSync endpoint in AWS, which writes the data into the configured AWS-side location. Some AWS-to-AWS transfers are also supported directly — for example EFS to EFS, even cross-Region.</p>
+
+  <h2>Scale and Reliability Features</h2>
+  <p>DataSync is built for large scale: current AWS documentation puts the maximum throughput per agent-based task at <strong>10 Gbps</strong> (roughly 100 TB/day), and a single task can work with up to <strong>50 million</strong> files, objects, and directories. Beyond raw scale, it also carries these built-in features:</p>
+  <ul>
+    <li><strong>Metadata transfer</strong> — permissions and timestamps move along with the data, important for complex directory structures.</li>
+    <li><strong>Built-in data validation</strong> — confirms data landing in AWS matches the source, valuable for scenarios like migrating medical records or scans where integrity matters.</li>
+    <li><strong>Encryption in transit</strong> (TLS) and <strong>compression</strong>.</li>
+    <li><strong>Automatic retry and recovery</strong> from transit errors.</li>
+    <li><strong>Bandwidth throttling</strong> — a configurable limiter so the transfer doesn't saturate your customer internet link.</li>
+    <li><strong>Incremental and scheduled transfers</strong> — not just one-off copies.</li>
+  </ul>
+  <p>It's billed pay-as-you-use: a per-gigabyte cost for data actually moved.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic: DataSync vs. Snowball</div>
+    Choose <strong>DataSync</strong> when a scenario needs a reliable, incremental or scheduled, bandwidth-throttled <em>electronic</em> transfer that integrates with EFS, FSx for Windows, or S3. Choose <strong>Snowball / Snowball Edge</strong> instead when it's a huge one-time bulk transfer with no viable network path — DataSync assumes you have a working link to throttle, not a link that doesn't exist.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company needs to migrate 40 TB of on-premises NAS data into an EFS file system, with the ability to run repeat incremental syncs on a nightly schedule and throttle bandwidth during business hours. Which service fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Snowball Edge is built for one-time bulk transfers or scenarios with no viable network link — it doesn't offer scheduled, incremental syncs against a live EFS target."> Snowball Edge, shipped back and forth on a recurring basis</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. DataSync natively integrates with EFS, supports scheduled and incremental transfers, and includes bandwidth throttling to protect business-hours link usage — exactly this scenario."> AWS DataSync, using an on-premises agent targeting the EFS location</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Manual S3 CLI uploads have no built-in scheduling, throttling, retry, or validation — DataSync exists precisely to automate what this approach would require you to build yourself."> Manual scripted uploads to S3 using the AWS CLI</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Storage Gateway File Gateway presents S3 as an NFS/SMB share for ongoing access, but it isn't the scheduled bulk-migration-with-throttling tool this scenario calls for."> Storage Gateway File Gateway, mounted directly by the NAS</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which two protocols does the DataSync agent use to communicate with on-premises storage devices like a SAN or NAS?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="HTTP and HTTPS aren't the protocols the agent uses to talk to local storage — those are used for other kinds of web traffic, not SAN/NAS file access."> HTTP and HTTPS</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The DataSync agent communicates with on-premises storage using NFS or SMB, which is why it can integrate with nearly any existing SAN or NAS device."> NFS and SMB</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="iSCSI and FCoE are block-storage transport protocols, not the file-sharing protocols the DataSync agent speaks to on-premises storage."> iSCSI and FCoE</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="FTP and SFTP are file transfer protocols handled by a different AWS service (Transfer Family), not the protocols the DataSync agent uses locally."> FTP and SFTP</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A DataSync task definition needs to specify all of the following EXCEPT which one?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The source and destination locations are a core part of every task definition — a task always defines where data is copied from and to."> The source location and the destination location</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A schedule is part of what a task can define, enabling incremental and recurring syncs rather than one-off transfers."> An optional transfer schedule</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Bandwidth throttling settings belong to the task definition, letting you limit customer-link impact during the transfer."> A bandwidth throttle limit</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The agent is a separate architectural component — the software installed on-premises that reads/writes local storage — it isn't itself a property configured inside the task definition."> The specific hypervisor version running the on-premises agent</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0012-directory-service.html">← Previous: AWS Directory Service</a>
+      <a href="0014-fsx-for-windows-file-server.html">Next: FSx for Windows File Server →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

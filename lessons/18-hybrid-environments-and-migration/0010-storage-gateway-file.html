@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – Storage Gateway: File Gateway</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 10
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>Storage Gateway: File Gateway</h1>
+    <p class="lesson-meta">Lesson 10 of 16 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/filegateway/latest/files3/what-is-file-s3.html" target="_blank">What Is Amazon S3 File Gateway?</a> · <a href="https://docs.aws.amazon.com/filegateway/latest/files3/fgw-quotas.html" target="_blank">Limits and Quotas for Amazon S3 File Gateway</a></p>
+  </div>
+
+  <p><strong>File Gateway</strong> bridges on-premises file storage and S3: it presents one or more file shares over <strong>NFS</strong> (Linux) or <strong>SMB</strong> (Windows, with optional Active Directory authentication), and each share maps to a single S3 bucket — a pairing AWS calls a <strong>bucket share</strong>.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — flagged in the course diagram</div>
+    The single most important fact about File Gateway, and the one most likely to be tested against the other Storage Gateway modes: <strong>S3 is the primary, authoritative copy of the data — not the local on-premises cache.</strong> Anything written on-premises is copied up to S3 automatically; the local disk only ever holds a read/write cache for LAN-like performance. This is the opposite of Volume Gateway in <em>Stored</em> mode, where the on-premises volume is authoritative and S3 only holds an asynchronous backup. If a question hinges on "which copy is the real one," that's the distinction to reach for.
+  </div>
+
+  <h2>How files map to objects</h2>
+  <p>Because S3 is authoritative, writing a file to a share creates (or updates) an object in the linked bucket, and any object placed directly into the bucket becomes visible on the share. The mapping is direct: a file named <code>winky.jpg</code> at the share root becomes an object named <code>winky.jpg</code>; a file at <code>omgwow/ruffle.png</code> becomes an object named <code>omgwow/ruffle.png</code>. Nested folder paths are folded into the object key — the same mechanism S3 itself uses to emulate a folder hierarchy on top of what is really a flat namespace.</p>
+
+  <div class="callout">
+    <div class="callout-title">Sizing facts</div>
+    A single gateway supports up to <strong>50 file shares</strong> (raised from an original limit of 10 — worth knowing the current ceiling if a scenario pushes on share count). Because S3 holds the authoritative copy, the local appliance only needs enough disk for its read/write cache, not for the full data set.
+  </div>
+
+  <h2>Multi-site architecture — and its caveats</h2>
+  <p>File Gateway isn't limited to one site talking to one bucket. Multiple gateways at different premises can point at the <em>same</em> bucket, each presenting it as a local share. This unlocks a genuine multi-site architecture, but with two behaviors worth knowing cold:</p>
+  <ul>
+    <li><strong>Writes propagate to S3 automatically</strong> — a new or changed file appears as an S3 object immediately. But that update does <strong>not</strong> automatically appear on other gateways' shares. Each gateway only refreshes its view of the bucket on its next <strong>listing</strong> — to avoid unnecessary, continuous S3 API calls. AWS's <strong>"notify when uploaded"</strong> feature can push a CloudWatch Events notification when new objects land, so other sites can be told to refresh, but this has to be deliberately designed in — it isn't automatic.</li>
+    <li><strong>No object locking.</strong> If two sites write to the same file at close to the same time, there's no coordination or conflict detection — one write can silently overwrite the other, causing data loss. Mitigate this by keeping only one share writable and the rest read-only, or by implementing your own access control over who can write and when.</li>
+  </ul>
+
+  <h2>DR and lifecycle, for free</h2>
+  <p>Because the data genuinely lives in S3, standard S3 features work underneath a file share with no special integration work:</p>
+  <ul>
+    <li><strong>Cross-Region Replication</strong> — replicate the bucket to a second Region for multi-Region DR, without changing how the on-premises side operates.</li>
+    <li><strong>S3 Lifecycle policies</strong> — a share is created with a default storage class (typically S3 Standard), but a lifecycle policy can transition objects to <strong>S3 Standard-IA</strong> after some number of days, then on to <strong>S3 Glacier</strong> later — all automatic, all transparent to whoever is accessing the share on-premises.</li>
+  </ul>
+  <p>Because objects also live in an ordinary S3 bucket, anything that can use S3 as a source can reach the same data indirectly — S3 Event Notifications with Lambda, Athena queries, and so on.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic</div>
+    See the keyword <strong>file</strong>, together with <strong>NFS</strong> or <strong>SMB</strong>, in a Storage Gateway question — default to <strong>File Gateway</strong>. Compare against the pattern from the previous two lessons: volumes → Volume Gateway, tapes → Tape Gateway, files/NFS/SMB → File Gateway.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team needs to know which copy of their data is authoritative before designing a DR plan around File Gateway. Where does File Gateway keep the primary copy of the data?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="It's the reverse: the local disk on a File Gateway only ever holds a read/write cache. The authoritative copy lives in S3, not on-premises."> On the on-premises appliance, with S3 holding only a backup copy</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Unlike Volume Gateway in Stored mode, File Gateway treats S3 as the primary, authoritative copy — the on-premises side only caches for performance."> In the linked S3 bucket, with the on-premises side acting only as a cache</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="File Gateway doesn't split authority evenly between two locations — S3 is the single authoritative source, and the local appliance is purely a performance cache."> Split evenly between the appliance and S3, updated on a fixed schedule</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Glacier isn't where File Gateway keeps its primary copy by default — S3 (typically Standard) holds the authoritative data, with Glacier only entering the picture via an optional lifecycle policy."> In Glacier, since File Gateway is designed primarily for archival</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Two File Gateways at different sites share the same S3 bucket. Site A writes a new file at 9:00am. An engineer at Site B lists their share at 9:05am but doesn't see the new file. What's the most likely explanation?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Writes from a gateway to S3 happen automatically and quickly — a five-minute gap wouldn't normally be explained by the upload itself still being in progress."> Site A's write to S3 is still uploading and hasn't completed yet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Writes go up to S3 automatically, but other gateways only refresh their view of the bucket on their next listing — that update isn't pushed automatically unless 'notify when uploaded' has been configured."> Site B's gateway only refreshes its bucket listing on demand, and hasn't re-listed since the write</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="File Gateway shares aren't limited to 50 files by default — the missing file is explained by listing behavior, not a file-count ceiling."> Site B's share has reached its maximum file count and rejected the update</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="File Gateway doesn't require manual approval for cross-site file visibility — the missing update is about when each gateway refreshes its listing, not an approval workflow."> Cross-site visibility requires manual approval from an administrator each time</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Two engineers at different sites both open and save changes to the same file at nearly the same time through their local File Gateway shares. What should the team expect, and how should they prevent it?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="File Gateway doesn't provide object locking, so it can't queue and merge concurrent writes automatically — one save can silently overwrite the other instead."> File Gateway automatically queues and merges both saves without any data loss</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. File Gateway has no object locking, so concurrent writes to the same file can silently overwrite each other; keeping only one share writable (others read-only), or adding external access control, avoids this."> One save can silently overwrite the other; keep only one share writable to avoid it</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="File Gateway doesn't reject a second concurrent write with an error — there's no built-in conflict detection at all, so the write simply overwrites the prior version."> The second write is automatically rejected with a file-lock error</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 Versioning on the bucket can preserve prior object versions, but File Gateway itself has no locking mechanism, so this doesn't happen 'automatically' as a File Gateway feature without deliberately enabling and managing versioning."> S3 Versioning is enabled by default on every File Gateway bucket to handle this</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-storage-gateway-tape-vtl.html">← Previous: Storage Gateway: Tape Gateway (VTL)</a>
+      <a href="0011-snowball-snowball-edge-and-snowmobile.html">Next: Snowball, Snowball Edge & Snowmobile →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – AWS Site-to-Site VPN</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Hybrid Environments and Migration</a> › Lesson 03
+    </div>
+    <div class="module-tag">Hybrid Environments and Migration</div>
+    <h1>AWS Site-to-Site VPN</h1>
+    <p class="lesson-meta">Lesson 03 of 16 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNTunnels.html" target="_blank">Tunnel options for your AWS Site-to-Site VPN connection</a> · <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/accelerated-vpn.html" target="_blank">Accelerated AWS Site-to-Site VPN connections</a></p>
+  </div>
+
+  <p><strong>AWS Site-to-Site VPN</strong> is a logical, IPSec-encrypted connection between a VPC and an on-premises (or other external) network. It's the fastest way to establish a hybrid network link into AWS — usually provisionable in under an hour, in sharp contrast to a physical Direct Connect, which can take weeks or months. It typically transits the public internet (the exception — a VPN layered over Direct Connect for extra encryption — is covered in a later lesson).</p>
+
+  <h2>Core Components</h2>
+  <table>
+    <thead><tr><th>Component</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><strong>VPC</strong></td><td>The AWS-side private network being connected</td></tr>
+      <tr><td><strong>Virtual private gateway (VGW)</strong></td><td>A logical gateway object attached to one VPC; a valid route table target</td></tr>
+      <tr><td><strong>Customer gateway (CGW)</strong></td><td>Both the logical AWS configuration <em>and</em> the physical on-premises router it represents</td></tr>
+      <tr><td><strong>VPN connection</strong></td><td>The configuration linking one VGW to one CGW</td></tr>
+    </tbody>
+  </table>
+
+  <h2>From Partial to Full High Availability</h2>
+  <p>This progression is the single most important thing to internalize about Site-to-Site VPN architecture.</p>
+  <p><strong>Step 1 — attach a VGW.</strong> A VGW looks like a simple logical object, but behind the scenes it's already highly available: it has physical endpoints in <em>multiple</em> Availability Zones, each with its own public IPv4 address.</p>
+  <p><strong>Step 2 — create a VPN connection to one CGW.</strong> This links the VGW to a single on-premises customer gateway, and AWS creates <strong>two VPN tunnels</strong> — one from each VGW endpoint to that same customer router. As long as at least one tunnel is up, the two networks stay connected.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">One CGW is still a single point of failure</div>
+    Even though the AWS side now spans two Availability Zones, <strong>every tunnel terminates at the same single on-premises router</strong>. If that router or its site fails, the whole connection fails — regardless of how resilient the AWS side is. This is <strong>partial high availability</strong>: HA on the AWS side, a single point of failure on the customer side.
+  </div>
+
+  <p><strong>Step 3 — add a second CGW.</strong> Add a second on-premises router, ideally with its own internet connection and ideally in a separate building, and create a <em>second</em> VPN connection from the same VGW to this new CGW. This provisions another pair of tunnels to another two AWS endpoints. Now either customer router, or either Availability Zone, can fail — and the connection survives. That's <strong>full high availability</strong>: resilience on both sides.</p>
+
+  <h2>Static vs. Dynamic VPNs</h2>
+  <table>
+    <thead><tr><th>Type</th><th>How routes are learned</th><th>Tradeoffs</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Static</strong></td><td>Manually configured on both sides</td><td>Simple, works with almost any router; no advanced failover or load balancing</td></tr>
+      <tr><td><strong>Dynamic</strong></td><td>BGP exchanges routes between VGW and CGW</td><td>Requires BGP-capable customer hardware; supports multi-link failover and load balancing</td></tr>
+    </tbody>
+  </table>
+  <p>With a dynamic VPN, you can also enable <strong>route propagation</strong> on a VPC route table: any network the VGW learns via BGP while a VPN is active gets automatically added as a route, rather than requiring manual route table entries.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The throughput cap — a frequently tested number</div>
+    A single VPN connection (its pair of tunnels combined) is capped at <strong>1.25 Gbps</strong>, and that same 1.25 Gbps figure is also the aggregate cap across all connections on one virtual private gateway. If a scenario needs more throughput than that, plain Site-to-Site VPN is the wrong answer. <strong>AWS now also offers two ways past this ceiling</strong>: <strong>Accelerated Site-to-Site VPN</strong>, which routes tunnel traffic over the AWS global network via Global Accelerator for better and more consistent performance (works with Transit Gateway attachments), and <strong>Large Bandwidth Tunnels</strong>, which raise the per-tunnel cap to <strong>5 Gbps</strong> for VPN connections attached to a Transit Gateway or Cloud WAN (not available on a plain VGW attachment, and not combinable with Accelerated VPN).
+  </div>
+
+  <h2>Other Considerations</h2>
+  <ul>
+    <li><strong>Latency</strong> — traffic transits the public internet, with variable hop count and latency. If an application is latency-sensitive, Direct Connect is the better fit.</li>
+    <li><strong>Cost</strong> — an hourly connection charge, plus data transfer out charges; traffic also consumes your on-premises internet bandwidth (and any data cap it carries).</li>
+    <li><strong>Speed to provision</strong> — often hours, since it's entirely software-defined and IPSec is supported on almost any router (dynamic VPNs additionally need BGP support, which is less universal).</li>
+    <li><strong>Pairing with Direct Connect</strong> — a VPN can stand up connectivity quickly while a much slower-to-provision Direct Connect request is in progress, and it also works well as a <strong>backup path</strong> for an existing Direct Connect connection.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company has one VGW attached to its VPC and one VPN connection to a single on-premises customer gateway. The AWS side spans two Availability Zones. What's the actual availability posture of this design?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Even though the AWS side spans two AZs, every tunnel still terminates at the same single customer router — so the design is not fully highly available."> Fully highly available, since both AZs and both tunnels are active</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The AWS side is resilient across two AZs, but every tunnel terminates at the single on-premises router, making that router a single point of failure — this is partial high availability."> Partially highly available; the single customer router is a point of failure</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A VGW is inherently highly available by design, with endpoints already spread across multiple AZs — it isn't itself a single point of failure in this design."> Not highly available at all, since the VGW is a single point of failure</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Route propagation affects how routes are learned and added to route tables — it doesn't change the physical resilience posture of the customer-side router."> Fully highly available, as long as route propagation is enabled</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application needs guaranteed throughput of 3 Gbps between on-premises and a VPC, and the team wants to keep using a standard Site-to-Site VPN attached directly to a virtual private gateway. Is the default 1.25 Gbps cap a blocker here?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The 1.25 Gbps cap applies per connection and per VGW. Large Bandwidth Tunnels can raise this to 5 Gbps, but only for VPN connections attached to a Transit Gateway or Cloud WAN — not a plain VGW attachment — so as described, this design can't clear 3 Gbps."> Yes; a plain VGW attachment cannot exceed the 1.25 Gbps cap</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A single VPN connection and its VGW share the same 1.25 Gbps ceiling — adding a second tunnel to the same connection doesn't raise the aggregate cap."> No; adding a second tunnel to the connection doubles the cap</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Route propagation affects how routing information is learned, not the underlying throughput ceiling of the VPN connection or VGW."> No; enabling route propagation removes the throughput cap</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Switching from static to dynamic VPN changes how routes are exchanged (via BGP) — it does not change the 1.25 Gbps per-connection or per-VGW throughput cap."> No; switching to a static VPN removes the throughput cap</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company wants multiple VPN links between the same two sites to automatically share traffic and fail over based on link state, with routes learned dynamically rather than typed in by hand. Which VPN configuration supports this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Static VPNs use manually configured IP addressing on both sides and don't support the dynamic, link-state-aware load balancing and failover this scenario describes."> A static VPN, since it's simpler and needs no BGP support</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Dynamic VPNs use BGP between the VGW and customer router to exchange routes and link state, enabling multiple links to be used together with automatic failover and load balancing."> A dynamic VPN, using BGP between the VGW and customer router</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single customer gateway is still one physical device and one point of failure — this alone doesn't provide multi-link load balancing or dynamic route learning."> A static VPN with a single customer gateway handling all traffic</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Route propagation is a route-table feature that works alongside dynamic VPNs, but the underlying dynamic exchange of routes and link state comes from BGP itself, not from enabling propagation on a static VPN."> A static VPN with route propagation enabled on the route tables</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-ipsec-vpn-fundamentals.html">← Previous: IPSec VPN Fundamentals</a>
+      <a href="0004-direct-connect-concepts.html">Next: Direct Connect (DX): Concepts →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

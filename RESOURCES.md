@@ -158,3 +158,43 @@
 | R152 | Connect Your VPC to Services Using AWS PrivateLink | https://docs.aws.amazon.com/vpc/latest/userguide/endpoint-services-overview.html | PrivateLink underlying mechanism |
 | R153 | What Is VPC Peering? | https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html | Peering overview, non-transitive |
 | R154 | How VPC Peering Connections Work | https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-basics.html | Route tables, CIDR overlap restriction |
+| R155 | Direct Connect Routing Policies and BGP Communities | https://docs.aws.amazon.com/directconnect/latest/UserGuide/routing-and-bgp.html | BGP as it applies to Direct Connect and dynamic VPNs |
+| R156 | Tunnel Options for Your AWS Site-to-Site VPN Connection | https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNTunnels.html | IKE phase 1/phase 2, policy-based vs. route-based VPNs |
+| R157 | Configure Tunnel Options for AWS Site-to-Site VPN | https://docs.aws.amazon.com/vpn/latest/s2svpn/tunnel-configure.html | Current tunnel-option terminology, verified against course content |
+| R158 | Accelerated AWS Site-to-Site VPN Connections | https://docs.aws.amazon.com/vpn/latest/s2svpn/accelerated-vpn.html | Global Accelerator-routed VPN and Large Bandwidth Tunnels (beyond the classic 1.25 Gbps cap) |
+| R159 | What Is Direct Connect? | https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html | DX port allocation model, VIF types overview |
+| R160 | Requesting Cross Connects at Direct Connect Locations | https://docs.aws.amazon.com/directconnect/latest/UserGuide/Colocation.html | DX location ownership, AWS cage / customer cage / comms-partner cage |
+| R161 | Resilience in AWS Direct Connect | https://docs.aws.amazon.com/directconnect/latest/UserGuide/disaster-recovery-resiliency.html | Official resiliency tiers behind the course's SPOF-reduction progression |
+| R162 | Direct Connect Virtual Interfaces and Hosted Virtual Interfaces | https://docs.aws.amazon.com/directconnect/latest/UserGuide/WorkingWithVirtualInterfaces.html | Public/private/transit VIFs; VPN-over-DX via public VIF |
+| R163 | What Is AWS Transit Gateway? | https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html | Attachments, transitive routing, peering, RAM sharing |
+| R164 | How Volume Gateway Works | https://docs.aws.amazon.com/storagegateway/latest/vgw/StorageGatewayConcepts.html | Stored vs. cached mode architecture |
+| R165 | AWS Storage Gateway Quotas (Volume Gateway) | https://docs.aws.amazon.com/storagegateway/latest/vgw/resource-gateway-limits.html | Verified volume/size/total capacity limits |
+| R166 | What Is Tape Gateway? | https://docs.aws.amazon.com/storagegateway/latest/tgw/WhatIsStorageGateway.html | VTL/VTS architecture, iSCSI tape emulation |
+| R167 | AWS Storage Gateway Quotas (Tape Gateway) | https://docs.aws.amazon.com/storagegateway/latest/tgw/resource-gateway-limits.html | Virtual tape size (now 15 TiB max) and VTL capacity limits |
+| R168 | What Is Amazon S3 File Gateway? | https://docs.aws.amazon.com/filegateway/latest/files3/what-is-file-s3.html | Bucket shares, S3-as-primary-storage model |
+| R169 | Limits and Quotas for Amazon S3 File Gateway | https://docs.aws.amazon.com/filegateway/latest/files3/fgw-quotas.html | File shares per gateway (raised from 10 to 50) |
+| R170 | What Is AWS Snowball Edge? | https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html | Device variants, storage/compute capacity |
+| R171 | AWS Snowball Edge Availability Change | https://docs.aws.amazon.com/snowball/latest/developer-guide/snowball-edge-availability-change.html | Snow family closed to new customers Nov 2025; Snowmobile/Snowcone retired |
+| R172 | What Is AWS Directory Service? | https://docs.aws.amazon.com/directoryservice/latest/admin-guide/what_is.html | Simple AD / Managed Microsoft AD / AD Connector overview |
+| R173 | AWS Managed Microsoft AD | https://docs.aws.amazon.com/directoryservice/latest/admin-guide/directory_microsoft_ad.html | Real AD implementation, trust relationships, current Windows Server version |
+| R174 | AWS DataSync Quotas | https://docs.aws.amazon.com/datasync/latest/userguide/datasync-limits.html | Per-agent throughput, per-task file-count limits (Basic vs. Enhanced mode) |
+| R175 | FSx for Windows File Server Performance | https://docs.aws.amazon.com/fsx/latest/WindowsGuide/performance.html | Current throughput ceiling (raised to 12 GB/s) |
+| R176 | Deployment and Storage Class Options for FSx for Lustre File Systems | https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html | Scratch/Persistent generations, S3 repository lazy-loading |
+| R177 | Create a Server in a Virtual Private Cloud — AWS Transfer Family | https://docs.aws.amazon.com/transfer/latest/userguide/create-server-in-vpc.html | Endpoint types (public/VPC internet-facing/VPC internal) and protocol support |
+| R178 | Rotate AWS Secrets Manager Secrets | https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html | Lambda-driven rotation, RDS in-sync integration |
+| R179 | Replicate Secrets Across Regions | https://docs.aws.amazon.com/secretsmanager/latest/userguide/replicate-secrets.html | Multi-Region secret replication |
+| R180 | AWS Network Firewall: Stateless and Stateful Rules Engines | https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-rules-engines.html | Vendor-neutral grounding for the generic L7 firewall lesson |
+| R181 | Web ACL Capacity Units (WCUs) in AWS WAF | https://docs.aws.amazon.com/waf/latest/developerguide/aws-waf-capacity-units.html | Current WCU ceiling (5,000, no ticket needed — up from the course-era 1,500) |
+| R182 | AWS WAF Pricing | https://aws.amazon.com/waf/pricing/ | Web ACL/rule/request pricing, Bot Control and Fraud Control fees |
+| R183 | AWS Shield Pricing | https://aws.amazon.com/shield/pricing/ | Shield Advanced's $3,000/month per-Organization commitment, verified current |
+| R184 | Health-Based Detection with Shield Advanced and Route 53 | https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-health-checks.html | Prerequisite for Shield Advanced's proactive engagement (SRT) |
+| R185 | AWS CloudHSM Cluster Architecture | https://docs.aws.amazon.com/cloudhsm/latest/userguide/cluster-architecture.html | ENI-per-node injection, AWS-managed HSM VPC |
+| R186 | AWS CloudHSM FAQs | https://aws.amazon.com/cloudhsm/faqs/ | FIPS 140-3 Level 3 validation (superseded 140-2 for current hardware) |
+| R187 | What Is AWS Config? | https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html | Configuration items, detective (not preventive) recording |
+| R188 | Evaluating Resources with AWS Config Rules | https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config.html | Managed/custom rules, compliance evaluation |
+| R189 | What Is Amazon Macie? | https://docs.aws.amazon.com/macie/latest/user/what-is-macie.html | Discovery jobs, policy vs. sensitive-data findings |
+| R190 | Quick Reference: Managed Data Identifiers by Type | https://docs.aws.amazon.com/macie/latest/user/mdis-reference-quick.html | Full managed data identifier catalog |
+| R191 | What Is Amazon Inspector? | https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html | Current continuous-scanning architecture (post-Inspector Classic) |
+| R192 | CIS Scans for Amazon EC2 Instance Operating Systems | https://docs.aws.amazon.com/inspector/latest/user/scanning-cis.html | Scheduled, not continuous — the one non-automatic Inspector scan type |
+| R193 | What Is Amazon GuardDuty? | https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html | Continuous ML/threat-intel account monitoring |
+| R194 | Feature Names for Protection Plans in GuardDuty | https://docs.aws.amazon.com/guardduty/latest/ug/guardduty-features-activation-model.html | Expanded protection plans (EKS/RDS/Lambda/Malware/Runtime/AI) beyond the original four data sources |
