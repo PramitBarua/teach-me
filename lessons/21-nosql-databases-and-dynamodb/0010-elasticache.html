@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – Amazon ElastiCache</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 10
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>Amazon ElastiCache</h1>
+    <p class="lesson-meta">Lesson 10 of 12 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/WhatIs.html" target="_blank">What is Amazon ElastiCache?</a> · <a href="https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Scaling-serverless.html" target="_blank">Scaling ElastiCache Serverless clusters</a></p>
+  </div>
+
+  <p><strong>ElastiCache</strong> is a managed in-memory data store. Where a database like RDS ultimately persists data to disk — and is therefore always bound by disk-level performance limits, however fast the disk — an in-memory store holds data in memory, delivering throughput and latency an order of magnitude better. The tradeoff is that it isn't persistent by default and is meant for temporary, fast-access data rather than a system of record. ElastiCache offers two engine choices, <strong>Redis</strong> and <strong>Memcached</strong>, both delivered as a fully managed service and both supporting a wide range of programming languages.</p>
+
+  <h2>What ElastiCache Is Actually Used For</h2>
+  <p>Two use cases dominate the exam and real-world deployments:</p>
+  <ul>
+    <li><strong>Caching for read-heavy workloads.</strong> Databases — relational ones especially — don't scale reads cheaply or easily. Offloading repeated reads to ElastiCache reduces load on the backend database and, at scale, reduces cost.</li>
+    <li><strong>Externalizing session state.</strong> Storing user session data in ElastiCache rather than on the application instance itself lets application servers be fully <strong>stateless</strong>. That matters most behind a load balancer and Auto Scaling group: if one instance fails, another instance can pick up the same session data from the cache and continue seamlessly — the difference between an application that's merely highly available and one that's genuinely <strong>fault tolerant</strong>.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Exam trap: ElastiCache is not invisible</div>
+    ElastiCache is <strong>not</strong> a drop-in optimization you bolt on without touching your code. The application has to actively know about the cache: check it first, fall through to the database on a miss, write the result back, and handle invalidation. If a scenario explicitly states <strong>"no application changes,"</strong> ElastiCache is the wrong answer — full stop.
+  </div>
+
+  <h2>Redis vs. Memcached</h2>
+  <p>Both engines deliver sub-millisecond access and support the same broad range of client languages, but they diverge sharply beyond that:</p>
+  <table>
+    <thead><tr><th>Redis</th><th>Memcached</th></tr></thead>
+    <tbody>
+      <tr><td>Rich data structures — lists, sets, sorted sets, hashes, bitmaps (e.g. a sorted set for a game leaderboard)</td><td>Simple strings only</td></tr>
+      <tr><td>Multi-AZ replication with read replicas — true high availability</td><td>No true replication; nodes can be manually sharded but each is expendable</td></tr>
+      <tr><td>Backup and restore — persistence supported</td><td>No persistence or backup capability at all</td></tr>
+      <tr><td>Supports transactions — all-or-nothing multi-operation atomicity</td><td>No transaction support</td></tr>
+      <tr><td>Single-threaded per node</td><td>Multi-threaded — better multi-core utilization</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic</div>
+    If a question mentions <strong>Multi-AZ, high availability, complex data structures (lists, sets, sorted sets, leaderboards), persistence/backup, or transactions</strong>, that's <strong>Redis</strong>. If it's a simple caching need with heavy <strong>multi-core throughput</strong> demands and no HA requirement, that points to <strong>Memcached</strong>.
+  </div>
+
+  <h2>Update Since the Course Was Recorded: ElastiCache Serverless</h2>
+  <p>The classic architecture the transcript describes — sizing and managing individual cache nodes yourself — is still fully current and still the foundation the exam tests. But AWS has since added <strong>ElastiCache Serverless</strong>: a deployment option with no cache nodes to size or manage at all. It automatically scales compute, memory, and network bandwidth up and down based on real-time demand, replicates data across multiple Availability Zones for high availability, and bills based on actual data stored and compute consumed rather than provisioned node capacity.</p>
+  <div class="callout">
+    <div class="callout-title">How to think about it for the exam</div>
+    Treat ElastiCache Serverless as a modern alternative to the provisioned-node model, not a replacement for the underlying Redis-vs-Memcached decision — you still choose an engine, and the same engine tradeoffs (data structures, persistence, transactions) still apply. Serverless just removes the capacity-planning step. If a scenario emphasizes not wanting to size or manage nodes, Serverless is the fit; if it's testing Redis vs. Memcached fundamentals, the classic node-based framing still applies.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A scenario states the team wants to reduce database read load and improve latency, but explicitly cannot make any changes to the application's code. What should you conclude?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="ElastiCache requires the application to actively check the cache, handle misses, write results back, and manage invalidation — it cannot be added with zero code changes."> ElastiCache is a good fit, since caching is added transparently</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. ElastiCache requires application-level changes to check the cache, handle misses, and write results back — a 'no application changes' constraint rules it out."> ElastiCache is not a good fit given that constraint</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Memcached still requires the same kind of application-side cache-check-and-fallback logic as Redis — the engine choice doesn't remove the need for code changes."> ElastiCache for Memcached avoids this requirement, unlike Redis</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="ElastiCache Serverless removes node management, not the need for application code to interact with the cache — the code-change requirement still applies."> ElastiCache Serverless avoids this requirement entirely</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application needs a leaderboard data structure that stays sorted by player rank, plus Multi-AZ replication for high availability. Which ElastiCache engine fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Redis supports rich data structures like sorted sets — a natural fit for a ranked leaderboard — plus true Multi-AZ replication with read replicas for high availability."> Redis, using a sorted set and Multi-AZ replication</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Memcached supports simple strings only and has no true replication mechanism — it can't natively model a sorted leaderboard or provide Multi-AZ HA."> Memcached, using manually sharded nodes for the leaderboard</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DynamoDB Streams captures change events from a table; it isn't an ElastiCache engine and doesn't provide in-memory sorted-set caching."> DynamoDB Streams, replacing the need for a cache engine</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RDS Multi-AZ provides HA for a relational database, but it doesn't deliver in-memory sub-millisecond caching or Redis-style sorted-set structures."> RDS Multi-AZ, storing the leaderboard directly in the database</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A fault-tolerant application runs behind a load balancer and Auto Scaling group. When one instance fails, another instance must pick up the failed instance's in-progress user session without disruption. What enables this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Storing session data on the local instance is exactly the pattern that breaks when that instance fails — the session data would be lost, not recoverable by another instance."> Storing session state locally on each EC2 instance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Externalizing session state to ElastiCache keeps application servers stateless, so any instance can load a user's session data from the cache after a failover, continuing the experience uninterrupted."> Externalizing session state to ElastiCache</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Sticky sessions on the load balancer pin a user to one instance — if that instance fails, the sticky session doesn't recover the lost session data on another instance."> Enabling sticky sessions on the load balancer alone</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Increasing the Auto Scaling group's minimum instance count improves general capacity but does nothing to preserve or transfer an individual user's session data on failover."> Increasing the Auto Scaling group's minimum capacity</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-amazon-athena.html">← Previous: Amazon Athena</a>
+      <a href="0011-redshift-architecture.html">Next: Amazon Redshift: Architecture →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

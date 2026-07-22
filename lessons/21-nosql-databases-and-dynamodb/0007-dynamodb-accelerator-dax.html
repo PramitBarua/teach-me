@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – DynamoDB Accelerator (DAX)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 07
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>DynamoDB Accelerator (DAX)</h1>
+    <p class="lesson-meta">Lesson 07 of 12 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.html" target="_blank">In-memory acceleration with DynamoDB Accelerator (DAX)</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.concepts.html" target="_blank">DAX: How it works</a></p>
+  </div>
+
+  <p><strong>DAX</strong> is an in-memory cache for DynamoDB. That description alone could apply to almost any cache sitting in front of almost any database — the part that matters for the exam is what makes DAX different from a generic cache you'd bolt on yourself: it's <strong>purpose-built and tightly integrated</strong> with DynamoDB specifically, which removes most of the admin overhead a generic caching layer normally demands.</p>
+
+  <h2>A Generic Cache vs. DAX</h2>
+  <p>Picture a traditional in-memory cache sitting beside DynamoDB. The application checks the cache first. On a <strong>cache miss</strong>, the application itself has to query DynamoDB directly, take the result, write it back into the cache, and only then return it to the caller. Every one of those steps — checking, falling through, writing back, invalidating — is application logic the developer has to build and maintain. The cache and the database are two entirely separate systems that happen to sit next to each other.</p>
+  <p>DAX collapses that into one API surface. The application installs the <strong>DAX SDK</strong> and talks to a single DAX endpoint as if it were talking to DynamoDB itself. If DAX already has the data, it's a cache hit and DAX returns it directly. If not, DAX itself goes to DynamoDB on the application's behalf, retrieves the data, populates its own cache, and returns the result — all invisible to the calling application. There's one set of API calls, one SDK, and DAX quietly handles the cache-miss round trip that a generic architecture would have forced the application to manage itself.</p>
+
+  <h2>Cluster Architecture</h2>
+  <p>DAX runs as a <strong>cluster</strong> deployed <strong>inside a VPC</strong>, spread across multiple Availability Zones for high availability. One node is the <strong>primary node</strong>, which handles both reads and writes; the rest are <strong>replica nodes</strong>, which serve reads only. If the primary node fails, the cluster holds an election and promotes one of the replicas to become the new primary — the same failover pattern you'd expect from any AZ-aware cluster service. Clients connect through a single cluster endpoint that load-balances requests, much like connecting to an RDS endpoint.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">DAX brings its own VPC requirement</div>
+    DynamoDB itself is a public AWS service — no VPC needed. DAX is the exception: because the DAX cluster is deployed inside a VPC, any application that wants to use DAX must also be deployed inside that same VPC. This is a real architectural constraint, not a detail — it's the kind of fact an exam question can hinge on.
+  </div>
+
+  <h2>Two Internal Caches</h2>
+  <p>DAX actually maintains two separate caches internally:</p>
+  <ul>
+    <li>The <strong>item cache</strong> holds individual items retrieved via <code>GetItem</code> or <code>BatchGetItem</code>, keyed by the item's partition key (and sort key, if the table has one).</li>
+    <li>The <strong>query cache</strong> holds the results of <code>Query</code> or <code>Scan</code> operations — but critically, it stores the exact parameters used alongside the result set. That means if the same query or scan is re-run with identical parameters, DAX can serve the whole result set straight from cache rather than touching DynamoDB again.</li>
+  </ul>
+  <p>DAX also supports <strong>write-through</strong> caching: writes made via the DAX SDK are committed to DynamoDB and written into the cache at the same time, keeping the two in sync without extra application logic. If a cache miss occurs during a read, the retrieved data is written into the primary node and then replicated out to the replica nodes.</p>
+
+  <h2>Performance</h2>
+  <p>Cache hits from DAX typically return in microseconds — the transcript cites roughly <strong>400 microseconds</strong> as a representative figure. Cache misses still fall back to DynamoDB's own native performance, which is single-digit milliseconds. So the worst case with DAX is "as fast as DynamoDB normally is," and the best case is an order of magnitude faster. DAX scales in both directions: <strong>scale up</strong> with larger node types, or <strong>scale out</strong> with more nodes in the cluster.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic: caching + DynamoDB defaults to DAX</div>
+    Whenever a question describes a <strong>caching requirement layered on top of DynamoDB</strong>, default to DAX and only move away from that assumption if the scenario gives you a specific reason not to. The one reason that reliably rules DAX out: a requirement for <strong>strongly consistent reads</strong>. DAX cannot serve strongly consistent reads at all — if the scenario insists on them, DAX is the wrong answer regardless of how read-heavy the workload is.
+  </div>
+
+  <h2>When to Reach for DAX — and When Not To</h2>
+  <p>DAX fits well when a workload is <strong>read-heavy or bursty</strong> — for example, a sudden spike in reads during a sale, or a table that always gets hammered with reads at certain times. It also fits when the <strong>same hot data</strong> is read over and over (perhaps a small, popular slice of a much larger table), or when an application is <strong>latency-critical</strong> and needs microsecond-level response times. Beyond performance, DAX can meaningfully reduce cost: rather than provisioning large RCU values to absorb repeated reads of the same data, offloading those reads to DAX can be markedly cheaper.</p>
+  <p>DAX is a poor fit when an application needs <strong>strongly consistent reads</strong> it cannot do without, when the workload isn't latency-sensitive at all, or when the workload is <strong>write-heavy</strong> with little repeated reading of the same data — in that last case, there's simply not much for a cache to do.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A table serves a read-heavy workload where the same small set of items is read repeatedly, and the team wants to add caching with minimal extra application logic to maintain. Which approach fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A generic cache would work, but it requires the application to handle cache misses, writes, and invalidation itself — exactly the admin overhead the scenario wants to avoid."> A generic in-memory cache managed entirely by the application</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. DAX exposes a single SDK endpoint and handles cache misses against DynamoDB on the application's behalf, minimizing the admin overhead a generic cache would require."> DAX, accessed through its own SDK as a single endpoint</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Larger RCU values raise the table's own provisioned throughput and cost but don't reduce latency to microseconds or remove the need for repeated direct reads."> Increasing the table's provisioned RCUs instead of caching</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="DynamoDB Streams captures a change log of table activity — it isn't a caching mechanism and won't speed up repeated reads of the same items."> Enabling DynamoDB Streams to capture repeated reads</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application requires strongly consistent reads on every request and cannot tolerate eventual consistency at all. Should the team add DAX in front of the table?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DAX cannot serve strongly consistent reads under any configuration — this isn't a setting that can be toggled on."> Yes, DAX can be configured to serve strongly consistent reads</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. DAX cannot serve strongly consistent reads at all, so an application with that hard requirement should read directly from DynamoDB instead."> No, DAX cannot serve strongly consistent reads at all</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Adding more replica nodes improves read throughput and availability, but it has no effect on DAX's inherent inability to serve strongly consistent reads."> Yes, as long as enough replica nodes are added to the cluster</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Write-through caching keeps writes synchronized between DAX and DynamoDB, but it doesn't change the fact that reads served from DAX are eventually consistent."> Yes, as long as write-through caching is enabled on the cluster</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team plans to deploy a DAX cluster and wants to know what that implies for the application servers that will use it. What's the correct architectural implication?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DynamoDB itself is a public service reachable without a VPC, but DAX is deployed inside a VPC — so this claim has it backwards for DAX."> Nothing changes, since DAX is a public service like DynamoDB</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. DAX clusters run inside a VPC, so any application using DAX must also be deployed inside that same VPC to reach it."> The application servers must also be deployed inside that same VPC</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DAX doesn't require a VPN — the VPC requirement is about the application being deployed in the same VPC as the cluster, not about connecting over a VPN tunnel."> The application servers must connect to DAX over a VPN connection</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DAX doesn't require a public NAT gateway for access — since both the cluster and the application live inside the VPC, traffic between them stays internal."> The application servers must route requests through a public NAT gateway</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-dynamodb-global-tables.html">← Previous: DynamoDB Global Tables</a>
+      <a href="0008-dynamodb-ttl.html">Next: DynamoDB Time to Live (TTL) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

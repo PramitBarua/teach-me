@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – DynamoDB Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 01
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>DynamoDB Architecture</h1>
+    <p class="lesson-meta">Lesson 01 of 12 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.TableClasses.html" target="_blank">DynamoDB table classes</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html" target="_blank">Point-in-time recovery for DynamoDB</a></p>
+  </div>
+
+  <p><strong>DynamoDB</strong> is a NoSQL, wide-column, key-value <strong>database as a service</strong>. That last phrase is precise on purpose: products like RDS or Aurora are <em>database-server</em>-as-a-service — you still get a server, even if AWS manages it. DynamoDB skips the server entirely. There is no instance to size, patch, or fail over. You interact with tables, and AWS handles everything underneath them.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The keyword heuristic</div>
+    If an exam question mentions <strong>NoSQL</strong> or <strong>key-value</strong> data, default to <strong>DynamoDB</strong> unless something strongly rules it out. If a question mentions <strong>relational data</strong> or <strong>SQL</strong> (structured query language), DynamoDB is almost certainly <em>not</em> the answer — it has no query language, no joins, and isn't designed for relational modeling.
+  </div>
+
+  <h2>Public Service, No Infrastructure</h2>
+  <p>DynamoDB is a <strong>public service</strong>: it's reachable from anywhere with access to its public endpoints, which means the public internet, or from inside a VPC via an <strong>internet gateway</strong> or a <strong>gateway VPC endpoint</strong>. There's no concept of placing DynamoDB "inside" a VPC the way you would an EC2 instance — you're always talking to a shared, AWS-operated endpoint.</p>
+  <p>Under the hood, data is replicated across multiple storage nodes in multiple Availability Zones by default, so multi-AZ resilience is automatic and not something you configure. Global resilience — spreading a table across Regions — is an optional extra, covered in a later lesson on Global Tables. DynamoDB is backed by SSD storage and delivers single-digit-millisecond latency for typical operations.</p>
+
+  <h2>Tables, Items, and Primary Keys</h2>
+  <p>The <strong>table</strong> is the base entity in DynamoDB — arguably, DynamoDB is really a database-<em>table</em>-as-a-service product. A table is a grouping of <strong>items</strong> that all share the same primary key structure. Think of an item roughly like a row in a relational table. A table can hold an unlimited number of items — there's no cap on item count.</p>
+  <p>Every table needs a primary key, chosen at creation time, and it comes in one of two shapes:</p>
+  <dl>
+    <dt>Simple primary key</dt>
+    <dd>Just a <strong>partition key (PK)</strong>. Every item's PK value must be unique in the table.</dd>
+    <dt>Composite primary key</dt>
+    <dd>A <strong>partition key (PK)</strong> plus a <strong>sort key (SK)</strong>. Individual items can share a PK, but the <em>combination</em> of PK and SK must be unique.</dd>
+  </dl>
+  <p>Beyond the primary key, items are flexible: two items sharing a table can have no other attributes, completely different attributes, or entirely overlapping ones. DynamoDB doesn't enforce a schema on non-key attributes at all. The one hard limit is <strong>item size</strong>: a single item — primary key, attribute names, and attribute values combined — can be at most <strong>400 KB</strong>.</p>
+
+  <h2>Capacity Is About Speed, Not Space</h2>
+  <p>"Capacity" is a slightly misleading term here — it sounds like storage, but in DynamoDB it means <strong>throughput</strong>. Adding capacity means adding more read or write speed, not more room. Tables can use <strong>provisioned capacity</strong>, where you set explicit values, or <strong>on-demand capacity</strong>, where DynamoDB scales automatically and you pay per operation.</p>
+  <p>With provisioned capacity, two units matter:</p>
+  <ul>
+    <li><strong>Write Capacity Unit (WCU)</strong> — one WCU allows one write of up to 1 KB per second.</li>
+    <li><strong>Read Capacity Unit (RCU)</strong> — one RCU allows one strongly consistent read of up to 4 KB per second.</li>
+  </ul>
+  <p>Most operations have a <strong>minimum consumption</strong> — a read of even 100 bytes still consumes at least 1 RCU, rounding up. Capacity mechanics get a full treatment in the next lesson; for now, just anchor the two unit definitions and the "capacity means speed" framing.</p>
+
+  <h2>Two Kinds of Backup</h2>
+  <table>
+    <thead><tr><th>Backup type</th><th>How it works</th><th>Restore behavior</th></tr></thead>
+    <tbody>
+      <tr><td>On-demand backup</td><td>Manual, full backup of a table, similar to an RDS manual snapshot. Retained until you remove it yourself.</td><td>Restorable same-Region or cross-Region; you can adjust encryption settings during restore.</td></tr>
+      <tr><td>Point-in-time recovery (PITR)</td><td>Opt-in per table, disabled by default. Once enabled, gives a continuous, rolling 35-day window of changes.</td><td>Restores to a <strong>new</strong> table, with 1-second granularity anywhere in that 35-day window.</td></tr>
+    </tbody>
+  </table>
+  <p>With on-demand backups, you're responsible for taking them and for cleaning up old ones when they're no longer needed. PITR, once switched on, runs continuously in the background with no manual snapshot step.</p>
+
+  <div class="callout">
+    <div class="callout-title">A newer table class: Standard-IA</div>
+    Beyond the original Standard table class, DynamoDB now also offers a <strong>Standard-Infrequent Access (Standard-IA)</strong> table class. It cuts storage costs by roughly 60% compared to Standard, in exchange for higher per-request read/write pricing — a natural fit for tables dominated by storage cost rather than request volume, such as long-retained logs or historical order records. Performance, durability, and availability are identical to Standard, and you can switch table classes without any application code changes. Table class sits alongside capacity mode as another cost lever on a per-table basis.
+  </div>
+
+  <h2>Billing</h2>
+  <p>Billing is per table, driven by the RCU/WCU settings (or on-demand request volume), the storage consumed, and any additional features enabled, such as PITR or streams. There's no base infrastructure cost — you only pay for what a table actually uses. For predictable long-term workloads, <strong>reserved capacity</strong> is available: commit for the longer term and get a discounted rate in return.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An exam question describes an application needing flexible, schema-less key-value storage with no relational joins or SQL involved. Which service best fits this description?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Key-value data with no SQL or relational requirement is the classic signal to default to DynamoDB, a NoSQL database as a service."> DynamoDB, a NoSQL key-value database as a service</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="RDS is a relational, SQL-based database-server-as-a-service product — the opposite of the schema-less, non-relational fit described here."> RDS, a relational SQL database server as a service</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Aurora is also a relational, SQL-compatible database engine — it targets structured relational workloads, not schema-less key-value storage."> Aurora, a relational SQL-compatible database engine</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Redshift is a SQL-based data warehouse built for analytics over structured data, not a general-purpose key-value store."> Redshift, a SQL-based data warehouse engine</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A table is designed with a composite primary key made of an order ID (partition key) and a line-item number (sort key). Two different items both use order ID "1001". What must be true for both items to be valid?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="With a composite key, the partition key alone doesn't need to be unique — multiple items can share it, since uniqueness applies to the combined key."> The partition key value alone must be unique across the table</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. With a composite primary key, individual items can share a partition key value, but the combination of partition key and sort key must be unique — so the two items need different line-item numbers."> Their combined partition key and sort key values must differ</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DynamoDB items sharing a table don't need identical attribute sets — attributes beyond the primary key are flexible and can vary freely between items."> Every non-key attribute on both items must match exactly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DynamoDB tables aren't restricted to a fixed number of items sharing one partition key value — there's no such cap on item count."> Only one item total is allowed per partition key value</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team enabled point-in-time recovery on a table three weeks ago and now needs to recover the exact state of that table from two days ago. What should they expect?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="PITR restores always create a brand-new table rather than overwriting or rehydrating the existing one in place."> The existing table itself is rewound to that earlier state</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. PITR keeps a continuous 35-day rolling window and restores to a new table with 1-second granularity, so any point within that window — including two days ago — can be restored."> A new table is created reflecting that point in time, with 1-second granularity</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="PITR requires no manual snapshot step once enabled — it's a continuous background process, not something triggered by taking periodic manual backups."> Recovery is only possible if a manual backup was also taken that day</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="PITR's rolling window is 35 days, comfortably covering a two-day-old restore point — this isn't outside the supported range."> The request fails, since two days ago falls outside the recovery window</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-dynamodb-operations-consistency-and-performance-part-1.html">Next: DynamoDB Operations, Consistency &amp; Performance (Part 1) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

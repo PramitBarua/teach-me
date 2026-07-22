@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – DynamoDB Operations, Consistency &amp; Performance (Part 2)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 03
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>DynamoDB Operations, Consistency &amp; Performance (Part 2)</h1>
+    <p class="lesson-meta">Lesson 03 of 12 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html" target="_blank">DynamoDB read consistency</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/read-write-operations.html" target="_blank">DynamoDB read and write operations</a></p>
+  </div>
+
+  <p>Picking up immediately from part one — Query, Scan, and capacity units are fresh. This lesson covers how DynamoDB actually replicates data behind the scenes, the two read-consistency models that replication makes possible, and the arithmetic for turning a workload into RCU/WCU settings.</p>
+
+  <h2>Replication: Leader and Storage Nodes</h2>
+  <p>Every item in a DynamoDB table is replicated across <strong>three storage nodes</strong>, each in a different Availability Zone. One of the three is dynamically elected the <strong>leader node</strong> — dynamic meaning that if the leader ever fails, a new election happens automatically.</p>
+  <p><strong>All writes go to the leader node first.</strong> Once the leader has the new data, it's immediately consistent, and replication to the other two nodes begins asynchronously — typically completing within milliseconds, assuming no faults. This is exactly why writes are pricier and less scalable than reads: they're pinned to one specific node, the leader, rather than able to be spread across all three.</p>
+
+  <h2>Two Read-Consistency Models</h2>
+  <p>Because data briefly exists on only one or two of the three nodes right after a write, DynamoDB offers two ways to read it:</p>
+  <dl>
+    <dt>Eventually consistent reads (default)</dt>
+    <dd>DynamoDB routes the read to <strong>any of the three</strong> storage nodes at random. Most of the time all three already agree, so there's no practical difference — but in the brief window right after a write, an eventually consistent read might land on a node that hasn't caught up yet, returning stale data. In exchange for tolerating that small risk, eventually consistent reads cost <strong>half</strong> the RCU of strongly consistent ones — double the reads per RCU.</dd>
+    <dt>Strongly consistent reads</dt>
+    <dd>Always routed to the <strong>leader node</strong> specifically, guaranteeing the most current data. Because it can't load-balance across all three nodes, it's less scalable, and it costs the standard, full RCU rate.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Choosing between the two</div>
+    Data where staleness is genuinely dangerous — financial balances, inventory counts, medical records — needs <strong>strongly consistent</strong> reads. Workloads that can tolerate a rare, brief lag in exchange for lower cost and better scaling should default to <strong>eventually consistent</strong> reads, which is also DynamoDB's out-of-the-box default.
+  </div>
+
+  <h2>Capacity Planning Arithmetic</h2>
+  <p>Turning a workload into RCU/WCU settings always follows the same two-step pattern: work out the units needed per item, then multiply by operations per second.</p>
+  <p><strong>Writes:</strong> take the average item size, divide by 1 KB (the size of one WCU), and round up. Multiply by writes per second.</p>
+  <p>Example: 10 writes/second, average item size 2.5 KB. 2.5 ÷ 1 = 2.5, round up to 3 WCU per item. 3 × 10 = <strong>30 WCU</strong> required.</p>
+  <p><strong>Reads:</strong> take the average item size, divide by 4 KB (the size of one RCU), and round up. Multiply by reads per second. Halve the result if eventually consistent reads are acceptable.</p>
+  <p>Example: 10 reads/second, average item size 2.5 KB. 2.5 ÷ 4 rounds up to 1 RCU per item. 1 × 10 = 10 RCU for strongly consistent reads, or <strong>5 RCU</strong> if eventually consistent reads will do.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Watch for the per-minute trick</div>
+    Exam questions sometimes state a rate in <strong>per-minute</strong> terms — say, "60 writes per minute" — specifically to see whether you'll plug that straight into the formula. RCU and WCU are always <strong>per-second</strong> values, so any per-minute figure must be converted first (60 per minute becomes 1 per second) before the arithmetic above applies.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An item was just updated and has replicated to the leader node and one of the two remaining storage nodes, but not the third. A read arrives immediately using eventual consistency. What's the possible outcome?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Eventually consistent reads are routed to any of the three nodes at random, so there's a small chance of landing on the one node that hasn't replicated the update yet, returning stale data."> It might return the older version, if routed to the lagging node</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Eventual consistency doesn't guarantee routing to a node with the very latest write — that guarantee only applies to strongly consistent reads, which always target the leader."> It always returns the newest version, regardless of which node is used</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Eventually consistent reads don't fail or block during replication — they simply return whatever version the randomly chosen node currently holds."> The read fails until replication finishes across all nodes</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Eventually consistent reads can be routed to any of the three storage nodes, not exclusively the leader — routing only the leader describes strongly consistent reads."> It is routed only to the leader node, guaranteeing freshness</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An inventory system must never return a stale stock count, even at the cost of higher RCU spend. Which read setting fits, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Strongly consistent reads always hit the leader node, guaranteeing the most current data — the right trade-off when staleness would be a real business problem, at the cost of full RCU pricing."> Strongly consistent reads, since they always target the leader node</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Eventually consistent reads are routed to a random node and carry a small chance of returning stale data — not acceptable when stock counts must always be current."> Eventually consistent reads, since they are cheaper per operation</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Consistency in DynamoDB is chosen per read request, not configured as a fixed table-wide property that applies to every operation."> Either setting works identically, since consistency is table-wide</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Scan doesn't provide stronger consistency guarantees than Query — the eventual vs. strong choice is independent of which operation is used."> Scan operations only, since they read data more thoroughly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A question states a device logs 120 items per minute, each averaging 3 KB, and asks for the required WCU. What must be done before applying the WCU formula?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. WCU is a per-second unit, so 120 items per minute must first be converted to 2 items per second before multiplying by the per-item WCU cost."> Convert 120 per minute into a per-second rate before multiplying</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Plugging the per-minute figure directly into the formula overstates the required WCU by a factor of 60, since WCU is defined per second, not per minute."> Use 120 directly as the operations-per-second value</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The formula divides item size by 1 KB for writes, not by 4 KB — 4 KB is the RCU unit size used for reads."> Divide the 3 KB item size by 4 KB instead of 1 KB</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="WCU calculations don't involve halving for eventual consistency — that discount applies only to RCU on read operations, not to writes."> Halve the result to account for eventual consistency on writes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-dynamodb-operations-consistency-and-performance-part-1.html">← Previous: DynamoDB Operations, Consistency &amp; Performance (Part 1)</a>
+      <a href="0004-dynamodb-local-and-global-secondary-indexes.html">Next: DynamoDB Local &amp; Global Secondary Indexes →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

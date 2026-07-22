@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – DynamoDB Global Tables</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 06
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>DynamoDB Global Tables</h1>
+    <p class="lesson-meta">Lesson 06 of 12 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html" target="_blank">Global tables: multi-active, multi-Region replication</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_versions.html" target="_blank">DynamoDB global tables versions</a></p>
+  </div>
+
+  <p><strong>Global Tables</strong> extend a DynamoDB table across multiple AWS Regions using <strong>multi-master replication</strong> — no single table is "the" master with others as replicas. Every regional table is a peer, equally able to serve reads and writes. To set one up, you create a table in each participating Region, then link them together from any one of them into a single global table configuration; DynamoDB handles replication between every replica from that point on.</p>
+
+  <h2>Conflict Resolution: Last-Writer-Wins</h2>
+  <p>Because any Region can write to the same item at nearly the same time, DynamoDB needs a conflict-resolution rule. It uses <strong>last-writer-wins</strong>: simple and predictable, but it means that if the same item is written concurrently in two Regions, one of those writes is silently overwritten by the other, more recent one. Replication between Regions is typically <strong>sub-second</strong>.</p>
+
+  <h2>Consistency Across Regions</h2>
+  <p>Strongly consistent reads are only possible in the <strong>same Region</strong> as the write that produced the data. Anything cross-Region is necessarily <strong>eventually consistent</strong>, because inter-Region replication is asynchronous. An application built on Global Tables has to be designed to tolerate that — there's no way to request a strongly consistent read of data written in a different Region.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The consistency rule to memorize</div>
+    Same Region as the write → strong or eventual consistency, your choice. Different Region than the write → <strong>eventual consistency only</strong>, no exceptions.
+  </div>
+
+  <h2>Use Cases</h2>
+  <ul>
+    <li><strong>Globally available applications</strong> that need to keep serving traffic even if one Region has issues.</li>
+    <li><strong>Improved global latency</strong> — reading and writing from whichever Region is closest to the user.</li>
+    <li><strong>Disaster recovery and business continuity</strong> for a data layer, without building custom cross-Region replication yourself.</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">Terminology and feature parity have moved on since this was recorded</div>
+    Current AWS documentation now describes this feature as <strong>multi-Region, multi-active</strong> replication — functionally the same "every replica is a peer" idea as "multi-master," just AWS's newer preferred phrasing. More substantively, the version of global tables in use today (<strong>2019.11.21</strong>, labeled "Current" in the console and CLI, versus the older "2017.11.29 Legacy") closes several gaps that older material sometimes describes as limitations: it now <strong>synchronizes TTL settings and TTL-driven deletes, auto scaling settings, GSI settings, and encryption-at-rest settings</strong> automatically across every replica, and it's available in all AWS Regions rather than a limited set. It's also cheaper — it consumes fewer replicated write capacity units per write than the legacy version. For the exam, the architectural picture taught here (multi-master/multi-active, last-writer-wins, sub-second replication, region-scoped strong consistency) still holds; just be aware "Global Tables" today means this newer, more capable version by default.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A global table has replicas in Tokyo and Dublin. The same item is written to both Regions within the same second. What does DynamoDB do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. DynamoDB uses last-writer-wins conflict resolution — the most recent write is kept and replicated everywhere, and the other concurrent write is silently overwritten."> It keeps the most recent write and discards the other</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Global Tables don't merge conflicting attribute values from simultaneous writes — the resolution mechanism is last-writer-wins, not an attribute-level merge."> It merges both writes into a single combined item</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Concurrent writes to the same item don't cause the operation to fail — DynamoDB resolves the conflict automatically using last-writer-wins rather than rejecting either write."> Both writes fail and must be retried by the application</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="There's no manual, human-in-the-loop conflict resolution step in Global Tables — resolution is automatic and immediate, based on last-writer-wins."> It pauses replication until a human resolves the conflict</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application writes an item in the US Region of a global table and immediately reads it back from the London replica. What consistency should the application expect?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Strongly consistent reads are only available in the same Region as the write — reading from a different Region than where the write occurred cannot use strong consistency."> Strongly consistent, since global tables guarantee freshness everywhere</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Cross-Region replication is asynchronous, so any read from a Region other than where the write occurred is necessarily eventually consistent — the application must tolerate this."> Eventually consistent, since the read crosses a Region boundary</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The read does not fail — Global Tables are designed to serve reads from any replica Region at any time, just with an eventual consistency guarantee across Regions."> The read fails, since cross-Region reads aren't supported</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Consistency isn't a manual per-request toggle for cross-Region reads in Global Tables — cross-Region is always eventual, with no strongly consistent option available."> Strong or eventual, selectable per request as needed</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A solutions architect needs to add a new Region to an existing, currently in-use global table without any downtime or data loss. Which global tables version supports this directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The 2017.11.29 Legacy version requires all replicas to be emptied before a new Region can be added, including during initial creation — it can't add a Region to a table already holding data."> Global Tables version 2017.11.29 (Legacy), directly</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Global Tables version 2019.11.21 (Current) supports adding and removing replica Regions on a table that already contains data, using the standard UpdateTable API."> Global Tables version 2019.11.21 (Current), directly</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Neither version requires exporting all data to S3 first — replica Regions are added through DynamoDB's own table or global-table management APIs, not through an S3 export/import cycle."> Only by exporting all data to S3 and reimporting</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Adding a Region to a global table doesn't require deleting and recreating the table from scratch in either version — that would itself risk data loss and downtime."> Neither version; the table must be deleted and recreated</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-dynamodb-streams-and-lambda-triggers.html">← Previous: DynamoDB Streams &amp; Lambda Triggers</a>
+      <a href="0007-dynamodb-accelerator-dax.html">Next: DynamoDB Accelerator (DAX) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

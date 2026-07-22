@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – DynamoDB Time to Live (TTL)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 08
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>DynamoDB Time to Live (TTL)</h1>
+    <p class="lesson-meta">Lesson 08 of 12 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/time-to-live-ttl-how-to.html" target="_blank">Enable time to live (TTL) in DynamoDB</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ttl-expired-items.html" target="_blank">Working with expired items and time to live (TTL)</a></p>
+  </div>
+
+  <p><strong>TTL</strong>, Time to Live, is a simple idea with real exam and real-world weight: it lets you mark items in a DynamoDB table so they're <strong>automatically deleted</strong> once they're no longer needed — no scheduled job, no manual cleanup script, no application code required to enforce it.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tip — flagged in the course diagram</div>
+    The single highest-yield fact in this lesson: the <strong>TTL attribute holds a timestamp</strong> — the number of <strong>seconds since the Unix epoch</strong> (January 1, 1970) — and DynamoDB uses that value to <strong>automatically delete the item</strong> once the timestamp is in the past. If an exam question describes a numeric attribute driving automatic item deletion, that's TTL, and the value format is epoch seconds.
+  </div>
+
+  <h2>Setting It Up</h2>
+  <p>You enable TTL on a table and nominate one attribute to act as the TTL attribute. That attribute must hold a number: the epoch-seconds value of when the item should expire. If you want an item to expire in exactly one week, you calculate the epoch-seconds value for "one week from now" and store that number in the TTL attribute for that item. You apply this to every item you want the TTL mechanism to manage — items without a value in that attribute are left alone.</p>
+
+  <h2>Two Independent Background Processes</h2>
+  <p>Enabling TTL sets up automated processes that run on <strong>every partition</strong> of the table, and it's worth understanding that there are genuinely <strong>two separate steps</strong>, not one:</p>
+  <ul>
+    <li><strong>Step one — expire.</strong> A background process periodically scans items in a partition and compares each item's TTL attribute against the current epoch time. Once that value is in the past, the item is marked <strong>expired</strong>. Nothing is removed yet — an expired item is still fully visible and queryable in the table.</li>
+    <li><strong>Step two — delete.</strong> A second, independent background process periodically looks for items already marked expired and <strong>deletes</strong> them — removing them from the table's partitions and from any indexes built on the table.</li>
+  </ul>
+  <p>Because these are internal, system-driven background events, the deletes themselves cause <strong>no performance impact</strong> and carry <strong>no charge</strong>.</p>
+
+  <h2>Tracking What TTL Deletes</h2>
+  <p>If the table has a normal DynamoDB Stream enabled, TTL-driven deletes appear in that stream alongside ordinary creates and modifies. On top of that, you can separately enable a <strong>dedicated TTL-only stream</strong>, which gives you a rolling <strong>24-hour window</strong> containing just the deletions TTL itself caused. That's useful for housekeeping tasks like auditing what TTL has removed, or building an undelete-style recovery path from recently expired data.</p>
+
+  <div class="callout">
+    <div class="callout-title">Common use cases</div>
+    Automatically purging stale user or sensor data once it's no longer useful (say, after a year of inactivity), and enforcing regulatory or contractual <strong>data-retention windows</strong> — one, three, or five years, for example — without writing and maintaining a manual cleanup job to do it.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A table has a TTL attribute enabled, and one item's TTL value is a timestamp representing a moment ten minutes in the past. What format does that timestamp need to be in for TTL to recognize it?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="TTL doesn't use an ISO 8601 date string — it requires a plain numeric value representing seconds since the epoch."> An ISO 8601 formatted date-time string</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The TTL attribute must hold a number representing seconds since the Unix epoch, January 1, 1970 — that's the value DynamoDB compares against the current time."> A number of seconds since the Unix epoch</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="TTL values are stored in seconds, not milliseconds, and the reference point is the Unix epoch rather than the item's own creation time."> A number of milliseconds since the item was created</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="TTL doesn't use a human-readable calendar date and time string — the attribute must be a plain epoch-seconds number."> A human-readable date and time in local timezone format</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An item's TTL timestamp has just passed, but a query run moments later still returns that item in the results. Is this expected behavior?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="TTL deletion isn't instantaneous the moment a timestamp passes — there are two independent background processes, and the item may simply not have been marked expired or deleted yet."> No, this indicates a fault since TTL should delete instantly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. One background process marks items expired once their TTL value is in the past, and a separate, independent background process later deletes expired items. Until the second process runs, the item remains visible and queryable."> Yes, an item can remain queryable after expiry until it's deleted</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Streams don't affect whether TTL processing has run — enabling a stream captures delete events after they occur but doesn't speed up or gate expiry and deletion."> No, this only happens if streams are disabled on the table</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Query filter expressions can hide expired-but-not-yet-deleted items from results, but the item still physically exists in the table until the delete process removes it — a query without such a filter will return it."> No, expired items are always excluded from every query automatically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team needs a rolling audit trail of only the items TTL has deleted over the last day, without capturing every other create or modify event on the table. What should they configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A normal table stream captures all changes — creates, modifies, and deletes together — not just TTL-driven deletions in isolation."> A standard DynamoDB Stream on the whole table</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A dedicated TTL-only stream gives a rolling 24-hour window containing just the deletions caused by the TTL processes, ideal for auditing or undelete-style housekeeping."> A dedicated stream linked specifically to the TTL processes</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Global tables replicate table data across Regions for availability and locality — they don't provide a filtered log of only TTL-driven deletions."> A DynamoDB Global Table configured in a second Region</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A secondary index changes how items can be queried by alternate keys — it has no role in tracking or isolating TTL deletion events."> A global secondary index built on the TTL attribute</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-dynamodb-accelerator-dax.html">← Previous: DynamoDB Accelerator (DAX)</a>
+      <a href="0009-amazon-athena.html">Next: Amazon Athena →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

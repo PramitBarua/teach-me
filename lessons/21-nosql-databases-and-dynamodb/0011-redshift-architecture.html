@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – Amazon Redshift: Architecture</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 11
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>Amazon Redshift: Architecture</h1>
+    <p class="lesson-meta">Lesson 11 of 12 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/redshift/latest/dg/c_high_level_system_architecture.html" target="_blank">Data warehouse system architecture</a> · <a href="https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-routing.html" target="_blank">Controlling network traffic with enhanced VPC routing</a></p>
+  </div>
+
+  <p><strong>Redshift</strong> is a petabyte-scale <strong>data warehouse</strong> — a place where many operational databases across a business feed data for long-term analysis, reporting, and trending. It's an <strong>OLAP</strong> system: Online Analytical Processing, built for complex aggregate queries over historical data. That's a deliberate contrast with a system like RDS, which is <strong>OLTP</strong> — Online Transaction Processing, built for real-time inserts, updates, and deletes of individual records (think: adding an order, editing a customer row). OLTP systems are typically where OLAP systems like Redshift get their data from in the first place.</p>
+
+  <h2>Why Column Storage Fits OLAP</h2>
+  <p>Redshift stores data <strong>by column</strong> rather than by row. Imagine a table of cats: each row holds one cat's microchip ID, name, age, colour, and favourite food. A row-based OLTP layout is efficient for interacting with one specific record — updating one cat's age touches one row. But an aggregate query like "what's the average age across every cat" has to scan every row just to read one field from each. A column-based layout stores all the ages together, all the names together, and so on — so an aggregate query over one column only has to scan that column, not full rows. That's precisely the query pattern OLAP workloads run constantly, which is why columnar storage is the natural fit.</p>
+
+  <h2>Provisioned, Not Ad Hoc</h2>
+  <p>Redshift is <strong>provisioned</strong> — it uses servers you stand up, not a serverless product like Athena. It's quicker to provision than an on-premises warehouse you'd build yourself, and it's realistic to spin a cluster up, load data, run analysis, and tear it down again. But it still isn't the tool for one-off, ad hoc querying of a dataset sitting in S3 — that's squarely Athena's job, covered two lessons ago. If a scenario needs true ad hoc S3 querying with no standing infrastructure, default to Athena; if it needs a persistent, loaded data warehouse for repeated heavy analytics, that's Redshift.</p>
+  <p>Two features extend what Redshift can reach without a full load: <strong>Redshift Spectrum</strong> lets a running cluster query data directly in S3 without loading it in first — still requires a live cluster, unlike Athena — and <strong>Federated Query</strong> lets Redshift directly query data sitting in remote/foreign databases. Redshift also connects via standard <strong>JDBC/ODBC</strong>, and integrates with <strong>QuickSight</strong> for visualization.</p>
+
+  <h2>Cluster Architecture</h2>
+  <p>A Redshift cluster has a <strong>leader node</strong> and one or more <strong>compute nodes</strong>. The leader node is the only thing clients and applications actually connect to — it manages all client communication and builds the execution plan for each query. Compute nodes carry out that plan and hold the actual data. Each compute node is itself divided into <strong>slices</strong> — 2, 4, 16, or 32 depending on the node's size — and those slices process their share of the workload in parallel.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Critical architectural fact: single-AZ by default</div>
+    A Redshift cluster's nodes and the high-speed networking between them run in <strong>one Availability Zone</strong>. The classic architecture is <strong>not natively highly available across AZs</strong> — if that AZ has a problem, the cluster is affected. The next lesson covers how backups mitigate this risk; for now, just hold onto the fact itself, since it's one of the most exam-tested points about Redshift.
+  </div>
+
+  <p>Redshift is a full VPC service, so the usual controls apply normally: security groups, NACLs, IAM for permissions, KMS for at-rest encryption, and CloudWatch for monitoring.</p>
+
+  <h2>Enhanced VPC Routing</h2>
+  <p>By default, traffic between a Redshift cluster and other AWS services — S3, for instance, when loading data via COPY — travels over Amazon's public AWS network paths rather than through your own VPC. Enabling <strong>Enhanced VPC Routing</strong> forces that traffic through your actual VPC networking configuration instead, which means security groups, NACLs, custom DNS, and the relevant gateways (internet gateway, NAT gateway, VPC endpoints) all now apply to it, just as they would for any other VPC-routed traffic.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic</div>
+    Any scenario that needs <strong>customized or controlled networking</strong> for Redshift's traffic to external services — inspecting it, restricting it, routing it through specific gateways — points to enabling <strong>Enhanced VPC Routing</strong>.
+  </div>
+
+  <h2>Getting Data In</h2>
+  <p>Common ingestion paths into Redshift include a <strong>COPY</strong> from S3, the <strong>Database Migration Service</strong>, <strong>Kinesis Data Firehose</strong> streaming directly in, and a direct copy from <strong>DynamoDB</strong>.</p>
+
+  <h2>Updates Since the Course Was Recorded</h2>
+  <div class="callout">
+    <div class="callout-title">Redshift Serverless and Multi-AZ now exist</div>
+    Two capabilities have arrived since this material was recorded, and both matter architecturally. <strong>Redshift Serverless</strong> automatically provisions and scales data warehouse capacity, removing the need to size or manage compute directly — a genuine alternative to hand-sizing a cluster. More significantly, <strong>Redshift Multi-AZ deployments</strong> are now generally available (for RA3 clusters): compute resources are deployed across <strong>two Availability Zones</strong>, reachable through a single endpoint, letting the warehouse keep operating through an AZ-level failure. This directly updates the "single-AZ only" framing above — it's still the foundational, most-tested default architecture, but Multi-AZ is now a real option when a scenario specifically calls for cross-AZ resilience in the live cluster itself, rather than resilience recovered only through backups (which the next lesson covers).
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A reporting team needs to run "average value across the entire year" style aggregate queries over a huge historical dataset as fast as possible. Why does a column-based OLAP system like Redshift suit this better than a row-based OLTP system?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Storing data by column means an aggregate query over one field only needs to scan that column, not every full row — exactly the access pattern OLAP aggregate queries need."> An aggregate query only needs to scan the relevant column, not full rows</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Redshift's advantage for this workload comes from its columnar storage layout, not from OLTP-style row locking, which is actually more relevant to transactional systems."> Column storage enables row-level locking for faster transactions</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Column storage doesn't remove the need for indexes on a Redshift table — the performance benefit for aggregates comes from scanning fewer columns, not from an index-free design."> Column-based tables don't require any indexes at all</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Column-based storage doesn't eliminate the need to store historical data — the whole point of an OLAP warehouse is retaining historical data for analysis."> Column storage removes the need to retain historical records</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants Redshift's COPY traffic to S3 to be restricted by security groups, NACLs, and routed through a specific NAT gateway rather than AWS's public network path. What should they enable?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Redshift Spectrum lets a cluster query S3 data without loading it first, but it doesn't control which network path COPY/UNLOAD traffic takes."> Redshift Spectrum, to route traffic through the VPC</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Enhanced VPC Routing forces traffic to other AWS services through your VPC configuration, so security groups, NACLs, and gateways like NAT all apply to it."> Enhanced VPC Routing on the cluster</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Federated Query lets Redshift query remote databases directly — it doesn't govern how COPY/UNLOAD traffic to S3 is routed."> Federated Query, to control the traffic path</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Enabling encryption with KMS protects data at rest but has no bearing on which network path traffic to other AWS services takes."> KMS encryption at rest on the cluster's storage</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A scenario specifically requires that the live Redshift cluster itself keep serving queries through the failure of an entire Availability Zone, without waiting for a restore from a backup. What should the team use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The classic Redshift architecture runs its nodes in a single Availability Zone — an AZ failure affects the whole cluster under this default architecture."> The classic single-AZ cluster architecture, unmodified</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Redshift Multi-AZ deployments, now generally available for RA3 clusters, run compute resources across two Availability Zones behind a single endpoint, letting the cluster keep operating through an AZ failure."> A Redshift Multi-AZ deployment on an RA3 cluster</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Restoring from an automatic snapshot creates a brand-new cluster after the fact — it doesn't keep the original live cluster serving queries during the failure itself."> Restoring from the most recent automatic snapshot</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Enhanced VPC Routing controls how traffic to external services is routed — it has no effect on the cluster's resilience to an Availability Zone failure."> Enabling Enhanced VPC Routing on the cluster</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-elasticache.html">← Previous: Amazon ElastiCache</a>
+      <a href="0012-redshift-dr-and-resilience.html">Next: Amazon Redshift: DR and Resilience →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

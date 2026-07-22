@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – DynamoDB Operations, Consistency &amp; Performance (Part 1)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 02
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>DynamoDB Operations, Consistency &amp; Performance (Part 1)</h1>
+    <p class="lesson-meta">Lesson 02 of 12 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html" target="_blank">Querying tables in DynamoDB</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html" target="_blank">Scanning tables in DynamoDB</a></p>
+  </div>
+
+  <p>This lesson covers DynamoDB's two capacity modes in more depth, the mechanics of capacity units, and the crucial difference between <strong>Query</strong> and <strong>Scan</strong> — two operations the exam loves to test against each other. Part 2 continues directly from where this lesson ends.</p>
+
+  <h2>On-Demand vs. Provisioned Capacity</h2>
+  <p>Every table picks one of two capacity modes at creation, and — with some restriction — you can switch between them afterward. <strong>On-demand</strong> suits unknown or unpredictable load, or simply a strong preference for zero admin overhead: DynamoDB scales for you automatically, and you pay a per-operation price. That convenience has a cost — on-demand pricing can run as much as <strong>5x</strong> the equivalent provisioned price. <strong>Provisioned capacity</strong> means you explicitly set Read Capacity Units (RCU) and Write Capacity Units (WCU) on the table, optionally paired with auto scaling.</p>
+
+  <h2>Capacity Unit Mechanics</h2>
+  <p>Whichever mode you use, the same underlying math applies:</p>
+  <ul>
+    <li><strong>1 WCU</strong> = one write of up to 1 KB, per second.</li>
+    <li><strong>1 RCU</strong> = one strongly consistent read of up to 4 KB, per second.</li>
+  </ul>
+  <p>Critically, <strong>every operation consumes at least one whole unit</strong> — usage always rounds up. Read 100 bytes, and you still pay for a full RCU. An item up to the 400 KB maximum would consume 100 RCU to read in a single operation.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The burst pool is an emergency reserve, not a budget line</div>
+    Every table carries a burst pool worth <strong>300 seconds</strong> of its provisioned RCU/WCU. Lean on it sparingly — background table-maintenance tasks compete for that same pool, so heavy reliance on it is risky. Deplete the pool while demand still exceeds capacity, and you'll get a <code>ProvisionedThroughputExceededException</code>: requests are throttled until you retry or raise the table's capacity.
+  </div>
+
+  <h2>Query: Efficient, But Needs a Partition Key</h2>
+  <p>Picture a weather-station table: partition key is <strong>station ID</strong>, sort key is <strong>day</strong>. Each item stores one day's reading for one station.</p>
+  <p>The <strong>Query</strong> operation always requires exactly <strong>one partition key value</strong> — you can't query across multiple stations in a single call. Query can return zero items, one item, or many items, and you can optionally narrow the result with a specific sort key value or a range of them. Query for station 1 with no sort key filter, and you get every reading ever logged for that station; add a sort key range, and you narrow it to specific days.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">One big Query beats many small ones</div>
+    Because every operation has that one-unit minimum floor, retrieving several items in a <strong>single</strong> Query is always more capacity-efficient than issuing separate Query calls for each item. Two 1.5 KB items fetched together might cost 1 RCU total; fetched as two separate single-item queries, each pays its own rounded-up minimum — costing more overall for identical data.
+  </div>
+
+  <p>One more subtlety: Query lets you request only specific attributes back from an item, but <strong>billing is based on the full item size regardless</strong>. Whatever you filter out is simply discarded after being read — you still pay for it.</p>
+
+  <h2>Scan: Flexible, But Expensive</h2>
+  <p>Suppose you need every weather-station reading, across every station, where a "sunny day" attribute is set — that attribute is neither the partition key nor the sort key. Query can't help here, since Query only ever works against one partition key value. This is what <strong>Scan</strong> is for.</p>
+  <p>Scan walks the <strong>entire table</strong>, item by item, and can filter on any attribute at all — not just keys. That flexibility is exactly why it's expensive: DynamoDB charges for the capacity of <strong>every item scanned</strong>, whether or not that item ends up in the filtered result. Scan four items totaling 14 KB looking for sunny days, and you're billed for all 14 KB rounded up to whole RCU, even if only two items actually matched.</p>
+
+  <div class="callout">
+    <div class="callout-title">The exam heuristic</div>
+    Need data for one specific, known partition key value? Reach for <strong>Query</strong>. Need to search on an attribute that isn't part of the key, across the whole table? That requires <strong>Scan</strong> — and Scan is the most flexible operation DynamoDB offers, but also the most costly.
+  </div>
+
+  <p>That's where part one ends. Part two continues immediately with replication, consistency models, and capacity-planning arithmetic.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A weather table uses station ID as the partition key and day as the sort key. An application needs every reading for station 7 from the last 30 days, in one call. Which operation fits, and why?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Query requires exactly one partition key value, and here it's station 7 — the sort key range for the last 30 days narrows the result within that single partition."> Query, using station 7 as the partition key with a sort key range</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Scan would work but is unnecessary and expensive here — it walks every item in the table, not just the ones for station 7, when Query can target that partition directly."> Scan, filtering on station ID equal to 7 across the table</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Query requires exactly one partition key value per call — it cannot accept a range or list of partition key values in a single request."> Query, supplying a range of station ID values in one call</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Scan cannot restrict its walk to a single partition key value in a way that avoids reading other partitions — it always steps through the full table regardless of filters."> Scan, since it can restrict itself to a single partition automatically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application needs two specific items from the same partition: station 3, Monday, and station 3, Tuesday. From a capacity-efficiency standpoint, what's the best approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Two separate Query calls each pay their own rounded-up minimum RCU, so splitting the request into two operations wastes capacity compared to combining them."> Two separate Query calls, one per sort key value</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A single Query for partition key station 3 with a sort key range covering Monday and Tuesday returns both items in one operation, avoiding the extra minimum-consumption charge of a second call."> One Query for station 3 with a sort key range covering both days</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Scan would read the entire table's capacity rather than just this one partition, making it far less efficient than a targeted Query for a known partition key."> A single Scan filtering for station 3 across the whole table</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Two separate Scan calls would each consume capacity for the entire table, making this the least efficient option of all, not the most."> Two separate Scan calls, one per day of interest</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team needs to find every item across all weather stations where a "malfunction" attribute is present — that attribute is not a partition or sort key anywhere in the table. What should they expect?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Query cannot filter on an attribute that isn't the partition key, and it always requires a single partition key value to run at all — neither condition is met here."> Query can do this directly by filtering on the malfunction attribute</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Since the attribute isn't part of the key, only Scan can search on it, and Scan consumes capacity for every item it walks through, not just the matching ones."> Only Scan can search on it, and it will consume capacity for the whole table</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Requesting specific attributes back from Query still bills for the full size of every item the query touches — filtering doesn't reduce the charge, and it still needs a partition key here regardless."> Query can retrieve just that attribute cheaply if it's requested by name</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DynamoDB has no operation that searches arbitrary attributes across an entire table for free — Scan is the only option, and it always bills for everything it reads through."> Neither operation supports this pattern without creating a new table</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-dynamodb-architecture.html">← Previous: DynamoDB Architecture</a>
+      <a href="0003-dynamodb-operations-consistency-and-performance-part-2.html">Next: DynamoDB Operations, Consistency &amp; Performance (Part 2) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

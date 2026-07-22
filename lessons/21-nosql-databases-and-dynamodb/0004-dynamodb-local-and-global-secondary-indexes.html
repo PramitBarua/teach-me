@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – DynamoDB Local &amp; Global Secondary Indexes</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 04
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>DynamoDB Local &amp; Global Secondary Indexes</h1>
+    <p class="lesson-meta">Lesson 04 of 12 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LSI.html" target="_blank">Local secondary indexes</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html" target="_blank">Global secondary indexes</a></p>
+  </div>
+
+  <p>Query is DynamoDB's most efficient operation, but it has one hard limitation: it only ever works against a <strong>single partition key value</strong>. <strong>Indexes</strong> exist to work around that — they're alternative <em>views</em> over a base table's data, letting Query serve access patterns the base table's own primary key can't support directly. There are two types: <strong>Local Secondary Indexes (LSI)</strong> and <strong>Global Secondary Indexes (GSI)</strong>.</p>
+
+  <h2>Local Secondary Index (LSI)</h2>
+  <p>An LSI provides an <strong>alternative sort key</strong>, while keeping the <strong>same partition key</strong> as the base table. Using the weather-station example again — partition key station ID, base sort key day — an LSI could reindex the same items by a "sunny day" attribute as its sort key, letting you query one station for just its sunny-day entries.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">LSIs are locked in at table creation</div>
+    A local secondary index <strong>must be created at the same time as the base table</strong>. There is no way to add one afterward — this is a hard, frequently tested exam fact. LSIs also share the base table's provisioned RCU/WCU rather than getting their own separate capacity.
+  </div>
+
+  <h2>Global Secondary Index (GSI)</h2>
+  <p>A GSI is far more flexible: it defines a completely <strong>independent partition key and sort key</strong>, unrelated to the base table's own keys. Back to the weather example — a GSI could use the "alarm" attribute as its partition key and station ID as its sort key, letting you efficiently query for every alarm, optionally narrowed to specific stations.</p>
+  <p>Unlike an LSI, a GSI can be <strong>created or removed at any time</strong> after the base table already exists, and it comes with its <strong>own separate RCU/WCU</strong> capacity settings, independent of the base table's. The trade-off: a GSI is <strong>always eventually consistent</strong>, with no strongly-consistent option at all, because data replicates from the base table into the index asynchronously.</p>
+
+  <table>
+    <thead><tr><th></th><th>Local Secondary Index</th><th>Global Secondary Index</th></tr></thead>
+    <tbody>
+      <tr><td>Partition key</td><td>Same as base table</td><td>Independent, chosen freely</td></tr>
+      <tr><td>Sort key</td><td>Different from base table</td><td>Independent, chosen freely</td></tr>
+      <tr><td>Created</td><td>Only with the base table</td><td>Any time</td></tr>
+      <tr><td>Capacity</td><td>Shared with base table</td><td>Its own separate RCU/WCU</td></tr>
+      <tr><td>Consistency</td><td>Eventual or strong</td><td>Eventual only</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Both Types Are Sparse</h2>
+  <p>Both LSIs and GSIs are <strong>sparse indexes</strong>: only items that actually have a value for the indexed attribute appear in the index at all. If the "sunny day" attribute is only ever set on days that were, in fact, sunny, the sunny-day index contains nothing but sunny-day items. That sparseness means even a <strong>Scan</strong> against a well-designed index can be cheap — you're only paying for the relevant subset, not the whole base table.</p>
+
+  <h2>Choosing What to Project</h2>
+  <p>Both index types let you choose which attributes get copied in — <strong>ALL</strong> attributes, <strong>KEYS_ONLY</strong>, or <strong>INCLUDE</strong> to name specific ones. This choice matters a lot:</p>
+  <ul>
+    <li>Projecting too much wastes capacity and storage, since every projected attribute is duplicated and billed for.</li>
+    <li>Projecting too little means that querying the index for a non-projected attribute silently triggers a <strong>fetch back to the base table</strong> — a hidden extra operation that's noticeably more expensive and slower than reading only from the index.</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">AWS's own default guidance</div>
+    When you're unsure which index type to reach for, default to a <strong>GSI</strong> — it's more flexible, can be added after the fact, and gets independent capacity. Reach for an <strong>LSI</strong> specifically when you need <strong>strong consistency</strong> on the alternative access pattern, since that's the one thing a GSI structurally cannot offer.
+  </div>
+
+  <p>Verified current per-table limits: <strong>5 LSIs</strong> per base table (unchanged from the source course figure), and a default of <strong>20 GSIs</strong> per base table, though this default quota can be raised on request. Both figures still match current AWS documentation, with no drift to flag.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team already has a production base table and now needs an alternative access pattern using a completely different partition key. What should they do?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="LSIs must be created at the same time as the base table — there's no way to add one to a table that already exists, which rules this out here."> Add a local secondary index to the existing table now</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Global secondary indexes can be created at any time after the base table exists, and they support a completely independent partition and sort key — exactly what's needed here."> Add a global secondary index to the existing table now</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Recreating the base table isn't necessary — GSIs are specifically designed to add new access patterns to an already-existing table without touching the original."> Recreate the base table with a different partition key</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Scan-only approach abandons the efficiency benefits an index provides and would consume capacity for the entire table on every access."> Use Scan exclusively instead of creating any index</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An application needs an alternative sort key view of its data, and it must be able to request a strongly consistent read against that view. Which index type fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. LSIs support both eventual and strongly consistent reads, unlike GSIs which are always eventually consistent — this is the specific reason to reach for an LSI."> Local secondary index, since it can offer strong consistency</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A GSI is always eventually consistent because replication from the base table happens asynchronously — it has no strongly-consistent read option at all."> Global secondary index, since it always supports strong consistency</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Neither index type is created automatically — both require an explicit definition, and only one of the two even supports strong consistency."> Either index type works, since both are created automatically</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Scan doesn't provide a consistency guarantee beyond what the underlying table or index already supports, and it doesn't solve the alternative-sort-key requirement described."> Scan against the base table, since it guarantees fresh data</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A GSI projects only KEYS_ONLY attributes, but an application's queries against it regularly request an attribute that wasn't projected. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Non-projected attributes aren't simply returned as empty — DynamoDB actively retrieves them, it just does so through an extra, costlier step rather than silently omitting the data."> The query silently returns empty values for that attribute</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Requesting a non-projected attribute triggers an automatic fetch back to the base table for each matching item — this works, but is noticeably more expensive and slower than reading only from the index."> DynamoDB fetches that attribute from the base table, at extra cost</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The query does not fail outright — DynamoDB still resolves the request, it just does so less efficiently by fetching from the base table."> The query fails outright since the attribute isn't in the index</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Projection settings on an existing GSI can't be changed automatically in response to a query pattern — the fetch-back behavior happens instead, not a silent reconfiguration."> DynamoDB automatically reprojects the index to include it</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-dynamodb-operations-consistency-and-performance-part-2.html">← Previous: DynamoDB Operations, Consistency &amp; Performance (Part 2)</a>
+      <a href="0005-dynamodb-streams-and-lambda-triggers.html">Next: DynamoDB Streams &amp; Lambda Triggers →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

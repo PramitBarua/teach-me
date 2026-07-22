@@ -198,3 +198,28 @@
 | R192 | CIS Scans for Amazon EC2 Instance Operating Systems | https://docs.aws.amazon.com/inspector/latest/user/scanning-cis.html | Scheduled, not continuous — the one non-automatic Inspector scan type |
 | R193 | What Is Amazon GuardDuty? | https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html | Continuous ML/threat-intel account monitoring |
 | R194 | Feature Names for Protection Plans in GuardDuty | https://docs.aws.amazon.com/guardduty/latest/ug/guardduty-features-activation-model.html | Expanded protection plans (EKS/RDS/Lambda/Malware/Runtime/AI) beyond the original four data sources |
+| R195 | DynamoDB Table Classes | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.TableClasses.html | Standard-IA table class, ~60% storage cost reduction |
+| R196 | Point-in-Time Recovery for DynamoDB | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html | PITR 35-day window, 1-second restore granularity |
+| R197 | Querying Tables in DynamoDB | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html | Partition-key-required Query mechanics |
+| R198 | Scanning Tables in DynamoDB | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html | Full-table Scan cost/flexibility tradeoff |
+| R199 | DynamoDB Read Consistency | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html | Eventually vs. strongly consistent reads, leader-node replication |
+| R200 | DynamoDB Read and Write Operations | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/read-write-operations.html | RCU/WCU capacity-planning arithmetic |
+| R201 | Local Secondary Indexes | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LSI.html | Create-time-only, same partition key, shared table capacity |
+| R202 | Global Secondary Indexes | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html | Independent partition/sort key, always eventually consistent |
+| R203 | Change Data Capture for DynamoDB Streams | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html | 24-hour window, four stream view types |
+| R204 | DynamoDB Streams and AWS Lambda Triggers | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.Lambda.html | Serverless trigger architecture |
+| R205 | DynamoDB Global Tables: Multi-Active, Multi-Region Replication | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html | Current "multi-active" terminology (formerly "multi-master") |
+| R206 | DynamoDB Global Tables Versions | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_versions.html | 2019.11.21 version now syncs TTL, auto scaling, GSIs, encryption across replicas |
+| R207 | In-Memory Acceleration with DynamoDB Accelerator (DAX) | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.html | DAX overview, when to use it |
+| R208 | DAX: How It Works | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.concepts.html | Item cache vs. query cache, cluster architecture |
+| R209 | Enable Time to Live (TTL) in DynamoDB | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/time-to-live-ttl-how-to.html | TTL attribute setup, epoch-seconds format |
+| R210 | Working with Expired Items and Time to Live (TTL) | https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ttl-expired-items.html | Expire-then-delete two-process mechanism |
+| R211 | What Is Amazon Athena? | https://docs.aws.amazon.com/athena/latest/ug/what-is.html | Schema-on-read, serverless S3 querying |
+| R212 | Use Amazon Athena Federated Query | https://docs.aws.amazon.com/athena/latest/ug/federated-queries.html | Lambda-based connectors to non-S3 sources |
+| R213 | Query Apache Iceberg Tables | https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg.html | ACID INSERT/UPDATE/DELETE — Athena is no longer S3-read-only for Iceberg tables |
+| R214 | What Is Amazon ElastiCache? | https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/WhatIs.html | Redis vs. Memcached engine comparison |
+| R215 | Scaling ElastiCache Serverless Clusters | https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Scaling-serverless.html | ElastiCache Serverless — no node sizing/management |
+| R216 | Data Warehouse System Architecture (Redshift) | https://docs.aws.amazon.com/redshift/latest/dg/c_high_level_system_architecture.html | Leader/compute nodes, slices, OLAP columnar design |
+| R217 | Controlling Network Traffic with Enhanced VPC Routing | https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-routing.html | Forces Redshift's external traffic through VPC networking |
+| R218 | Amazon Redshift Snapshots and Backups | https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html | Automatic/manual snapshots, cross-Region copy |
+| R219 | Multi-AZ Deployments for Amazon Redshift | https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-multi-az.html | GA since Nov 2023 for RA3 clusters — qualifies the single-AZ-by-default teaching |

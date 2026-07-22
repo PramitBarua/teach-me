@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – Amazon Redshift: DR and Resilience</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 12
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>Amazon Redshift: DR and Resilience</h1>
+    <p class="lesson-meta">Lesson 12 of 12 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html" target="_blank">Amazon Redshift snapshots and backups</a> · <a href="https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-multi-az.html" target="_blank">Multi-AZ deployments for Amazon Redshift</a></p>
+  </div>
+
+  <p>The previous lesson ended on a critical risk: a classic Redshift cluster runs its nodes in a <strong>single Availability Zone</strong>, so an AZ failure is a real threat to the cluster. This lesson picks up exactly there — how Redshift's backup features let you manage that risk, even though the live cluster itself isn't natively spread across AZs.</p>
+
+  <h2>Automatic Snapshots</h2>
+  <p>Redshift takes <strong>automatic snapshots</strong> to S3 roughly every <strong>8 hours</strong>, or every <strong>5 GB</strong> of data change — whichever comes first. By default these are retained for <strong>1 day</strong>, configurable up to <strong>35 days</strong>. Backup storage up to the size of your cluster's own capacity is included free with the cluster. Snapshots are <strong>incremental</strong>, so only the data that actually changed since the last snapshot is stored and charged for.</p>
+
+  <h2>Manual Snapshots</h2>
+  <p>You can also trigger a <strong>manual snapshot</strong> explicitly — by a person, a script, or a management tool. Unlike automatic snapshots, manual snapshots have <strong>no automatic expiry</strong>: they persist indefinitely until someone removes them. That makes them the right tool for deliberate, longer-term retention points you want to keep around on purpose.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The mechanism that actually makes Redshift resilient</div>
+    Both snapshot types land in <strong>S3</strong> — and the moment they do, they inherit <strong>S3's own multi-AZ durability</strong>, even though the live cluster itself still runs in only one AZ. This is the key idea to hold onto: the <em>cluster</em> is single-AZ, but the <em>backup data</em> is not. Resilience comes from where the backups live, not from the cluster's own architecture.
+  </div>
+
+  <h2>Restoring: Always a New Cluster</h2>
+  <p>Restoring from any snapshot — automatic or manual — creates a <strong>brand-new cluster</strong>. Critically, when you restore, you can choose to provision that new cluster into a <strong>different, working Availability Zone</strong> — directly solving the case where the original AZ has failed. Recovery is never "repair the old cluster in place"; it's always "stand up a new one from the snapshot."</p>
+
+  <h2>Regional Disaster Recovery</h2>
+  <p>For resilience against a problem affecting an entire AWS Region, snapshots can be configured to <strong>automatically copy to another Region</strong>. The copied snapshots can have their own <strong>independently configurable retention period</strong>, which helps control cross-Region storage cost separately from the source Region's retention policy. If the original Region has a major event, a new cluster can be provisioned quickly from those copied snapshots in the destination Region.</p>
+
+  <div class="callout">
+    <div class="callout-title">Exam heuristic</div>
+    Redshift resilience questions are really testing one idea: the <strong>cluster</strong> is single-AZ, but the <strong>backup data</strong> — via S3-backed automatic and manual snapshots — can be made multi-AZ, and even multi-Region with cross-Region snapshot copy. Recovery always means restoring into a <strong>new cluster</strong>, whether in a different AZ or a different Region, never patching the original cluster back to life.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Remember: Multi-AZ deployments are now a direct alternative</div>
+    The previous lesson flagged that Redshift <strong>Multi-AZ deployments</strong> are now generally available for RA3 clusters — compute spread live across two AZs behind one endpoint. That's a materially different resilience story from what this lesson covers: snapshot-based recovery still means provisioning a <em>new</em> cluster after a failure, whereas a genuine Multi-AZ deployment keeps the <em>original</em> cluster serving queries through an AZ failure in the first place. If a scenario demands continuous availability through an AZ failure with no restore step, Multi-AZ is the more direct answer; if it's about surviving data loss or standing up a replacement cluster (including cross-Region), snapshots are still the mechanism being tested.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A Redshift cluster's Availability Zone fails entirely. The team needs to recover using existing snapshots. What is the correct recovery action?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A failed cluster in a failed AZ can't simply be restarted in place — the underlying compute in that AZ is unavailable, which is exactly why a new cluster in a working AZ is needed."> Restart the existing cluster once the AZ recovers</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Restoring from a snapshot always creates a brand-new cluster, and you can choose a different, working Availability Zone to provision it into."> Restore from a snapshot into a new cluster in a working AZ</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Enhanced VPC Routing controls network paths for external traffic — it has no role in recovering a cluster after an Availability Zone failure."> Enable Enhanced VPC Routing to reroute around the failed AZ</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Redshift Spectrum queries S3 data directly from a live cluster — it doesn't provide a mechanism for recovering a cluster after an AZ failure."> Use Redshift Spectrum to rebuild the cluster automatically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A compliance requirement calls for certain Redshift snapshots to be kept indefinitely, with no automatic expiry, until someone explicitly deletes them. Which snapshot type satisfies this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Automatic snapshots have a default 1-day retention, configurable up to 35 days — they always expire on a schedule rather than persisting indefinitely."> Automatic snapshots, with retention set to 35 days</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Manual snapshots have no automatic expiry — they're retained indefinitely until explicitly removed, making them the right fit for indefinite compliance retention."> Manual snapshots, triggered explicitly and left untouched</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cross-Region copies of automatic snapshots still carry their own configurable retention period — they don't persist indefinitely by default."> Cross-Region copies of the automatic snapshots</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Enabling KMS encryption governs how data is protected at rest; it has no effect on how long a snapshot is retained."> Any snapshot type, as long as KMS encryption is enabled</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A business needs Redshift to survive the complete loss of an entire AWS Region, with the ability to stand up a replacement cluster elsewhere. What should be configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Automatic snapshots protect against AZ-level failure within a Region by landing in S3, but on their own they don't copy data to a separate Region."> Automatic snapshots only, retained for 35 days in the source Region</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Configuring snapshots to automatically copy to another Region, with its own independently configurable retention, lets you provision a new cluster in that Region if the original Region fails entirely."> Automatic copying of snapshots to a second AWS Region</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Enhanced VPC Routing manages network paths for traffic to external services within a Region — it has no cross-Region resilience function."> Enhanced VPC Routing configured on the source cluster</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Redshift Federated Query lets a cluster query remote databases directly — it doesn't provide cross-Region backup or disaster recovery capability."> Federated Query pointed at a cluster in the second Region</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links"><a href="0011-redshift-architecture.html">← Previous: Amazon Redshift: Architecture</a><span></span></div>
+    <p style="margin-top:1.5rem">You've completed the NoSQL Databases and DynamoDB module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

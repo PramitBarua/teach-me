@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoSQL Databases and DynamoDB – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › NoSQL Databases and DynamoDB</div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>NoSQL Databases and DynamoDB</h1>
+    <p class="lesson-meta">12 lessons · ~98 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html" target="_blank">Amazon DynamoDB Developer Guide</a></p>
+  </div>
+
+  <p>This module is built around DynamoDB — eight lessons covering its architecture, operations, and every major feature (indexes, streams, global tables, DAX, TTL) — followed by four adjacent data services that repeatedly get confused with each other and with DynamoDB on the exam: ad hoc S3 querying (Athena), in-memory caching (ElastiCache), and the analytical data warehouse (Redshift, across two lessons).</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><a href="0001-dynamodb-architecture.html">DynamoDB Architecture</a></td><td>Database-as-a-service (not server-as-a-service); tables/items/primary keys; capacity means speed, not space</td></tr>
+      <tr><td>02</td><td><a href="0002-dynamodb-operations-consistency-and-performance-part-1.html">DynamoDB Operations, Consistency & Performance (Part 1)</a></td><td>On-demand vs. provisioned capacity; Query (needs a partition key) vs. Scan (whole-table, expensive)</td></tr>
+      <tr><td>03</td><td><a href="0003-dynamodb-operations-consistency-and-performance-part-2.html">DynamoDB Operations, Consistency & Performance (Part 2)</a></td><td>Leader-node replication; eventually consistent (half-price) vs. strongly consistent reads; capacity math</td></tr>
+      <tr><td>04</td><td><a href="0004-dynamodb-local-and-global-secondary-indexes.html">DynamoDB Local & Global Secondary Indexes</a></td><td>LSI: create-time-only, same partition key. GSI: anytime, own keys, always eventually consistent</td></tr>
+      <tr><td>05</td><td><a href="0005-dynamodb-streams-and-lambda-triggers.html">DynamoDB Streams & Lambda Triggers</a></td><td>24-hour change window + Lambda = serverless, event-driven trigger architecture</td></tr>
+      <tr><td>06</td><td><a href="0006-dynamodb-global-tables.html">DynamoDB Global Tables</a></td><td>Multi-active replication across Regions; last-writer-wins; strong consistency only same-Region</td></tr>
+      <tr><td>07</td><td><a href="0007-dynamodb-accelerator-dax.html">DynamoDB Accelerator (DAX)</a></td><td>VPC-bound in-memory cache, one SDK for cache+DB, microsecond hits — but no strongly consistent reads</td></tr>
+      <tr><td>08</td><td><a href="0008-dynamodb-ttl.html">DynamoDB Time to Live (TTL)</a></td><td>Epoch-seconds timestamp attribute drives automatic, free, background item deletion</td></tr>
+      <tr><td>09</td><td><a href="0009-amazon-athena.html">Amazon Athena</a></td><td>Serverless schema-on-read SQL over S3; pay per query scanned; Federated Query reaches non-S3 sources</td></tr>
+      <tr><td>10</td><td><a href="0010-elasticache.html">Amazon ElastiCache</a></td><td>Requires app code changes; Redis (HA, structures, persistence) vs. Memcached (simple, multi-threaded)</td></tr>
+      <tr><td>11</td><td><a href="0011-redshift-architecture.html">Amazon Redshift: Architecture</a></td><td>Columnar OLAP data warehouse; leader/compute nodes and slices; single-AZ by default</td></tr>
+      <tr><td>12</td><td><a href="0012-redshift-dr-and-resilience.html">Amazon Redshift: DR and Resilience</a></td><td>S3-backed snapshots inherit multi-AZ durability; restore into a new cluster, in a new AZ or Region</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The single highest-yield DynamoDB distinction is <strong>Query needs a partition key value; Scan doesn't but reads (and bills for) the whole table</strong> (Lesson 02) — paired with <strong>eventually consistent reads cost half of strongly consistent ones</strong> (Lesson 03). For indexes: <strong>LSIs must be created with the base table; GSIs can be created anytime but are always eventually consistent</strong> (Lesson 04). For the four adjacent services, anchor on what each one is actually for: <strong>DAX</strong> = DynamoDB-specific caching (not for strongly-consistent-read workloads), <strong>Athena</strong> = ad hoc, serverless querying of data already in S3, <strong>ElastiCache</strong> = general-purpose in-memory caching that requires application changes, <strong>Redshift</strong> = a provisioned, columnar OLAP data warehouse for petabyte-scale analytics — not for ad hoc queries, that's Athena's job.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Several services here have gained real capabilities since the course was recorded</div>
+    <strong>DynamoDB</strong> now offers a Standard-IA table class (Lesson 01) and Global Tables terminology has shifted from "multi-master" to "multi-active" with broader replica feature parity (Lesson 06). <strong>Athena</strong> can now perform real INSERT/UPDATE/DELETE against Apache Iceberg tables, not just read-only S3 querying (Lesson 09). <strong>ElastiCache Serverless</strong> removes the need to size or manage cache nodes at all (Lesson 10). Most significantly, <strong>Amazon Redshift Multi-AZ</strong> has been generally available for RA3 clusters since November 2023 — directly qualifying the "Redshift is single-AZ only" architecture taught as the foundational default in Lesson 11 (independently verified, not just taken from a single source). Each affected lesson flags its own update inline.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-dynamodb-architecture.html">Start: DynamoDB Architecture →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

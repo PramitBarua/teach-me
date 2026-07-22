@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – DynamoDB Streams &amp; Lambda Triggers</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 05
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>DynamoDB Streams &amp; Lambda Triggers</h1>
+    <p class="lesson-meta">Lesson 05 of 12 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html" target="_blank">Change data capture for DynamoDB Streams</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.Lambda.html" target="_blank">DynamoDB Streams and AWS Lambda triggers</a></p>
+  </div>
+
+  <p>A <strong>DynamoDB Stream</strong> is a time-ordered, <strong>24-hour rolling window</strong> of item-level changes — inserts, updates, and deletes — captured for a table. Streams are enabled on a per-table basis, and behind the scenes they're backed by Kinesis Streams. On their own, streams are just a record of change. Paired with Lambda, they become the foundation of an entirely serverless, event-driven architecture.</p>
+
+  <h2>Four Stream View Types</h2>
+  <p>When you enable a stream, you choose what information each captured change actually contains:</p>
+  <dl>
+    <dt>KEYS_ONLY</dt>
+    <dd>Just the key attributes of the changed item. Consumers must read the table themselves to learn what actually changed.</dd>
+    <dt>NEW_IMAGE</dt>
+    <dd>The full item state <strong>after</strong> the change.</dd>
+    <dt>OLD_IMAGE</dt>
+    <dd>The full item state <strong>before</strong> the change.</dd>
+    <dt>NEW_AND_OLD_IMAGES</dt>
+    <dd>Both pre- and post-change state together, letting a consumer diff the change without ever touching the table.</dd>
+  </dl>
+  <p>All four view types apply equally to inserts, updates, and deletes — with the obvious caveat that a delete has no meaningful "new" state, and an insert has no meaningful "old" state.</p>
+
+  <h2>Streams + Lambda = Triggers</h2>
+  <p>The real power shows up when a stream is paired with <strong>Lambda</strong> to build a <strong>trigger</strong>: an item change generates a stream event, and that event automatically invokes a Lambda function. There's no polling involved anywhere in this chain — the whole thing is event-driven and serverless from end to end.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The exam heuristic</div>
+    Whenever a scenario needs an <strong>event-driven reaction to DynamoDB data changes</strong> — without constant polling and without managing servers — think <strong>Streams + Lambda triggers</strong>.
+  </div>
+
+  <h2>Real-World Use Cases</h2>
+  <ul>
+    <li><strong>Reporting and analytics</strong> — generating a report the moment a tracked item changes.</li>
+    <li><strong>Aggregation</strong> — tallying votes in a voting app, or rolling up stock-level changes as they happen.</li>
+    <li><strong>Messaging and notifications</strong> — pushing a notification the instant a new chat message is written to a table.</li>
+  </ul>
+  <p>All three share the same underlying win: instead of a compute resource constantly polling a table to check for changes — burning cycles even when nothing has happened — the architecture reacts only when a real change occurs, consuming the minimum compute necessary.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A voting application needs to update a running vote tally the moment a new vote item is written to a DynamoDB table, without any server polling the table. What architecture fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A DynamoDB Stream captures the insert as an event, and a Lambda trigger reacts to it immediately, avoiding any polling entirely — exactly the serverless, event-driven pattern described."> DynamoDB Streams with a Lambda trigger reacting to each insert</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A scheduled Lambda function checking the table on an interval is still polling — it doesn't react instantly to changes and wastes compute checking even when nothing changed."> A Lambda function on a fixed schedule scanning the table</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EC2 instances polling a table on a loop is exactly the wasteful pattern streams and triggers are meant to replace, and it isn't serverless."> EC2 instances polling the table continuously in a loop</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Query and Scan are on-demand read operations invoked by a client; neither reacts automatically to a write event without something else triggering the call."> Manual Query calls issued whenever a user refreshes a page</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A consumer needs to know both the exact pre-change and post-change state of an item, purely from the stream record, without querying the table at all. Which stream view type fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="KEYS_ONLY records only the key attributes of the changed item — it provides no information about what the actual data looked like before or after."> KEYS_ONLY, since it identifies exactly which item changed</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="NEW_IMAGE captures only the item's state after the change — it has no information about what the item looked like beforehand."> NEW_IMAGE, since it captures the item's current full state</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="OLD_IMAGE captures only the item's state before the change — it provides no visibility into what the item became afterward."> OLD_IMAGE, since it captures the item's prior full state</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. NEW_AND_OLD_IMAGES stores both the pre-change and post-change state in the same stream record, letting a consumer diff the change without any additional table read."> NEW_AND_OLD_IMAGES, since it stores both states together</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A table has streams enabled with the KEYS_ONLY view type, and a Lambda trigger needs to know the actual updated values of a changed item. What must happen?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="KEYS_ONLY intentionally omits the item's data values — it records only the partition key and sort key of the item that changed, nothing more."> The full updated values are already included in the stream record</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. With KEYS_ONLY, the stream record identifies which item changed, but the consumer must separately read the table itself to learn the actual updated values."> The Lambda function must read the table itself to get the values</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Stream view type isn't switched automatically based on what a consumer needs — it's a fixed per-stream setting chosen when the stream is configured."> DynamoDB automatically switches the view type to include values</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Streams don't require polling to be added on top for a trigger to function — the Lambda invocation is already event-driven; only the lack of value data is the limitation here."> Polling must be added since KEYS_ONLY doesn't support triggers</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-dynamodb-local-and-global-secondary-indexes.html">← Previous: DynamoDB Local &amp; Global Secondary Indexes</a>
+      <a href="0006-dynamodb-global-tables.html">Next: DynamoDB Global Tables →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

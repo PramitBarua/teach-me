@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Amazon Athena</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">NoSQL Databases and DynamoDB</a> › Lesson 09
+    </div>
+    <div class="module-tag">NoSQL Databases and DynamoDB</div>
+    <h1>Amazon Athena</h1>
+    <p class="lesson-meta">Lesson 09 of 12 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/athena/latest/ug/what-is.html" target="_blank">What is Amazon Athena?</a> · <a href="https://docs.aws.amazon.com/athena/latest/ug/federated-queries.html" target="_blank">Use Amazon Athena federated query</a> · <a href="https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg.html" target="_blank">Query Apache Iceberg tables</a></p>
+  </div>
+
+  <p><strong>Athena</strong> is a serverless, interactive query service: it lets you run ad hoc SQL queries against data sitting in S3, with <strong>no infrastructure to provision</strong>, <strong>no data loading</strong>, and <strong>no ETL</strong> required first. You pay only for the data your query actually scans, plus the normal S3 storage cost of the underlying data — there's no base monthly fee and no per-hour charge for idle capacity.</p>
+
+  <h2>Schema-on-Read</h2>
+  <p>The concept that makes Athena work is <strong>schema-on-read</strong>. Think of the schema as a lens or a window you look through, not something that changes what's behind it: the source data in S3 is <strong>never modified</strong>. You define tables that describe how to translate the raw S3 data into a queryable, table-like structure, and that translation happens transiently, in flight, only at the moment a query runs. Nothing is loaded or transformed in advance — the "table" in Athena is really just a set of directions for reading the original files, not a copy of the data itself.</p>
+  <p>Athena supports a wide and steadily growing range of source formats: JSON, CSV/TSV, Avro, Parquet, ORC, and common log formats such as Apache web server logs, CloudTrail, and VPC Flow Logs. It also integrates with the <strong>Glue Data Catalog</strong> for storing and looking up table/schema metadata.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Where Athena wins: ad hoc, sporadic, log-driven</div>
+    Athena is the right call whenever a scenario describes <strong>infrequent or ad hoc</strong> querying of data already sitting in S3 — standing up a database or running an ETL pipeline just to answer an occasional question would be wasted effort. It's also the <strong>default exam answer</strong> for cost-conscious querying of AWS service logs specifically: <strong>VPC Flow Logs, CloudTrail, ALB/ELB access logs, and Cost and Usage Reports</strong> are strong keyword matches for Athena.
+  </div>
+
+  <h2>Federated Query: The One Exception to a Reliable Rule</h2>
+  <p>Normally, if an exam question mentions <strong>SQL, NoSQL, or names a specific database product</strong>, Athena is probably <em>not</em> the right answer — Athena's whole premise is querying files in S3, not another database engine. <strong>Athena Federated Query</strong> is the deliberate exception to that rule. It uses <strong>Lambda-based data source connectors</strong> that let Athena reach into systems that aren't S3 at all, translating between Athena's query engine and the target source. Pre-built connectors exist for sources like <strong>CloudWatch Logs, DynamoDB, DocumentDB, and Amazon RDS</strong>, as well as other JDBC-compliant relational databases such as MySQL and PostgreSQL.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Exam trap: "database mentioned" doesn't always rule out Athena</div>
+    If a question names a specific database <em>and</em> frames it as something Athena needs to query alongside S3 data, Federated Query is exactly that scenario — don't reflexively eliminate Athena the instant a database name appears. Check whether federation, not a plain "which database service" choice, is what's being tested.
+  </div>
+
+  <h2>Update Since the Course Was Recorded: Athena Can Now Write, Not Just Read</h2>
+  <p>The original course material treats S3 data as read-only from Athena's perspective — a defensible simplification at the time. That has genuinely changed: Athena now supports the <strong>Apache Iceberg</strong> table format, and Iceberg tables in Athena support real <strong>INSERT</strong>, <strong>UPDATE</strong>, <strong>DELETE</strong>, and <strong>MERGE INTO</strong> operations, along with time-travel queries against earlier snapshots. This is powered by Iceberg's own transaction model — Athena writes row-level changes as delete files rather than rewriting whole data files — and it gives Athena genuine ACID semantics for tables built on Iceberg.</p>
+  <div class="callout">
+    <div class="callout-title">What this changes for the exam</div>
+    "Athena only reads, never writes" is no longer an absolute rule — it's now <strong>true for standard/classic Athena tables</strong>, but <strong>not true for Iceberg-format tables</strong>, which support full read-write DML. If a scenario specifically calls out Iceberg tables or asks about updating/deleting rows queried through Athena, this capability is the relevant answer; for everything else, the classic "Athena is read-only against S3" framing still holds.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A business occasionally needs to run one-off SQL queries against a large dataset already stored in S3, but doesn't want to provision any infrastructure or transform the data first. What's the best fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Athena queries data directly in S3 with no infrastructure to provision and no upfront loading or transformation — ideal for occasional, ad hoc querying."> Amazon Athena, querying the data directly in place</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Redshift is a provisioned data warehouse that generally expects data to be loaded in before querying — a heavier setup than an occasional query needs."> Amazon Redshift, after loading the dataset into a cluster</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="RDS is built for transactional relational workloads, not ad hoc analytical queries against files already sitting in S3."> Amazon RDS, after importing the dataset into a table</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="DynamoDB is a NoSQL key-value/document store meant for application data access patterns, not for running SQL analytics over arbitrary S3 files."> Amazon DynamoDB, after migrating the dataset into a table</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A question describes needing to query both files in S3 and live data in a DynamoDB table within the same analysis, using standard SQL. Which Athena capability makes this possible?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Schema-on-read describes how Athena applies table structure to S3 data at query time — it doesn't extend Athena's reach to non-S3 sources like DynamoDB."> Schema-on-read applied directly to the DynamoDB table</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Athena Federated Query uses Lambda-based data source connectors — including a pre-built DynamoDB connector — to query non-S3 sources alongside S3 data."> Athena Federated Query, using a Lambda-based data source connector</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The Glue Data Catalog stores table and schema metadata for Athena, but it doesn't itself connect Athena's query engine to a live DynamoDB table."> The Glue Data Catalog, storing DynamoDB's schema directly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DynamoDB Streams captures a change log from a table but has no mechanism for exposing that data to an Athena SQL query."> DynamoDB Streams, exporting live data into an Athena query</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team stores its analytics tables in Athena using the Apache Iceberg format and now wants to run an UPDATE statement to correct some rows in place. Is this possible with Athena?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This was true for classic Athena tables historically, but Athena has since gained real write support for tables using the Iceberg format specifically."> No, Athena can only ever read S3 data, never modify it</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Athena now supports INSERT, UPDATE, DELETE, and MERGE INTO against tables using the Apache Iceberg format, giving genuine ACID write capability that classic Athena tables never had."> Yes, Iceberg-format tables in Athena support UPDATE and other DML</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Redshift Spectrum can query S3 data from a Redshift cluster, but the scenario is specifically about Athena's own Iceberg support, which now handles this directly."> No, this would require exporting the data to Redshift Spectrum first</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Federated Query extends Athena to non-S3 data sources — it isn't the mechanism behind writable Iceberg tables, which is a native Athena/Iceberg capability."> Yes, but only by routing the UPDATE through Athena Federated Query</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-dynamodb-ttl.html">← Previous: DynamoDB Time to Live (TTL)</a>
+      <a href="0010-elasticache.html">Next: Amazon ElastiCache →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
