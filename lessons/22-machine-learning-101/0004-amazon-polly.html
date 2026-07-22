@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Amazon Polly</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 04
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Polly</h1>
+    <p class="lesson-meta">Lesson 04 of 11 · ~4 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/polly/latest/dg/using-voices.html" target="_blank">Choosing a voice engine — Amazon Polly</a> · <a href="https://docs.aws.amazon.com/polly/latest/dg/generative-voices.html" target="_blank">Generative voices — Amazon Polly</a></p>
+  </div>
+
+  <p><strong>Amazon Polly</strong> converts text into lifelike speech. Feed it "I like cats, dogs, chickens and rabbits, spiders, not so much," and it produces spoken audio of that exact sentence. The key restriction to remember: <strong>Polly performs no translation</strong>. Input text in a given language always comes out as speech in that <em>same</em> language — it never converts between languages.</p>
+
+  <h2>Synthesis Modes</h2>
+  <p>The source course describes two modes of speech synthesis:</p>
+  <dl>
+    <dt>Standard TTS (text-to-speech)</dt>
+    <dd>Uses a <strong>concatenative architecture</strong>, built from <strong>phonemes</strong> — the smallest units of sound (the phoneme for the letter A, for instance). Speech is assembled by stitching these units together.</dd>
+    <dt>Neural TTS</dt>
+    <dd>Takes phonemes, generates <strong>spectrograms</strong> from them, and passes those through a <strong>vocoder</strong> to produce the output audio. This is far more computationally expensive than standard TTS, but produces noticeably more natural, human-sounding speech.</dd>
+  </dl>
+
+  <div class="callout">
+    <div class="callout-title">A newer tier: generative voices</div>
+    Since this course content was recorded, AWS has added a third synthesis tier: <strong>generative voices</strong>. Built on a larger model than standard or neural TTS, generative voices aim for the most human-like, emotionally engaged, and adaptive speech Polly offers — better handling of context-dependent prosody, pausing, and natural delivery. Conceptually it slots in as a step beyond neural TTS on the same "more compute, more natural" spectrum: standard → neural → generative.
+  </div>
+
+  <h2>Output Formats and SSML</h2>
+  <p>Polly can output <strong>MP3</strong>, <strong>Ogg Vorbis</strong>, or <strong>PCM</strong>. The choice depends on how you're integrating Polly elsewhere — PCM, for instance, is a common pick when feeding raw audio into another AWS product rather than playing an audio file directly.</p>
+  <p>Polly also supports <strong>SSML (Speech Synthesis Markup Language)</strong>, which lets you control delivery within the text itself: emphasizing certain words, controlling pronunciation, whispering parts of a sentence, or applying an exaggerated newscaster speaking style.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Integration component, not a standalone tool</div>
+    Polly is almost always used <em>as part of</em> something else — a WordPress plugin that reads articles aloud, another AWS service needing generated speech, or a custom application calling the API — rather than something used on its own. If a scenario needs text turned into spoken audio, in the same language, that's Polly.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An application needs to take English text and produce spoken French audio for the same content. Does Amazon Polly fit this requirement on its own?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Polly explicitly performs no translation — output speech is always in the same language as the input text."> Yes, Polly translates and speaks it in French directly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Polly never translates between languages; it would need to be paired with a translation step, such as Amazon Translate, before synthesis."> No, Polly never translates between languages on its own</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Neural TTS improves naturalness, not translation capability — it still requires input already written in the target output language."> Yes, but only when using the neural TTS engine</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SSML controls delivery style like emphasis or pacing; it has no ability to translate content between languages."> Yes, if the request includes SSML markup tags</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team wants Polly's most natural, human-like speech for a customer-facing voice assistant, and is willing to accept higher compute cost for it. Which capability should they reach for?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Standard TTS uses a concatenative, phoneme-based architecture — it's the least computationally expensive and least natural-sounding option."> Standard TTS, using its concatenative phoneme architecture</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Neural TTS is more natural than standard, but generative voices push further still as the newest, most human-like tier."> Neural TTS, generating spectrograms through a vocoder</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Generative voices are the newest tier, aiming for the most human-like, emotionally adaptive speech, beyond neural TTS."> Generative voices, the newest and most human-like tier</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SSML controls delivery style on top of a chosen engine — it doesn't itself determine which underlying synthesis engine is used."> SSML tagging alone, without changing the synthesis engine</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A developer wants Polly to whisper a specific phrase and use a newscaster-style delivery for another part of the same sentence. What feature controls this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Output format (MP3, Ogg Vorbis, PCM) controls the audio file encoding, not delivery style like whispering or speaking style."> Choosing PCM instead of MP3 as the output format</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. SSML lets you mark up text to control delivery, including whispering, emphasis, pronunciation, and speaking styles like newscaster mode."> SSML, marking up the text to control delivery style</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Switching between standard and neural TTS changes overall voice quality, not fine-grained delivery instructions within a sentence."> Switching from standard TTS to neural TTS entirely</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Polly has no translation capability at all, so this isn't a language-selection question."> Selecting a different output language for that phrase</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-amazon-lex.html">← Previous: Amazon Lex</a>
+      <a href="0005-amazon-rekognition.html">Next: Amazon Rekognition →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

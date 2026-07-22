@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – Amazon Kendra</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 02
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Kendra</h1>
+    <p class="lesson-meta">Lesson 02 of 11 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/kendra/latest/dg/what-is-kendra.html" target="_blank">What is Amazon Kendra?</a> · <a href="https://docs.aws.amazon.com/kendra/latest/dg/kendra-availability-change.html" target="_blank">Amazon Kendra availability change</a></p>
+  </div>
+
+  <p><strong>Amazon Kendra</strong> is an intelligent enterprise search service. The design goal is that querying it should feel like talking to a human expert on the subject, rather than typing keywords into a search box and hoping for the best.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Current status: closing to new customers</div>
+    The exam content here (and the underlying course video) treats Kendra as a standalone product you'd actively choose for a new enterprise search build. As of this writing, AWS has announced that <strong>Amazon Kendra will no longer be open to new customers starting July 30, 2026</strong> — existing customers keep full support, but AWS now points new search workloads toward <strong>Amazon Bedrock Knowledge Bases</strong> instead. (Amazon Q Business, which is built on top of Kendra, is following the same path, closing to new customers July 31, 2026, with Amazon Quick as its recommended successor.) For the SAA-C03 exam, the concepts on this page — index, data source, query types — are still exactly what's tested; just be aware that "which service should a new customer pick today" and "what does the exam expect you to know" are now two different questions.
+  </div>
+
+  <h2>Three Kinds of Questions</h2>
+  <p>Kendra is built to handle a spread of question styles:</p>
+  <ul>
+    <li><strong>Factoid questions</strong> — simple who/what/where questions, like "who wrote this book" or "where is this place."</li>
+    <li><strong>Descriptive questions</strong> — open-ended questions where the answer is a sentence or passage, like "how do I get my cat to stop being a jerk?"</li>
+    <li><strong>Keyword questions that are genuinely ambiguous</strong> — the classic example is "what time is the keynote address?" where "address" could mean a postal address or a speech. Kendra has to infer intent, not just match keywords.</li>
+  </ul>
+
+  <h2>Index and Data Source</h2>
+  <p>Two concepts anchor how Kendra works:</p>
+  <dl>
+    <dt>Index</dt>
+    <dd>The searchable, organized block of data that Kendra actually queries against.</dd>
+    <dt>Data source</dt>
+    <dd>The original location where the data lives — an S3 bucket, Confluence, Google Workspace, RDS, OneDrive, a web crawler, WorkDocs, FSx, and many more. Kendra <strong>syncs</strong> a data source into the index on a schedule, keeping the index current.</dd>
+  </dl>
+  <p>Documents indexed this way can be <strong>structured</strong> (like FAQs) or <strong>unstructured</strong> (HTML, PDF, plain text).</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Backend service, not an end-user tool</div>
+    Kendra is a <strong>backend service</strong>: you build search into an application and consume Kendra through its API. It's not something end users open directly in the console. It integrates with <strong>IAM</strong> and <strong>IAM Identity Center</strong> (formerly AWS SSO) for security. If a question describes adding search <em>within</em> an application backed by varied enterprise data sources — not a general-purpose keyword search box — that's the Kendra signal.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A user asks Kendra "what time is the keynote address?" Why is this harder for Kendra than it first appears?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This isn't a language issue — the question is written in plain, grammatically normal English."> The question contains a spelling or grammar mistake to correct</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The word 'address' has two valid meanings here — a speech or a postal address — so Kendra must infer the questioner's true intent rather than pattern-match on the keyword."> The word "address" is ambiguous and needs intent resolution</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The difficulty here is semantic ambiguity, not a missing or unsynced data source."> The data source containing the answer hasn't finished syncing</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Question length isn't the issue — this is a short question; the challenge is resolving which meaning of a word applies."> The question is too long for Kendra's query parser</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team configures Kendra to pull documents from Confluence and an S3 bucket on a recurring schedule so search results stay current. What is that recurring pull-and-refresh process called?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Indexing describes the searchable store itself, not the scheduled act of pulling fresh content from a data source into it."> Indexing, the process of building the search index</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Kendra syncs each configured data source into the index on a schedule, keeping the index current with the original data location."> Syncing, the scheduled refresh from data source to index</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Crawling refers to how a web crawler data source discovers pages, not the general scheduled refresh mechanism across all data source types."> Crawling, the general term for any data retrieval</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Replication describes copying data across systems or Regions, not Kendra's scheduled data source refresh behavior."> Replication, copying documents between AWS Regions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A solutions architect wants end users to open the AWS console directly and type search queries into Kendra themselves as their daily workflow. Is this the intended usage pattern?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kendra isn't designed as an end-user console tool for daily querying — it's a backend piece consumed through an application."> Yes, Kendra is meant to be used this way by end users</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Kendra is a backend service consumed via API and built into applications; end users interact with the app, not the Kendra console directly."> No, Kendra is a backend service consumed via API by an app</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kendra has no CLI-first end-user workflow — the CLI is for administration, not the intended daily search experience."> Yes, but only through the AWS CLI instead of the console</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kendra doesn't require a support ticket to search — the barrier here is architectural, not procedural."> No, because search queries require an AWS support ticket</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-amazon-comprehend.html">← Previous: Amazon Comprehend</a>
+      <a href="0003-amazon-lex.html">Next: Amazon Lex →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

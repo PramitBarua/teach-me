@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Machine Learning 101 – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Machine Learning 101</div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Machine Learning 101</h1>
+    <p class="lesson-meta">11 lessons · ~58 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://aws.amazon.com/machine-learning/ai-services/" target="_blank">AWS AI Services Overview</a></p>
+  </div>
+
+  <p>A survey of AWS's pre-built AI services — ten managed products that each solve one common AI task via API, no ML expertise required — followed by Amazon SageMaker, the platform for building genuinely custom models when none of the ten pre-built services fit. Each lesson here is intentionally short: the exam (outside the ML Specialty track) only needs a high-level architectural understanding of each product, not implementation depth.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><a href="0001-amazon-comprehend.html">Amazon Comprehend</a></td><td>NLP on text: entities, key phrases, language, sentiment, PII — each with a confidence score</td></tr>
+      <tr><td>02</td><td><a href="0002-amazon-kendra.html">Amazon Kendra</a></td><td>Intelligent enterprise search that mimics a human expert, resolving question intent — closing to new customers</td></tr>
+      <tr><td>03</td><td><a href="0003-amazon-lex.html">Amazon Lex</a></td><td>Conversational chatbots/voice (powers Alexa): ASR + NLU, intents/utterances/slots, Lambda fulfillment</td></tr>
+      <tr><td>04</td><td><a href="0004-amazon-polly.html">Amazon Polly</a></td><td>Text-to-speech only, no translation; standard/neural/generative voice tiers; SSML for delivery control</td></tr>
+      <tr><td>05</td><td><a href="0005-amazon-rekognition.html">Amazon Rekognition</a></td><td>Deep learning image/video analysis: objects, faces, text, moderation, activity, live video via Kinesis</td></tr>
+      <tr><td>06</td><td><a href="0006-amazon-textract.html">Amazon Textract</a></td><td>Extracts text, tables, and relationships from documents; normalizes ID fields across document types</td></tr>
+      <tr><td>07</td><td><a href="0007-amazon-transcribe.html">Amazon Transcribe</a></td><td>Speech-to-text (the reverse of Polly); Transcribe Medical and Call Analytics variants</td></tr>
+      <tr><td>08</td><td><a href="0008-amazon-translate.html">Amazon Translate</a></td><td>Neural text-to-text translation via encoder/decoder/attention; often one step in a larger pipeline</td></tr>
+      <tr><td>09</td><td><a href="0009-amazon-forecast.html">Amazon Forecast</a></td><td>Time-series forecasting with explainability — closed to new customers since July 2024</td></tr>
+      <tr><td>10</td><td><a href="0010-amazon-fraud-detector.html">Amazon Fraud Detector</a></td><td>Online Fraud / Transaction Fraud / Account Takeover model types — closed to new customers since Nov 2025</td></tr>
+      <tr><td>11</td><td><a href="0011-amazon-sagemaker.html">Amazon SageMaker</a></td><td>The build-your-own-model counterpart to the ten services above: Studio, Domains, containers, hosting</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    Almost every lesson here reduces to a single keyword-matching heuristic: sentiment/entities/PII-in-text → <strong>Comprehend</strong>; enterprise document search → <strong>Kendra</strong>; chatbot/voice assistant → <strong>Lex</strong>; text-to-speech → <strong>Polly</strong>; image/video analysis → <strong>Rekognition</strong>; extract text/tables from documents → <strong>Textract</strong>; speech-to-text → <strong>Transcribe</strong>; text-to-text translation → <strong>Translate</strong>; time-series forecasting → <strong>Forecast</strong>; fraud scoring → <strong>Fraud Detector</strong>. The one non-keyword distinction that matters most: a scenario needing a <strong>genuinely custom</strong> model, rather than one of these ten pre-built tasks, points to <strong>SageMaker</strong> instead.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Several of these services have real, dated lifecycle changes — independently verified, not just taken on faith</div>
+    <strong>Amazon Kendra</strong> closes to new customers <strong>July 30, 2026</strong> (Maintenance Mode since June 30, 2026); AWS now points new search/RAG work to <strong>Amazon Bedrock Knowledge Bases</strong> (Lesson 02). <strong>Amazon Rekognition's</strong> Streaming Video Analysis and Bulk Image Analysis closed to new customers <strong>April 30, 2026</strong> (Lesson 05). <strong>Amazon Forecast</strong> closed to new customers <strong>July 29, 2024</strong>, with AWS steering new projects to SageMaker Canvas (Lesson 09). <strong>Amazon Fraud Detector</strong> closed to new customers <strong>November 7, 2025</strong>, with AWS recommending SageMaker, AutoGluon, or AWS WAF Fraud Control instead (Lesson 10). And <strong>Amazon SageMaker itself was renamed "Amazon SageMaker AI"</strong> in December 2024, repositioned as one part of a broader unified data/AI platform alongside SageMaker Unified Studio and Amazon Bedrock (Lesson 11). Each lesson still teaches the underlying architecture the exam tests, but flags its own status change plainly rather than presenting a closed-to-new-customers product as fully current.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-amazon-comprehend.html">Start: Amazon Comprehend →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

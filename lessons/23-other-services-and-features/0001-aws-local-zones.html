@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – AWS Local Zones</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Other Services and Features</a> › Lesson 01
+    </div>
+    <div class="module-tag">Other Services and Features</div>
+    <h1>AWS Local Zones</h1>
+    <p class="lesson-meta">Lesson 01 of 1 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/local-zones/latest/ug/what-is-aws-local-zones.html" target="_blank">What Is AWS Local Zones?</a> · <a href="https://docs.aws.amazon.com/local-zones/latest/ug/how-local-zones-work.html" target="_blank">How AWS Local Zones Work</a></p>
+  </div>
+
+  <p>A normal AWS Region gives you scale and resilience across multiple Availability Zones — but those AZs might still be hundreds of kilometers from your actual business premises. Even over fiber, even over Direct Connect, that physical distance adds latency. For most applications a few milliseconds doesn't matter. For latency-sensitive ones — the transcript's example is financial trading — it can matter a great deal. <strong>AWS Local Zones</strong> exist to close that gap.</p>
+
+  <p>A Local Zone is best understood as <strong>one extra, extremely close availability zone</strong> — an extension of a "parent" Region, physically sited near a major population center, with its own independent connection to the internet (and generally Direct Connect support too). You extend your existing VPC into it simply by creating subnets there, then launch resources into those subnets as normal.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Reading a Local Zone's name</div>
+    A Local Zone's name always starts with its <strong>parent Region</strong>, followed by a city code and an identifier — for example <code>us-west-2-lax-1a</code> is a Local Zone in Los Angeles (<code>lax</code>), parented to <code>us-west-2</code>. A single city can have more than one Local Zone (e.g. <code>...-lax-1a</code> and <code>...-lax-1b</code>). Spotting the parent-Region prefix is the quick way to identify one in an exam scenario.
+  </div>
+
+  <h2>What Stays Local, What Stays in the Parent Region</h2>
+  <p>Local Zone subnets behave like any other subnet in your VPC and have normal private connectivity back to the parent Region. But not everything about a Local Zone actually runs locally: <strong>EBS snapshots</strong>, for instance, are still stored in S3 back in the parent Region — which is exactly what lets them keep the usual multi-AZ durability snapshots rely on. Knowing which capability is genuinely local (compute, low-latency access) versus which quietly depends on the parent Region (snapshot durability) is the kind of detail exam scenarios probe.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">No built-in resilience — it's one facility</div>
+    A Local Zone is <strong>one physical location</strong>, conceptually like a single Availability Zone — it doesn't have the multi-AZ redundancy a Region does. If a Local Zone itself fails, whatever's running in it fails too. Also: <strong>not every AWS service or feature supports Local Zones</strong>, support is frequently opt-in, and coverage varies by geographic area — always a "check current AWS documentation" situation rather than an assumption, both for the exam and in the real world.</p>
+  </div>
+
+  <h2>When to Reach for a Local Zone</h2>
+  <p>Use Local Zones when an architecture's dominant requirement is <strong>the lowest possible latency to a specific metro area</strong> — closer to the same category of problem CloudFront's edge locations solve for content delivery, but for compute, storage, and database resources rather than cached content.</p>
+
+  <table>
+    <thead><tr><th>Edge option</th><th>Where it physically sits</th><th>Best fit</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Local Zones</strong></td><td>Near major metro areas, extending a parent Region</td><td>Low-latency compute/storage/database for a specific city's users</td></tr>
+      <tr><td><strong>Wavelength</strong></td><td>Inside telecom providers' 5G networks</td><td>Ultra-low-latency mobile/5G-native applications (AR/VR, IoT, connected devices)</td></tr>
+      <tr><td><strong>Outposts</strong></td><td>Your own data center or co-location facility</td><td>AWS infrastructure and APIs running fully on-premises</td></tr>
+    </tbody>
+  </table>
+  <p class="source-link">Comparison sourced from <a href="https://aws.amazon.com/blogs/compute/aws-local-zones-and-aws-outposts-choosing-the-right-technology-for-your-edge-workload/" target="_blank">AWS Compute Blog: Local Zones and Outposts — choosing the right technology</a>.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A financial trading firm's office is hundreds of kilometers from its AWS Region's Availability Zones, and even small amounts of added latency measurably hurt trading performance. What's the most direct architectural fix?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Adding more Availability Zones within the existing Region doesn't reduce the physical distance to the firm's premises — the latency comes from geographic separation, not AZ count."> Provision additional Availability Zones within the same Region</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A Local Zone places compute and storage physically close to a specific metro area, directly cutting the latency caused by geographic distance to the parent Region's Availability Zones."> Extend the VPC into a nearby AWS Local Zone</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Direct Connect improves consistency and bypasses the public internet, but it doesn't change the physical distance data has to travel — latency from distance still applies."> Replace the internet connection with Direct Connect alone</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFront accelerates cached content delivery to end users globally — it isn't the mechanism for reducing latency to compute and database resources the firm's own workload runs on."> Front the application entirely with CloudFront</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A resource is named <code>us-west-2-lax-1a</code>. What can you correctly conclude from this name alone?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This name doesn't indicate a standalone Region — the us-west-2 prefix specifically identifies it as a Local Zone parented to that Region, not an independent Region in its own right."> It's a fully independent AWS Region in Los Angeles</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The leading us-west-2 identifies the parent Region, and lax identifies the Los Angeles metro area — exactly how Local Zone names are structured."> It's a Local Zone in Los Angeles, parented to us-west-2</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This naming pattern is specific to Local Zones, not Wavelength Zones, which are identified differently and tied to telecom carrier networks rather than a parent Region and city code."> It's a Wavelength Zone inside a telecom carrier network</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This naming pattern doesn't refer to a customer's own on-premises Outposts deployment — Outposts are identified by the customer's own configuration, not a parent-Region-plus-city-code scheme."> It's a customer-owned AWS Outposts rack on-premises</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An application runs entirely within a single AWS Local Zone for its low-latency benefits. A solutions architect assumes this gives the same resilience as running across multiple Availability Zones in a Region. Is this assumption correct?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A Local Zone is conceptually one physical facility, similar to a single Availability Zone — it doesn't provide the multi-AZ redundancy a Region's full set of Availability Zones does."> Yes, Local Zones automatically replicate across multiple facilities</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A Local Zone behaves like a single Availability Zone — one physical location with no built-in redundancy of its own. Losing that facility affects everything running in it, just as losing a single AZ would without a multi-AZ design."> No, a Local Zone is effectively one facility with no built-in redundancy</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EBS snapshots being stored via S3 in the parent Region protects backup data, but it doesn't make the live, running Local Zone resources themselves resilient to that Local Zone's failure."> Yes, because EBS snapshots are automatically stored in the Local Zone itself</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Direct Connect improves connectivity performance and reliability of the network path — it doesn't add redundancy to the Local Zone facility itself if that facility fails."> Yes, as long as Direct Connect is used to reach the Local Zone</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Other Services and Features module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

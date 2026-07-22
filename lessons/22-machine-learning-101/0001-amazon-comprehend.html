@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Amazon Comprehend</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 01
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Comprehend</h1>
+    <p class="lesson-meta">Lesson 01 of 11 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/comprehend/latest/dg/functionality.html" target="_blank">Amazon Comprehend insights overview</a> · <a href="https://docs.aws.amazon.com/comprehend/latest/dg/how-pii.html" target="_blank">Detecting PII entities</a></p>
+  </div>
+
+  <p><strong>Amazon Comprehend</strong> is a natural language processing service: you feed it a document — in practice, just text — and it surfaces the important elements buried inside it. This is the first of a run of "pre-built AI service" lessons. Each one wraps a common, well-defined AI task behind a managed API, so you get the capability without needing any machine learning expertise. Contrast that with <strong>SageMaker</strong>, covered at the end of this module, which is for building genuinely custom models. If a scenario needs a specific, common task done via API with no ML background required, one of these services is probably the answer.</p>
+
+  <h2>What Comprehend Extracts</h2>
+  <p>Given an input document, Comprehend can identify:</p>
+  <ul>
+    <li><strong>Entities</strong> — people, organizations, locations, and other named things in the text.</li>
+    <li><strong>Key phrases</strong> — the notable phrases that summarize what the text is about.</li>
+    <li><strong>Language</strong> — which language the text is written in.</li>
+    <li><strong>Sentiment</strong> — an overall reading of positive, negative, neutral, or mixed tone.</li>
+    <li><strong>PII (personally identifiable information)</strong> — names, credit card numbers, bank details, addresses, phone numbers, emails, and similar sensitive fields.</li>
+  </ul>
+  <p>Every one of these results comes back with a <strong>confidence score from 0 to 1</strong> (0% to 100%), showing how sure Comprehend is about that particular finding. A person entity might come back at 0.99+, meaning Comprehend is over 99% confident that piece of text really is a person's name.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The keyword heuristic</div>
+    If an exam scenario mentions <strong>sentiment analysis</strong>, <strong>entity recognition</strong>, <strong>key phrase extraction</strong>, or <strong>detecting PII within text</strong>, default to <strong>Comprehend</strong>.
+  </div>
+
+  <h2>Pre-Trained or Custom, Real-Time or Batch</h2>
+  <p>Comprehend is a machine learning service built on either <strong>pre-trained models</strong> (the built-in analysis type, ready to use immediately) or <strong>custom models</strong> you train to fit your own data. It supports two ways of running analysis: <strong>real-time (synchronous)</strong> analysis for small inputs, where you get results back immediately, and <strong>asynchronous batch jobs</strong> for larger workloads, where you submit a job and it processes in the background. It's accessible from the console or CLI for interactive, one-off use, and via the API for integrating the capability directly into an application.</p>
+
+  <h2>What the Console Demo Shows</h2>
+  <p>The console's built-in sample lets you paste in text and click analyze. Feeding it a sample email containing a name, a company, a credit card number, and an address produces exactly the categories above: entities (person, organization, location, and a generic "other" category for things like credit card numbers and email addresses), key phrases, detected language, PII findings, and an overall sentiment reading. Changing the input text changes the sentiment result in an intuitive way — mentioning something you like alongside something you dislike shifts the reading from purely positive or negative toward <strong>mixed</strong>. The conceptual takeaway isn't the UI itself; it's that all of this — sentiment, key phrases, entities, PII — comes from the same document in a single pass, and the exact same categories are available through the API for use inside a real application.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company wants to automatically flag whether customer support emails are positive, negative, or mixed in tone, without training any custom model. Which service fits directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Sentiment analysis on text, using pre-trained models with no ML expertise needed, is a core built-in Comprehend capability."> Amazon Comprehend, using its built-in sentiment analysis</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Rekognition analyzes images and video, not written text, so it cannot read sentiment from an email body."> Amazon Rekognition, using its content analysis features</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Textract extracts text and structure from scanned documents and images, not sentiment from plain email text."> Amazon Textract, using its document analysis features</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SageMaker is for building and training genuinely custom models, which this scenario explicitly doesn't need."> Amazon SageMaker, by training a custom classifier</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Comprehend returns an entity match with a confidence value of 0.87. What does that value represent?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Confidence scores describe certainty of a single finding, not how much of the document text that entity occupies."> The percentage of the document made up by that entity</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Comprehend expresses confidence on a 0-to-1 scale, where 0.87 means it is 87% confident in that particular identification."> How confident Comprehend is that the identification is correct</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Confidence scores are per-finding, not a count of how many entity types were detected across the document."> The number of distinct entity types found in the document</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Confidence reflects certainty of the current identification, not a prediction about future accuracy improvements."> How much the model's accuracy will improve with retraining</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team needs to process a nightly batch of tens of thousands of large documents for entity and key phrase extraction, rather than getting instant results one at a time. Which Comprehend mode fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Real-time synchronous analysis is meant for small inputs needing an immediate response, not large overnight batch volumes."> Real-time synchronous analysis for each document</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Asynchronous batch jobs are exactly what Comprehend offers for larger workloads submitted as a job rather than processed instantly."> Asynchronous batch jobs submitted for later processing</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Comprehend doesn't require building a custom model just to run its standard entity and key phrase detection at scale."> A custom-trained model built specifically for this batch</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Comprehend's console is meant for interactive, one-off exploration, not for driving a scheduled nightly batch across tens of thousands of documents."> Manual console analysis repeated for every document</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-amazon-kendra.html">Next: Amazon Kendra →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

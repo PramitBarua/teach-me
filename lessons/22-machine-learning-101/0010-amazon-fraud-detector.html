@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – Amazon Fraud Detector</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 10
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Fraud Detector</h1>
+    <p class="lesson-meta">Lesson 10 of 11 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/frauddetector/latest/ug/frauddetector-availability-change.html" target="_blank">Amazon Fraud Detector availability change</a> · <a href="https://docs.aws.amazon.com/frauddetector/latest/ug/choosing-model-type.html" target="_blank">Choose a model type</a></p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Service lifecycle: closed to new customers</div>
+    As of November 7, 2025, AWS stopped accepting new customers for Amazon Fraud Detector. Existing customers can keep using it as normal, but anyone evaluating a fraud-detection solution today is pointed toward alternatives such as Amazon SageMaker, the open-source AutoGluon library, or AWS WAF Fraud Control (for account-creation-fraud scenarios specifically). The exam may still test the underlying architecture and model-type concepts covered below even though the product itself is closed to new adopters.
+  </div>
+
+  <p><strong>Amazon Fraud Detector</strong> is a fully managed fraud-detection service. It looks at historical trends and related data to identify potential fraud around online activity — typically things like new account creation, payments, or guest checkouts.</p>
+
+  <h2>Architecture: Import, Choose a Model, Score</h2>
+  <p>Like the other managed ML services in this module, the pattern is: upload historical data, choose a model type, and let the service score incoming events. Fraud Detector offers three model types, each suited to a different situation:</p>
+  <dl>
+    <dt>Online Fraud Insights</dt>
+    <dd>For when little or no history exists on the entity being evaluated — a brand-new account signup, for example. Little historical data means the model instead looks at general risk-signal trends surrounding the event.</dd>
+    <dt>Transaction Fraud Insights</dt>
+    <dd>For when a transaction history <em>does</em> exist for the customer — commonly used for credit-card validation, using patterns like stores used, purchase amounts, countries, and time of day to build a profile of normal behavior.</dd>
+    <dt>Account Takeover Insights</dt>
+    <dd>Detects signals of account compromise — for example, a phishing- or credential-stuffing-style login from an unusual location or an unusual referral source.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic: match the model to the data you have</div>
+    The exam-level distinction between the three model types comes down to <strong>what history exists for the entity being evaluated</strong>: no history on a new user → Online Fraud Insights; an established transaction history → Transaction Fraud Insights; suspected account compromise signals like unusual login location → Account Takeover Insights.
+  </div>
+
+  <h2>Rules and Positioning</h2>
+  <p>Once events are scored, you build <strong>rules</strong> — decision logic that reacts to those scores according to your business's risk tolerance. Like Forecast, this is a backend service: it's integrated into applications and environments rather than used interactively from the console.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A brand-new user is signing up for an account, so there is no prior activity history to draw on. Which Fraud Detector model type is designed for this situation?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Online Fraud Insights is designed for entities with little or no historical data, such as brand-new account signups, using general risk-signal trends instead."> Online Fraud Insights, for entities with no history</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Transaction Fraud Insights assumes an existing transaction history to build a behavior profile — a brand-new signup has none."> Transaction Fraud Insights, for existing purchase history</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Account Takeover Insights looks for signs an existing account has been compromised — not the fit for a brand-new signup event."> Account Takeover Insights, for compromised accounts</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Forecast performs time-series prediction of things like demand — it isn't a Fraud Detector model type at all."> Amazon Forecast, for time-series demand prediction</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A payments team wants to validate incoming credit-card transactions against a customer's established purchase history — stores used, typical amounts, and countries. Which model type fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Online Fraud Insights is for entities with little or no history — this scenario explicitly has an established purchase history to draw on."> Online Fraud Insights, for entities with no history</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Transaction Fraud Insights is built for exactly this: an established transaction history used to validate new payments against normal customer behavior."> Transaction Fraud Insights, for existing purchase history</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Account Takeover Insights targets signs of account compromise, like unusual login locations, not routine payment validation."> Account Takeover Insights, for compromised accounts</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Comprehend performs text analysis such as sentiment and entity extraction — it doesn't validate payment transactions."> Amazon Comprehend, for text sentiment analysis</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A security team notices a login attempt for an existing account from an unfamiliar country and an unusual referral source. Which model type is designed to flag this kind of signal?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Online Fraud Insights is aimed at entities with little or no history, such as new signups — not an existing account's login behavior."> Online Fraud Insights, for entities with no history</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Transaction Fraud Insights focuses on payment and purchase patterns, not login location or referral source signals."> Transaction Fraud Insights, for existing purchase history</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Account Takeover Insights is designed to detect exactly these signals — unusual login location or referral source pointing to a compromised account."> Account Takeover Insights, for compromised accounts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Translate performs text-to-text language conversion — it has no role in detecting account compromise signals."> Amazon Translate, for text language conversion</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-amazon-forecast.html">← Previous: Amazon Forecast</a>
+      <a href="0011-amazon-sagemaker.html">Next: Amazon SageMaker →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Amazon Forecast</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 09
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Forecast</h1>
+    <p class="lesson-meta">Lesson 09 of 11 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/forecast/latest/dg/what-is-forecast.html" target="_blank">What Is Amazon Forecast?</a></p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Service lifecycle: closed to new customers</div>
+    As of July 29, 2024, AWS closed Amazon Forecast to new customers — it no longer accepts sign-ups from accounts that haven't already used it. Existing customers can keep using the service as normal, and AWS continues to maintain security, availability, and performance, but no new features are planned. For new forecasting projects, AWS points customers toward Amazon SageMaker (for example, with AutoGluon-TimeSeries or Chronos foundation models) instead. The exam may still test the underlying architecture and concepts covered below even though the product itself is winding down for new adopters.
+  </div>
+
+  <p>Despite the name, <strong>Amazon Forecast</strong> has nothing to do with the weather — it's a managed service for <strong>time-series forecasting</strong>: predicting future values of something based on how it has behaved over time. Typical targets include retail demand, supply chain planning, staffing levels, energy requirements, server capacity, and web traffic.</p>
+
+  <h2>Historical Data and Related Data</h2>
+  <p>Forecast learns from two kinds of input:</p>
+  <dl>
+    <dt>Historical data</dt>
+    <dd>The core time series itself — for example, an item, a timestamp, and a quantity sold. This lets Forecast trend how something has behaved over time.</dd>
+    <dt>Related data</dt>
+    <dd>Optional contextual factors that plausibly influence the trend — things like promotions or weather. Weather in particular can swing demand in either direction: some conditions keep people home, others send them shopping, and even online demand can shift (heavy rain nudging demand for certain clothing, for instance).</dd>
+  </dl>
+  <p>Forecast combines both inputs to learn what "normal" looks like over a given period, then produces two outputs: a <strong>forecast</strong> — the predicted future trend — and <strong>forecast explainability</strong>, a breakdown of <em>why</em> the forecast moves the way it does, such as attributing a demand spike to a specific promotion or weather pattern.</p>
+
+  <h2>Access and Positioning</h2>
+  <p>Forecast can be used through the console — which includes visualization of past data, future predictions, and explainability — as well as through the CLI, APIs, and the Python SDK. It's a backend, fairly niche service: something consumed as part of a larger business process or application rather than used as a standalone destination.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A retailer wants to predict next quarter's demand for a product line using years of past sales data, plus known upcoming promotions. Which service is purpose-built for this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Forecast is built for exactly this: combining historical data with related contextual data like promotions to predict future time-series trends."> Amazon Forecast, using historical and related data</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Fraud Detector scores events for fraud risk — it isn't designed for time-series demand prediction."> Amazon Fraud Detector, scoring transaction risk levels</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Comprehend extracts insights like sentiment and entities from text — it doesn't perform time-series forecasting."> Amazon Comprehend, extracting entities from text</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Kendra is an intelligent search service over documents — it has no forecasting capability."> Amazon Kendra, searching enterprise document content</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A demand forecast shows an unexpected spike, and the business wants to understand which factor is most likely responsible for it. What Forecast output addresses this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The forecast itself is the predicted trend — it doesn't on its own explain why the trend moves the way it does."> The forecast alone, showing predicted future values</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Forecast explainability breaks down the reasons behind a forecast's movement, such as attributing a spike to a specific promotion or weather pattern."> Forecast explainability, attributing the spike to a cause</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Historical data is an input used to train the model — it isn't the output that explains a specific spike."> Historical data alone, listing past sales figures</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The Python SDK is simply an access method for the service — it doesn't itself provide an explanation of forecast movements."> The Python SDK, listing available API operations</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team is scoping a brand-new forecasting project today and wants to know what AWS currently recommends. Based on Forecast's current lifecycle status, what should they expect?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Forecast has been closed to new customers since July 2024 — a brand-new account cannot sign up for it today."> They can freely sign up for Forecast as a new customer</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Forecast stopped accepting new customers as of July 29, 2024, and AWS now points new forecasting projects toward Amazon SageMaker instead."> They cannot onboard to Forecast and should consider SageMaker</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Forecast has not been shut down for existing customers, and there's no announced hard end-of-life date removing it entirely."> Forecast has been fully shut down for every customer</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The change specifically affects new customer sign-ups; it isn't limited to only certain AWS Regions."> The restriction only applies in certain AWS Regions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-amazon-translate.html">← Previous: Amazon Translate</a>
+      <a href="0010-amazon-fraud-detector.html">Next: Amazon Fraud Detector →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

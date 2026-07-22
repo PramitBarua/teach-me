@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – Amazon Textract</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 06
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Textract</h1>
+    <p class="lesson-meta">Lesson 06 of 11 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/textract/latest/dg/how-it-works-identity.html" target="_blank">Analyzing Identity Documents — Amazon Textract</a> · <a href="https://docs.aws.amazon.com/textract/latest/dg/invoices-receipts.html" target="_blank">Analyzing Invoices and Receipts — Amazon Textract</a></p>
+  </div>
+
+  <p><strong>Amazon Textract</strong> detects and analyzes text contained in documents. Input formats are <strong>JPEG, PNG, PDF, or TIFF</strong>. Output is the extracted text, the structure around that text, and analysis performed on it.</p>
+
+  <h2>Synchronous vs. Asynchronous</h2>
+  <p>For a normal-sized document, Textract runs <strong>synchronously</strong> — you get results back almost immediately. For a large document, think a hundred-page PDF, Textract processes it <strong>asynchronously</strong>: you submit a job and wait for it to complete. Pricing is pay-per-use, with custom pricing available at large volume.</p>
+
+  <h2>More Than Just Text: Relationships and Tables</h2>
+  <p>Textract doesn't just extract raw text — it understands the <strong>relationships</strong> between elements. On a receipt, it can connect a line item to its price and to the tax associated with it. It also extracts full <strong>table structure</strong>, not just the text sitting inside a table, so a complex, irregularly formatted table can still be reconstructed as rows and columns with its data intact.</p>
+
+  <h2>Specialized Analysis Modes</h2>
+  <dl>
+    <dt>Generic documents</dt>
+    <dd>Names, addresses, dates, and other general fields.</dd>
+    <dt>Expense analysis</dt>
+    <dd>Purpose-built for receipts and invoices — vendor information, line items, dates, and totals.</dd>
+    <dt>Identity document analysis</dt>
+    <dd>Extracts fields from documents like driver's licenses and passports, and <strong>abstracts</strong> equivalent fields into a common, normalized name. A driver's license number and a passport number are different fields on different documents, but Textract maps both into the same normalized <strong>Document ID</strong> field.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Why normalized identity fields matter</div>
+    Because identity document analysis abstracts differently-named fields into one consistent schema, downstream systems can use a single data structure regardless of which document type a customer submitted. This is exactly what a <strong>know-your-customer (KYC)</strong> or <strong>anti-money-laundering (AML)</strong> identity-verification workflow needs. If an exam question describes verifying identity documents with a normalized field across document types, that's Textract's identity analysis feature specifically.
+  </div>
+
+  <h2>What the Console Demo Shows</h2>
+  <p>The Textract console's sample walkthrough demonstrates the same underlying capability across several document types: a vaccination card (mixed structured fields and a handwritten table), a pay stub (dense key-value data), a loan application (large blocks of text), a receipt (via the expense analysis mode, extracting vendor info and line items), and both a driver's license and a passport (via identity document analysis, with both mapping to the same normalized Document ID field). The conceptual point across all of these: Textract extracts fields accurately even from slanted, differently sized, or messily formatted source data, and the same capability is available through the API for use inside an application — not just as an interactive console tool.</p>
+
+  <h2>Console or API</h2>
+  <p>Textract can be used from the console UI or from the API, and it integrates with applications you build as well as with other AWS products, including other machine learning services.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A financial services company needs to verify customer identity by extracting a normalized ID field across driver's licenses, passports, and other identity documents. Which service and feature fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Textract's identity document analysis abstracts fields like driver's license numbers and passport numbers into a common Document ID field, ideal for KYC/AML workflows."> Amazon Textract, using its identity document analysis mode</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Rekognition analyzes image and video content like faces and objects; it doesn't extract and normalize text fields from identity documents."> Amazon Rekognition, using its facial comparison feature</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Comprehend analyzes plain text for entities and sentiment; it doesn't extract structured fields from scanned identity documents."> Amazon Comprehend, using its entity recognition feature</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Kendra provides enterprise search over an index of documents; it doesn't extract or normalize fields from scanned ID documents."> Amazon Kendra, using its enterprise search index</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company needs to process a 200-page scanned PDF contract through Textract. What should they expect in terms of processing behavior?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Synchronous processing is for normal-sized documents returning near-instant results, not large multi-hundred-page files."> Results return immediately in a synchronous call</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Large documents like a hundred-plus-page PDF are processed asynchronously — you submit a job and retrieve results once it completes."> The job is submitted asynchronously and processed in the background</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Textract doesn't require manually splitting a large PDF into single pages before submission — asynchronous jobs handle large documents directly."> The document must be manually split into single pages first</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Document length by itself isn't a rejection reason — large documents are supported via the asynchronous processing path."> Textract rejects the file for exceeding a page limit</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A receipt shows a product line item, its unit price, and a tax amount tied to that specific line. Beyond raw text extraction, what else does Textract surface here?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Textract's outputs go beyond a flat list of words — it also captures how the extracted elements relate to one another."> Only a flat list of individual words found on the receipt</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Textract understands relationships between extracted elements, such as connecting a line item's price to its associated tax."> The relationship connecting the line item, price, and tax together</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Textract doesn't perform currency conversion or exchange rate calculations on extracted monetary values."> A converted currency value based on the day's exchange rate</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Textract extracts and structures existing document content; it doesn't generate a sentiment judgment about a receipt."> A sentiment score describing the tone of the receipt</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-amazon-rekognition.html">← Previous: Amazon Rekognition</a>
+      <a href="0007-amazon-transcribe.html">Next: Amazon Transcribe →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

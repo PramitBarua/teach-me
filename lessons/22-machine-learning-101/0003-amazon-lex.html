@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – Amazon Lex</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 03
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Lex</h1>
+    <p class="lesson-meta">Lesson 03 of 11 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/lexv2/latest/dg/what-is.html" target="_blank">What is Amazon Lex V2?</a> · <a href="https://docs.aws.amazon.com/lexv2/latest/dg/intent-slots.html" target="_blank">Slots — Amazon Lex</a></p>
+  </div>
+
+  <p><strong>Amazon Lex</strong> is the product behind interactive chatbots and voice assistants — it's literally what powers Alexa's voice interactions. Like the other services in this module, it's a backend service: you don't use Lex directly as an end user, you build it into an application to add conversational capability.</p>
+
+  <h2>Two Core Capabilities</h2>
+  <dl>
+    <dt>Automatic Speech Recognition (ASR)</dt>
+    <dd>Speech-to-text. Sounds simple, but doing it well — reliably, in noisy or varied conditions — is genuinely hard.</dd>
+    <dt>Natural Language Understanding (NLU)</dt>
+    <dd>Working out what the user actually wants, their <strong>intent</strong>, from what they said or typed — and chaining related statements together. If someone says "I want to order a large pepperoni pizza" and then follows up with "make that an extra large," Lex has to recognize that the second statement modifies the first, rather than treating it as an unrelated new request.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The keyword heuristic</div>
+    If an exam scenario mentions building a <strong>chatbot</strong>, a <strong>voice-interactive assistant</strong>, or an <strong>Alexa-style voice interface</strong>, default to <strong>Lex</strong>.
+  </div>
+
+  <h2>Key Concepts</h2>
+  <ul>
+    <li><strong>Bot</strong> — the interactive conversational entity itself, capable of one or more languages.</li>
+    <li><strong>Intent</strong> — the action a user wants to perform, such as "order pizza."</li>
+    <li><strong>Utterances</strong> — different sample phrasings of the same intent, like "can I order," "I want to order," or "give me a."</li>
+    <li><strong>Slots</strong> — parameters an intent needs to be fulfilled, such as pizza size or crust type.</li>
+    <li><strong>Fulfillment</strong> — how the intent actually gets carried out once understood, typically via a <strong>Lambda</strong> function.</li>
+  </ul>
+  <p>Lex scales automatically, uses pay-as-you-go pricing, and integrates well with <strong>Amazon Connect</strong> and event-driven or serverless architectures generally — Lambda fulfillment being the clearest example of that fit.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team wants to build a voice-driven ordering assistant similar in style to Alexa, understanding spoken requests and follow-up clarifications. Which service is the fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Lex provides ASR and NLU for voice and text conversational interfaces, and is literally what powers Alexa's voice interactions."> Amazon Lex, providing speech recognition and intent understanding</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Polly only converts text to speech in one direction — it has no capability to understand spoken requests or intent."> Amazon Polly, converting text into lifelike speech output</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Comprehend analyzes existing written text for insights like sentiment; it doesn't recognize speech or drive a conversational bot."> Amazon Comprehend, analyzing written text for sentiment</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Kendra is an enterprise search service for querying indexed documents, not a conversational voice assistant builder."> Amazon Kendra, searching indexed enterprise documents</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A user tells a pizza-ordering bot "I want to order a pizza," then follows with "make that a large." What Lex capability lets it connect the second statement to the first?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="ASR only converts spoken audio to text — it doesn't determine how two separate statements relate to each other."> Automatic Speech Recognition converting audio into text</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. NLU determines intent and can chain related follow-up statements, recognizing that the second sentence modifies the first rather than starting a new request."> Natural Language Understanding, chaining related intents together</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fulfillment carries out an already-understood intent via Lambda — it doesn't perform the linguistic work of connecting two statements."> Fulfillment, executing the order through a Lambda function</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Utterances are just the sample phrasings configured for an intent; they don't perform runtime reasoning about follow-up statements."> Utterance configuration, listing sample phrases in advance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A bot's "order pizza" intent needs to know the pizza size and crust type before it can be completed. What Lex concept represents these required pieces of information?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Utterances are sample phrasings of how an intent might be said, not the parameters an intent needs collected."> Utterances, the sample phrasings of the intent</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Slots are the parameters an intent requires, such as pizza size or crust type, which Lex gathers from the user during the conversation."> Slots, the parameters required to fulfill the intent</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fulfillment is the action taken once all required information is already gathered, not the information itself."> Fulfillment, the Lambda function that completes the order</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A bot is the overall conversational entity, not the specific parameters a single intent needs."> The bot, the overall conversational entity itself</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-amazon-kendra.html">← Previous: Amazon Kendra</a>
+      <a href="0004-amazon-polly.html">Next: Amazon Polly →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

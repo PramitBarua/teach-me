@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – Amazon Rekognition</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 05
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Rekognition</h1>
+    <p class="lesson-meta">Lesson 05 of 11 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/rekognition/latest/dg/what-is.html" target="_blank">What is Amazon Rekognition?</a> · <a href="https://docs.aws.amazon.com/rekognition/latest/dg/streaming-video.html" target="_blank">Working with streaming video events</a></p>
+  </div>
+
+  <p><strong>Amazon Rekognition</strong> is a <strong>deep learning</strong>-based image and video analysis product — deep learning being a subset of machine learning. It looks at images or videos and intelligently identifies things within them.</p>
+
+  <h2>What It Can Identify</h2>
+  <ul>
+    <li><strong>Objects and scenes</strong> — cats, dogs, everyday objects, general scene content.</li>
+    <li><strong>Specific people</strong> — identifying known individuals and comparing faces across images or videos.</li>
+    <li><strong>Text in images</strong> — such as license plates.</li>
+    <li><strong>Activities</strong> — what people are doing in an image or video.</li>
+    <li><strong>Content moderation</strong> — flagging whether content is safe or inappropriate.</li>
+    <li><strong>Facial analysis</strong> — emotion and other facial attributes.</li>
+    <li><strong>Pathing</strong> — tracking how people move through a video, useful for things like sports post-game analysis.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The keyword heuristic</div>
+    If a scenario needs analysis of image or video <strong>content</strong> — objects, faces, emotion, text-in-image, activity, or moderation — default to <strong>Rekognition</strong>.
+  </div>
+
+  <h2>Pricing and Event-Driven Integration</h2>
+  <p>Rekognition is <strong>pay-as-you-use</strong>: per image, or per minute of video. It's accessed via API and integrates well with event-driven architectures. A common pattern:</p>
+  <p>An image is uploaded to <strong>S3</strong> → an <strong>S3 event</strong> fires → it invokes a <strong>Lambda</strong> function → Lambda calls <strong>Rekognition</strong> to analyze the image → the results come back → Lambda stores the metadata, along with a link to the image, in <strong>DynamoDB</strong> for downstream use.</p>
+  <p>Rekognition also supports analyzing <strong>live video by integrating with Kinesis Video Streams</strong> — for example, real-time facial recognition on security camera footage, distinguishing a property's owner from someone attempting a break-in.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Current status: streaming video narrows to existing customers</div>
+    The course frames live analysis via Kinesis Video Streams as a standard, available Rekognition capability. As of this writing, AWS has announced that <strong>Rekognition's Streaming Video Analysis (and its Bulk Image Analysis feature) is no longer available to new customers as of April 30, 2026</strong> — accounts that used the feature in the prior 12 months keep access, and no other Rekognition capability is affected. For the exam, the concept of "event-driven image analysis" and "video content analysis" generally is still core Rekognition territory; the live Kinesis Video Streams pattern specifically is the part that's now closed off to newly onboarding accounts.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A scenario needs to flag inappropriate content, detect emotions on faces, and recognize objects across a library of uploaded images. Which service is the default fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Object detection, content moderation, and facial emotion analysis are all core Rekognition capabilities for image content."> Amazon Rekognition, analyzing image content directly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Textract extracts text and structure from documents; it doesn't classify objects, moderate content, or read facial emotion."> Amazon Textract, extracting structured text from documents</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Comprehend works on written text for entities and sentiment, not visual content in images."> Amazon Comprehend, analyzing written text sentiment</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Polly converts text into speech; it has no image or video analysis capability at all."> Amazon Polly, converting descriptions into spoken audio</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An architecture uploads photos to S3, and each upload should automatically trigger analysis with the results stored for later lookup. What's the typical event-driven flow?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Rekognition doesn't poll S3 directly on a schedule — the pattern is event-driven, triggered by the S3 upload itself."> Rekognition polls S3 on a timer to find new images</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. This is the standard pattern: S3 event triggers Lambda, Lambda calls Rekognition, and results plus a link to the image are stored in DynamoDB."> S3 event triggers Lambda, which calls Rekognition and stores results in DynamoDB</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Rekognition itself doesn't manage scheduled batch jobs against S3 buckets as its standard integration pattern."> Rekognition runs a nightly batch job across the whole bucket</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Analysis results and metadata are commonly stored in DynamoDB for downstream use, not discarded after each run."> Results are discarded immediately after each analysis completes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A security team wants real-time facial recognition running against live security camera footage, not stored video files. What underlying integration does Rekognition use for this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 event notifications are the trigger pattern for stored images, not the mechanism for analyzing a continuous live video feed."> S3 event notifications on uploaded video files</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Rekognition analyzes live video by integrating with Kinesis Video Streams, enabling real-time facial recognition on streaming footage."> Kinesis Video Streams, for real-time streaming analysis</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DynamoDB is used to store analysis results and metadata, not to deliver or process the live video stream itself."> DynamoDB, storing each video frame as it arrives</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Lambda can be part of a broader pipeline, but the live video ingestion itself is handled through Kinesis Video Streams, not Lambda directly."> Lambda functions, ingesting the raw video stream directly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-amazon-polly.html">← Previous: Amazon Polly</a>
+      <a href="0006-amazon-textract.html">Next: Amazon Textract →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

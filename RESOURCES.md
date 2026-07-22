@@ -223,3 +223,24 @@
 | R217 | Controlling Network Traffic with Enhanced VPC Routing | https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-routing.html | Forces Redshift's external traffic through VPC networking |
 | R218 | Amazon Redshift Snapshots and Backups | https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html | Automatic/manual snapshots, cross-Region copy |
 | R219 | Multi-AZ Deployments for Amazon Redshift | https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-multi-az.html | GA since Nov 2023 for RA3 clusters — qualifies the single-AZ-by-default teaching |
+| R220 | Amazon Comprehend Insights Overview | https://docs.aws.amazon.com/comprehend/latest/dg/functionality.html | Entities, key phrases, language, sentiment |
+| R221 | Detecting PII Entities (Comprehend) | https://docs.aws.amazon.com/comprehend/latest/dg/how-pii.html | PII detection mechanics |
+| R222 | What Is Amazon Kendra? | https://docs.aws.amazon.com/kendra/latest/dg/what-is-kendra.html | Intelligent enterprise search architecture |
+| R223 | Amazon Kendra Availability Change | https://docs.aws.amazon.com/kendra/latest/dg/kendra-availability-change.html | Closes to new customers July 30, 2026 — steers new work to Bedrock Knowledge Bases |
+| R224 | What Is Amazon Lex V2? | https://docs.aws.amazon.com/lexv2/latest/dg/what-is.html | Bots, ASR, NLU |
+| R225 | Slots — Amazon Lex | https://docs.aws.amazon.com/lexv2/latest/dg/intent-slots.html | Intent parameters |
+| R226 | Choosing a Voice Engine — Amazon Polly | https://docs.aws.amazon.com/polly/latest/dg/using-voices.html | Standard vs. neural TTS |
+| R227 | Generative Voices — Amazon Polly | https://docs.aws.amazon.com/polly/latest/dg/generative-voices.html | Newer third TTS tier beyond standard/neural |
+| R228 | What Is Amazon Rekognition? | https://docs.aws.amazon.com/rekognition/latest/dg/what-is.html | Image/video deep learning analysis overview |
+| R229 | Working with Streaming Video Events (Rekognition) | https://docs.aws.amazon.com/rekognition/latest/dg/streaming-video.html | Closed to new customers April 30, 2026 |
+| R230 | Analyzing Identity Documents — Amazon Textract | https://docs.aws.amazon.com/textract/latest/dg/how-it-works-identity.html | Normalized Document ID field across ID types |
+| R231 | Analyzing Invoices and Receipts — Amazon Textract | https://docs.aws.amazon.com/textract/latest/dg/invoices-receipts.html | Expense analysis mode |
+| R232 | What Is Amazon Transcribe? | https://docs.aws.amazon.com/transcribe/latest/dg/what-is.html | ASR, Transcribe Medical/Call Analytics |
+| R233 | How Amazon Translate Works | https://docs.aws.amazon.com/translate/latest/dg/how-it-works.html | Encoder/decoder/attention mechanism |
+| R234 | What Is Amazon Forecast? | https://docs.aws.amazon.com/forecast/latest/dg/what-is-forecast.html | Closed to new customers July 29, 2024 — steers new work to SageMaker Canvas |
+| R235 | Amazon Fraud Detector Availability Change | https://docs.aws.amazon.com/frauddetector/latest/ug/frauddetector-availability-change.html | Closed to new customers November 7, 2025 |
+| R236 | Choose a Model Type (Fraud Detector) | https://docs.aws.amazon.com/frauddetector/latest/ug/choosing-model-type.html | Online Fraud vs. Transaction Fraud vs. Account Takeover Insights |
+| R237 | What Is Amazon SageMaker? / SageMaker AI Domains | https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html | Dec 2024 rename to SageMaker AI; SageMaker Unified Studio + Bedrock as siblings |
+| R238 | What Is AWS Local Zones? | https://docs.aws.amazon.com/local-zones/latest/ug/what-is-aws-local-zones.html | Region extension near metro areas |
+| R239 | How AWS Local Zones Work | https://docs.aws.amazon.com/local-zones/latest/ug/how-local-zones-work.html | Subnet extension, parent-Region dependency for snapshots |
+| R240 | AWS Compute Blog: Local Zones and Outposts — Choosing the Right Technology | https://aws.amazon.com/blogs/compute/aws-local-zones-and-aws-outposts-choosing-the-right-technology-for-your-edge-workload/ | Local Zones vs. Wavelength vs. Outposts comparison |

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – Amazon SageMaker</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 11
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon SageMaker</h1>
+    <p class="lesson-meta">Lesson 11 of 11 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html" target="_blank">What is Amazon SageMaker?</a> · <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/sm-domain.html" target="_blank">Amazon SageMaker AI domains</a></p>
+  </div>
+
+  <p>Every other service in this module — Comprehend, Kendra, Lex, Polly, Rekognition, Textract, Transcribe, Translate, Forecast, Fraud Detector — is a <strong>pre-built</strong> AI capability: you send in data and get back a result, with no model of your own to build or train. <strong>Amazon SageMaker</strong> is this module's counterpart to all of that: it's the platform you reach for when you need to build, train, and host a genuinely <em>custom</em> machine learning model rather than consume someone else's.</p>
+
+  <h2>A Platform for the Whole ML Lifecycle</h2>
+  <p>SageMaker isn't one single product — it's a collection of products and features packaged together as a fully managed machine learning service. It covers the entire lifecycle of a model: fetching, cleaning, and preparing data; training and evaluating models; deploying them; and then monitoring them and collecting data on how they perform in production.</p>
+
+  <h2>Key Concepts</h2>
+  <dl>
+    <dt>SageMaker Studio</dt>
+    <dd>An IDE — an integrated development environment — for the entire ML lifecycle. It's where you build, train, debug, and monitor models, all from one development environment.</dd>
+    <dt>SageMaker Domain</dt>
+    <dd>Isolation and grouping for a particular project. Creating a domain provisions the surrounding infrastructure a project needs: an EFS volume, users, applications, policies, and VPC configuration. You must create a domain before you can start using SageMaker at all — think of it as the container a project lives inside.</dd>
+    <dt>Containers</dt>
+    <dd>SageMaker workloads run as Docker containers deployed onto purpose-built <code>ml.</code>-prefixed EC2 instance types, sized and designed specifically for machine learning work. Many pre-built containers exist, each shipped with specific versions of the OS, libraries, and tooling suited to a particular ML task.</dd>
+    <dt>Hosting</dt>
+    <dd>Once a model is trained, SageMaker can deploy it as an endpoint that applications call to get predictions — using either serverless or continuously running compute architectures, depending on the workload.</dd>
+  </dl>
+
+  <div class="callout warn">
+    <div class="callout-title">Cost awareness: SageMaker itself is free, its resources are not</div>
+    SageMaker has no charge of its own — but every resource it provisions (compute, storage, endpoints) does, and machine learning workloads are often resource-intensive. Costs can scale up quickly, and pricing is fairly complex given the range of resource types SageMaker can create. Treat "no SageMaker charge" as a fact about the control plane, not a promise about the bill.
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">A modern evolution: SageMaker as a unified platform</div>
+    Since this course was recorded, AWS renamed the original product to <strong>Amazon SageMaker AI</strong> and repositioned "Amazon SageMaker" as a broader umbrella: a unified platform for data, analytics, and AI. Under that umbrella now sit SageMaker AI (the model build/train/deploy service described above), SageMaker Lakehouse, SageMaker Unified Studio (a single development environment spanning analytics and AI tooling), and <strong>Amazon Bedrock</strong> — positioned as SageMaker's sibling product for foundation-model and generative-AI use cases. The core concepts this lesson teaches — Studio, Domain, containers, and hosting — remain the exam-relevant foundation; the branding around them has simply grown a layer.
+  </div>
+
+  <h2>Exam Heuristic</h2>
+  <p>If a scenario describes a task a pre-built AI service already handles — text extraction, translation, speech, sentiment, forecasting, fraud scoring — reach for the specific service built for it. If the scenario genuinely calls for developing, training, or hosting a <strong>custom</strong> model, that's SageMaker. This module, start to finish, is really that one distinction: ten ready-made answers, and one platform for building your own.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team needs to train a custom machine learning model on proprietary data, rather than use a pre-built AWS AI service. Which product is designed for this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. SageMaker is the platform for building, training, and hosting custom machine learning models across the full lifecycle."> Amazon SageMaker, for custom model development</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Rekognition is a pre-built image and video analysis service — it doesn't let you train a custom model on your own data."> Amazon Rekognition, for pre-built image analysis</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Comprehend is a pre-built text analysis service — it doesn't provide custom model training capability."> Amazon Comprehend, for pre-built text analysis</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Textract is a pre-built document text extraction service — it doesn't provide custom model training capability."> Amazon Textract, for pre-built document extraction</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Before a team can begin using SageMaker for a new project, what must they first create to provision isolation, an EFS volume, users, and VPC configuration for that project?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SageMaker Studio is the IDE used inside a project once it exists — it isn't itself the container-level construct that provisions isolation and infrastructure."> A SageMaker Studio instance, for writing model code</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A SageMaker Domain provides isolation and grouping for a project, provisioning an EFS volume, users, applications, policies, and VPC configuration."> A SageMaker Domain, for project-level isolation</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A hosting endpoint is created later, once a model is trained and ready to serve predictions — not before a project even begins."> A hosting endpoint, for serving trained predictions</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A container is the packaged runtime environment for a specific ML task — it doesn't provide the project-level isolation a domain does."> An ml.-prefixed container, for running training jobs</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A finance team is surprised by a large bill after running SageMaker training jobs for a few weeks, since they believed SageMaker itself was free. What's the accurate explanation?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="SageMaker genuinely has no charge of its own — the bill isn't a billing error, it reflects the resources SageMaker provisioned."> This must be a billing error, since SageMaker is free</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. SageMaker itself has no charge, but the compute, storage, and other resources it provisions do, and ML workloads can be resource-intensive enough to scale costs quickly."> SageMaker has no charge, but its provisioned resources do</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="SageMaker Domains don't carry a flat monthly subscription fee on their own — cost comes from the resources a domain's workloads provision."> Every SageMaker Domain carries a fixed monthly fee</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Docker containers used by SageMaker aren't billed by download count — cost is driven by the compute and other resources they run on."> Containers are billed per download, regardless of runtime</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links"><a href="0010-amazon-fraud-detector.html">← Previous: Amazon Fraud Detector</a><span></span></div>
+    <p style="margin-top:1.5rem">You've completed the Machine Learning 101 module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

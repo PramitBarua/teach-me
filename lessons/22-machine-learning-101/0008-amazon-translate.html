@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Amazon Translate</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 08
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Translate</h1>
+    <p class="lesson-meta">Lesson 08 of 11 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/translate/latest/dg/how-it-works.html" target="_blank">How Amazon Translate works</a></p>
+  </div>
+
+  <p><strong>Amazon Translate</strong> is a text-to-text translation service built on machine learning: text goes in written in one language, and text comes out written in another. Rather than translating word-for-word, it works to preserve <em>meaning</em> — the way a point is expressed often differs between languages, so a literal substitution wouldn't produce a natural or even correct result.</p>
+
+  <h2>Encoder, Decoder, Attention</h2>
+  <p>Translate's process runs in two stages:</p>
+  <dl>
+    <dt>Encoder</dt>
+    <dd>Reads the source text and produces a <strong>semantic representation</strong> — a model of the text's <em>meaning</em>, not just its words.</dd>
+    <dt>Decoder</dt>
+    <dd>Reads that semantic representation and writes it out in the target language.</dd>
+  </dl>
+  <p>An <strong>attention mechanism</strong> sits alongside this process to add context: it helps the model weigh which words in the source text matter most for a given part of the output, which is what lets it correctly resolve ambiguous words or phrases rather than translating them naively. Translate can also <strong>auto-detect</strong> the source language, so you don't always need to state it explicitly.</p>
+
+  <h2>Use Cases</h2>
+  <p>Business documents, meeting notes, posts, and internal communications are usually authored in one primary language. Translate lets a business offer that same content in every language its staff speak — useful for organizations operating across multiple countries. The same idea extends to live interactions: emails, in-game chat, or customer support chat can be offered in a customer's native language. Translate is equally useful in the other direction — translating <em>incoming</em> foreign-language content, such as social media posts or news, into the language a business's staff read day to day.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">A distinct, exam-relevant pattern: language independence</div>
+    Translate is often used to give <strong>other AWS AI services language independence</strong> — for example, pairing it with Comprehend, Transcribe, and Polly so a pipeline can operate across languages. A typical chain: Transcribe converts foreign-language audio to text, Translate converts that text into a different language, and Polly speaks the translated text aloud. Translate is rarely the whole answer on its own — it's almost always one component of a larger business process.
+  </div>
+
+  <p>Translate can also be pointed at text already stored in services like S3, RDS, and DynamoDB, translating that stored data as part of a broader workflow.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A scenario describes converting a block of written text from French into Japanese. Which service directly performs this conversion?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Amazon Translate is the text-to-text, machine-learning-based translation service — exactly the conversion described here."> Amazon Translate, a text-to-text translation service</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Transcribe converts spoken audio into text — it doesn't translate text that is already written between languages."> Amazon Transcribe, a speech-to-text service</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Polly converts written text into spoken audio — it doesn't change the language of existing text."> Amazon Polly, a text-to-speech service</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Comprehend extracts insights like sentiment and entities from text — it doesn't translate text between languages."> Amazon Comprehend, a text analysis service</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An architecture needs to correctly resolve ambiguous words or phrases so the translated output reflects intended meaning rather than a literal word-for-word swap. Which part of Translate's design is responsible for this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The encoder produces the semantic representation of the source text, but resolving which words matter most for context is the attention mechanism's role, not the encoder alone."> The encoder, which reads the source text alone</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The decoder writes the target-language text from the semantic representation, but it isn't what decides which source words are most relevant for context."> The decoder, which writes the target text alone</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The attention mechanism helps the model weigh which source words matter most for a given part of the output, which is what correctly resolves ambiguous words and phrases."> The attention mechanism, which weighs source word context</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Auto-detection identifies the source language itself — it plays no role in resolving ambiguity within the text once the language is known."> Auto-detection, which identifies the source language</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A pipeline needs to take a foreign-language voicemail, convert it to text, translate that text into English, and then read the English version aloud. Which service plays the middle role in this chain?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Transcribe fills the first role in this chain, converting the voicemail audio to text — not the middle translation step."> Amazon Transcribe, converting audio to text first</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Translate provides language independence for a pipeline like this — taking the transcribed text and converting it into English before Polly speaks it."> Amazon Translate, converting the text into English</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Polly fills the last role in this chain, speaking the already-translated text aloud — not the middle translation step."> Amazon Polly, speaking the final text aloud</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Kendra is an intelligent search service — it has no role in a speech-to-text-to-translation-to-speech pipeline."> Amazon Kendra, searching the transcribed content</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-amazon-transcribe.html">← Previous: Amazon Transcribe</a>
+      <a href="0009-amazon-forecast.html">Next: Amazon Forecast →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

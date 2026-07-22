@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – Amazon Transcribe</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Machine Learning 101</a> › Lesson 07
+    </div>
+    <div class="module-tag">Machine Learning 101</div>
+    <h1>Amazon Transcribe</h1>
+    <p class="lesson-meta">Lesson 07 of 11 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/transcribe/latest/dg/what-is.html" target="_blank">What is Amazon Transcribe?</a></p>
+  </div>
+
+  <p><strong>Amazon Transcribe</strong> is an <strong>automatic speech recognition (ASR)</strong> service. The input is audio containing speech; the output is text. It's a deliberately narrow product, so there isn't a large amount of theory to hold onto — the value is in knowing what it does and recognizing when an exam scenario is describing it.</p>
+
+  <h2>Core Features</h2>
+  <p>Beyond the basic audio-to-text conversion, Transcribe offers a handful of features that improve the quality and safety of its output:</p>
+  <ul>
+    <li><strong>Language customization</strong> — specify the source language explicitly, or let Transcribe auto-detect it.</li>
+    <li><strong>Content filtering</strong> — remove or mask profanity, or redact personally identifiable information (PII), so transcripts are safe to store or share.</li>
+    <li><strong>Speaker identification</strong> — attribute segments of the transcript to different speakers in the same audio.</li>
+    <li><strong>Custom vocabularies and custom language models</strong> — tune recognition for domain-specific terms (product names, jargon, acronyms) that a general-purpose model wouldn't reliably catch.</li>
+  </ul>
+  <p>Billing is pay-per-use, charged <strong>per second of audio transcribed</strong>.</p>
+
+  <h2>What the Console Demo Shows</h2>
+  <p>A live walkthrough of the Transcribe console mostly confirms the theory rather than adding new concepts. Using real-time streaming transcription, spoken audio appears as text almost immediately, with a full transcript downloadable afterward. The console also surfaces the feature set described above as configurable settings: choosing or auto-detecting the source language, toggling speaker identification, applying vocabulary filtering or PII redaction, and — under a customizations section — supplying a custom vocabulary, enabling partial result stabilization, or attaching a custom language model. The console also exposes application integration options, and a menu for the product variants covered next.</p>
+
+  <h2>Product Variants</h2>
+  <p>Amazon Transcribe comes in a few flavors:</p>
+  <dl>
+    <dt>Amazon Transcribe (standard)</dt>
+    <dd>General-purpose speech-to-text, as described above.</dd>
+    <dt>Amazon Transcribe Medical</dt>
+    <dd>A variant tuned for medical speech and terminology.</dd>
+    <dt>Amazon Transcribe Call Analytics</dt>
+    <dd>Ingests audio from phone calls and layers on <strong>summarization</strong>, <strong>categorization</strong>, and <strong>sentiment</strong> analysis of the people talking.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic</div>
+    "Speech to text" points to <strong>Transcribe</strong>. This is the mirror image of Amazon Polly, covered earlier in this module, which goes the other direction — text to speech. If a scenario describes converting spoken audio into written text, Transcribe is almost always the answer; if it describes generating spoken audio from text, think Polly instead.
+  </div>
+
+  <h2>Use Cases and Integration</h2>
+  <p>Common uses for Transcribe include full-text indexing and search of audio content, generating meeting notes from recorded meetings, and producing subtitles, captions, or transcripts for video. It integrates with custom applications through its API, and — just as importantly — it's often the <em>first step</em> in a larger pipeline: transcribed text can be fed into other AWS machine learning services, such as Amazon Comprehend, for further analysis like sentiment detection.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company records customer support calls and wants to convert that audio into searchable text so agents can find past conversations by keyword. Which service directly provides this conversion?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Transcribe is an automatic speech recognition service — audio in, text out — which is exactly the conversion needed for full-text indexing of recorded audio."> Amazon Transcribe, which converts speech audio into text</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Polly converts text into spoken audio — the opposite direction from what's needed here."> Amazon Polly, which converts text into spoken audio</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Translate converts text from one language into another — it doesn't process audio at all."> Amazon Translate, which converts text between languages</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Comprehend analyzes existing text for sentiment and entities — it doesn't generate text from audio in the first place."> Amazon Comprehend, which analyzes text for sentiment</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A transcript of a recorded conversation must have credit card numbers and other personal details automatically removed before storage. Which Transcribe capability addresses this directly?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Speaker identification attributes text to different speakers — it doesn't remove sensitive content from the transcript."> Speaker identification, attributing text to speakers</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Custom vocabularies improve recognition accuracy for domain-specific terms — they don't redact sensitive information."> Custom vocabulary, improving domain term accuracy</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Transcribe's content filtering features include PII redaction, which masks or removes personally identifiable information such as card numbers from the output transcript."> PII redaction, masking sensitive personal details</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Partial result stabilization affects how streaming results firm up over time — it has nothing to do with removing sensitive content."> Partial result stabilization, firming up live results</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A call center wants to ingest recorded phone calls and get back not just the text, but also a summary, category, and sentiment reading for each call. Which product variant fits this need?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Standard Transcribe produces plain text output — it doesn't add summarization, categorization, or sentiment on top."> Standard Amazon Transcribe, producing plain text</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Transcribe Medical is tuned for medical speech and terminology, not general call-center summarization and sentiment."> Amazon Transcribe Medical, tuned for clinical speech</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Transcribe Call Analytics is built specifically for phone call audio, adding summarization, categorization, and sentiment on top of the transcript."> Amazon Transcribe Call Analytics, for phone call audio</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Amazon Translate handles text-to-text translation between languages — it doesn't summarize or score sentiment on calls."> Amazon Translate, for translating call transcripts</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-amazon-textract.html">← Previous: Amazon Textract</a>
+      <a href="0008-amazon-translate.html">Next: Amazon Translate →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
