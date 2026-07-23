@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – CloudFormation Conditions</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 06
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>CloudFormation Conditions</h1>
+    <p class="lesson-meta">Lesson 06 of 17 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/conditions-section-structure.html" target="_blank">CloudFormation template Conditions syntax</a></p>
+  </div>
+
+  <p>Conditions let a single template react differently depending on input — deploying more (or less, or different) infrastructure based on a parameter value. They're a simple feature, but they're what turns a fixed template into a genuinely reusable one.</p>
+
+  <h2>Conditions Are Evaluated First</h2>
+  <p>Like <code>Outputs</code>, the <code>Conditions</code> section is optional. Every condition you declare inside it resolves to <strong>true</strong> or <strong>false</strong>, and — critically — CloudFormation evaluates the entire <code>Conditions</code> section <strong>before</strong> it starts processing logical resources. Whatever a condition resolves to is already settled by the time CloudFormation decides which physical resources to actually create.</p>
+
+  <p>Conditions are built from a small set of intrinsic functions: <code>Fn::And</code>, <code>Fn::Equals</code>, <code>Fn::If</code>, <code>Fn::Not</code>, and <code>Fn::Or</code>. A condition can evaluate a parameter value, a pseudo parameter, a mapping value, or another condition — but it can't reference a resource's logical ID or attributes, since resources haven't been created yet at the point conditions are evaluated.</p>
+
+  <h2>Attaching a Condition to a Resource</h2>
+  <p>Any logical resource can carry a <code>Condition</code> key referencing one of these true/false results:</p>
+
+  <pre><code>Parameters:
+  EnvType:
+    Type: String
+    AllowedValues: [dev, prod]
+
+Conditions:
+  IsProd: !Equals [!Ref EnvType, prod]
+
+Resources:
+  WordPress2:
+    Type: AWS::EC2::Instance
+    Condition: IsProd
+    Properties: { ... }</code></pre>
+
+  <p>If <code>IsProd</code> evaluates to <strong>true</strong>, <code>WordPress2</code> gets created. If it evaluates to <strong>false</strong>, CloudFormation skips it entirely — no physical resource is created for that logical resource, no error, nothing. A resource with no <code>Condition</code> key is created regardless, unconditionally, every time.</p>
+
+  <p>Picture Bob, a developer, applying this template with <code>EnvType</code> set to either <code>dev</code> or <code>prod</code>. If he sets <code>prod</code>, <code>IsProd</code> resolves true, and — alongside the base <code>WordPress</code> instance that always gets created — a second instance <code>WordPress2</code> and its Elastic IPs also get created. Set <code>dev</code>, and only the base, unconditional resources appear.</p>
+
+  <h2>Nesting Conditions</h2>
+  <p>Conditions can reference other conditions, letting you build compound logic: an <code>IsProd</code> condition, a separate <code>CreateS3Bucket</code> condition, and then a third condition — say <code>CreateBucketPolicy</code> — that's only true when <em>both</em> of the others are true, using <code>Fn::And</code>. This lets a bucket policy resource depend on "we're creating a bucket <em>and</em> this is production," entirely through condition composition, with no extra logic in the resource itself.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Two common exam patterns</div>
+    Conditions built from a numeric or enum-style parameter (say, an AZ count of <code>1</code>, <code>2</code>, or <code>3</code>, each with its own condition controlling a duplicated block of resources) and conditions built from an environment-type parameter (controlling instance size or resource count between <code>dev</code> and <code>prod</code>) are both extremely common in real templates — and both are worth being able to read at a glance.
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Conditions can't see resources</div>
+    Because the entire <code>Conditions</code> section resolves before any resource is processed, a condition can only be built from parameters, pseudo parameters, mappings, and other conditions — never from a resource's logical ID or a <code>Fn::GetAtt</code> lookup. If you need resource-derived logic, that has to live inside the resource itself (for example, via <code>Fn::If</code> in a property value), not inside the <code>Conditions</code> section.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A logical resource in a template has no Condition key attached to it at all. What happens to it during stack creation?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A missing Condition key doesn't default a resource to false — the default behavior is unconditional creation, not suppression."> It defaults to being treated as false and is skipped</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A resource with no Condition key is created every time, unconditionally, regardless of anything declared in the Conditions section."> It is created unconditionally, every time the stack runs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFormation doesn't error out on resources lacking a Condition key — attaching a condition is entirely optional per resource."> The stack fails validation for missing a required attribute</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A resource without a Condition key isn't paused waiting on anything — pausing for external input is the role of features like wait conditions, not the Conditions section."> It waits for a condition to be added before creating</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why can't a condition in the Conditions section reference an attribute of a resource, such as an EC2 instance's Availability Zone?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="IAM permissions aren't what gate condition evaluation — the restriction is about evaluation timing, not access control."> IAM never grants any permission at all to read resource attributes at that stage</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fn::GetAtt itself works fine elsewhere in a template — it's specifically unusable inside Conditions because of evaluation order, not a general limitation of the function."> Fn::GetAtt is a deprecated function no longer supported anywhere</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Attribute values aren't withheld from conditions for size reasons — the restriction is purely about when conditions are evaluated relative to resources."> Resource attribute values are too large to evaluate at that stage</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The Conditions section is fully evaluated before any resource is processed, so no resource attribute exists yet for a condition to reference."> The entire Conditions section resolves before any resource is created</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A template has CreateBucket and IsProd conditions, plus a third condition, CreateBucketPolicy, defined as Fn::And of both. When is CreateBucketPolicy true?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Fn::And only resolves true when all of its referenced conditions are true, so both CreateBucket and IsProd must hold at the same time."> Only when both CreateBucket and IsProd are true together</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fn::And requires every listed condition to be true — a single true condition among several isn't sufficient on its own."> Whenever either CreateBucket or IsProd alone is true</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fn::And doesn't invert its inputs — that behavior belongs to Fn::Not, which isn't used in this composition."> Only when both CreateBucket and IsProd are false together</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Nesting one condition inside another through Fn::And doesn't make it unconditional — CreateBucketPolicy still depends entirely on the two referenced conditions."> Always, since nested conditions override individual results</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-cloudformation-outputs.html">← Previous: CloudFormation Outputs</a>
+      <a href="0007-cloudformation-dependson.html">Next: DependsOn →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

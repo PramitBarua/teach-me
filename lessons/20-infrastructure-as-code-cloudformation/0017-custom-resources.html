@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>17 – Custom Resources</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 17
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Custom Resources</h1>
+    <p class="lesson-meta">Lesson 17 of 17 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html" target="_blank">Custom provisioning logic with custom resources</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources-lambda.html" target="_blank">Lambda-backed custom resources</a></p>
+  </div>
+
+  <p>CloudFormation's logical-to-physical resource model is straightforward: define what you want, CloudFormation creates, updates, or deletes the matching physical resource. But CloudFormation doesn't support everything AWS offers, and it never will support some things natively. <strong>Custom resources</strong> are the escape hatch — a logical resource type that lets CloudFormation do whatever you tell it to, including talking to systems outside AWS entirely.</p>
+
+  <h2>The Architecture: ServiceToken and Event Data</h2>
+  <p>A custom resource is backed by one of two things, specified as its <strong>ServiceToken</strong>: a <strong>Lambda function</strong> ARN, or an <strong>SNS topic</strong> ARN. Whenever the custom resource is created, updated, or deleted, CloudFormation sends an event to that endpoint containing the operation type and any resource properties you configured.</p>
+  <p>Whatever is backing the custom resource — say, a Lambda function — does whatever work you've programmed it to do, then reports back success or failure to a <strong>response URL</strong> supplied in that same event data. On success, the custom resource is marked created, and any data the function returned becomes available elsewhere in the template.</p>
+
+  <h2>Worked Example: A Bucket That Cleans Up After Itself</h2>
+  <p>Consider a template that creates an empty S3 bucket, plus a Lambda-backed custom resource. On <strong>create</strong>, CloudFormation invokes the Lambda function, passing it the bucket's name. The function downloads some objects into that bucket, then reports success — the stack reaches <code>CREATE_COMPLETE</code>, and now there's a bucket full of objects.</p>
+  <p>Later, someone manually uploads a few more files directly into the bucket — outside CloudFormation entirely. Now you delete the stack. Without a custom resource, CloudFormation would try to delete the bucket directly, fail, because S3 refuses to delete a non-empty bucket, and the whole stack deletion would stall.</p>
+  <p>But because the custom resource was created <em>using</em> the bucket, CloudFormation knows there's a dependency between them. On delete, it works in <strong>reverse dependency order</strong>: the custom resource is deleted first. CloudFormation sends a delete event — same event-data shape, now flagged as a delete, still carrying the bucket name — to the Lambda function, which empties the bucket (including the manually added files) and signals success via the response URL. Only once the custom resource is gone does CloudFormation move on to deleting the now-empty bucket, which succeeds.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The pattern to recognize</div>
+    Any scenario where CloudFormation "can't do X natively" — populate a bucket, clean up before deletion, call an external system, fetch a value from something outside AWS — is a custom resource question. The mechanism is always the same: ServiceToken → Lambda or SNS → response URL back to CloudFormation.
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">A newer, complementary mechanism: CloudFormation Hooks</div>
+    Custom resources extend what CloudFormation can <em>do</em> — reactively, as part of provisioning. Since 2022, <strong>CloudFormation Hooks</strong> solve a different problem: <em>proactively</em> validating or blocking a create, update, or delete operation before it happens, typically for governance — for example, rejecting a stack update that would create a non-compliant resource. If a question is about extending functionality (populate a bucket, call an external API), think custom resources. If it's about pre-provisioning compliance checks that can stop an operation before anything is touched, that's Hooks.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What two things can a custom resource's ServiceToken point to?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Neither of these backs a custom resource's ServiceToken — the two valid targets are Lambda and SNS."> An RDS database endpoint or a DynamoDB stream ARN</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. ServiceToken is the ARN of either a Lambda function or an SNS topic — those are the two supported custom resource backends."> A Lambda function ARN or an SNS topic ARN</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An EC2 instance ID and an Auto Scaling group name aren't valid ServiceToken targets for a custom resource."> An EC2 instance ID or an Auto Scaling group name</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Systems Manager document or CloudWatch alarm isn't what a custom resource's ServiceToken references."> A Systems Manager document or a CloudWatch alarm</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A bucket populated by a custom resource, plus some manually uploaded files, needs to be deleted along with its stack. Why does this succeed where a plain bucket-with-objects deletion would fail?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFormation doesn't empty buckets on its own regardless of how objects got there — S3 still blocks deleting a non-empty bucket by default."> CloudFormation always empties any bucket automatically before deleting it</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The custom resource's Lambda function is invoked on delete, empties the bucket (including manually added files), and only then does CloudFormation delete the now-empty bucket."> The custom resource's Lambda function empties the bucket before CloudFormation deletes it</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Non-empty buckets can be deleted through CloudFormation — just not directly; a custom resource is exactly the mechanism that makes it possible here."> A non-empty S3 bucket can never be deleted through CloudFormation under any setup</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Versioning settings aren't what's blocking or enabling this deletion — the object count in the bucket is the actual constraint."> The custom resource disables bucket versioning before the delete happens</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In a stack containing a bucket and a custom resource that depends on it, what determines the order resources are deleted in?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Deletion order isn't driven by template file position — it follows the dependency relationship CloudFormation detected."> The exact order the resources are listed in the template file</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Deletion order isn't alphabetical by logical ID — it's driven by dependency, not naming."> Alphabetical order by logical ID, with custom resources always last</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. CloudFormation deletes in reverse of the dependency order it detected at creation — since the custom resource depended on the bucket, the custom resource is deleted first."> The reverse of the dependency detected at creation — the custom resource goes first</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="No manual DependsOn override on the bucket is required — CloudFormation already infers the dependency from how the custom resource was defined."> A manual DependsOn attribute added to the bucket resource</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links"><a href="0016-changesets.html">← Previous: Change Sets</a><span></span></div>
+    <p style="margin-top:1.5rem">You've completed the Infrastructure as Code (CloudFormation) module! Type <strong>/teach</strong> to continue learning or explore the next topic.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

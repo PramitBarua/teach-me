@@ -244,3 +244,35 @@
 | R238 | What Is AWS Local Zones? | https://docs.aws.amazon.com/local-zones/latest/ug/what-is-aws-local-zones.html | Region extension near metro areas |
 | R239 | How AWS Local Zones Work | https://docs.aws.amazon.com/local-zones/latest/ug/how-local-zones-work.html | Subnet extension, parent-Region dependency for snapshots |
 | R240 | AWS Compute Blog: Local Zones and Outposts — Choosing the Right Technology | https://aws.amazon.com/blogs/compute/aws-local-zones-and-aws-outposts-choosing-the-right-technology-for-your-edge-workload/ | Local Zones vs. Wavelength vs. Outposts comparison |
+| R241 | CloudFormation Template Anatomy | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html | Template structure, top-level sections overview |
+| R242 | Resources Section Structure | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html | Logical resource definition, Type/Properties |
+| R243 | Generating Templates for Existing Resources (IaC Generator) | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/generate-IaC.html | Reverse-generates a template from unmanaged resources |
+| R244 | Parameters Section Structure | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html | Defaults, allowed values, NoEcho, AWS-specific types |
+| R245 | Pseudo Parameters Reference | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html | AWS::Region, AWS::StackId, AWS::StackName, AWS::AccountId |
+| R246 | Intrinsic Function Reference | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference.html | Full function catalog, incl. newer Fn::ForEach/Fn::Length/Fn::ToJsonString |
+| R247 | Fn::GetAtt | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-getatt.html | Secondary attribute lookup vs. Ref's primary value |
+| R248 | Fn::Cidr | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-cidr.html | Auto-generated subnet CIDR ranges from a parent VPC range |
+| R249 | Mappings Section Structure | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/mappings-section-structure.html | One/two-level key-value lookup tables |
+| R250 | Fn::FindInMap | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-findinmap.html | Mapping lookup, incl. AWS::LanguageExtensions default-value enhancement |
+| R251 | Outputs Section Structure | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html | Optional stack outputs, description/value, nested-stack visibility |
+| R252 | Fn::Join | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-join.html | String construction from literals and resource attributes |
+| R253 | Conditions Section Structure | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/conditions-section-structure.html | Evaluated before resources; and/equals/if/not/or |
+| R254 | DependsOn Attribute | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-dependson.html | Explicit dependency ordering beyond implicit reference-based inference |
+| R255 | CreationPolicy Attribute | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-creationpolicy.html | Signal count/timeout gating for EC2/ASG resource creation |
+| R256 | Using a Wait Condition | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-waitcondition.html | Standalone signal-gate resource, wait handle pre-signed URL |
+| R257 | Working with Nested Stacks | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html | Root/parent stack, AWS::CloudFormation::Stack resource type |
+| R258 | AWS::CloudFormation::Stack | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudformation-stack.html | Nested stack logical resource reference |
+| R259 | Walkthrough: Refer to Resource Outputs in Another Stack | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/walkthrough-crossstackref.html | Export/Fn::ImportValue shared-VPC pattern |
+| R260 | Fn::ImportValue | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-importvalue.html | Cross-stack import, same region/account only |
+| R261 | StackSets Concepts | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html | Admin account, stack instances, target accounts, self- vs. service-managed permissions |
+| R262 | StackSet Operation Options (Concurrency Mode) | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/concurrency-mode.html | Newer STRICT_FAILURE_TOLERANCE/SOFT_FAILURE_TOLERANCE, added Nov 2023 |
+| R263 | DeletionPolicy Attribute | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-deletionpolicy.html | Delete/Retain/Snapshot, deletions only (not replacement) |
+| R264 | UpdateReplacePolicy Attribute | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-updatereplacepolicy.html | Companion to DeletionPolicy covering replacement-triggered updates |
+| R265 | Using AWS CloudFormation Stack Roles (Service Roles) | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html | Role separation — pass a service role instead of granting resource permissions directly |
+| R266 | AWS::CloudFormation::Init | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-init.html | Desired-state config keys: packages/groups/users/sources/files/commands/services |
+| R267 | cfn-init Helper Script Reference | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/cfn-init.html | Config set invocation, stack ID/region parameters |
+| R268 | cfn-hup Helper Script Reference | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/cfn-hup.html | Metadata-change polling daemon, default 10-minute interval |
+| R269 | CloudFormation Helper Scripts Reference | https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/cfn-helper-scripts-reference.html | cfn-init/cfn-hup/cfn-signal/cfn-get-metadata overview |
+| R270 | Updating Stacks Using Change Sets | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html | No-interruption/interruption/replacement preview before executing |
+| R271 | What Is a Custom Resource? | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html | Lambda/SNS-backed logical resources for unsupported functionality |
+| R272 | Custom Resources That Publish to an AWS Lambda Function | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources-lambda.html | ServiceToken, event data, response URL success/failure signaling |

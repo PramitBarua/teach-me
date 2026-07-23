@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 – CloudFormation Init (cfn-init)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 14
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>CloudFormation Init (cfn-init)</h1>
+    <p class="lesson-meta">Lesson 14 of 17 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-init.html" target="_blank">AWS::CloudFormation::Init</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/cfn-init.html" target="_blank">cfn-init reference</a></p>
+  </div>
+
+  <p>You already know one way to bootstrap an EC2 instance: <strong>user data</strong>, a script that EC2 (not CloudFormation) hands to the operating system on first boot. <strong>CloudFormation Init</strong> is a native CloudFormation alternative — configuration directives live directly in the template, attached to the same logical resource they configure.</p>
+
+  <h2>Procedural vs. Desired State</h2>
+  <p>The distinction that matters for the exam: user data is <strong>procedural</strong>. It's a list of commands executed in order — you tell the instance <em>how</em> to reach a state, step by step. CloudFormation Init is a <strong>desired-state</strong> system. You declare <em>what</em> you want to be true — a package installed, a service running — and the tool figures out how to get there.</p>
+  <p>Desired state brings two practical benefits. It's <strong>cross-platform</strong>, working consistently across Linux distributions (and in places, Windows). And it's <strong>idempotent</strong>: if Apache is already installed and your config says Apache should be installed, running it again does nothing. If a service is already defined and already started, nothing changes. You don't need to hand-write the "is this already done?" logic yourself — the system checks for you.</p>
+
+  <h2>How It's Wired Together</h2>
+  <p>The directives live under <code>Metadata</code> → <code>AWS::CloudFormation::Init</code> on an EC2 (or Auto Scaling) logical resource. A helper script called <strong>cfn-init</strong>, pre-installed on Amazon Linux and available for other platforms, is what actually reads that metadata and applies it. You invoke cfn-init yourself, from user data — so user data doesn't disappear, it just shrinks down to a couple of lines:</p>
+  <pre><code>#!/bin/bash
+/opt/aws/bin/cfn-init -v --stack ${AWS::StackId} \
+  --resource WebServerInstance --configsets wordpress_install \
+  --region ${AWS::Region}
+/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} \
+  --resource WebServerInstance --region ${AWS::Region}</code></pre>
+  <p>CloudFormation substitutes <code>${AWS::StackId}</code> and <code>${AWS::Region}</code> with real values before the instance ever sees this script. Those values are what let cfn-init call back to the CloudFormation service and fetch its own configuration — it knows exactly which stack and which logical resource it belongs to. <code>cfn-signal</code> afterwards tells CloudFormation whether bootstrapping succeeded, so the stack knows when the instance is genuinely ready.</p>
+
+  <h2>Config Keys and Config Sets</h2>
+  <p>Inside <code>AWS::CloudFormation::Init</code>, directives are grouped into <strong>config keys</strong> — named containers, each of which can hold the same seven sections, always processed in this order: <code>packages</code>, <code>groups</code>, <code>users</code>, <code>sources</code>, <code>files</code>, <code>commands</code>, <code>services</code>.</p>
+  <ul>
+    <li><strong>packages</strong> — software to install</li>
+    <li><strong>groups</strong> / <strong>users</strong> — local OS group and user management</li>
+    <li><strong>sources</strong> — archives to download and extract</li>
+    <li><strong>files</strong> — files to create on disk</li>
+    <li><strong>commands</strong> — arbitrary commands to run</li>
+    <li><strong>services</strong> — services to enable and keep running</li>
+  </ul>
+  <p>A single config key is often enough. But you can define several — say, <code>install_cfn</code>, <code>install_wordpress</code>, <code>configure_wordpress</code> — and bundle them into a <strong>config set</strong>, which names which config keys to use and in what order:</p>
+  <pre><code>Metadata:
+  AWS::CloudFormation::Init:
+    configSets:
+      wordpress_install:
+        - install_cfn
+        - install_wordpress
+    install_cfn:
+      files: { ... }
+    install_wordpress:
+      packages:
+        yum: { wordpress: [] }</code></pre>
+  <p>The <code>--configsets wordpress_install</code> flag on the cfn-init call above is what picks this bundle. A single template can define multiple config sets — one for a fresh install, another for an upgrade path — and cfn-init is simply told which one to run.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam framing</div>
+    If a question emphasizes <strong>idempotency</strong>, <strong>desired state</strong>, or configuration <strong>defined in the template's metadata</strong> rather than as a shell script, that's cfn-init, not plain user data.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What's the fundamental difference between plain EC2 user data and CloudFormation Init?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="It's the reverse: user data is the procedural, step-by-step approach, and cfn-init is the desired-state system."> User data defines desired state, while cfn-init executes procedural steps in order</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. User data is procedural — commands run in sequence. cfn-init is desired state — you declare the end result and the tool reaches it."> User data is procedural, step-by-step, while cfn-init declares a desired state to reach</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Both can run scripts or install packages; the real difference is procedural execution versus desired-state configuration, not which service hosts the file."> Both work identically, but cfn-init loads its script from S3 instead of inline</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Neither is restricted to a single OS family in that way — cfn-init is actually the more cross-platform of the two."> User data only runs on Windows, while cfn-init only runs on Linux</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Apache is already installed on an instance, and cfn-init's config also specifies that Apache should be installed. What happens when cfn-init runs?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Idempotency means cfn-init checks current state first — it doesn't blindly redo work that's already done."> cfn-init reinstalls Apache from scratch every single run</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Existing state matching the desired state isn't an error condition — idempotent tools are designed to handle this gracefully."> cfn-init throws an error because Apache is already present</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="cfn-init doesn't pause for a human — it evaluates state and proceeds automatically."> cfn-init pauses and waits for a human to confirm before continuing</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. This is idempotency: if the current state already matches the desired state, cfn-init leaves it alone and moves on."> cfn-init leaves Apache untouched, since the desired state already matches</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. What is a config set, in relation to config keys?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A config set names a list of config keys and the order to apply them, so one template can support several install or upgrade paths."> A named list of config keys, plus the order to apply them, chosen at cfn-init call time</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Config sets are an organizational grouping mechanism, not an encryption feature — metadata isn't hidden from the instance this way."> An encrypted wrapper that hides metadata from the instance's operating system</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Restarting cfn-hup is unrelated to config sets, which are purely about grouping and ordering cfn-init's config keys."> A trigger that restarts the cfn-hup daemon after every stack update</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A config set is optional and user-named — cfn-init only falls back to a key literally named 'config' when no config set is specified at all."> The single mandatory config key that cfn-init always reads by default</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0013-stack-roles.html">← Previous: Stack Roles</a>
+      <a href="0015-cfn-hup.html">Next: cfn-hup →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – Stack Sets</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 11
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Stack Sets</h1>
+    <p class="lesson-meta">Lesson 11 of 17 · ~9 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html" target="_blank">StackSets concepts</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/concurrency-mode.html" target="_blank">Choose the concurrency mode for StackSets</a></p>
+  </div>
+
+  <p><strong>StackSets</strong> let CloudFormation create, update, or delete the same infrastructure across many Regions and, potentially, many AWS accounts — all from one place, instead of you manually switching accounts and Regions and applying the template yourself each time.</p>
+
+  <h2>Core Concepts</h2>
+  <dl>
+    <dt>Admin account</dt>
+    <dd>The account where the stack set itself is created and managed. Nothing structurally special about it — the label just distinguishes it from the accounts being deployed into.</dd>
+    <dt>Stack set</dt>
+    <dd>A container, applied in the admin account, that references many stack instances.</dd>
+    <dt>Stack instance</dt>
+    <dd>A reference to one actual stack in one Region of one target account. Stack instances persist even if the underlying stack fails to create — they exist to record what happened.</dd>
+    <dt>Target account</dt>
+    <dd>An ordinary AWS account that a stack set is configured to deploy into.</dd>
+  </dl>
+
+  <p>Every stack a stack set creates is a completely normal CloudFormation stack, built from a completely normal template — there's nothing special about the template itself. What StackSets adds is the orchestration: given a set of target accounts and Regions, it uses either <strong>self-managed roles</strong> (you create the IAM roles and trust relationships yourself) or <strong>service-managed permissions</strong> (roles are provisioned automatically via AWS Organizations) to assume into each target account, create a stack instance, and create the stack.</p>
+
+  <h2>Concurrency and Failure Tolerance</h2>
+  <p>Two settings control how a stack set operation rolls out across accounts:</p>
+  <ul>
+    <li><strong>Concurrent accounts</strong> — how many target accounts CloudFormation deploys into at the same time. Higher concurrency generally means a faster overall rollout.</li>
+    <li><strong>Failure tolerance</strong> — how many individual account/Region deployments are allowed to fail before the whole stack set operation is considered failed.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale-vs-current: concurrency now has a mode switch</div>
+    The classic behavior above (concurrency and failure tolerance interacting to throttle a rollout) is still accurate, but AWS has since added a <strong>ConcurrencyMode</strong> setting with two options. <strong>STRICT_FAILURE_TOLERANCE</strong> is the original behavior — concurrency is dynamically lowered as failures occur, so deployment speed drops the more failures you see. <strong>SOFT_FAILURE_TOLERANCE</strong>, added in November 2023, decouples concurrency from the failure count entirely — the operation keeps running at your configured concurrency level regardless of failures, prioritizing deployment speed over the older throttling safety behavior. For the exam, know that failure tolerance and concurrent accounts still exist as concepts, but current StackSets can be told explicitly whether to slow down on failures or push through at full speed.
+  </div>
+
+  <h2>Retaining Stacks on Removal</h2>
+  <p>Removing a stack instance from a stack set <strong>deletes the underlying stack by default</strong>. If you want to keep the actual infrastructure in place — just detaching it from the stack set's management — you can set <strong>RetainStacks</strong> so the stack itself survives in its account and Region even after the instance is removed.</p>
+
+  <h2>Common Use Cases</h2>
+  <ul>
+    <li>Enabling AWS Config, or deploying Config rules (MFA enforcement, Elastic IP checks, EBS encryption checks), across a large fleet of accounts.</li>
+    <li>Rolling out cross-account IAM roles at scale, instead of creating the same role manually in every account.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A stack set targets 3 accounts and fails to create a stack in one of them. What keeps a record of that failure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The stack set is the overall container; it doesn't itself record per-account failure detail — that's the stack instance's job."> The stack set object in the admin account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A stack instance is a reference to a stack in one account and Region, and it persists to record the outcome even when the stack itself fails to create."> The stack instance for that account and Region</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudTrail logs API activity, not the internal state tracking that StackSets uses to record per-instance creation outcomes."> An entry automatically written to CloudTrail</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The target account's own CloudFormation console shows the failed stack, but the structured record within the stack set is the stack instance, not a console view."> Nothing — failures in target accounts are silently dropped</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A stack set operation needs to push through a rollout at maximum configured concurrency even while some target accounts are failing. Which current setting achieves that?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Strict failure tolerance is the mode that dynamically lowers concurrency as failures accumulate — the opposite of what's needed here."> ConcurrencyMode set to STRICT_FAILURE_TOLERANCE</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. SOFT_FAILURE_TOLERANCE decouples concurrency from the failure count, so the operation keeps running at the configured concurrency level regardless of failures."> ConcurrencyMode set to SOFT_FAILURE_TOLERANCE</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RetainStacks controls whether stacks survive after their instance is removed from a stack set — it has no effect on rollout concurrency."> RetainStacks set to true on every target account</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Service-managed permissions are about how CloudFormation obtains cross-account access via Organizations — they don't govern rollout speed or failure handling."> Switching from self-managed to service-managed permissions</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An admin wants to remove a target account from a stack set without deleting the CloudFormation-created infrastructure already running in that account. What should they configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="ConcurrencyMode governs rollout speed and failure handling, not what happens to a stack when its instance is removed."> ConcurrencyMode set to SOFT_FAILURE_TOLERANCE</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. RetainStacks tells CloudFormation to leave the underlying stack in place when its stack instance is removed from the stack set, rather than deleting it by default."> RetainStacks set to true on the instance being removed</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Failure tolerance controls how many failed deployments are acceptable during an operation — it doesn't control what happens on intentional instance removal."> A higher failure tolerance count set on the stack set</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DeletionPolicy is a per-resource template attribute for individual resources within a stack, not a stack set-level setting for removing a target account."> A DeletionPolicy of Retain applied to the stack set itself</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-cross-stack-references.html">← Previous: Cross-Stack References</a>
+      <a href="0012-deletion-policy.html">Next: Deletion Policy →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

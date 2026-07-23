@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – Wait Conditions and cfn-signal</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 08
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Wait Conditions, CreationPolicy, and cfn-signal</h1>
+    <p class="lesson-meta">Lesson 08 of 17 · ~10 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-creationpolicy.html" target="_blank">CreationPolicy attribute</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-waitcondition.html" target="_blank">Create wait conditions in a template</a></p>
+  </div>
+
+  <p>By default, CloudFormation's idea of "done" is naive. Take an EC2 instance bootstrapped with WordPress via user data: CloudFormation asks EC2 to create the instance, and the moment EC2 reports the instance provisioned, CloudFormation marks the logical resource <strong>create complete</strong> — regardless of whether the bootstrapping inside that instance ever actually finished, let alone succeeded. The instance can be sitting there mid-install, or permanently broken, and the stack will still report success.</p>
+
+  <p><strong>CreationPolicy</strong>, <strong>wait conditions</strong>, and the <strong>cfn-signal</strong> helper script exist to close that gap — letting a resource genuinely signal back to CloudFormation whether it's actually ready.</p>
+
+  <h2>How Signaling Works</h2>
+  <p>The mechanism is the same either way: you configure CloudFormation to <strong>hold</strong> a resource until it receives a set number of success signals, within a configured <strong>timeout</strong>. The <code>cfn-signal</code> utility — part of the <code>cfn-bootstrap</code> package — runs on the instance (or wherever the bootstrapping happens) and sends that signal back to CloudFormation once its work is done.</p>
+
+  <ul>
+    <li>A <strong>success</strong> signal, once the required count is reached, moves the resource — and the stack — to create complete.</li>
+    <li>A <strong>failure</strong> signal fails the resource, and the stack, immediately.</li>
+    <li>No signal at all before the timeout expires is treated as an <strong>implicit failure</strong> — same outcome as an explicit failure signal.</li>
+  </ul>
+
+  <p>The maximum timeout you can configure is <strong>12 hours (43200 seconds)</strong>, expressed in ISO 8601 duration format as <code>PT#H#M#S</code>.</p>
+
+  <h2>CreationPolicy: the Recommended Default</h2>
+  <p>For EC2 instances and Auto Scaling groups specifically, AWS recommends <strong>CreationPolicy</strong> — it's an attribute attached directly to the resource being signaled, rather than a separate resource of its own.</p>
+
+  <pre><code>AutoScalingGroup:
+  Type: AWS::AutoScaling::AutoScalingGroup
+  Properties: { ... }
+  CreationPolicy:
+    ResourceSignal:
+      Count: 3
+      Timeout: PT15M</code></pre>
+
+  <p>Here, the Auto Scaling group launches three instances, but won't move to create complete until it has received three success signals within 15 minutes. Each instance's user data runs its bootstrapping — say, installing an app — then finishes with a call to <code>cfn-signal</code>, which sends that instance's one signal. Get all three within the timeout and the group completes; miss the count, get a failure signal, or run out the clock, and the stack fails instead.</p>
+
+  <h2>Wait Conditions: the General-Purpose Alternative</h2>
+  <p>A <strong>wait condition</strong> works on the same principle, but as its own standalone logical resource rather than an attribute bolted onto an existing one. That makes it useful when the thing you're waiting on isn't a single EC2 instance or Auto Scaling group — say, an external IT system completing some process outside the stack entirely.</p>
+
+  <p>A wait condition needs a companion <strong>wait condition handle</strong> — a resource whose only job is to generate a pre-signed URL that anything can send a signal to, without needing AWS credentials of its own:</p>
+
+  <pre><code>MyWaitHandle:
+  Type: AWS::CloudFormation::WaitConditionHandle
+
+MyWaitCondition:
+  Type: AWS::CloudFormation::WaitCondition
+  DependsOn: MyEC2Instance
+  Properties:
+    Handle: !Ref MyWaitHandle
+    Timeout: "3600"
+    Count: 1</code></pre>
+
+  <p>Whatever is doing the signaling — an EC2 instance, an external server — sends a small JSON document to that pre-signed URL: a <code>Status</code> (<code>SUCCESS</code> or <code>FAILURE</code>), a <code>UniqueId</code>, a <code>Reason</code>, and a <code>Data</code> field that can carry back arbitrary information about the event. That <code>Data</code> value isn't just discarded once the wait condition completes — you can pull it into the rest of the template with <code>!GetAtt MyWaitCondition.Data</code>, letting the signal carry real information (a license key, a status detail) into the stack, not just a bare yes/no.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">CreationPolicy vs. wait condition, at a glance</div>
+    Use <strong>CreationPolicy</strong> for EC2 instances and Auto Scaling groups — it's simpler, and it's what AWS recommends for those cases. Reach for a <strong>wait condition</strong> when you need to gate progress on something that isn't tied to one specific resource, or when you need the richer data-passing that a wait condition's <code>Data</code> field provides.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: CreationPolicy now covers a fourth resource type</div>
+    The transcript describes CreationPolicy as applying to EC2 instances and Auto Scaling groups, with wait conditions as the fallback for everything else. AWS's current documentation confirms both of those still hold — but a <code>CreationPolicy</code> can now also be attached directly to a wait condition resource itself (as an alternative to signaling it manually), and to <strong>AWS::AppStream::Fleet</strong>, letting an AppStream fleet's start-up be gated by a signal the same way. The core mental model in this lesson — CreationPolicy for the common resource-level case, wait conditions for everything more general — is unchanged.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EC2 instance has no CreationPolicy and no wait condition attached. Its user data runs a bootstrapping script that fails partway through. What does CloudFormation report for that resource?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFormation has no built-in way to detect a failed bootstrap script unless a CreationPolicy or wait condition is explicitly configured to receive a signal about it."> Create failed, since CloudFormation detects the script error</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Without a configured timeout to wait against, there's nothing here that would leave the resource sitting in progress indefinitely."> Create in progress indefinitely, until manually cancelled</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Without any signaling mechanism, CloudFormation only knows whether EC2 reported the instance as provisioned — it has no visibility into whether bootstrapping inside the instance succeeded."> Create complete, since EC2 reported the instance provisioned</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFormation doesn't automatically retry a bootstrapping script on its own — no such retry mechanism exists for user data."> Create complete, after CloudFormation automatically retries the script</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An Auto Scaling group needs three instances to each confirm a successful application install before the group is considered ready. Which feature is the AWS-recommended fit?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A wait condition would technically work here too, but AWS specifically recommends CreationPolicy over a wait condition for EC2 instances and Auto Scaling groups."> A standalone wait condition with its own handle resource</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. CreationPolicy with a ResourceSignal count of three is exactly the recommended pattern for gating an Auto Scaling group on multiple instance-level success signals."> A CreationPolicy attribute with ResourceSignal Count set to three</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DependsOn only controls the order resources are created in — it has no mechanism for waiting on signals sent from inside an instance."> A DependsOn attribute referencing all three instances</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A Condition only controls whether a resource is created at all based on true/false logic — it doesn't gate completion on runtime signals."> A Condition block referencing the desired instance count parameter value</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A wait condition's Timeout is set to a value corresponding to 13 hours. What happens when the template is deployed?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFormation doesn't quietly cap an out-of-range value and continue — a timeout beyond the supported maximum is rejected outright."> CloudFormation silently caps it at 12 hours and proceeds</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudFormation doesn't grant unlimited waiting for wait conditions — a hard maximum of 12 hours applies regardless of the value specified."> The wait condition waits indefinitely with no upper bound</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The maximum permitted timeout for a wait condition (and for CreationPolicy) is 12 hours (43200 seconds) — a longer value fails template validation."> The template fails, since 12 hours is the maximum permitted value</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A 13-hour value on its own doesn't switch the resource over to using CreationPolicy instead — the two are configured independently, and this value simply exceeds the allowed maximum."> CloudFormation automatically converts it behind the scenes into a CreationPolicy</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-cloudformation-dependson.html">← Previous: DependsOn</a>
+      <a href="0009-nested-stacks.html">Next: Nested Stacks →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

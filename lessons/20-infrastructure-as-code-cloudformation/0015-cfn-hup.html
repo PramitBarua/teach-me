@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15 – cfn-hup</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 15
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>cfn-hup</h1>
+    <p class="lesson-meta">Lesson 15 of 17 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/cfn-hup.html" target="_blank">cfn-hup reference</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/cfn-helper-scripts-reference.html" target="_blank">CloudFormation helper scripts reference</a></p>
+  </div>
+
+  <p>The previous lesson covered <strong>cfn-init</strong>: a helper script that applies desired-state configuration from a logical resource's metadata. There's a catch worth sitting with — <strong>cfn-init only runs once</strong>, during initial bootstrap. If you later edit the template's metadata and run an update-stack operation, that change is <em>not</em> automatically reapplied to already-running instances.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Updating a stack does not rebootstrap anything by default</div>
+    Neither user data nor cfn-init re-executes just because you changed the template and updated the stack. Whatever bootstrapped the instance at launch is, by default, a one-time event.
+  </div>
+
+  <h2>What cfn-hup Adds</h2>
+  <p><strong>cfn-hup</strong> is a separate helper tool — a daemon you install and configure yourself, typically during the same bootstrap process as everything else. Once running, it watches a specific logical resource's metadata for changes. When it detects one, it runs a configurable action — most commonly, rerunning <code>cfn-init</code> so the new configuration actually gets applied.</p>
+  <p>Put together: update the template's metadata, run update-stack, and cfn-hup (already running on the instance) notices the change, reruns cfn-init, and the instance's configuration catches up — no replacement, no manual SSH session, no re-launch.</p>
+
+  <h2>Configuration Files</h2>
+  <p>cfn-hup relies on two config files that you place on the instance during bootstrap:</p>
+  <ul>
+    <li><strong>cfn-hup.conf</strong> — which stack to watch and the credentials to use</li>
+    <li><strong>hooks.conf</strong> — the actions to run when a watched path changes</li>
+  </ul>
+  <pre><code>[cfn-auto-reloader-hook]
+triggers=post.update
+path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
+action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackId} \
+  --resource WebServerInstance --configsets wordpress_install \
+  --region ${AWS::Region}</code></pre>
+  <p>By default, cfn-hup polls for metadata changes every 10 minutes — worth knowing if a change doesn't seem to land instantly after a stack update.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">cfn-init vs. cfn-hup, in one line</div>
+    <strong>cfn-init</strong> applies desired-state configuration once, at launch. <strong>cfn-hup</strong> is what makes that configuration <em>stay in sync</em> across future stack updates, by re-triggering cfn-init whenever the watched metadata changes.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A stack update changes an EC2 logical resource's metadata. Does this automatically rerun bootstrapping on the already-running instance?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Neither user data nor cfn-init reruns automatically just because a stack update changed the metadata."> Yes, both user data and cfn-init rerun automatically on every update</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Bootstrapping runs once at launch by default. Reapplying changed metadata requires cfn-hup watching for the change."> No, bootstrapping isn't rerun automatically unless something is watching for the change</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="cfn-init itself has no built-in mechanism to detect later metadata changes on its own — that's the job of a separate watcher, cfn-hup."> Only cfn-init reruns automatically; user data never does regardless of setup</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This behavior isn't OS-specific — neither Linux nor Windows instances rerun bootstrapping automatically after a stack update."> Only on Windows instances, since Linux bootstrapping is always one-time only</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. What role does cfn-hup actually play once it's installed and running on an instance?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Nothing pushes changes from CloudFormation to the instance without an agent running there — cfn-hup is that agent, polling from inside the instance."> It's a CloudFormation service feature that pushes changes with no agent on the instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="cfn-hup is meant to run continuously, watching for changes indefinitely — it isn't a single-shot bootstrap script."> It's a one-time script that runs once during launch and then exits for good</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. cfn-hup is an on-instance daemon that polls for metadata changes and runs a configured action, typically rerunning cfn-init."> It's an on-instance daemon that polls for metadata changes and triggers an action</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFormation doesn't invoke a Lambda function against instances on every update — cfn-hup itself runs entirely on the instance."> It's a Lambda function CloudFormation calls automatically on every update</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. For cfn-hup to trigger a reconfiguration after you edit a template and update the stack, what must actually change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Instance type changes don't factor into whether cfn-hup's watched metadata path has changed."> Only the EC2 instance type specified in the template</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. cfn-hup watches a specific metadata path on a specific logical resource — that path's content must actually change for it to fire."> The specific metadata path on the logical resource that cfn-hup is configured to watch</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Stack tags aren't part of the resource metadata cfn-hup watches, so tag changes alone won't trigger anything."> Only the stack's tags need to be updated for cfn-hup to react</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The region passed to cfn-init is fixed by the pseudo parameter substitution at launch; editing it manually isn't how reconfiguration is triggered."> The region argument passed manually into the cfn-init command line</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0014-cloudformation-init.html">← Previous: CloudFormation Init (cfn-init)</a>
+      <a href="0016-changesets.html">Next: Change Sets →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

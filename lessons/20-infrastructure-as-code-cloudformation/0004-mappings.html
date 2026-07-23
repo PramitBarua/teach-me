@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Mappings</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 04
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Mappings</h1>
+    <p class="lesson-meta">Lesson 04 of 17 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/mappings-section-structure.html" target="_blank">CloudFormation template Mappings syntax</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-findinmap.html" target="_blank">Fn::FindInMap</a></p>
+  </div>
+
+  <p>A CloudFormation template is, at its top level, just a set of sections — <code>Resources</code>, <code>Parameters</code>, and now a third one: <code>Mappings</code>. Like parameters, mappings exist to help a template adapt to its surroundings instead of being static — but where a parameter takes input from a human or from AWS, a mapping is a lookup table baked directly into the template itself.</p>
+
+  <h2>The Mappings Section: Keys to Values</h2>
+  <p>A mapping maps a key to a value — or, more commonly, a top-level key to a second-level key to a value, giving you a two-level lookup. The classic example is looking up the right AMI ID for a given Region and a given architecture.</p>
+
+  <pre><code>Mappings:
+  RegionMap:
+    us-east-1:
+      HVM64: ami-0abcdef1234567890
+    eu-west-1:
+      HVM64: ami-0123456789abcdef0</code></pre>
+
+  <h2>Fn::FindInMap: Reading a Mapping</h2>
+  <p><code>Fn::FindInMap</code> is the function that performs the lookup. It always needs the mapping's name and a top-level key; supply a second-level key as well, and it drills one level deeper.</p>
+
+  <pre><code>ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', HVM64]</code></pre>
+
+  <p>Notice the top-level key here is <code>!Ref 'AWS::Region'</code> — a pseudo parameter, not a literal string. That's what turns a static lookup table into something genuinely portable: the same template automatically picks the right AMI for whichever Region it's deployed into, with no parameter for the deployer to fill in and no risk of picking the wrong AMI for the Region.</p>
+
+  <div class="callout">
+    <div class="callout-title">One or two levels — your choice</div>
+    If you only ever need a single key mapped to a single value, a one-level mapping works fine. Two-level mappings are for exactly the kind of "by Region, then by architecture" (or "by Region, then by environment") lookups that come up constantly in portable templates.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: two things worth knowing now</div>
+    First, <code>Fn::FindInMap</code> gained a genuine enhancement since this course was recorded: under the <code>AWS::LanguageExtensions</code> transform, it now supports a <strong>default value</strong> parameter, returned when the requested keys aren't found in the mapping — the plain lookup behavior in this lesson still works exactly as described, this is purely additive. Second, and more practically: for the AMI-lookup use case specifically, current AWS guidance now steers away from maintaining a hand-built <code>RegionMap</code> at all. Instead, it recommends a <strong>dynamic reference to a public SSM parameter</strong> (for example, the latest Amazon Linux 2 AMI) so the template always resolves to the current AMI without anyone having to update the mapping by hand. Mappings remain a valid and commonly tested CloudFormation feature — this is a note about the specific AMI-table example, not a correction to how <code>Fn::FindInMap</code> itself works.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. What must every call to Fn::FindInMap supply, at minimum?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A second-level key lets FindInMap drill one level deeper, but it isn't mandatory — omit it and you get back the entire object under the top-level key instead."> A mapping name and a second-level key only</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Fn::FindInMap looks values up in the Mappings section — a template parameter isn't part of its required inputs."> A template parameter and a default value</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The mapping's name and a top-level key are mandatory; the second-level key is optional and only needed for a two-level lookup."> A mapping name and a top-level key</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The Mappings section explicitly disallows intrinsic functions and pseudo parameters from being declared inside it — FindInMap references a mapping from outside that section, in Resources or Outputs."> A pseudo parameter declared inside Mappings</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Why does using !Ref 'AWS::Region' as the top-level key in a RegionMap lookup make a template more portable?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Because AWS::Region always resolves to the Region the stack is actually created in, the same unmodified template automatically looks up the correct entry no matter where it's deployed."> It resolves to the stack's actual Region</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="RegionMap entries aren't validated with AllowedValues — that's a template-parameter feature, and mappings don't have parameter-style restrictions at all."> It restricts the mapping to AllowedValues</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS::Region is a pseudo parameter with no NoEcho behavior — that setting only applies to declared template parameters holding sensitive values."> It hides the Region value using NoEcho</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Mappings entries are static key-value pairs fixed at template-authoring time — a stack update doesn't cause CloudFormation to fetch new mapping values from AWS at runtime."> It refreshes the mapping on every update</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. For the specific case of looking up the latest Amazon Linux AMI ID per Region, what does current AWS guidance recommend instead of maintaining a hand-built Mappings table?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fn::ForEach is a loop construct for repeating template fragments — it has no role in resolving a Region's current AMI ID."> Looping over Regions with Fn::ForEach</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fn::Cidr generates subnet CIDR ranges from a parent VPC block — it has nothing to do with looking up AMI IDs."> Generating the AMI ID with Fn::Cidr</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="NoEcho hides sensitive input as it's typed — it has no bearing on how a template resolves an AMI ID for a Region."> Marking the AMI parameter with NoEcho</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A dynamic reference to a public SSM parameter (holding the latest AMI ID) resolves automatically at stack creation, so nobody has to keep a RegionMap up to date by hand."> A dynamic reference to an SSM parameter</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-intrinsic-functions.html">← Previous: Intrinsic Functions</a>
+      <a href="0005-cloudformation-outputs.html">Next: CloudFormation Outputs →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

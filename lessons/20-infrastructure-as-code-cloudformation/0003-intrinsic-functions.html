@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – Intrinsic Functions</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 03
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Intrinsic Functions</h1>
+    <p class="lesson-meta">Lesson 03 of 17 · ~11 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference.html" target="_blank">Intrinsic function reference</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-getatt.html" target="_blank">Fn::GetAtt</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-cidr.html" target="_blank">Fn::Cidr</a></p>
+  </div>
+
+  <p>Everything so far — logical resources, template parameters, pseudo parameters — has been either static or supplied as input. <strong>Intrinsic functions</strong> are different: they let a template take actions and pull values <em>at runtime</em>, while the stack is actually being created. That runtime awareness is a big part of what makes templates portable.</p>
+
+  <h2>Ref and Fn::GetAtt: Referencing Other Things</h2>
+  <p>Every parameter and every logical resource has a <strong>main value</strong>. For a parameter, it's simply the value provided. For a logical resource, it's usually the physical resource ID — once that resource reaches create complete. The <code>Ref</code> function retrieves this main value, and it's how a subnet's logical resource can point at a VPC's logical resource, or how a resource can pick up a parameter's value.</p>
+
+  <pre><code>Properties:
+  ImageId: !Ref LatestAmiIdParameter
+  InstanceType: t3.micro</code></pre>
+
+  <p>Some resources also expose <strong>secondary attributes</strong> beyond their main value — an EC2 instance's public IP address or public DNS name, for example. <code>Fn::GetAtt</code> retrieves these, taking the logical resource name and the attribute name:</p>
+
+  <pre><code>WebsiteUrl: !GetAtt MyInstance.PublicDnsName</code></pre>
+
+  <p><code>Ref</code> and <code>Fn::GetAtt</code> are the two functions you'll reach for constantly — almost every non-trivial template uses both.</p>
+
+  <h2>Fn::GetAZs and Fn::Select: Staying Region-Agnostic</h2>
+  <p>Hard-coding an Availability Zone name like <code>us-east-1a</code> defeats portability the moment the template runs in a different Region. <code>Fn::GetAZs</code> returns the list of AZs available in a given Region (or the Region the stack is being created in, if left blank), and <code>Fn::Select</code> picks a single item out of that list by a zero-based index.</p>
+
+  <pre><code>AvailabilityZone: !Select [0, !GetAZs '']</code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">A default-VPC nuance</div>
+    <code>Fn::GetAZs</code> doesn't quite return every AZ that exists in a Region — it returns AZs where the account's default VPC has a subnet. Normally that's the same thing as "every AZ," but if the default VPC has had subnets deleted from it, the list you get back can be incomplete. Worth knowing if the AZ list ever looks shorter than expected.
+  </div>
+
+  <h2>Fn::Join and Fn::Split: Strings and Lists</h2>
+  <p><code>Fn::Split</code> takes a single delimited string and turns it into a list; <code>Fn::Join</code> does the reverse, combining a list into one string using a delimiter. A common use is building a usable URL out of a protocol string and an instance's DNS name attribute:</p>
+
+  <pre><code>SiteUrl: !Join ['', ['https://', !GetAtt MyInstance.PublicDnsName]]</code></pre>
+
+  <h2>Fn::Base64 and Fn::Sub: Encoding and Substitution</h2>
+  <p>Plenty of AWS inputs — EC2 user data among them — must be Base64-encoded. <code>Fn::Base64</code> accepts plain text and outputs the Base64 form the target resource actually needs. <code>Fn::Sub</code> does variable substitution: write <code>${VariableName}</code> inside a string, and <code>Fn::Sub</code> replaces it with the runtime value of a parameter, a resource's main value, or a <code>Logical.Attribute</code> pair.</p>
+
+  <div class="callout">
+    <div class="callout-title">One restriction worth remembering</div>
+    A resource can't use <code>Fn::Sub</code> to reference its own attributes — an instance's user data can't substitute in that same instance's own instance ID, because the physical resource doesn't exist yet at the point the substitution would need to happen.
+  </div>
+
+  <h2>Fn::Cidr: Automatic Subnet Ranges</h2>
+  <p>Instead of manually carving up a VPC's CIDR range into subnet ranges by hand, <code>Fn::Cidr</code> takes a parent CIDR block, a count of ranges to generate, and the size of each range, then returns a list of CIDR blocks you can hand out with <code>Fn::Select</code>. It's limited to working within the parent VPC's range — it can't allocate or reclaim address space outside it — but for straightforward subnetting it removes a whole category of manual arithmetic.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Still to come</div>
+    Three more functions get their own dedicated coverage later in this module: <code>Fn::FindInMap</code> (next lesson, for <code>Mappings</code> lookups), <code>Fn::ImportValue</code> (cross-stack references), and <code>Fn::Transform</code> (template macros). Don't worry about them yet.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: three newer intrinsic functions</div>
+    Since this course was recorded, AWS added <code>Fn::ForEach</code>, <code>Fn::Length</code>, and <code>Fn::ToJsonString</code> as part of the <code>AWS::LanguageExtensions</code> transform (a template must opt in with that transform to use them). <code>Fn::ForEach</code> is a genuine loop construct — it repeats a fragment of a template once per item in a collection, which is a real capability gap the original function list didn't cover. <code>Fn::Length</code> returns the size of an array, and <code>Fn::ToJsonString</code> converts a template fragment into an escaped JSON string. None of them replace <code>Ref</code>, <code>Fn::GetAtt</code>, or the other functions above — they're additions, not corrections.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A template needs the public DNS name of an EC2 instance so it can build a URL. Which function retrieves that attribute?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Fn::GetAtt retrieves a secondary attribute — such as PublicDnsName — from a logical resource once it exists."> Fn::GetAtt, naming the resource and attribute</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Ref returns a resource's main value — for an EC2 instance that's the instance ID, not a secondary attribute like a DNS name."> Ref, applied to the instance's logical name</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Fn::Sub performs string substitution using values already available to it — it doesn't itself go and fetch a resource's attribute the way Fn::GetAtt does."> Fn::Sub, substituting the logical name</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Fn::Join combines a list of strings into one — it has no mechanism for retrieving a resource's runtime attribute in the first place."> Fn::Join, combining a static string list</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A template must place a subnet in an Availability Zone without hard-coding an AZ name, so it stays portable across Regions. Which pair of functions is designed for exactly this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fn::Join and Fn::Split handle string concatenation and splitting — they don't discover or select Availability Zones."> Fn::Join and Fn::Split</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fn::Base64 encodes text for things like user data, and Fn::Sub performs variable substitution — neither one enumerates or chooses an AZ."> Fn::Base64 and Fn::Sub</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fn::Cidr generates subnet address ranges from a parent CIDR block — it doesn't return or select an Availability Zone name."> Fn::Cidr and Ref together</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Fn::GetAZs returns the list of AZs available in a Region, and Fn::Select picks one out by index — together they avoid hard-coding an AZ name."> Fn::GetAZs and Fn::Select</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A template author wants to repeat a block of template fragment once for every item in a list of names, generating one resource per name. Which function, added after this course was recorded, is built for that?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fn::FindInMap performs a lookup in the Mappings section — it doesn't repeat a fragment across a collection of items."> Fn::FindInMap, using a nested map</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Fn::ForEach, added via the AWS::LanguageExtensions transform, repeats a template fragment once per item in a collection — a genuine loop construct the original function list didn't have."> Fn::ForEach, via LanguageExtensions</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fn::Cidr generates a list of subnet CIDR ranges from a parent block — it has no looping or repetition behavior over arbitrary items."> Fn::Cidr, applied to a parameter list</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fn::GetAZs only returns Availability Zones for a Region — it isn't a general-purpose loop over an arbitrary collection of names."> Fn::GetAZs, applied to the name list</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-template-and-pseudo-parameters.html">← Previous: Template and Pseudo Parameters</a>
+      <a href="0004-mappings.html">Next: Mappings →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

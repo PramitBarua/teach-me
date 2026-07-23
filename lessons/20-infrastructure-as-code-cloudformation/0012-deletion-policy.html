@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – Deletion Policy</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 12
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Deletion Policy</h1>
+    <p class="lesson-meta">Lesson 12 of 17 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-deletionpolicy.html" target="_blank">DeletionPolicy attribute</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-updatereplacepolicy.html" target="_blank">UpdateReplacePolicy attribute</a></p>
+  </div>
+
+  <p>When a logical resource is removed from a template and the stack is updated — or when the whole stack is deleted — CloudFormation's default behavior is to <strong>delete the corresponding physical resource</strong>. For some resource types that's harmless. For an RDS database or an EBS volume, it means real data loss. <strong>DeletionPolicy</strong> is the per-resource attribute that controls what actually happens.</p>
+
+  <h2>The Three Options</h2>
+  <dl>
+    <dt>Delete (default)</dt>
+    <dd>CloudFormation removes the physical resource when the logical resource is deleted. This is what happens if you set no policy at all.</dd>
+    <dt>Retain</dt>
+    <dd>CloudFormation leaves the physical resource in place. Set every resource in a stack to <code>Retain</code>, and deleting the whole stack removes nothing — every resource survives in the account.</dd>
+    <dt>Snapshot</dt>
+    <dd>Only available for a smaller subset of resource types — EBS volumes, ElastiCache, Neptune, RDS, and Redshift. Before deleting the physical resource, CloudFormation takes a snapshot of it first.</dd>
+  </dl>
+
+  <pre><code>Resources:
+  AppDatabase:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      # ...</code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">Snapshots outlive the stack — and cost money</div>
+    A snapshot taken under a <code>Snapshot</code> deletion policy is not deleted when the stack is deleted, or ever cleaned up automatically. It's your responsibility to manage and eventually remove it, and until you do, it keeps incurring storage cost. Also remember: <code>Snapshot</code> is <strong>not supported for EC2 instances</strong> — only for the resource types listed above.
+  </div>
+
+  <h2>The Gap: Replacement Is Not Deletion</h2>
+  <p>DeletionPolicy only fires on <strong>deletion-style operations</strong> — removing a logical resource and updating the stack, or deleting the stack outright. But some property changes cause CloudFormation to <strong>replace</strong> a resource: it creates a new physical resource, repoints dependents at it, and then deletes the old one — effectively a delete-and-recreate. DeletionPolicy does <strong>not</strong> apply to that old resource during a replacement, so a subtle template change can quietly destroy data that a DeletionPolicy of Retain or Snapshot would otherwise have protected.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale-vs-current: that gap now has a fix</div>
+    AWS has since added <strong>UpdateReplacePolicy</strong>, an attribute that sits alongside <code>DeletionPolicy</code> on a resource and applies specifically to the old physical resource during a <strong>replacement update</strong> — the exact gap the transcript describes as unhandled. It accepts the same style of values (<code>Retain</code>, and <code>Snapshot</code> for resources that support it), letting you protect a resource from an update-triggered replacement the same way DeletionPolicy protects it from an outright deletion. For the exam, know both attributes exist and cover two distinct triggers: DeletionPolicy for delete operations, UpdateReplacePolicy for replacement operations.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EBS volume has no DeletionPolicy set. Its logical resource is removed from the template, and the stack is updated. What happens to the physical volume?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Retain is not the default — it must be explicitly specified. With no DeletionPolicy set, the resource is deleted."> It is retained automatically, since EBS volumes are always kept</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Snapshot is not the default behavior — it must be explicitly set, and only applies to a supported subset of resource types."> A snapshot is taken automatically before deletion</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Delete is the default DeletionPolicy — with nothing specified, CloudFormation deletes the physical volume."> It is deleted, since Delete is the default policy</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Resource removal followed by a stack update is exactly the deletion-style operation DeletionPolicy governs — it does not fail."> The stack update fails until a policy is explicitly set</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An RDS instance has DeletionPolicy set to Retain, but a template change requires a property that forces replacement of that instance. What happens to the original database?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DeletionPolicy does not apply to replacement operations at all — Retain gives no protection here on its own."> It is retained, because Retain always protects the resource, no matter what</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. DeletionPolicy applies only to delete-style operations. A replacement deletes the old physical resource after creating the new one, and DeletionPolicy alone does not prevent that — UpdateReplacePolicy is needed to cover this case."> It can still be deleted — Retain doesn't cover replacement</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A snapshot is not taken automatically here — Retain does not imply Snapshot, and neither applies to replacement without UpdateReplacePolicy."> A snapshot is taken automatically instead of a deletion</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFormation does not block replacement updates due to a DeletionPolicy setting — the update proceeds and the old resource is replaced."> The update is blocked entirely until DeletionPolicy is removed</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which resource type can NOT use a DeletionPolicy of Snapshot?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="RDS instances are explicitly one of the supported types for the Snapshot deletion policy."> AWS::RDS::DBInstance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="EBS volumes are explicitly one of the supported types for the Snapshot deletion policy."> AWS::EC2::Volume</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Snapshot is explicitly not supported for EC2 instances — only for a specific set of stateful storage and database resource types."> AWS::EC2::Instance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Redshift clusters are explicitly one of the supported types for the Snapshot deletion policy."> AWS::Redshift::Cluster</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-stack-sets.html">← Previous: Stack Sets</a>
+      <a href="0013-stack-roles.html">Next: Stack Roles →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

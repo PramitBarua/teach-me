@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – Physical and Logical Resources</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 01
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Physical and Logical Resources</h1>
+    <p class="lesson-meta">Lesson 01 of 17 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html" target="_blank">CloudFormation template sections</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html" target="_blank">CloudFormation template Resources syntax</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/generate-IaC.html" target="_blank">Generate templates from existing resources with IaC generator</a></p>
+  </div>
+
+  <p><strong>CloudFormation</strong> is AWS's native infrastructure-as-code product. Everything it does starts from a <strong>template</strong> — a document written in YAML or JSON — and everything it manages comes down to two related but distinct ideas: <strong>logical resources</strong> and <strong>physical resources</strong>. Get comfortable with the difference between the two, and the rest of CloudFormation's behavior falls into place.</p>
+
+  <h2>Logical Resources: The What, Not the How</h2>
+  <p>A logical resource is defined inside a template and represents <strong>what you want</strong> — an EC2 instance, an S3 bucket, a VPC — without you having to script <strong>how</strong> it gets built. You give it a logical name (unique within the template), a <code>Type</code> such as <code>AWS::EC2::Instance</code>, and a set of properties CloudFormation uses to configure the eventual real-world resource.</p>
+
+  <pre><code>Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0abcdef1234567890
+      InstanceType: t3.micro
+      KeyName: my-ssh-key</code></pre>
+
+  <p>Here, <code>MyInstance</code> is the logical name; everything below it describes intent, not mechanics. A template can contain one logical resource or hundreds, and the same template can be reused to create one stack, ten stacks, or the same stack repeated across many accounts and Regions. A template written this way — with no hard-coded, environment-specific values — is called a <strong>portable template</strong>, and portability is one of CloudFormation's central design goals.</p>
+
+  <h2>Stacks Turn Logical into Physical</h2>
+  <p>A <strong>stack</strong> is what you get when you hand a template to CloudFormation and ask it to act. For every logical resource in the template, the stack creates a matching <strong>physical resource</strong> — an actual EC2 instance with a real instance ID, an actual S3 bucket that exists in your account. The logical resource is the blueprint; the physical resource is the built thing.</p>
+
+  <div class="callout">
+    <div class="callout-title">Keeping the two in sync</div>
+    A stack's entire job is to keep logical and physical resources synchronized. Update the template and update the stack, and CloudFormation diffs the logical resources, then adds, modifies, or deletes the matching physical resources to match. Delete the stack, and its logical resources disappear, taking their physical counterparts with them.
+  </div>
+
+  <p>Once a logical resource reaches a <strong>create complete</strong> state — meaning its physical resource now exists — other logical resources in the same template can reference it. A subnet's logical resource might reference the physical ID of a VPC's logical resource, for example, so that the subnet is created inside the correct VPC. This referencing is what lets templates describe genuinely interconnected infrastructure rather than a pile of unrelated resources.</p>
+
+  <h2>Why This Distinction Matters</h2>
+  <p>Because CloudFormation deals in logical resources within a template but produces and manages physical resources through a stack, you get a clean separation: you author intent once, and CloudFormation repeatedly and reliably turns that intent into real infrastructure — one deployment, a hundred deployments, or a change-managed, peer-reviewed template stored in a source repository before it's ever applied.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: templates can now also come <em>from</em> resources</div>
+    The transcript (and this lesson) describes a one-way flow: template → stack → physical resources. Since the course was recorded, AWS shipped the <strong>IaC generator</strong>, which runs the process in reverse — it scans resources already sitting in your account that CloudFormation didn't create, and generates a matching template you can then import into a new or existing stack. It's a genuinely useful tool for bringing manually-created resources under CloudFormation management, but it doesn't change anything about how the physical/logical relationship works once a stack owns the resource — the core model in this lesson still holds.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Within a CloudFormation template, what does a logical resource actually represent?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A logical resource has no physical ID of its own — the physical ID belongs to the real-world resource a stack creates from it."> The physical ID assigned after creation</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Only one CloudFormation stack corresponds to a given deployment of a template; a single logical resource doesn't fan out into several stacks."> A separate stack created per resource type</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. A logical resource declares the what — a name, a type, and properties — while CloudFormation figures out the how when a stack creates the matching physical resource."> The desired resource and its configuration</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Region selection happens at stack creation time and isn't something a logical resource declaration fixes on its own."> The Region the stack must deploy into</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A CloudFormation stack's template is updated with new property values, and the stack is then updated. What happens to the physical resources?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. CloudFormation's job is to keep physical resources in sync with the logical resources in the template, changing, adding, or removing physical resources as the update requires."> CloudFormation updates them to match the template</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Physical resources aren't deleted and rebuilt from scratch on every update — CloudFormation reconciles them with the new logical resources, which for many properties means an in-place modification rather than a replacement."> They are deleted and rebuilt from nothing</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Templates aren't purely informational after creation — updating a stack does propagate template changes to the physical resources it manages."> They remain unchanged until the stack is deleted</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A template update on its own, without an accompanying stack update, has no effect — CloudFormation only reconciles physical resources when the stack itself is updated."> Nothing changes without creating a new stack</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. You have several EC2 instances that were launched manually in the console, and you now want CloudFormation to manage them going forward. What current CloudFormation capability directly supports this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Pseudo parameters supply runtime values like account ID or Region — they have nothing to do with bringing existing, unmanaged resources under CloudFormation."> Referencing the instances with pseudo parameters</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Fn::FindInMap performs a lookup within a template's own Mappings section — it has no role in discovering or importing unmanaged resources."> Adding an Fn::FindInMap lookup to the template</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Deleting and recreating the instances would cause downtime and lose their existing state — it isn't how CloudFormation brings unmanaged resources under management."> Deleting the instances and recreating them</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The IaC generator scans existing resources not created by CloudFormation and produces a template for them, which you can then import into a stack — this is the reverse-direction capability the course transcript predates."> Scanning the account with the IaC generator</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-template-and-pseudo-parameters.html">Next: Template and Pseudo Parameters →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

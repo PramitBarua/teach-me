@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Nested Stacks</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 09
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Nested Stacks</h1>
+    <p class="lesson-meta">Lesson 09 of 17 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html" target="_blank">Working with nested stacks</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudformation-stack.html" target="_blank">AWS::CloudFormation::Stack reference</a></p>
+  </div>
+
+  <p>A single CloudFormation stack is <strong>isolated</strong> — every resource inside it is created, updated, and eventually deleted together, as one unit sharing a single lifecycle. That's fine for simple projects, but two limits push complex, professional-grade deployments toward using <strong>multiple stacks</strong> instead: a hard cap of <strong>500 resources per stack</strong>, and the fact that a stack's resources can't be referenced from any other stack — <code>Ref</code> only works within the stack that defines the resource.</p>
+
+  <p>There are two architectural patterns for splitting work across multiple stacks: <strong>nested stacks</strong> (this lesson) and <strong>cross-stack references</strong> (next lesson). Choosing correctly between them is one of the more testable distinctions in the CloudFormation part of the exam.</p>
+
+  <h2>Root Stacks and Parent Stacks</h2>
+  <p>A <strong>root stack</strong> is the one stack in a nested architecture that a human or an automation process creates directly — through the console, the CLI, or a pipeline. Every other stack in the structure gets created indirectly, by another stack. Any stack that creates further nested stacks beneath it is called a <strong>parent stack</strong> — so a root stack is usually also a parent stack, and in deep architectures, a nested stack can itself be a parent to further nested stacks below it.</p>
+
+  <h2>A Stack as a Logical Resource</h2>
+  <p>Inside a template, you're used to logical resources like an S3 bucket or a VPC. CloudFormation also lets a <strong>stack itself</strong> be a logical resource, using the type <code>AWS::CloudFormation::Stack</code>. It points at a <code>TemplateURL</code> — the location of the child template — and supplies whatever <code>Parameters</code> that child template requires (every parameter needs a value unless the child template defines a default).</p>
+
+  <pre><code>Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://someurl.com/template.yaml
+      Parameters:
+        Param1: value-one
+        Param2: value-two
+        Param3: value-three</code></pre>
+
+  <p>Once <code>VPCStack</code> finishes creating, its outputs become readable from the parent using <code>!GetAtt VPCStack.Outputs.OutputName</code>. That's the <em>only</em> way a parent can reach into a nested stack — you can read its declared outputs, but you can never reference an individual logical resource buried inside it directly.</p>
+
+  <h2>Chaining Nested Stacks Together</h2>
+  <p>A parent stack can hold several nested-stack resources, and later ones can depend on earlier ones — either because CloudFormation infers the dependency (one nested stack's parameters reference another's outputs) or because you set <code>DependsOn</code> explicitly. A typical chain: a <code>VPCStack</code> creates networking, an <code>ADStack</code> depends on it for a VPC ID to run Active Directory in, and an <code>AppStack</code> depends on <code>ADStack</code> for authentication. Outputs flow upward and sideways: the root stack collects each nested stack's outputs and feeds them in as parameters to the next.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Flagged in the course diagrams as exam-critical</div>
+    The single decision point between nested stacks and cross-stack references comes down to one question: <strong>are you reusing a template, or reusing an actual resource?</strong> Nested stacks let you reuse a <strong>template</strong> — upload a VPC template once, and every nested stack that points at it gets its <strong>own separate, physical VPC</strong>. Nothing is shared; the code is reused, the resource is not. That's why nested stacks are the right choice only when everything in the structure is <strong>lifecycle-linked</strong> — created together, updated together, and deleted together as one solution. If you ever need multiple consumers sharing the <em>same</em> physical resource, or parts of the architecture need independent lifecycles, nested stacks are the wrong tool — that's what cross-stack references solve, covered next.
+  </div>
+
+  <h2>When to Reach for Nested Stacks</h2>
+  <ul>
+    <li>To get past the 500-resources-per-stack limit — five nested stacks give you room for 2,500 resources.</li>
+    <li>To modularize templates you plan to reuse structurally, such as a standard VPC template deployed across many projects.</li>
+    <li>To simplify large deployments — applying one root stack lets CloudFormation orchestrate every nested stack beneath it automatically.</li>
+  </ul>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A team uploads a single VPC template and uses it as a nested stack inside five different root stacks, each for a different client project. What happens to the VPC resource?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Nested stacks don't share physical resources across parents — each nested stack resource creates its own independent stack from the template."> All five projects share one single physical VPC created once</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Nested stacks reuse the template, not the resource — each of the five root stacks gets its own distinct, physical VPC from its own copy of the nested stack."> Each project gets its own distinct, physical VPC</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Nested stacks don't require manual exports and imports between parents — that pattern belongs to cross-stack references, not nested stacks."> The VPC is exported and manually imported into each project</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A nested stack is created once per AWS::CloudFormation::Stack resource that references it — it doesn't fail on reuse."> Stack creation fails because the template is already in use</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Within a root stack's template, how does a parent stack read a value produced by one of its nested stacks?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Ref only resolves logical resources defined in the same template — a nested stack's internal resources aren't visible to Ref from the parent."> Using Ref against the nested resource's logical ID directly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A parent reads a nested stack's declared output using GetAtt in the form NestedStackLogicalId.Outputs.OutputName."> Using GetAtt against NestedStackName.Outputs.OutputName</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fn::ImportValue reads values from the region-wide exports list used by cross-stack references, not outputs of a nested stack owned by the same parent."> Using Fn::ImportValue against an exported name</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Nested stack outputs aren't published to Parameter Store automatically — there's no such implicit integration."> Reading the value from SSM Parameter Store automatically</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Which scenario is the best fit for nested stacks rather than cross-stack references?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Sharing one long-lived VPC across many short-lived consumer stacks is the textbook case for cross-stack references, not nested stacks."> A shared, long-lived VPC consumed by many independent, short-lived app stacks</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A VPC, its Active Directory, and its application are all part of one solution with a single shared lifecycle — exactly the case nested stacks are designed for."> A VPC, an Active Directory, and an app that share one single lifecycle</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Reusing a single physical resource across services with independent lifecycles is the cross-stack reference use case, not nested stacks."> A single security group reused by several unrelated, independently-lived services</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Frequent, isolated changes to just one part of an architecture argue for separating that part into its own stack and using cross-stack references, not bundling it into a nested structure."> A component expected to change often while everything else stays completely untouched</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-wait-conditions-and-cfn-signal.html">← Previous: Wait Conditions and cfn-signal</a>
+      <a href="0010-cross-stack-references.html">Next: Cross-Stack References →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

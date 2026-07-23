@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – Template and Pseudo Parameters</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 02
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Template and Pseudo Parameters</h1>
+    <p class="lesson-meta">Lesson 02 of 17 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html" target="_blank">CloudFormation template Parameters syntax</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html" target="_blank">Get AWS values using pseudo parameters</a></p>
+  </div>
+
+  <p>Lesson 01 established that a template's logical resources describe what to build. But not everything a template needs can be baked in as a static value — some information should come from whoever (or whatever) is creating the stack, and some should come from AWS itself. That's the job of <strong>template parameters</strong> and <strong>pseudo parameters</strong>.</p>
+
+  <h2>Template Parameters: Input from a Human or a Process</h2>
+  <p>A template parameter is declared in a template's <code>Parameters</code> section, alongside <code>Resources</code>. When someone creates or updates a stack — via the console, CLI, or API — they supply a value for each parameter, or accept a default if one exists. Logical resources elsewhere in the template can then reference that parameter's value, letting a single template adapt to different situations: different instance sizes, different environments, different AMIs.</p>
+
+  <pre><code>Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues: [t3.micro, t3.small, t3.medium]
+    Description: Size of the web server instance</code></pre>
+
+  <p>Each parameter can carry several kinds of configuration:</p>
+  <dl>
+    <dt>Default</dt>
+    <dd>The value used automatically if nothing else is supplied.</dd>
+    <dt>AllowedValues</dt>
+    <dd>A restricted list of valid inputs — useful for constraining instance types or environment names.</dd>
+    <dt>Restrictions</dt>
+    <dd>Minimum/maximum length or an allowed pattern, for validating free-text input.</dd>
+    <dt>NoEcho</dt>
+    <dd>Hides the input as it's typed — the standard choice for passwords.</dd>
+    <dt>Type</dt>
+    <dd>Simple types like <code>String</code>, <code>Number</code>, or <code>List</code>, plus AWS-specific types that can populate a live list of VPCs or subnets straight from the console.</dd>
+  </dl>
+
+  <h2>Pseudo Parameters: Input from AWS Itself</h2>
+  <p>Pseudo parameters look and behave like template parameters — you reference them the same way — but nobody supplies their value. AWS injects them automatically, and they exist even if you never declare them in the <code>Parameters</code> section.</p>
+
+  <ul>
+    <li><code>AWS::Region</code> — the Region the stack is being created in</li>
+    <li><code>AWS::StackName</code> — the name of the stack</li>
+    <li><code>AWS::StackId</code> — the stack's unique ID</li>
+    <li><code>AWS::AccountId</code> — the account the stack belongs to</li>
+  </ul>
+
+  <p>Because <code>AWS::Region</code> always resolves to wherever the stack is actually being deployed, a template that references it never needs a hard-coded Region — the same template stays portable across every Region it's applied in.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Template vs. pseudo parameters aren't mutually exclusive</div>
+    A template routinely uses both kinds side by side — a template parameter for the environment name, a pseudo parameter for the account ID used inside an IAM policy ARN. The distinction is only about <em>who supplies the value</em>: a human or process for template parameters, AWS itself for pseudo parameters.
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Best practice: minimize required input</div>
+    Every parameter that demands explicit input from a human is one more thing that can be entered wrong. Favor sensible defaults, and favor pseudo parameters over template parameters wherever AWS can supply the value itself — it's one less decision left to whoever runs the stack.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A parameter needs to accept a database password without echoing the characters back to the console as they're typed. Which parameter setting achieves this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AllowedValues restricts input to a fixed list of options — it doesn't hide characters as they're typed, and a password isn't a fixed list anyway."> AllowedValues restricted to a short list</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Default only supplies a fallback value when nothing is entered — it has no effect on whether typed input is displayed."> Default left blank on the parameter</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Type controls what kind of value is accepted (String, Number, and so on) — it doesn't control whether the input is visible while typing."> Type set to Number instead of String</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. NoEcho is the setting built specifically to hide sensitive input, such as passwords, as it's entered."> NoEcho set to true on the parameter</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Which of these is a pseudo parameter rather than a template parameter?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EnvironmentName is a made-up example of a value a human would supply at stack creation — that's exactly what a template parameter is for, not a pseudo parameter."> EnvironmentName, chosen from Dev or Prod</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. AWS::AccountId is supplied automatically by AWS — nobody enters it, and it exists whether or not you declare it in the template."> AWS::AccountId, supplied by AWS itself</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="InstanceSize is a hypothetical parameter a human would choose from a dropdown of sizes at stack creation time — that's a template parameter, supplied externally."> InstanceSize, chosen from a size dropdown</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DBPassword, entered with NoEcho enabled, is still supplied by a human at stack creation — it's a template parameter, just one with hidden input."> DBPassword, entered with NoEcho enabled</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Why does referencing AWS::Region instead of hard-coding a Region name help template portability?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. AWS::Region always resolves to wherever the stack is actually being created, so the same unmodified template behaves correctly no matter which Region it's applied in."> It resolves automatically to the stack's Region</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS::Region isn't validated against AllowedValues at all — it's a pseudo parameter supplied by AWS, not a declared template parameter with restrictions."> It restricts values to an AllowedValues list</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Pseudo parameters aren't tied to NoEcho behavior — that setting only applies to declared template parameters, and has nothing to do with Region portability."> It hides the Region name using NoEcho</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS::Region has nothing to do with S3 replication — it's a pseudo parameter that resolves to the stack's deployment Region, not a storage feature."> It triggers cross-Region S3 replication</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-physical-and-logical-resources.html">← Previous: Physical and Logical Resources</a>
+      <a href="0003-intrinsic-functions.html">Next: Intrinsic Functions →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

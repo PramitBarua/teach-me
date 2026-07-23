@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – DependsOn</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 07
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>DependsOn</h1>
+    <p class="lesson-meta">Lesson 07 of 17 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-dependson.html" target="_blank">DependsOn attribute</a></p>
+  </div>
+
+  <p>When CloudFormation creates, updates, or deletes the resources in a stack, it tries to be efficient — doing as much as possible <strong>in parallel</strong>. To do that safely, it also tries to work out a dependency order automatically. <code>DependsOn</code> is how you step in and state that order explicitly, for the cases where CloudFormation's automatic guess isn't enough.</p>
+
+  <h2>Implicit Dependencies (the 99% case)</h2>
+  <p>Most of the time, you never need <code>DependsOn</code> at all. If one logical resource's properties reference another — via <code>!Ref</code>, <code>!GetAtt</code>, or <code>!Sub</code> — CloudFormation infers an <strong>implicit dependency</strong>: it can't resolve that reference until the referenced resource is in a create-complete state, so it creates the referenced resource first automatically. An EC2 instance whose user data references an Aurora cluster's endpoint, for example, waits for that cluster without you writing anything special.</p>
+
+  <h2>When Implicit Isn't Enough: the Gateway Attachment Problem</h2>
+  <p>Consider a VPC and an Internet Gateway declared side by side in a template. Neither references the other — you can create an Internet Gateway with no VPC, and a VPC with no Internet Gateway — so CloudFormation sees no dependency between them at all.</p>
+
+  <p>Now add a <code>VPCGatewayAttachment</code>, which references both the VPC and the gateway. CloudFormation correctly infers that the attachment depends on both. But here's the catch: some other resources — most notably an <strong>Elastic IP</strong> associated with an instance in that VPC — actually require the gateway to be <em>attached</em> before they can be created, yet nothing in the EIP's own properties references the attachment resource. There's no <code>!Ref</code> to latch onto, so CloudFormation has no way to infer that dependency on its own.</p>
+
+  <p>Without an explicit dependency, whether the stack succeeds comes down to the random order CloudFormation happens to pick: create the EIP before the attachment exists, and you get an error. Delete the attachment before the EIP, and you get an error there too.</p>
+
+  <pre><code>Resources:
+  GatewayToInternet:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  MyEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: GatewayToInternet
+    Properties:
+      Domain: vpc</code></pre>
+
+  <p>With <code>DependsOn: GatewayToInternet</code> added, CloudFormation will only create <code>MyEIP</code> once <code>GatewayToInternet</code> reaches create-complete — and on deletion, it reverses that order, removing <code>MyEIP</code> before the attachment. <code>DependsOn</code> takes either a single resource name, as above, or a list of names when a resource needs several explicit dependencies at once.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam-favorite scenario</div>
+    "Elastic IP creation randomly fails, or stack deletion randomly fails" is one of the most recognizable <code>DependsOn</code> patterns on the exam. Whenever a resource requires an attached Internet Gateway (or other gateway) but has nothing in its own properties that references the attachment, that's the signal to add an explicit <code>DependsOn</code>.
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">It isn't only about gateways</div>
+    AWS's own reference broadens this same pattern beyond Elastic IPs: any of an Auto Scaling group, an EC2 instance, a load balancer, an RDS instance, or a VPC route that includes the Internet Gateway can hit the identical problem when it has a public IP address in a VPC whose gateway attachment isn't otherwise referenced. The underlying cause, and the fix, are exactly the same in every case.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A template's Subnet resource references its VPC's logical ID via !Ref in its properties. What determines the creation order between them?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An explicit DependsOn attribute isn't required here — the !Ref reference alone is enough for CloudFormation to infer the correct order."> Nothing; an explicit DependsOn attribute is mandatory here</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The !Ref reference in the Subnet's properties creates an implicit dependency, so CloudFormation automatically creates the VPC first."> The !Ref reference creates an implicit dependency automatically</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFormation doesn't create resources in random order when a reference exists — the reference itself is what establishes the required sequencing."> Creation order is left entirely random whenever no DependsOn is present</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Subnets and VPCs are created together within the same stack in the normal case — a nested stack isn't required for this ordering to work."> The Subnet must live in a separately nested stack</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An Elastic IP resource's properties don't reference a VPCGatewayAttachment resource anywhere, yet the EIP needs that attachment to exist first. What's the correct fix?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Reordering resources in the YAML file has no effect on creation sequence — CloudFormation doesn't process a template top to bottom."> Move the EIP resource block above the attachment in the file</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Removing the Internet Gateway doesn't solve the ordering problem — it would just remove a resource the EIP's networking may still need."> Delete the InternetGateway resource from the template entirely</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Since nothing in the EIP's properties references the attachment, an explicit DependsOn attribute is the only way to establish the required ordering."> Add an explicit DependsOn attribute on the EIP resource</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A Condition key controls whether a resource is created at all, based on true/false logic — it has no role in sequencing resource creation order."> Add a Condition key referencing the attachment's logical ID</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A resource has DependsOn set to a list of two other resources rather than a single name. What does this configure?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. DependsOn accepts a single resource name or a list of names, and when a list is given, the resource depends on every entry in it."> The resource depends on both listed resources being complete first</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DependsOn does not average or randomly pick one dependency from a list — every listed resource is treated as a required dependency."> CloudFormation picks one of the two dependencies at random</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A list under DependsOn doesn't create two duplicate copies of the resource — it's still one logical resource with two prerequisites."> Two separate copies of the resource are created in parallel</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DependsOn governs resource creation ordering, not template validation rules — a list of two entries isn't a syntax error."> The template fails CloudFormation's own validation, since only a single name is ever allowed</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-cloudformation-conditions.html">← Previous: CloudFormation Conditions</a>
+      <a href="0008-wait-conditions-and-cfn-signal.html">Next: Wait Conditions and cfn-signal →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

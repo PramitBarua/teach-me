@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – Cross-Stack References</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 10
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Cross-Stack References</h1>
+    <p class="lesson-meta">Lesson 10 of 17 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/walkthrough-crossstackref.html" target="_blank">Refer to resource outputs in another stack</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-importvalue.html" target="_blank">Fn::ImportValue reference</a></p>
+  </div>
+
+  <p>The previous lesson's nested stacks solve reuse of a <strong>template</strong> — but every reuse creates a brand-new, separate physical resource. Sometimes that's the wrong outcome. Imagine a well-secured, shared VPC that many short-lived application stacks need to plug into — you don't want ten copies of that VPC, you want all ten stacks using the <em>same one</em>. That's the job of <strong>cross-stack references</strong>.</p>
+
+  <h2>Export an Output</h2>
+  <p>Stacks are isolated by design — one stack's <code>Ref</code> can't reach into another. To bridge that gap, a stack can <strong>export</strong> one of its outputs, publishing it to a list of exports maintained per Region, per account. The export name has to be unique within that list.</p>
+
+  <pre><code>Outputs:
+  SharedVpcId:
+    Value: !Ref SharedVPC
+    Export:
+      Name: SharedVpcId</code></pre>
+
+  <h2>Import with Fn::ImportValue</h2>
+  <p>Any other stack in the <strong>same Region, same account</strong> can then pull that value in using <code>Fn::ImportValue</code> — it replaces <code>Ref</code> exactly where you'd normally reference a local resource, only this time the value comes from the account-wide exports list rather than the local template.</p>
+
+  <pre><code>Resources:
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      SubnetId: !ImportValue SharedSubnetId</code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">Region and account scope only</div>
+    Exports and <code>Fn::ImportValue</code> only work <strong>within one Region of one account</strong> — there is no cross-Region or cross-account version of this mechanism. AWS's current documentation also confirms a practical guardrail worth remembering for the exam: <strong>you can't delete a stack while another stack still imports one of its exported outputs</strong> — the importing stack must stop referencing it first.
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Flagged in the course diagrams as exam-critical</div>
+    This is the same decision point introduced in the nested stacks lesson, viewed from the other side. Cross-stack references let you reuse an actual <strong>resource</strong> — the same physical VPC, the same subnets — across stacks with genuinely <strong>independent, service-oriented lifecycles</strong>. Contrast that with nested stacks, which reuse a <strong>template</strong> and always produce a fresh physical copy. Choose cross-stack references when the shared component has a long lifecycle while its consumers churn independently and shorter-lived — for example, a shared VPC that many short-lived CI/CD test-and-teardown application stacks plug into. Choose nested stacks only when everything is lifecycle-linked as one solution. Getting this backwards in a real deployment — or on the exam — produces a design that doesn't hold up.
+  </div>
+
+  <h2>When to Reach for Cross-Stack References</h2>
+  <ul>
+    <li>Service-oriented architectures, where one stack provides a service (like networking) consumed by several others.</li>
+    <li>A churn of short-lived stacks that all need to consume from one long-lived shared resource, such as a shared VPC.</li>
+    <li>Anywhere you need to reuse the actual resource a stack created, not just the template that created it.</li>
+  </ul>
+
+  <p>Remember: a <strong>template</strong> is not a stack. A template can be used to create many stacks (nested stacks), or a single stack's actual resources can be shared with many consumers (cross-stack references). Confusing the two is the most common mistake in this part of the exam.</p>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A shared-services VPC stack needs to make its subnet IDs available to several other stacks in the same account and Region. What must the VPC stack's template do first?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Ref only resolves references within the same template — it cannot be used from a separate consumer stack."> Add a Ref to each subnet inside the consumer stacks directly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The VPC stack must declare the subnet IDs as outputs and export them, adding them to the account and Region's exports list before any other stack can import them."> Declare the subnet IDs as outputs and export them by name</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Nested stacks aren't required here — cross-stack references work between independent, non-nested stacks."> Convert the consumer stacks into nested stacks of the VPC stack</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="StackSets deploy the same template across many accounts and Regions — they don't share a single resource between separate stacks in one account."> Deploy the VPC using a StackSet targeting each consumer account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An engineer tries to use Fn::ImportValue in a stack in eu-west-2 to pull an exported value from a stack running in us-east-1 in the same account. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cross-Region imports are not supported — this will not succeed regardless of account permissions."> It succeeds, since both stacks belong to the same AWS account</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Exports lists are maintained per Region per account — Fn::ImportValue cannot reach across Regions, only within the same Region of the same account."> It fails, since exports never cross a Region boundary</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="No such replication feature exists for the exports list — it stays scoped to the Region where the export was created."> It succeeds once CloudFormation automatically replicates the export</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Nested stacks are unrelated to this import — the failure is about Region scope, not stack nesting."> It fails only because the two stacks aren't nested under a shared root</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A CI/CD pipeline spins up a short-lived application stack for every commit, and each one needs to reuse the same long-running shared VPC and NAT gateways to save cost. Which architecture fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Nested stacks would recreate a brand-new VPC for every commit's application stack, defeating the goal of reusing the same shared infrastructure."> A nested stack architecture with the VPC template nested under each app stack</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The VPC has a long, independent lifecycle while application stacks are short-lived and numerous — exporting the VPC's outputs and importing them into each app stack is exactly this scenario."> A standalone VPC stack that exports its outputs for each app stack to import</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A single monolithic stack would tie the VPC's lifecycle to every short-lived commit-triggered deployment, forcing full recreation or fragile updates on every commit."> One single stack containing the VPC and every application deployment</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="StackSets replicate a template across many accounts or Regions — this scenario is single-account, single-Region resource sharing, which StackSets don't address."> A StackSet deploying the VPC template to a new account per commit</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-nested-stacks.html">← Previous: Nested Stacks</a>
+      <a href="0011-stack-sets.html">Next: Stack Sets →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

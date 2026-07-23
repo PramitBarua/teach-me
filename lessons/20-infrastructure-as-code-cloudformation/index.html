@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Infrastructure as Code (CloudFormation) – Module Index</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Modules › Infrastructure as Code (CloudFormation)</div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Infrastructure as Code (CloudFormation)</h1>
+    <p class="lesson-meta">17 lessons · ~133 min total</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html" target="_blank">AWS CloudFormation User Guide</a></p>
+  </div>
+
+  <p>This module covers CloudFormation end to end: the physical/logical resource model that underpins everything else, the portability toolkit (parameters, pseudo parameters, intrinsic functions, mappings), the template features that control what gets built and when (outputs, conditions, DependsOn, wait conditions/CreationPolicy), the two multi-stack architectures the exam loves to contrast (nested stacks vs. cross-stack references), account/region-scale deployment (StackSets), safety mechanisms for production use (deletion policies, stack roles, change sets), and the two ways to extend CloudFormation beyond its native reach (cfn-init/cfn-hup for EC2 configuration, custom resources for everything else).</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lesson</th>
+        <th>Key idea</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><a href="0001-physical-and-logical-resources.html">Physical and Logical Resources</a></td><td>Template → stack → physical resource pipeline; logical resources are the "what," CloudFormation handles the "how"</td></tr>
+      <tr><td>02</td><td><a href="0002-template-and-pseudo-parameters.html">Template and Pseudo Parameters</a></td><td>Human/process-supplied input (template parameters) vs. AWS-injected input (pseudo parameters like <code>AWS::Region</code>) — both drive portability</td></tr>
+      <tr><td>03</td><td><a href="0003-intrinsic-functions.html">Intrinsic Functions</a></td><td><code>Ref</code>/<code>Fn::GetAtt</code>, <code>Fn::GetAZs</code>/<code>Fn::Select</code>, <code>Fn::Join</code>/<code>Fn::Split</code>, <code>Fn::Base64</code>/<code>Fn::Sub</code>, <code>Fn::Cidr</code> — runtime data access that makes templates portable</td></tr>
+      <tr><td>04</td><td><a href="0004-mappings.html">Mappings</a></td><td>Static key-value lookup tables (e.g. region → AMI ID) queried via <code>Fn::FindInMap</code></td></tr>
+      <tr><td>05</td><td><a href="0005-cloudformation-outputs.html">CloudFormation Outputs</a></td><td>Optional, visible from CLI/console, returned to parent stacks when nested, and exportable for cross-stack references</td></tr>
+      <tr><td>06</td><td><a href="0006-cloudformation-conditions.html">CloudFormation Conditions</a></td><td>Evaluated before resources; a resource with a false condition simply isn't created — the dev/prod and multi-AZ-count exam patterns</td></tr>
+      <tr><td>07</td><td><a href="0007-cloudformation-dependson.html">DependsOn</a></td><td>CloudFormation infers dependencies from references, but the Elastic IP ↔ Internet Gateway Attachment gap needs an explicit <code>DependsOn</code></td></tr>
+      <tr><td>08</td><td><a href="0008-wait-conditions-and-cfn-signal.html">Wait Conditions and cfn-signal</a></td><td>Bootstrapping finishing ≠ EC2 reporting complete; CreationPolicy (preferred, resource-attached) vs. WaitCondition (standalone, external-system-friendly)</td></tr>
+      <tr><td>09</td><td><a href="0009-nested-stacks.html">Nested Stacks</a></td><td>Reuse the <strong>template</strong>, not the resource — every reuse creates a fresh physical copy; use when everything is lifecycle-linked</td></tr>
+      <tr><td>10</td><td><a href="0010-cross-stack-references.html">Cross-Stack References</a></td><td>Reuse the actual <strong>resource</strong> via Export + <code>Fn::ImportValue</code>; use for shared services with independent lifecycles, same region/account only</td></tr>
+      <tr><td>11</td><td><a href="0011-stack-sets.html">Stack Sets</a></td><td>Admin account → stack instances → stacks across many target accounts/regions; concurrent-accounts and failure-tolerance control the rollout</td></tr>
+      <tr><td>12</td><td><a href="0012-deletion-policy.html">Deletion Policy</a></td><td>Delete (default) / Retain / Snapshot (EBS, ElastiCache, Neptune, RDS, Redshift only) — applies to deletions only, never to replacement</td></tr>
+      <tr><td>13</td><td><a href="0013-stack-roles.html">Stack Roles</a></td><td>Role separation: an identity can create/update a stack via a passed role without ever holding the underlying resource permissions itself</td></tr>
+      <tr><td>14</td><td><a href="0014-cloudformation-init.html">CloudFormation Init (cfn-init)</a></td><td>Desired-state, idempotent, cross-platform alternative to procedural user data; config keys bundled into config sets</td></tr>
+      <tr><td>15</td><td><a href="0015-cfn-hup.html">cfn-hup</a></td><td>cfn-init only runs once — cfn-hup watches for metadata changes after a stack update and reruns cfn-init automatically</td></tr>
+      <tr><td>16</td><td><a href="0016-changesets.html">Change Sets</a></td><td>Preview no-interruption/interruption/replacement impacts before committing; execute only when the diff looks right</td></tr>
+      <tr><td>17</td><td><a href="0017-custom-resources.html">Custom Resources</a></td><td>Lambda- or SNS-backed logical resources for anything CloudFormation doesn't natively support — the S3-bucket-with-objects deletion problem is the classic example</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam scope</div>
+    The single decision point the course diagrams themselves flag as exam-critical is <strong>nested stacks vs. cross-stack references</strong> (Lessons 09–10): nested stacks reuse a <em>template</em> (each use creates a brand-new physical resource, so only use this when everything is lifecycle-linked), while cross-stack references reuse an actual <em>resource</em> via Export/<code>Fn::ImportValue</code> (for shared services with independent, service-oriented lifecycles — same region and account only, no exceptions). Beyond that pairing, know DependsOn's classic Elastic-IP-needs-an-attached-Internet-Gateway trap (Lesson 07), that DeletionPolicy never applies to replacement (Lesson 12), and that CreationPolicy is AWS's recommended default over WaitCondition for EC2/ASG (Lesson 08).
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Several features have grown since this course was recorded</div>
+    Each lesson flags its own specifics inline, but at a glance: <strong>Fn::ForEach, Fn::Length, and Fn::ToJsonString</strong> are newer intrinsic functions under the <code>AWS::LanguageExtensions</code> transform (Lesson 03); CloudFormation can now <strong>reverse-generate a template from existing unmanaged resources</strong> via the IaC generator (Lesson 01, also behind Lesson 16's change-set-based resource import); <strong>StackSets gained a <code>ConcurrencyMode</code> switch</strong> decoupling concurrency from failure tolerance (Lesson 11); <strong><code>UpdateReplacePolicy</code></strong> now exists specifically to cover the replacement-triggered gap DeletionPolicy leaves open (Lesson 12); and <strong>CloudFormation Hooks</strong> (Lesson 17) offer proactive, pre-provisioning validation as a newer complement to custom resources' reactive extension model.
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0001-physical-and-logical-resources.html">Start: Physical and Logical Resources →</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

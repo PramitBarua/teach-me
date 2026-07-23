@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 – Stack Roles</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 13
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Stack Roles</h1>
+    <p class="lesson-meta">Lesson 13 of 17 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html" target="_blank">CloudFormation service role</a></p>
+  </div>
+
+  <p>Creating a stack means CloudFormation creates physical AWS resources, and every one of those operations needs permission. By default, CloudFormation uses <strong>the permissions of whoever is creating the stack</strong> — so to run a template that creates a VPC, an EC2 instance, and an RDS database, the identity applying that template needs permission both to manage stacks <em>and</em> to create a VPC, an EC2 instance, and an RDS database directly.</p>
+
+  <p>That's often more access than an organization wants to hand out. <strong>Stack roles</strong> (CloudFormation service roles) solve this: CloudFormation assumes an IAM role to perform the actual resource operations, so the identity driving the stack never needs those resource permissions itself.</p>
+
+  <h2>Role Separation in Practice</h2>
+  <p>Picture two identities: <strong>Gabby</strong>, an account administrator, and <strong>Phil</strong>, a help-desk engineer who should only be able to manage infrastructure <em>through</em> CloudFormation, never directly.</p>
+  <ol>
+    <li>Gabby creates an IAM role with the permissions needed to create the resources in a given template. Phil can't edit this role, and has no permission to assume it directly.</li>
+    <li>Phil is given only two things: permission to create/update/delete stacks, and <code>iam:PassRole</code> permission to pass Gabby's role into CloudFormation.</li>
+    <li>When Phil creates a stack from Gabby's template, he selects that role in the console (or specifies it via the API/CLI). The role becomes attached to the stack.</li>
+    <li>CloudFormation assumes the role to perform every resource operation for that stack — not Phil's own permissions.</li>
+  </ol>
+  <p>Phil ends up able to deploy exactly the infrastructure Gabby has authorized, through CloudFormation, without ever holding the underlying resource permissions himself.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The exam scenario to recognize</div>
+    Whenever a question describes an identity that needs to create or manage AWS resources <strong>only through CloudFormation</strong>, and not be able to touch those resources any other way, a <strong>service role attached to the stack</strong> is the answer. The identity only ever needs stack permissions plus <code>iam:PassRole</code> — never the resource-level permissions themselves.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Once attached, it's permanent</div>
+    Per the current CloudFormation documentation, once a service role is associated with a stack, CloudFormation always uses that role for every subsequent operation on the stack — it cannot later be removed from the stack.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A help-desk engineer must be able to deploy a predefined CloudFormation template but should never have direct permission to create the resources it defines. What's the minimum set of permissions to give that engineer?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Granting the resource permissions directly defeats the goal — the engineer should never hold those permissions outside of CloudFormation."> Full permissions to create every resource type in the template</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Stack management permissions plus iam:PassRole let the engineer create the stack and pass in a pre-built service role, without ever holding the underlying resource permissions."> Stack management permissions, plus iam:PassRole for the role</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Assuming the role directly would give the engineer the resource permissions outside of CloudFormation too — the design specifically avoids that."> Permission to directly assume the IAM role that has resource access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Editing the role isn't needed for the engineer to use it, and would let them escalate the role's permissions, undermining the separation."> Permission to edit the IAM role's trust and permissions policy</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. When a stack has a service role attached, which permissions does CloudFormation actually use to create the resources defined in the template?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Once a service role is attached, CloudFormation uses that role's permissions for resource operations, not the calling identity's own permissions."> The permissions of the identity that triggered the stack operation</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. CloudFormation assumes the attached service role and uses its permissions for every resource operation on that stack."> The permissions granted to the attached service role</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="AWS Organizations SCPs can still limit what's allowed, but they aren't the source of the actual permissions CloudFormation exercises — the service role is."> The organization's root account permissions via AWS Organizations</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudFormation does not fall back to combining both sets of permissions — once a service role is attached, that role's permissions are what's used."> A combination of the caller's and the role's permissions, whichever is broader</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An admin wants to detach a service role from an existing stack and go back to using the caller's own permissions instead. What does current CloudFormation documentation say about this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This is not possible — CloudFormation does not allow a service role to be removed once it's attached to a stack."> It's a simple console setting toggle available at any time</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="No stack replacement is required, and more importantly it isn't possible to remove the role at all, so recreating the stack doesn't change that constraint for the original one."> It requires deleting and fully recreating the stack without a role</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Once attached, a service role cannot be removed from a stack — CloudFormation continues using it for all future operations on that stack."> It cannot be done — a service role can't be removed once attached</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="No PassRole revocation mechanism detaches an already-attached service role from a stack — the attachment itself is permanent."> Revoking iam:PassRole from the admin detaches the role</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0012-deletion-policy.html">← Previous: Deletion Policy</a>
+      <a href="0014-cloudformation-init.html">Next: CloudFormation Init →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

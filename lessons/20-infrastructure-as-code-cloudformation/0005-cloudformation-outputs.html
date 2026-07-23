@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – CloudFormation Outputs</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 05
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>CloudFormation Outputs</h1>
+    <p class="lesson-meta">Lesson 05 of 17 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html" target="_blank">CloudFormation template Outputs syntax</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-join.html" target="_blank">Fn::Join</a></p>
+  </div>
+
+  <p>The <code>Outputs</code> section of a template is entirely optional — plenty of valid templates skip it. When you do include one, it lets you declare values that surface once a stack reaches <strong>create complete</strong>: visible in the CLI, visible in the console, and — this is the part that matters most — <strong>readable by a parent stack</strong> when this template is nested inside another. Outputs can also be exported for cross-stack references, a mechanism a later lesson covers in full; for now, keep this one simple.</p>
+
+  <h2>Declaring an Output</h2>
+  <p>An output has a logical name, and under it, two key fields you'll use constantly:</p>
+
+  <dl>
+    <dt>Description</dt>
+    <dd>A human-readable string. Visible from the CLI and console, and passed up to a parent stack when nesting is used. Always worth writing — it's what makes the output meaningful to someone who never saw the template.</dd>
+    <dt>Value</dt>
+    <dd>The actual thing being exposed. It can be a literal, a parameter reference, or — as in the example below — the result of an intrinsic function.</dd>
+  </dl>
+
+  <p>Here's a template provisioning an EC2 instance running WordPress, with an output that hands back a ready-to-click URL:</p>
+
+  <pre><code>Outputs:
+  WordPressURL:
+    Description: URL for the WordPress installation
+    Value: !Join ["", ["https://", !GetAtt WebServer.PublicDnsName]]</code></pre>
+
+  <p><code>Fn::Join</code> (shorthand <code>!Join</code>) concatenates the literal string <code>https://</code> with the <code>PublicDnsName</code> attribute of the <code>WebServer</code> logical resource. Once the stack completes, the <code>WordPressURL</code> output resolves to something like <code>https://ec2-1-2-3-4.compute-1.amazonaws.com</code> — a working link straight to the service the stack just built, with no manual lookup required.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Why bother with outputs at all</div>
+    Anything a user of the template would otherwise have to hunt for in the console — a load balancer's DNS name, a bucket name, an API endpoint — is a good candidate for an output. It turns "go find the thing this stack made" into "read the thing this stack made."
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Stale vs. current: a newer way to read outputs across stacks</div>
+    The transcript defers cross-stack referencing to a later lesson, and the classic mechanism — declaring an <code>Export</code> under an output, then reading it elsewhere with <code>Fn::ImportValue</code> — still works exactly as taught. Since recording, though, AWS added <code>Fn::GetStackOutput</code>, which lets a template read another stack's output directly, including across accounts and Regions, without that stack needing an explicit <code>Export</code> declaration at all. It's a genuinely newer option, not a replacement you need to worry about yet — the Export/ImportValue pattern remains the one this course teaches and the one you'll see most often.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A template creates an EC2 instance nested inside a parent stack. Which statement about a value declared in the child template's Outputs section is correct?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. One of the central reasons to declare an output is that a parent stack can access it directly when the template is used as a nested stack."> It is accessible from the parent stack once creation completes</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Outputs aren't sealed inside the child stack — a defining feature of the Outputs section is that a parent stack can read them when nesting is used."> It is only visible from within the child stack itself</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Outputs section usage has no bearing on IAM permissions — visibility of an output value and IAM authorization are unrelated concerns."> It automatically grants the parent stack full IAM permissions on every resource</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Declaring an output doesn't rename or relocate the underlying resource — it just exposes a value derived from it."> It renames the underlying physical resource to match</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. In the WordPressURL example, what role does Fn::Join play in the output's Value?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Fn::Join doesn't create or configure any resource — it's a string-building function, not a provisioning action."> It provisions a brand new DNS record specifically for that instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Validating parameter input is the job of constraints like AllowedValues on a Parameters declaration — Fn::Join has no validation role."> It validates that the EnvType parameter was supplied correctly</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Fn::Join concatenates the literal https:// string with the instance's PublicDnsName attribute, producing one usable URL string."> It concatenates a literal string with a resource attribute into one URL</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Nothing about Fn::Join controls resource creation order — that's the role of implicit references or the DependsOn attribute."> It delays creation of the WebServer resource until sometime later on</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Why is writing a clear Description on every output good practice, beyond just being optional documentation?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A Description is a plain literal string — it can't reference parameters or intrinsic functions, so it plays no role in computing the Value."> It fundamentally changes how the Value field itself gets calculated</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Descriptions have no effect on stack update behavior or resource replacement — those are governed by the properties of the resources themselves."> It somehow prevents the stack from ever replacing resources on update</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Encryption of data at rest is handled by services like KMS on the resource itself — an output's Description field has no encryption role."> It encrypts the output value before it's displayed</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The Description is visible from the CLI, the console, and passed to a parent stack in nesting scenarios — it's what makes an output understandable to someone who never opened the template."> It's the field that makes the output meaningful to someone reading it later</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-mappings.html">← Previous: Mappings</a>
+      <a href="0006-cloudformation-conditions.html">Next: CloudFormation Conditions →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

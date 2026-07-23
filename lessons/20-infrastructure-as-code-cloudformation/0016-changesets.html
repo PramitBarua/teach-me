@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16 – Change Sets</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Infrastructure as Code (CloudFormation)</a> › Lesson 16
+    </div>
+    <div class="module-tag">Infrastructure as Code (CloudFormation)</div>
+    <h1>Change Sets</h1>
+    <p class="lesson-meta">Lesson 16 of 17 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html" target="_blank">Updating stacks using change sets</a> · <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/generate-IaC.html" target="_blank">Generate templates with the IaC generator</a></p>
+  </div>
+
+  <p>Updating a CloudFormation stack directly is a bit of a leap of faith — you apply a new template version and CloudFormation just does whatever it decides that implies. <strong>Change sets</strong> let you preview that decision first.</p>
+
+  <h2>Three Ways an Update Can Land</h2>
+  <p>When a stack update changes a logical resource, the resulting physical-resource impact is one of three things:</p>
+  <ul>
+    <li><strong>No interruption</strong> — the change applies with no effect on the running resource</li>
+    <li><strong>Some interruption</strong> — for example, an EC2 instance reboots; disruptive but not destructive</li>
+    <li><strong>Replacement</strong> — the physical resource is destroyed and a new one created in its place, which can mean real data loss</li>
+  </ul>
+  <p>None of that is visible up front if you just update the stack directly and hope for the best.</p>
+
+  <h2>The Direct-Update Risk</h2>
+  <p>Picture a template that creates three S3 buckets: <code>catpix</code>, <code>dogpix</code>, and <code>memes</code>. You use it to create a stack — three buckets exist. Now you decide the memes bucket was a mistake, remove it from the template, and update the stack directly. CloudFormation removes the logical resource, and the physical bucket, along with it — immediately, no confirmation step.</p>
+
+  <h2>What a Change Set Actually Is</h2>
+  <p>Instead of updating the stack directly, you submit the new template as a <strong>change set</strong> — a distinct object representing the delta between the stack's current template and the proposed one. Creating a change set <strong>does not touch any physical resource</strong>; it's purely a comparison. You can create several change sets against the same stack, review each one, and discard whichever you don't want.</p>
+  <p>A change set lists every detected change: an <code>Action</code> like <code>Remove</code>, against a logical ID and its corresponding physical ID. You can inspect the template inside the change set, and view a JSON list of exactly what changed — one entry per affected resource. That's a genuinely reviewable artifact, the kind that fits into a formal change-management process.</p>
+  <p>When you're satisfied, you <strong>execute</strong> the chosen change set — this runs the same update-stack operation as a direct update, with the same underlying effect, but only after you've had full visibility into what's about to happen.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">A change set isn't a guarantee</div>
+    A change set shows you what CloudFormation intends to do — it doesn't guarantee the update will succeed. It won't catch things like breaching an account service limit, updating a property that doesn't actually support in-place updates, or an IAM permission gap. Those can still fail the update after execution.
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Change sets show up again later in the course</div>
+    Change sets aren't only for previewing edits to a stack you already manage. <strong>Importing existing, unmanaged resources</strong> into a stack is also implemented as a change set — created with <code>ChangeSetType=IMPORT</code> — and the newer <strong>IaC generator</strong> feature can scan your account's existing resources and auto-generate both a template and the import change set for you. Same underlying mechanism, a different use case.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A stack has three S3 buckets. You remove one bucket's logical resource from the template and run a direct stack update, with no change set involved. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Without a change set, CloudFormation applies the update immediately — the logical resource and its physical bucket are both removed right away."> The physical bucket is deleted immediately as part of the update</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFormation doesn't force a change set — direct stack updates are a normal, valid workflow, just a riskier one."> CloudFormation refuses the update unless a change set exists first</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Removing a logical resource and updating directly does remove the corresponding physical resource — it isn't preserved outside the stack."> The bucket keeps existing indefinitely until someone deletes it by hand</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudFormation doesn't rename and preserve resources that fall out of the template — the physical resource is simply deleted."> CloudFormation renames the bucket and keeps it outside the stack</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. What actually happens to the stack's physical resources at the moment a change set is created?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Creating a change set is only a comparison step — no update runs and no rollback point is generated at creation time."> The update runs immediately and a rollback point is captured</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Creating a change set only computes and displays the proposed differences — no physical resource is touched until you execute it."> Nothing — CloudFormation only computes and displays the proposed differences</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A stack can have multiple change sets created against it at the same time — creating one doesn't lock out others."> The stack is locked so no further change sets can be created</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Creating a new change set doesn't delete previously created ones — they can coexist until reviewed, executed, or explicitly deleted."> Every previously created change set on the stack is deleted first</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A change set shows an action of Remove against a bucket's logical ID. You never execute this change set. What's the state of the actual bucket?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Change sets don't expire and auto-apply after a fixed time window — an unexecuted change set simply sits there until acted on."> It's removed automatically after 24 hours to avoid stale change sets</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A change set is only a preview. Until you execute it (or discard it), the physical resource remains exactly as it was."> It's untouched — nothing changes until the change set is executed or discarded</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Change sets don't perform partial actions on their own — no action happens to the resource until execution."> Its contents are emptied but the bucket itself is kept</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="An unexecuted change set doesn't leave the stack stuck in a review status — the stack simply continues in its current, stable state."> The stack becomes permanently stuck in a review-pending status</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0015-cfn-hup.html">← Previous: cfn-hup</a>
+      <a href="0017-custom-resources.html">Next: Custom Resources →</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something? Type <strong>/teach</strong> followed by your question and your teacher will help you.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
