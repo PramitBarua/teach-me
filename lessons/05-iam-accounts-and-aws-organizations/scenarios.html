@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Practice – IAM, Accounts &amp; AWS Organizations</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Scenario Practice</div>
+    <div class="module-tag">Exam Practice</div>
+    <h1>Scenario-Based Exam Practice</h1>
+    <p class="lesson-meta">IAM, Accounts &amp; AWS Organizations · 55 scenarios</p>
+    <p class="source-link">Sources: <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/" target="_blank">AWS IAM Docs</a> · <a href="https://docs.aws.amazon.com/organizations/latest/userguide/" target="_blank">AWS Organizations Docs</a> · <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/" target="_blank">AWS CloudTrail Docs</a></p>
+  </div>
+
+  <p>These are exam-style scenario questions, separate from the retrieval-practice quiz at the end of each lesson. They mostly draw on this chapter, but some pull in ideas from other chapters — the real exam mixes services constantly, so this is deliberate interleaving. Each question has one answer that's technically possible but breaks a requirement in the scenario, one that's plausible and easy to confuse with the right answer, and one correct best choice — read carefully. Click an option to select your answer, then reveal it — your pick is highlighted in red if wrong, green marks the correct one. Once you've answered every question, check "Show my results" for your overall score and which topics to study again.</p>
+
+  <div class="scenario-set">
+    <p class="scenario-count">55 scenarios · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-topic breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+<!-- 1 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 1</p>
+  <p class="scenario-text">A finance analyst has two customer managed policies attached to her IAM user: one allows <code>s3:GetObject</code> on the "reports" bucket, the other allows <code>dynamodb:Query</code> on the "ledger" table. She has no other policies, and neither policy contains a Deny statement. Which of these can she actually do?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Only <code>s3:GetObject</code>, since attaching a second managed policy silently replaces the first one's grants</li>
+    <li><span class="opt-letter">B.</span> Both actions — <code>s3:GetObject</code> and <code>dynamodb:Query</code> — since IAM evaluates the union of every attached policy with no explicit deny</li>
+    <li><span class="opt-letter">C.</span> Neither action, since two separate managed policies without a bound inline policy always default-deny</li>
+    <li><span class="opt-letter">D.</span> Only <code>dynamodb:Query</code>, since the most recently attached policy is the one IAM evaluates last</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="B">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM identity policies</p>
+    <p class="answer-line">Correct answer: B</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — attaching a second managed policy adds to an identity's permissions, it never silently replaces an earlier one; there's no "last policy wins" replacement behavior in IAM.</li>
+      <li class="correct-choice"><strong>B.</strong> Correct — with no explicit Deny anywhere, IAM combines every attached policy's Allow statements into a union. She gets both grants simultaneously, from two independent policies.</li>
+      <li><strong>C.</strong> Wrong — there's no rule requiring an inline policy to "activate" managed policies; managed policies are fully effective on their own once attached, with nothing extra needed.</li>
+      <li><strong>D.</strong> Wrong — attachment order and recency don't determine which policy IAM evaluates; every attached policy is evaluated together, not in a most-recent-wins sequence.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 2</p>
+  <p class="scenario-text">A newly created IAM user has no managed policy, no inline policy, and no group membership. The user tries to call <code>ec2:DescribeInstances</code> from the CLI using their new access key. Security policy requires that no identity ever gets standing access it wasn't explicitly granted. What happens, and does it satisfy the policy?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> The call fails with AccessDenied, satisfying the policy — everything is denied by default until an explicit Allow is attached</li>
+    <li><span class="opt-letter">B.</span> The call succeeds, because <code>DescribeInstances</code> is a read-only action AWS permits without any attached policy</li>
+    <li><span class="opt-letter">C.</span> The call succeeds, because the user inherits a default "NewUserReadOnly" policy AWS attaches automatically</li>
+    <li><span class="opt-letter">D.</span> The call fails, but only because the new access key needs time to propagate before it can authenticate at all</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="A">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM identity policies</p>
+    <p class="answer-line">Correct answer: A</p>
+    <ul class="answer-explanations">
+      <li class="correct-choice"><strong>A.</strong> Correct — with zero statements matching this request, evaluation falls through to implicit deny. Everything in AWS is denied unless something explicitly allows it, which is exactly what the policy requires.</li>
+      <li><strong>B.</strong> Wrong — no action is free by default, read-only or not; even a harmless Describe call requires an explicit Allow statement somewhere or it's denied.</li>
+      <li><strong>C.</strong> Wrong — AWS does not attach any default policy to new users; a brand-new user genuinely starts with zero permissions until someone attaches one.</li>
+      <li><strong>D.</strong> Wrong — this invents a propagation delay that isn't the actual cause here; the user has no policy granting the action at all, so the call would fail the same way regardless of key age.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 3</p>
+  <p class="scenario-text">A contractor's IAM user has a customer managed policy called "BaselineReadOnly" attached, shared by 40 other users, granting broad read access. For this one contractor only, security wants to block reading a single sensitive Secrets Manager secret, without changing what any of the other 40 users can do. What's the best way to add this restriction?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Edit the BaselineReadOnly policy directly to add a Deny statement for that secret</li>
+    <li><span class="opt-letter">B.</span> Detach BaselineReadOnly from the contractor and recreate an identical copy just for them, then add the Deny</li>
+    <li><span class="opt-letter">C.</span> Attach an inline policy to the contractor's user with an explicit Deny on that specific secret</li>
+    <li><span class="opt-letter">D.</span> Create a permissions boundary on the contractor's user that simply omits Secrets Manager actions</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="C">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM identity policies</p>
+    <p class="answer-line">Correct answer: C</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — this works mechanically, but BaselineReadOnly is shared by 40 other users; editing it directly would deny that secret to all of them too, violating the "without changing anyone else" requirement.</li>
+      <li><strong>B.</strong> Wrong — cloning an entire policy just to add one exception is unnecessary duplication that's hard to maintain long-term, when the same one-off restriction can be layered on cleanly.</li>
+      <li class="correct-choice"><strong>C.</strong> Correct — an inline policy scoped to exactly this one user is the textbook exceptional, one-off case inline policies exist for. It layers an explicit Deny on top of the shared managed policy without touching the other 40 users.</li>
+      <li><strong>D.</strong> Wrong — a permissions boundary caps the maximum envelope of what a user's policies can grant; omitting Secrets Manager broadly isn't the same as a targeted deny on one specific secret, and it's a coarser, easy-to-misconfigure tool for this job.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 4</p>
+  <p class="scenario-text">An identity policy statement has <code>Effect: Allow</code>, <code>Action: "s3:GetObject"</code>, <code>Resource: "arn:aws:s3:::project-x/*"</code>. The user tries to call <code>s3:ListBucket</code> on the same bucket "project-x" instead. What happens?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Allowed, because the Resource ARN's wildcard covers the entire bucket, including listing it</li>
+    <li><span class="opt-letter">B.</span> Allowed, because ListBucket is a common read action closely related enough to GetObject to be covered</li>
+    <li><span class="opt-letter">C.</span> Denied, but only because the Resource ARN is missing the bucket-level ARN and covers just the objects inside it</li>
+    <li><span class="opt-letter">D.</span> Denied, because the Action field only lists <code>s3:GetObject</code> — a statement must match on both Action and Resource</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="D">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM identity policies</p>
+    <p class="answer-line">Correct answer: D</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — a Resource wildcard only controls which resources a statement's actions apply to; it can't substitute for an action the statement never lists in the first place.</li>
+      <li><strong>B.</strong> Wrong — IAM never infers "closely related" actions; every action needs its own explicit match. GetObject and ListBucket are two entirely separate permissions.</li>
+      <li><strong>C.</strong> Wrong — it's true that ListBucket technically needs the bucket-level ARN as its resource, but that's not why this specific statement fails: the Action field doesn't even list ListBucket, so the resource detail is moot here.</li>
+      <li class="correct-choice"><strong>D.</strong> Correct — a statement only applies when both its Action and Resource match the request. This statement's Action is only <code>s3:GetObject</code>, so a ListBucket call falls through to implicit deny regardless of the resource wildcard.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 5</p>
+  <p class="scenario-text">An engineer has five different customer managed policies attached to their role, granting broad EC2 permissions. One of the five, added months ago for a now-decommissioned project, contains a single explicit Deny on <code>ec2:TerminateInstance</code> that nobody remembers. The engineer's team assumes they have full EC2 access and tries to terminate an unused instance. What happens?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> The termination succeeds, since 4 of the 5 policies allow it and majority-allow governs evaluation</li>
+    <li><span class="opt-letter">B.</span> The termination succeeds, since an explicit Deny in an old, unused-project policy is ignored by IAM as stale</li>
+    <li><span class="opt-letter">C.</span> The termination fails; the lone explicit Deny among the five policies overrides every Allow, no matter how many grant it</li>
+    <li><span class="opt-letter">D.</span> The termination fails, but only because the role needs a fresh explicit Allow added in a sixth policy to override the deny</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="C">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM identity policies</p>
+    <p class="answer-line">Correct answer: C</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — IAM evaluation isn't a vote; there's no "majority of policies allow it" rule. A single matching Deny is enough to block the action outright.</li>
+      <li><strong>B.</strong> Wrong — IAM has no concept of a policy going "stale" because its project is decommissioned; the Deny statement remains fully active until someone actually detaches or edits the policy.</li>
+      <li class="correct-choice"><strong>C.</strong> Correct — explicit Deny always wins over explicit Allow, regardless of how many other attached policies grant the action. The forgotten policy's single Deny statement blocks the termination outright.</li>
+      <li><strong>D.</strong> Wrong — this describes the actual failure but for the wrong reason; no amount of additional Allow statements can override an existing explicit Deny, so a sixth policy wouldn't fix anything unless the Deny itself is removed.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 6 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 6</p>
+  <p class="scenario-text">A developer writes a policy granting <code>s3:ListBucket</code> and <code>s3:GetObject</code> on a bucket called "invoices", using a single Resource entry: <code>"arn:aws:s3:::invoices/*"</code>. Testing shows GetObject works but ListBucket always fails. What's the fix?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Add a second Resource entry, <code>"arn:aws:s3:::invoices"</code> with no trailing /*, since ListBucket operates on the bucket itself</li>
+    <li><span class="opt-letter">B.</span> Change the wildcard from /* to /** so it also implicitly matches the bucket-level ARN</li>
+    <li><span class="opt-letter">C.</span> Move ListBucket into a separate resource-based bucket policy instead of the identity policy</li>
+    <li><span class="opt-letter">D.</span> Replace the ARN's region field with a wildcard so ListBucket is authorized across every region</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="A">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM users and ARNs</p>
+    <p class="answer-line">Correct answer: A</p>
+    <ul class="answer-explanations">
+      <li class="correct-choice"><strong>A.</strong> Correct — ListBucket is a bucket-level operation and needs the bucket's own ARN, <code>arn:aws:s3:::invoices</code>, as its resource. The object-key wildcard <code>invoices/*</code> only covers actions on objects, like GetObject.</li>
+      <li><strong>B.</strong> Wrong — <code>/**</code> is not valid ARN wildcard syntax and doesn't implicitly reach up to match the bucket-level ARN; a single <code>*</code> is the only wildcard IAM recognizes here.</li>
+      <li><strong>C.</strong> Wrong — this would work mechanically since a bucket policy could grant ListBucket, but it's unnecessary extra infrastructure for a same-account fix that a one-line Resource addition already solves.</li>
+      <li><strong>D.</strong> Wrong — S3 bucket ARNs don't include a region segment at all, since bucket names are globally unique; there's no region field here to wildcard, and it has nothing to do with ListBucket failing.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 7 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 7</p>
+  <p class="scenario-text">A security engineer writes a policy meant to allow <code>ec2:StopInstances</code> on all instances in every region of the account, using <code>Resource: "arn:aws:ec2:us-east-1:123456789012:instance/*"</code>. After deployment, instances in eu-west-1 can't be stopped by this policy. What's wrong?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> The account-id segment must also be a wildcard, since EC2 ARNs don't actually include account IDs</li>
+    <li><span class="opt-letter">B.</span> The region segment is hardcoded to us-east-1; it must be a wildcard ("*") to cover every region</li>
+    <li><span class="opt-letter">C.</span> EC2 instance ARNs don't support wildcards anywhere in the resource-id segment</li>
+    <li><span class="opt-letter">D.</span> The policy needs a separate, near-identical Allow statement duplicated once for every region instead of one wildcard</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="B">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM users and ARNs</p>
+    <p class="answer-line">Correct answer: B</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — this states the opposite of reality: unlike S3, EC2 ARNs do include an account-id segment, and it's correctly populated here; that's not the problem.</li>
+      <li class="correct-choice"><strong>B.</strong> Correct — the ARN pins the region to us-east-1, so the statement only matches instances there. Swapping it for <code>arn:aws:ec2:*:123456789012:instance/*</code> makes it match instances in every region.</li>
+      <li><strong>C.</strong> Wrong — EC2 instance ARNs do support a wildcard in the resource-id segment (that's exactly what <code>instance/*</code> is doing here); the resource-id isn't the part that's scoped too narrowly.</li>
+      <li><strong>D.</strong> Wrong — this would technically work, listing one statement per region, but it's needless duplication and ongoing maintenance burden compared to a single wildcarded region segment achieving the same coverage.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 8 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 8</p>
+  <p class="scenario-text">A B2B SaaS company provisions one IAM user per customer company for API access, and has reached 4,800 IAM users as it approaches the 5,000 limit. Growth projections show 3,000 more customers signing up next year. What should they do before hitting the ceiling?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Request a limit increase from AWS support, since 5,000 IAM users per account is a soft, adjustable limit</li>
+    <li><span class="opt-letter">B.</span> Delete IAM users for inactive customers to free up headroom, then keep provisioning new users the same way</li>
+    <li><span class="opt-letter">C.</span> Switch new customers to IAM roles assumed via STS (or federation), since the 5,000-user cap can't be raised</li>
+    <li><span class="opt-letter">D.</span> Split customers across several new AWS accounts, provisioning up to 5,000 IAM users in each one</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="C">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM users and ARNs</p>
+    <p class="answer-line">Correct answer: C</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — 5,000 IAM users per account is a hard limit; no support request raises it, so this path dead-ends regardless of how it's framed.</li>
+      <li><strong>B.</strong> Wrong — this buys a bit of temporary headroom, but it doesn't fix the design and risks disrupting customers later mistaken for "inactive," while next year's 3,000 new signups blow past the ceiling again anyway.</li>
+      <li class="correct-choice"><strong>C.</strong> Correct — since the user cap is fixed, the scalable pattern is IAM roles assumed via STS (or external federation) for new customers, avoiding the creation of any new long-term IAM users at all.</li>
+      <li><strong>D.</strong> Wrong — multi-account strategies are a real and valid AWS pattern for other reasons, but here they just relocate the same per-customer-user model into more accounts instead of removing the actual scaling constraint.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 9 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 9</p>
+  <p class="scenario-text">An operations engineer has one IAM user, "svc-deploy", used both by a human logging into the console with a password and by a CI/CD pipeline calling the API with that same user's access key. An audit can't distinguish which caller performed a given destructive action, since both authenticate as the identical principal. What's the best fix to restore accountability?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Rotate the shared access key more frequently, so at least the pipeline's calls are time-boxed and traceable</li>
+    <li><span class="opt-letter">B.</span> Add a CloudTrail alarm that triggers whenever "svc-deploy" performs a destructive API action</li>
+    <li><span class="opt-letter">C.</span> Enable MFA on the "svc-deploy" user, so both the human and the pipeline must provide a second factor</li>
+    <li><span class="opt-letter">D.</span> Create separate IAM identities — a distinct user or role for the human and another for the pipeline</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="D">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM users and ARNs</p>
+    <p class="answer-line">Correct answer: D</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — rotating a shared key more often is a real hygiene practice, but it still leaves one principal used by two different callers; CloudTrail events would still show "svc-deploy" for both, solving nothing about attribution.</li>
+      <li><strong>B.</strong> Wrong — an alarm on destructive actions is a useful monitoring layer, but every triggered alert would still just say "svc-deploy" did it — it adds noise, not the missing distinction between human and pipeline.</li>
+      <li><strong>C.</strong> Wrong — MFA challenges a login attempt, but programmatic API calls using access keys don't authenticate with MFA the way console sessions do, and it wouldn't tag which caller made a given API call either way.</li>
+      <li class="correct-choice"><strong>D.</strong> Correct — giving the human and the pipeline separate identities (a user for one, a role for the other) means every CloudTrail event now records a distinct principal, restoring exactly the accountability the audit needs.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 10 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 10</p>
+  <p class="scenario-text">A junior engineer is confused why the ARN for an S3 bucket, <code>arn:aws:s3:::finance-data</code>, has two empty segments, while the ARN for an IAM user, <code>arn:aws:iam::123456789012:user/bob</code>, has only the region segment empty. What's the correct explanation?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> This is a documentation inconsistency; both ARN types should always populate every segment</li>
+    <li><span class="opt-letter">B.</span> Empty segments always mean "wildcard, matches anything," identical in meaning to using *</li>
+    <li><span class="opt-letter">C.</span> Only global services like IAM omit segments; regional services like S3 always populate both region and account-id</li>
+    <li><span class="opt-letter">D.</span> S3 bucket names are globally unique, so region and account-id aren't needed; IAM is account-scoped and needs the account-id but has no regional concept</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="D">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM users and ARNs</p>
+    <p class="answer-line">Correct answer: D</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — this isn't an error; different resource types legitimately require different segments depending on what's needed to uniquely identify them.</li>
+      <li><strong>B.</strong> Wrong — this is the exact trap to avoid: an omitted segment means "not required for this resource type," which is a different concept from a wildcard <code>*</code> meaning "match every value."</li>
+      <li><strong>C.</strong> Wrong — this gets the pattern backwards; S3 is a regional-ish service that still omits both segments because bucket names are globally unique, while global services like IAM populate the account-id but never region.</li>
+      <li class="correct-choice"><strong>D.</strong> Correct — S3 bucket names are unique across all of AWS, so no region or account-id is needed to pinpoint one. IAM resources live inside one account with no regional scope, so the account-id is required but the region segment stays empty.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 11 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 11</p>
+  <p class="scenario-text">A user's own inline policy explicitly denies all <code>iam:*</code> actions. The user also belongs to the "Admins" group, which grants full AdministratorAccess. The user tries to call <code>iam:CreateUser</code>. What happens?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Allowed, because the group-level AdministratorAccess policy takes priority over the user's own inline policy</li>
+    <li><span class="opt-letter">B.</span> Denied, because policies are merged across the user and all their groups, and the explicit Deny wins</li>
+    <li><span class="opt-letter">C.</span> Allowed, because inline policies on a user are evaluated separately from, and after, group policies</li>
+    <li><span class="opt-letter">D.</span> Denied, but only until the user is removed from the Admins group, at which point it would be allowed</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="B">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM groups</p>
+    <p class="answer-line">Correct answer: B</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — there's no such priority rule; group-attached policies and the user's own policies are combined as equals, not ranked by source.</li>
+      <li class="correct-choice"><strong>B.</strong> Correct — IAM merges the user's own policies with every group's policies into one evaluation. The inline policy's explicit Deny on <code>iam:*</code> overrides the group's AdministratorAccess Allow, so the call is blocked.</li>
+      <li><strong>C.</strong> Wrong — there is no separate or delayed evaluation pass for inline versus group policies; all attached policies, from any source, are evaluated together in a single pass.</li>
+      <li><strong>D.</strong> Wrong — the Deny lives on the user's own inline policy, not on group membership, so removing the user from Admins wouldn't change this outcome at all — the deny persists either way.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 12 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 12</p>
+  <p class="scenario-text">A new AWS account administrator wants every current and future IAM user to automatically get a baseline "AllUsersReadOnly" policy the moment they're created, without manually attaching anything. She looks for a default "AllUsers" group to attach the policy to. What should she do?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Use the built-in "AllUsers" group that AWS creates automatically in every new account</li>
+    <li><span class="opt-letter">B.</span> Create her own group, attach the policy to it, and manually add every user — new users must be added explicitly, since AWS has no automatic mechanism for this</li>
+    <li><span class="opt-letter">C.</span> Use a permissions boundary set at the account level, which automatically applies to every IAM identity</li>
+    <li><span class="opt-letter">D.</span> Attach the policy directly to the account's root user, since permissions cascade down from root to all IAM users</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="B">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM groups</p>
+    <p class="answer-line">Correct answer: B</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — AWS never creates a default "AllUsers" group; every group in an account is one an administrator has to create and manage themselves.</li>
+      <li class="correct-choice"><strong>B.</strong> Correct — there's no built-in all-users mechanism, so the closest available design is a self-managed group with the policy attached, and adding each new user to it — with no automation from AWS for the "future users" part.</li>
+      <li><strong>C.</strong> Wrong — permissions boundaries aren't account-wide defaults; they must be attached to each identity individually and only cap what that identity's policies can grant, they don't broadcast a baseline allow to everyone automatically.</li>
+      <li><strong>D.</strong> Wrong — the root user's permissions don't cascade to IAM users at all; each IAM user's access is governed purely by its own attached policies, independent of root.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 13 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 13</p>
+  <p class="scenario-text">A user was previously a member of the "Billing" group, which grants <code>billing:*</code> actions. An admin removes the user from the Billing group but forgets to check anything else. The user still successfully calls <code>billing:ViewBillingAccount</code>. What's the most likely explanation?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Group membership changes can take up to 24 hours to fully propagate through IAM</li>
+    <li><span class="opt-letter">B.</span> Groups retain a cached copy of their permissions on former members for a grace period</li>
+    <li><span class="opt-letter">C.</span> The Billing group's policy was accidentally duplicated as an account-wide default for all users</li>
+    <li><span class="opt-letter">D.</span> The user has their own separate policy, or belongs to another group, that independently grants billing access</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="D">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM groups</p>
+    <p class="answer-line">Correct answer: D</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — this sounds like a plausible eventual-consistency story, but IAM permission changes, including group membership removal, take effect essentially immediately, not after a day-long delay.</li>
+      <li><strong>B.</strong> Wrong — a group has no rights of its own to "retain" or cache; the moment membership ends, the member no longer inherits anything from that group's policies.</li>
+      <li><strong>C.</strong> Wrong — this describes a specific misconfiguration the scenario gives no evidence for; it's a fabricated mechanism, not something IAM does on its own.</li>
+      <li class="correct-choice"><strong>D.</strong> Correct — since a group itself grants nothing and removal from it takes effect immediately, continued access almost always means the user's own policy, or membership in a different group, is independently granting the same permission.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 14 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 14</p>
+  <p class="scenario-text">A platform team wants a "Contractors" group nested inside a broader "AllExternal" group, so contractors automatically inherit AllExternal's policies plus their own Contractors-specific ones, mirroring how they organized OUs in AWS Organizations. When they try to add the Contractors group as a member of AllExternal, the console won't allow it. Why, and what should they do instead?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> IAM groups cannot contain other groups; instead, attach both groups' policies directly to each contractor user, or also attach AllExternal's policies to the Contractors group</li>
+    <li><span class="opt-letter">B.</span> Nesting requires enabling a "hierarchical groups" account setting first, which is off by default</li>
+    <li><span class="opt-letter">C.</span> Only 300 groups can exist per account, and adding a nested group would exceed that limit</li>
+    <li><span class="opt-letter">D.</span> Nesting is supported, but only for groups federated through IAM Identity Center, not native IAM groups</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="A">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM groups</p>
+    <p class="answer-line">Correct answer: A</p>
+    <ul class="answer-explanations">
+      <li class="correct-choice"><strong>A.</strong> Correct — unlike Organizations OUs, IAM groups have no nesting at all; only users can be group members. To get the same combined effect, attach both sets of policies to the Contractors group (or to each user) directly.</li>
+      <li><strong>B.</strong> Wrong — there's no such account setting; nesting isn't a togglable feature that's simply disabled by default, it's a structural restriction of IAM groups that can't be turned on.</li>
+      <li><strong>C.</strong> Wrong — 300 is the (soft) limit on total groups per account, a real number, but it's unrelated to why nesting itself is rejected — the team is nowhere near that ceiling here.</li>
+      <li><strong>D.</strong> Wrong — this confuses IAM groups with IAM Identity Center permission sets and account assignments; native IAM groups don't support nesting through any AWS feature, Identity Center included.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 15 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 15</p>
+  <p class="scenario-text">A power user already belongs to 10 IAM groups — the maximum — and needs a policy from an 11th group to do new work. The team's first instinct is to file an AWS Support limit-increase request, the same way they'd handle the 300-groups-per-account cap. Will that work here, and what should they actually do?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> No — 10 groups per user is a hard limit that cannot be raised; instead consolidate two groups' policies into one, or attach a policy directly to the user</li>
+    <li><span class="opt-letter">B.</span> Yes — like the 300-group account limit, the 10-groups-per-user limit is also just a soft default</li>
+    <li><span class="opt-letter">C.</span> No — the user must be moved to a different AWS account, which comes with a fresh 10-group allowance</li>
+    <li><span class="opt-letter">D.</span> Yes, but only after first reducing the account's total group count below 300 to make room</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="A">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM groups</p>
+    <p class="answer-line">Correct answer: A</p>
+    <ul class="answer-explanations">
+      <li class="correct-choice"><strong>A.</strong> Correct — unlike the 300-groups-per-account soft limit, the 10-groups-per-user cap is hard and cannot be increased by any support request. The practical fix is consolidating policies across fewer groups, or attaching the needed policy straight to the user.</li>
+      <li><strong>B.</strong> Wrong — this conflates the two different limits; the per-account cap is adjustable, but the per-user cap explicitly is not, no matter how the request is framed.</li>
+      <li><strong>C.</strong> Wrong — this would technically sidestep the number, since a fresh account starts its own count, but relocating an entire user to a new AWS account is a wildly disproportionate response to a group-count ceiling that a simple policy consolidation already solves.</li>
+      <li><strong>D.</strong> Wrong — the account-wide group total has nothing to do with how many groups one specific user can join; reducing it wouldn't raise this user's individual 10-group ceiling at all.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 16 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 16</p>
+  <p class="scenario-text">A role's trust policy lists the EC2 service (<code>ec2.amazonaws.com</code>) as its only trusted principal, and its permission policy grants <code>s3:GetObject</code> on a specific bucket. An EC2 instance is launched with this role attached, and code on the instance successfully reads from the bucket. A teammate then tries to directly call <code>sts:AssumeRole</code> on this same role from their own IAM user. What happens, and why?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> It fails, since the trust policy only names the EC2 service as a trusted principal — the teammate's IAM user isn't listed and can't assume it</li>
+    <li><span class="opt-letter">B.</span> It succeeds, since the permission policy (not the trust policy) is what actually controls who may assume a role</li>
+    <li><span class="opt-letter">C.</span> It succeeds, since any authenticated IAM principal in the account can assume any role that has a valid permission policy</li>
+    <li><span class="opt-letter">D.</span> It fails, since IAM roles can only ever be assumed by AWS services, never by an IAM user</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="A">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM roles (technical mechanics)</p>
+    <p class="answer-line">Correct answer: A</p>
+    <ul class="answer-explanations">
+      <li class="correct-choice"><strong>A.</strong> Correct — the trust policy is what governs who may call AssumeRole, and it names only <code>ec2.amazonaws.com</code>. The teammate's IAM user isn't a listed trusted principal, so the assumption is denied regardless of the permission policy's contents.</li>
+      <li><strong>B.</strong> Wrong — this swaps the two policies' jobs. The permission policy only defines what the role can do once assumed; it plays no part in deciding who is allowed to assume it in the first place.</li>
+      <li><strong>C.</strong> Wrong — assuming a role is never account-wide by default; only principals explicitly named in that specific role's trust policy can assume it, no matter what else the account contains.</li>
+      <li><strong>D.</strong> Wrong — roles can absolutely be assumed by IAM users, other roles, or external identities — it all depends on what the trust policy lists; the limitation here is what's named, not a blanket "services only" rule.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 17 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 17</p>
+  <p class="scenario-text">A batch job assumes a role via STS with a 1-hour session duration and starts a data export expected to take 3 hours. Two hours in, API calls start failing with credential errors. What's happening, and what should the job be designed to do?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> The role's trust policy expired and must be manually re-attached by an administrator before the job continues</li>
+    <li><span class="opt-letter">B.</span> The temporary credentials expired after 1 hour; the job must detect this and call AssumeRole again for a fresh set</li>
+    <li><span class="opt-letter">C.</span> IAM automatically extends session duration up to 12 hours the first time credentials are about to expire</li>
+    <li><span class="opt-letter">D.</span> The permission policy silently revoked access after detecting the job ran longer than a typical operation</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="B">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM roles (technical mechanics)</p>
+    <p class="answer-line">Correct answer: B</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — trust policies don't have an expiry of their own; what expires is the temporary session credentials issued when the role was assumed, not the trust policy document itself.</li>
+      <li class="correct-choice"><strong>B.</strong> Correct — the credentials returned by AssumeRole are only valid for the requested session duration, here 1 hour. Once that elapses, calls fail until the job re-assumes the role for a new set of temporary credentials — long-running jobs must build in this refresh logic themselves.</li>
+      <li><strong>C.</strong> Wrong — sessions can be configured with a longer max duration up front, but IAM doesn't silently auto-extend an already-running 1-hour session; the requester has to explicitly re-assume the role.</li>
+      <li><strong>D.</strong> Wrong — permission policies don't monitor runtime duration or revoke access mid-flight based on how long a job has been running; that isn't how policy evaluation works.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 18 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 18</p>
+  <p class="scenario-text">A security review flags a role whose trust policy trusts <code>arn:aws:iam::333333333333:root</code>, intending to allow only one specific automation role in that account to assume it. Currently, any IAM principal in account 333333333333 with <code>sts:AssumeRole</code> permission on this ARN can assume it. What change makes the trust policy match the intended scope?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Nothing needs to change — :root already restricts trust to a single default role in that account</li>
+    <li><span class="opt-letter">B.</span> Replace the root ARN with the specific automation role's ARN, e.g. <code>arn:aws:iam::333333333333:role/automation-role</code></li>
+    <li><span class="opt-letter">C.</span> Add a Condition block requiring MFA, which narrows :root down to exactly one principal automatically</li>
+    <li><span class="opt-letter">D.</span> Remove the trust policy entirely and rely on the automation role's own permission policy to restrict assumption</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="B">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM roles (technical mechanics)</p>
+    <p class="answer-line">Correct answer: B</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — <code>:root</code> in a trust policy means the entire account is trusted, not a single default role; that's precisely the over-broad behavior the review is flagging.</li>
+      <li class="correct-choice"><strong>B.</strong> Correct — naming the exact role ARN instead of the account root scopes trust down to that one specific principal, matching the intended restriction precisely.</li>
+      <li><strong>C.</strong> Wrong — an MFA condition adds a real security requirement, but it narrows the authentication method, not which principal is trusted; every principal in the account is still eligible, just now needing MFA too.</li>
+      <li><strong>D.</strong> Wrong — removing the trust policy doesn't restrict assumption, it would break assumption for everyone (a role with no trusted principals can't be assumed at all); and the permission policy governs what the role can do, not who may assume it.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 19 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 19</p>
+  <p class="scenario-text">A team wants an S3 bucket policy's <code>Principal</code> field to reference an identity, so that whichever identity is assumed gets bucket access, and they want to reuse the same reference for multiple rotating team members without listing individuals. They're deciding between referencing an IAM Role's ARN or an IAM Group's ARN as the Principal. Which works, and why?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Either works identically, since both roles and groups can be resource-policy principals</li>
+    <li><span class="opt-letter">B.</span> Only the group ARN works — bucket policies are designed to grant access to a batch of users, which is what a group represents</li>
+    <li><span class="opt-letter">C.</span> Only the role ARN works — roles are valid resource-policy principals, while groups can never be referenced as a principal anywhere</li>
+    <li><span class="opt-letter">D.</span> Neither works — resource-based policies can only reference IAM users or the account root, never roles or groups</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="C">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM roles (technical mechanics)</p>
+    <p class="answer-line">Correct answer: C</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — the two aren't interchangeable here; only one of them is actually a valid resource-policy principal type.</li>
+      <li><strong>B.</strong> Wrong — this is the classic exam trap: a group is a natural-sounding fit for "many rotating members," but IAM groups are never valid principals in any resource-based policy, no matter how well the intuition fits.</li>
+      <li class="correct-choice"><strong>C.</strong> Correct — IAM roles are a valid principal type in resource-based policies like S3 bucket policies. Groups are categorically excluded from the Principal field everywhere, so a role achieves the "shared, reusable identity" goal that a group cannot.</li>
+      <li><strong>D.</strong> Wrong — resource-based policies accept more than just users and the account root as principals; roles and specific AWS services are valid principal types too.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 20 -->
+<div class="scenario-block">
+  <p class="scenario-tag">Scenario 20</p>
+  <p class="scenario-text">A federated user assumes a role and, in the same AssumeRole call, passes an inline session policy that further restricts the resulting session to read-only S3 actions, even though the role's own permission policy allows full S3 read/write. What access does the resulting temporary session actually have?</p>
+  <ul class="scenario-options">
+    <li><span class="opt-letter">A.</span> Full read/write, since a role's permission policy always takes precedence over any session policy passed at assume-time</li>
+    <li><span class="opt-letter">B.</span> Full read/write, since session policies are purely advisory metadata and aren't enforced by AWS</li>
+    <li><span class="opt-letter">C.</span> Read-only, but only because the session policy overwrites and replaces the role's permission policy for that session</li>
+    <li><span class="opt-letter">D.</span> Read-only, since the session policy and the role's permission policy are intersected, and the session policy is the more restrictive of the two</li>
+  </ul>
+  <div class="scenario-actions">
+    <button class="reveal-btn" data-answer="D">Reveal answer</button>
+    <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+  </div>
+  <div class="answer-panel">
+    <p class="answer-topic">Topic: IAM roles (technical mechanics)</p>
+    <p class="answer-line">Correct answer: D</p>
+    <ul class="answer-explanations">
+      <li><strong>A.</strong> Wrong — this gets the relationship backwards; a session policy passed at assume-time doesn't defer to the role's permission policy, it further restricts what that session can do.</li>
+      <li><strong>B.</strong> Wrong — session policies are fully enforced, not advisory; AWS actively evaluates them alongside the role's own permission policy for every request in that session.</li>
+      <li><strong>C.</strong> Wrong — the final read-only outcome is right, but the mechanism is described wrong: the session policy doesn't replace or overwrite the role's permission policy, it narrows it.</li>
+      <li class="correct-choice"><strong>D.</strong> Correct — the effective permissions of an assumed-role session are the intersection of the role's permission policy and any session policy passed at assume-time. Since the session policy caps it at read-only, that's the binding restriction even though the role itself allows write.</li>
+    </ul>
+  </div>
+</div>
+<!-- 21 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 21</p>
+      <p class="scenario-text">A containerized batch-processing job running on ECS needs to read encrypted objects from S3 and write results to DynamoDB. The security team requires that no long-term secrets ever exist inside the container image or its environment variables. Which approach satisfies this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Bake an IAM access key and secret into a config file that is loaded at container startup</li>
+        <li><span class="opt-letter">B.</span> Attach an IAM task role to the ECS task definition so credentials are supplied automatically</li>
+        <li><span class="opt-letter">C.</span> Store an access key pair in Secrets Manager and fetch it into an environment variable at boot</li>
+        <li><span class="opt-letter">D.</span> Create one IAM user per container instance and rotate its keys every 24 hours</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: When to use IAM roles</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> This embeds a static, long-term secret directly in the image — exactly what the requirement forbids.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — an ECS task role hands the container short-lived, auto-rotated credentials with no static secret ever stored anywhere.</li>
+          <li><strong>C.</strong> This still surfaces a long-term access key into an environment variable at runtime, which is a static secret in another disguise.</li>
+          <li><strong>D.</strong> Manual per-instance IAM users with rotation is operationally heavy and still relies on long-term keys between rotations.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 22 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 22</p>
+      <p class="scenario-text">During a production incident, an on-call engineer normally has read-only access but needs temporary write access to restart a failed service. The company wants this elevated access to be time-bound, logged, and automatically revoked once the incident session ends. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Permanently attach an administrator-level policy to the engineer's IAM user</li>
+        <li><span class="opt-letter">B.</span> Add the engineer to an IAM group that has elevated permissions at all times</li>
+        <li><span class="opt-letter">C.</span> Let the engineer assume a break-glass IAM role that grants temporary elevated credentials</li>
+        <li><span class="opt-letter">D.</span> Share the root account credentials with the engineer for the duration of the incident</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: When to use IAM roles</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Permanent elevation violates least privilege and stays active long after the incident is over, contrary to the time-bound requirement.</li>
+          <li><strong>B.</strong> Standing group membership with elevated rights is always-on access, not the temporary, revocable access the scenario asks for.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a break-glass role gives temporary STS credentials that expire automatically and are recorded in CloudTrail as an AssumeRole event.</li>
+          <li><strong>D.</strong> Root credentials are never meant for daily operational use and bypass individual accountability entirely.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 23 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 23</p>
+      <p class="scenario-text">A mobile game built by a small studio needs each player to save their progress to DynamoDB. Players sign in using their existing Google or Facebook account — the studio does not want to manage passwords or create IAM users for millions of players. What is the correct identity approach?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Create an IAM user for every player using their email as the username</li>
+        <li><span class="opt-letter">B.</span> Use web identity federation so players assume a role after authenticating with Google or Facebook</li>
+        <li><span class="opt-letter">C.</span> Federate the studio's corporate Active Directory with IAM roles via SAML</li>
+        <li><span class="opt-letter">D.</span> Embed a single shared access key in the game client for all players to use</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: When to use IAM roles</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Millions of IAM users is not feasible — IAM users are capped far below that and are not meant for public end users.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — web identity federation lets an external IdP like Google authenticate the player, who then assumes a role scoped to just their own data.</li>
+          <li><strong>C.</strong> SAML/AD federation is for corporate workforce identity, not for anonymous public consumers signing in with social logins.</li>
+          <li><strong>D.</strong> A shared key embedded in a client is a static, extractable secret with no per-player isolation or auditability.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 24 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 24</p>
+      <p class="scenario-text">A consulting firm's engineers work daily in a shared identity account but must regularly perform work inside four separate client AWS accounts. The clients insist that no IAM users be created for the consultants inside their accounts, since that would count against their own account's user inventory and audit scope. What satisfies all clients?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Ask each client to create an IAM user for every consultant in their account</li>
+        <li><span class="opt-letter">B.</span> Have each client account create a role trusting the consulting firm's account, which consultants assume</li>
+        <li><span class="opt-letter">C.</span> Peer a VPC between the consulting firm's account and each client account</li>
+        <li><span class="opt-letter">D.</span> Give consultants the client accounts' root credentials for the engagement period</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: When to use IAM roles</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> This is precisely what the clients ruled out — it creates per-consultant IAM users inside their accounts.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — each client defines a cross-account role trusting the firm's account; consultants assume it with no new identities created client-side.</li>
+          <li><strong>C.</strong> VPC peering connects networks, not identities — it has no effect on who can authenticate or what they can do via IAM.</li>
+          <li><strong>D.</strong> Root credentials are catastrophic to share and grant unrestricted, unaudited access far beyond the consulting scope.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 25 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 25</p>
+      <p class="scenario-text">An EC2 instance running a monitoring agent needs to call CloudWatch APIs continuously for the life of the instance. A security reviewer notes that whatever mechanism is used must not require any manual key rotation and must stop working automatically if the instance is terminated. Which design meets this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Attach an instance profile with an IAM role to the EC2 instance</li>
+        <li><span class="opt-letter">B.</span> Generate a long-lived access key and store it in the instance's user data script</li>
+        <li><span class="opt-letter">C.</span> Create an IAM user dedicated to the instance and rotate its key manually every 90 days</li>
+        <li><span class="opt-letter">D.</span> Hardcode the credentials inside the monitoring agent's configuration file</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: When to use IAM roles</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — an instance profile supplies temporary, auto-rotating credentials via the metadata service, and access disappears when the instance terminates.</li>
+          <li><strong>B.</strong> User data is visible to anyone who can describe the instance and creates a static, non-rotating credential — a security risk.</li>
+          <li><strong>C.</strong> Manual rotation contradicts the "no manual key rotation" requirement and leaves a live key even after termination.</li>
+          <li><strong>D.</strong> Hardcoded credentials never expire or rotate and remain valid even after the instance is gone.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 26 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 26</p>
+      <p class="scenario-text">A security engineer wants to reduce the permissions of the role that AWS Elastic Load Balancing uses to manage EC2 instances on the account's behalf. They open the role in the IAM console expecting to trim its policy. What will they find?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> They can freely edit the policy document since it is just a normal IAM role</li>
+        <li><span class="opt-letter">B.</span> The permissions are fixed by the ELB service and cannot be edited by the account</li>
+        <li><span class="opt-letter">C.</span> They must contact AWS Support to request a permissions change on the role</li>
+        <li><span class="opt-letter">D.</span> They can remove permissions but cannot add new ones to the role</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service-linked roles and PassRole</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Service-linked roles look like normal roles but their permission set is predefined by the linked service, not editable.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the permissions of a service-linked role are entirely controlled by the service; the account can only decide whether the role exists.</li>
+          <li><strong>C.</strong> No support ticket changes this behavior — it is a structural property of service-linked roles, not a support-gated limit.</li>
+          <li><strong>D.</strong> Neither removing nor adding permissions is possible — the policy is completely fixed, not partially editable.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 27 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 27</p>
+      <p class="scenario-text">A junior operator has permission to call <code>ec2:RunInstances</code> but has never been granted <code>iam:CreateRole</code> or <code>iam:PassRole</code>. They try to launch an EC2 instance with an existing highly privileged role attached. What happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The instance launches and the role is attached because RunInstances implies role attachment rights</li>
+        <li><span class="opt-letter">B.</span> The launch fails because the operator lacks permission to pass that role to the service</li>
+        <li><span class="opt-letter">C.</span> The launch fails because the operator lacks permission to create the role first</li>
+        <li><span class="opt-letter">D.</span> The instance launches without a role and the operator can attach it manually afterward</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service-linked roles and PassRole</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> RunInstances alone does not grant the right to attach a role — AWS checks PassRole separately as a distinct safeguard.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — attaching an existing role to a service requires <code>iam:PassRole</code> on that role's ARN; without it the launch is denied.</li>
+          <li><strong>C.</strong> The operator is attaching an existing role, not creating a new one, so CreateRole is irrelevant here.</li>
+          <li><strong>D.</strong> The launch fails outright at the role-attachment step; it does not silently succeed without the role.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 28 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 28</p>
+      <p class="scenario-text">A platform team wants to let developers deploy Lambda functions with pre-approved execution roles, but must prevent developers from attaching an unapproved role that has broader access than intended. Which control directly addresses this risk?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Scope each developer's <code>iam:PassRole</code> permission to only the specific approved role ARNs</li>
+        <li><span class="opt-letter">B.</span> Require developers to request a new IAM user for every Lambda deployment</li>
+        <li><span class="opt-letter">C.</span> Grant developers full <code>iam:*</code> so they can manage roles themselves</li>
+        <li><span class="opt-letter">D.</span> Attach an SCP at the root that blocks all Lambda deployments company-wide</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service-linked roles and PassRole</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — restricting PassRole to specific ARNs means developers can only attach the pre-approved roles, closing the privilege-escalation gap.</li>
+          <li><strong>B.</strong> Creating IAM users per deployment doesn't address role attachment at all and adds unnecessary identity sprawl.</li>
+          <li><strong>C.</strong> Full <code>iam:*</code> is the opposite of the control needed — it would let developers create or pass any role, including over-privileged ones.</li>
+          <li><strong>D.</strong> Blocking all Lambda deployments prevents the legitimate use case entirely rather than narrowing the specific risk.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 29 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 29</p>
+      <p class="scenario-text">An administrator tries to delete a service-linked role used by AWS Elastic Load Balancing while several load balancers in the account are still actively using it. What is the outcome?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The deletion succeeds immediately and the load balancers lose their permissions</li>
+        <li><span class="opt-letter">B.</span> The role is deleted but ELB automatically recreates an identical one within minutes</li>
+        <li><span class="opt-letter">C.</span> AWS blocks the deletion until the dependent resources are removed first</li>
+        <li><span class="opt-letter">D.</span> The role is disabled but not deleted, remaining visible with zero permissions</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service-linked roles and PassRole</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> AWS explicitly protects active service-linked roles from deletion; it would not silently break running load balancers.</li>
+          <li><strong>B.</strong> The role isn't deleted and recreated — it simply isn't deleted at all while in use, so there's no recreation step.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — AWS blocks deletion of a service-linked role while any resource depends on it; the resources must be removed first.</li>
+          <li><strong>D.</strong> There is no "disabled with zero permissions" state — the role stays fully intact and unchanged until deletion is permitted.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 30 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 30</p>
+      <p class="scenario-text">A developer has full permissions to create and edit IAM roles, including attaching any policy to any role. Their manager argues this alone is enough for them to deploy an EC2 instance with a role attached. Is the manager correct?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, because creating a role automatically grants the ability to attach it to any service</li>
+        <li><span class="opt-letter">B.</span> No, they also need <code>iam:PassRole</code> on the role to attach it during instance launch</li>
+        <li><span class="opt-letter">C.</span> Yes, because <code>iam:PassRole</code> only applies to service-linked roles, not customer roles</li>
+        <li><span class="opt-letter">D.</span> No, they instead need the EC2 service to be granted a trust policy toward their IAM user</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service-linked roles and PassRole</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Role creation and role attachment are separate permissions by design — creating a role does not imply the right to pass it to a service.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — PassRole is a distinct, required check whenever any identity attaches an existing role to a service like EC2, regardless of who created it.</li>
+          <li><strong>C.</strong> PassRole applies to ordinary customer-created roles just as much as service-linked ones whenever a role is being attached.</li>
+          <li><strong>D.</strong> Trust policies govern who can assume a role, not who can attach a role to a launching resource — that's what PassRole governs.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 31 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 31</p>
+      <p class="scenario-text">A startup currently has one AWS account. As it grows, leadership wants separate accounts for dev, staging, and production, but wants a single consolidated invoice each month with volume pricing applied across all of them. What AWS Organizations feature delivers this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Create three separate root user logins and manually sum the invoices each month</li>
+        <li><span class="opt-letter">B.</span> Use consolidated billing under one management account across all member accounts</li>
+        <li><span class="opt-letter">C.</span> Attach a billing-only SCP to each account to merge cost data automatically</li>
+        <li><span class="opt-letter">D.</span> Enable Cost Explorer in each account and export reports to a shared S3 bucket</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Organizations</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Manually summing separate invoices is exactly the manual overhead consolidated billing is designed to remove, and forfeits volume discounts.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Organizations rolls up charges from all member accounts into the management account's single invoice, and usage is pooled for volume discounts.</li>
+          <li><strong>C.</strong> SCPs restrict permissions; they have no role in billing aggregation or pricing.</li>
+          <li><strong>D.</strong> Cost Explorer reports summarize spend but do not merge billing into one invoice or apply organization-wide volume pricing.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 32 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 32</p>
+      <p class="scenario-text">A cloud team is designing their OU structure. They want a "Production" OU containing separate "Payments" and "Inventory" OUs, each holding its own set of accounts, so team-specific policies can be layered on top of company-wide production policies. Does AWS Organizations support this structure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, OUs can only sit directly under the root and cannot contain other OUs</li>
+        <li><span class="opt-letter">B.</span> No, an OU may hold either accounts or nested OUs, but never both together</li>
+        <li><span class="opt-letter">C.</span> Yes, OUs can be nested inside other OUs to build a multi-level hierarchy</li>
+        <li><span class="opt-letter">D.</span> Yes, but nesting is capped at exactly two levels beneath the root</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Organizations</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> OUs are not restricted to sitting directly under root — they can be nested inside other OUs at multiple levels.</li>
+          <li><strong>B.</strong> An OU can hold a mix of accounts and nested OUs simultaneously; there is no either-or restriction.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — OUs can be nested, so "Production" can contain "Payments" and "Inventory" as sub-OUs, each with their own accounts.</li>
+          <li><strong>D.</strong> There is no fixed two-level cap defined by AWS on OU nesting depth.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 33 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 33</p>
+      <p class="scenario-text">A company already has an existing standalone AWS account run by a partner team, and wants to bring it under central management in their new AWS Organization without the partner team losing access to their existing resources. What is the correct way to bring this account in?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Send an invitation from the management account, which the partner team must accept</li>
+        <li><span class="opt-letter">B.</span> Ask the partner team to email their root password to the management account owner</li>
+        <li><span class="opt-letter">C.</span> Create a brand-new account inside the org and migrate all resources manually</li>
+        <li><span class="opt-letter">D.</span> Attach an SCP to the partner account from outside the organization</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Organizations</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — for an existing account, the management account sends an invite, and the existing account must accept it to join the organization, preserving its resources.</li>
+          <li><strong>B.</strong> Sharing root credentials is unnecessary and a serious security anti-pattern; invitations do not require credential sharing.</li>
+          <li><strong>C.</strong> Creating a new account and migrating resources is far more work than simply inviting the existing account, and risks resource loss.</li>
+          <li><strong>D.</strong> SCPs can only be attached to accounts already inside the organization — this account isn't a member yet.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 34 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 34</p>
+      <p class="scenario-text">A security architect wants engineers to access dozens of member accounts without ever creating an IAM user in any of them, using a single central identity account as the entry point. Which pattern implements this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Give every engineer the root credentials of the central identity account</li>
+        <li><span class="opt-letter">B.</span> Create an IAM user for each engineer in every member account they need</li>
+        <li><span class="opt-letter">C.</span> Engineers log in to the identity account and assume cross-account roles in member accounts</li>
+        <li><span class="opt-letter">D.</span> Peer VPCs between the identity account and every member account</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Organizations</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Sharing root credentials for the identity account grants unrestricted access and removes individual accountability entirely.</li>
+          <li><strong>B.</strong> Creating per-account IAM users for every engineer is exactly the sprawl this pattern is designed to avoid.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — engineers authenticate once to the central account, then assume roles in whichever member accounts they need, with no per-account users.</li>
+          <li><strong>D.</strong> VPC peering is a networking construct and has no bearing on identity or cross-account permission delegation.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 35 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 35</p>
+      <p class="scenario-text">An organization's finance team asks whether the management account itself can be restricted from performing risky actions using a policy attached at the organization root, to reduce blast radius if its credentials are ever compromised. What is true here?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A root-level SCP restricts the management account just like any member account</li>
+        <li><span class="opt-letter">B.</span> The management account can never be restricted by any SCP, including one at the root</li>
+        <li><span class="opt-letter">C.</span> The management account can be restricted only if the SCP is attached directly to it</li>
+        <li><span class="opt-letter">D.</span> The management account can be restricted only after it is moved into an OU</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Organizations</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Root-level SCPs apply to member accounts and OUs, but the management account is explicitly excluded from SCP enforcement.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the management account is never affected by SCPs, at any attachment point, by deliberate AWS design; this is why it shouldn't run production workloads.</li>
+          <li><strong>C.</strong> Even an SCP attached directly to the management account itself would not restrict it — the exemption is unconditional.</li>
+          <li><strong>D.</strong> The management account cannot be moved into an OU at all — it always sits outside the OU structure at the organization root.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 36 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 36</p>
+      <p class="scenario-text">A company wants every member account to be permanently blocked from disabling AWS CloudTrail, no matter what IAM permissions individual users or admins in that account are granted. Which control enforces this at the account-boundary level rather than relying on IAM policy discipline?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Attach an SCP that denies <code>cloudtrail:StopLogging</code> and related actions to the relevant OU</li>
+        <li><span class="opt-letter">B.</span> Train every account administrator not to disable CloudTrail manually</li>
+        <li><span class="opt-letter">C.</span> Grant only AdministratorAccess and rely on IAM policy conditions for CloudTrail</li>
+        <li><span class="opt-letter">D.</span> Enable CloudTrail insights and alert after logging has already stopped</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service Control Policies (SCPs)</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — an SCP sets a hard ceiling that applies regardless of IAM permissions, so even an account admin with full IAM rights cannot stop CloudTrail.</li>
+          <li><strong>B.</strong> Training relies on human discipline, not an enforced boundary, and does nothing to stop a determined or compromised admin.</li>
+          <li><strong>C.</strong> AdministratorAccess is an IAM policy that grants permissions — it cannot enforce a restriction, and IAM alone can always be self-modified by an admin.</li>
+          <li><strong>D.</strong> Detecting after the fact does not prevent the action; the requirement calls for the action to be blocked, not merely alerted on.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 37 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 37</p>
+      <p class="scenario-text">An account has the default <code>FullAWSAccess</code> SCP still attached, plus a custom SCP that denies <code>rds:DeleteDBInstance</code>. An IAM user in the account has an identity policy granting <code>rds:*</code>. Can the user delete an RDS instance?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, because IAM's <code>rds:*</code> grant always takes precedence over any SCP</li>
+        <li><span class="opt-letter">B.</span> No, because the explicit SCP deny overrides the IAM allow in the intersection</li>
+        <li><span class="opt-letter">C.</span> Yes, because FullAWSAccess being present cancels out the custom deny statement</li>
+        <li><span class="opt-letter">D.</span> No, because SCPs alone are sufficient to delete resources without an IAM policy</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service Control Policies (SCPs)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> IAM policies never override SCPs — effective permissions are the intersection, and an SCP deny always wins over an IAM allow.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — SCPs are evaluated alongside IAM as a boundary; an explicit deny in either always blocks the action regardless of what IAM allows.</li>
+          <li><strong>C.</strong> FullAWSAccess being attached does not cancel a separately attached explicit-deny SCP — both apply, and deny wins.</li>
+          <li><strong>D.</strong> SCPs never grant permissions by themselves; this option correctly denies the action but for the wrong reason, since IAM's rds:* grant is what's actually blocked by the SCP.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 38 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 38</p>
+      <p class="scenario-text">A tightly regulated organization wants member accounts to be able to use only an explicitly approved list of services — anything not on that list must be blocked by default, even if a future IAM policy accidentally grants it. Which SCP strategy fits, and what is the first step?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Use a deny-list strategy and add Deny statements for each risky service one at a time</li>
+        <li><span class="opt-letter">B.</span> Remove the default FullAWSAccess SCP and attach an SCP that explicitly allows only approved services</li>
+        <li><span class="opt-letter">C.</span> Keep FullAWSAccess attached and add IAM boundary policies to every user instead</li>
+        <li><span class="opt-letter">D.</span> Attach FullAWSAccess to the root and a second FullAWSAccess copy to each OU</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service Control Policies (SCPs)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> A deny-list still permits everything not explicitly denied — a newly introduced service would be allowed by default, failing the "blocked unless approved" requirement.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — removing FullAWSAccess and attaching an explicit-allow SCP means nothing is permitted unless it's on the approved list, matching a true allow-list model.</li>
+          <li><strong>C.</strong> IAM permissions boundaries are per-user constructs; they don't provide the org-wide default-deny ceiling an SCP allow-list gives.</li>
+          <li><strong>D.</strong> Duplicating FullAWSAccess still leaves everything allowed by default — it does not create any restriction at all.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 39 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 39</p>
+      <p class="scenario-text">A billing analyst notices that a member account was somehow able to launch resources in a region the company had explicitly restricted via an SCP attached to that account's parent OU. Upon investigation, the account had recently been moved out of that OU into an unrestricted OU. What best explains what happened?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> SCPs only apply the moment they are created, never retroactively to accounts moved in later</li>
+        <li><span class="opt-letter">B.</span> The account inherits the SCPs attached to whichever OU currently contains it, so moving it changed its effective policy</li>
+        <li><span class="opt-letter">C.</span> SCPs are permanently bound to the account regardless of which OU it moves to</li>
+        <li><span class="opt-letter">D.</span> Region restrictions require a separate AWS Config rule and are unrelated to SCPs entirely</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service Control Policies (SCPs)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> SCPs apply continuously to whatever is currently attached to their scope — there is no "grandfathering" for accounts joining later.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — SCP effect is based on current OU placement; moving the account out of the restricted OU removed that SCP's effect on it immediately.</li>
+          <li><strong>C.</strong> SCPs are attached to organizational nodes (root, OU, account), not permanently bound to the account itself across moves.</li>
+          <li><strong>D.</strong> SCPs can absolutely enforce region restrictions via condition keys; this is a standard SCP use case, not a separate Config-only concern.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 40 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 40</p>
+      <p class="scenario-text">A developer with an IAM policy granting <code>s3:*</code> reports they can no longer create S3 buckets after an SCP was attached to their account's OU that denies <code>s3:CreateBucket</code> specifically. They argue this must be a bug since their IAM policy clearly allows it. What is the correct explanation?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It is a bug — IAM Allow statements should always take priority over SCP Deny statements</li>
+        <li><span class="opt-letter">B.</span> The SCP deny narrows the effective permission set below what IAM allows; this is expected behavior</li>
+        <li><span class="opt-letter">C.</span> SCPs only affect the root user, so this developer's denial must come from somewhere else</li>
+        <li><span class="opt-letter">D.</span> The SCP must have been misconfigured to target the management account by mistake</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Service Control Policies (SCPs)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> This is not a bug — SCPs are designed to cap IAM permissions, and an explicit SCP deny always overrides an IAM allow.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — effective permissions are the intersection of IAM and SCP; the SCP deny on CreateBucket removes that action even though IAM grants s3:*.</li>
+          <li><strong>C.</strong> SCPs apply to every identity in scoped member accounts, not just the root user — this developer is affected exactly as intended.</li>
+          <li><strong>D.</strong> The management account is exempt from SCPs regardless, so a misconfigured target there wouldn't explain a member-account developer being denied.</li>
+        </ul>
+      </div>
+    </div>
+<!-- 41 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 41</p>
+      <p class="scenario-text">A platform team ingests logs from three microservices, but all three currently write into a single CloudWatch Logs log group called <code>/app/all-services</code>, each to its own stream. Compliance requires payment-service logs to be retained for 7 years, while the other two services only need 30 days. What is the correct way to achieve this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Move payment-service logs into their own log group and set that group's retention independently to 7 years, leaving the other log group at 30 days</li>
+        <li><span class="opt-letter">B.</span> Set the shared log group's retention to 7 years, so it applies uniformly across all three streams inside it</li>
+        <li><span class="opt-letter">C.</span> Set a 7-year retention policy directly on the payment-service log stream, leaving the shared log group's retention unchanged</li>
+        <li><span class="opt-letter">D.</span> Enable CloudTrail data events on the payment-service log stream so its logs are retained indefinitely</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Logs</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — retention and permissions are configured per log group, not per stream, so giving payment-service its own log group lets it carry a different retention period from the other two services sharing the original group.</li>
+          <li><strong>B.</strong> Wrong — this does satisfy the 7-year requirement for payment-service, but it applies that same 7-year retention to the other two services' streams too, since retention is set at the group level, unnecessarily over-retaining data the requirement says only needs 30 days.</li>
+          <li><strong>C.</strong> Wrong — CloudWatch Logs does not support setting retention on an individual stream; it is strictly a log-group-level setting, so this configuration isn't actually possible.</li>
+          <li><strong>D.</strong> Wrong — CloudTrail records API calls and has nothing to do with CloudWatch Logs retention; enabling it wouldn't change how long the payment-service log events are kept.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 42 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 42</p>
+      <p class="scenario-text">An engineering team wants an automatic SNS notification the moment "OutOfMemoryError" appears more than 5 times within 5 minutes across a Lambda function's CloudWatch Logs, with nobody needing to watch the console. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Have an engineer manually run a CloudWatch Logs Insights query every few minutes to search for the error string and page the team by hand</li>
+        <li><span class="opt-letter">B.</span> Create a metric filter on the log group matching the error pattern, then attach a CloudWatch Alarm on the resulting metric to trigger an SNS notification</li>
+        <li><span class="opt-letter">C.</span> Create a CloudWatch Logs subscription filter that streams matching log events to a Kinesis stream for a downstream dashboard to poll</li>
+        <li><span class="opt-letter">D.</span> Enable CloudTrail Insights on the account's trail to detect the unusual error pattern inside the Lambda function's application logs</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Logs</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this can technically surface the pattern, but it's manual, scheduled at the engineer's discretion, and directly violates the stated requirement that nobody has to check anything.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a metric filter converts the matching log pattern into a numeric CloudWatch metric, and an alarm on that metric can trigger SNS automatically the moment the threshold is crossed, with no human involvement.</li>
+          <li><strong>C.</strong> Wrong — a subscription filter is a real feature for streaming matching events to a destination like Kinesis, but it only relocates the data; something still has to be built to evaluate a threshold and page the team, which this option doesn't provide.</li>
+          <li><strong>D.</strong> Wrong — CloudTrail Insights analyzes API call volume in already-logged management or data events; it has no visibility into application-level log text like a Lambda error string.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 43 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 43</p>
+      <p class="scenario-text">A company migrating gradually to AWS has on-premises Windows and Linux servers whose system and application logs must be centralized into CloudWatch Logs alongside logs from its EC2 fleet, using one consistent tool across both fleets. What should they use?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Install the legacy CloudWatch Logs agent on the on-premises servers and the unified CloudWatch agent on the EC2 fleet</li>
+        <li><span class="opt-letter">B.</span> Install the unified CloudWatch agent only on the on-premises servers, relying on EC2 instance logs being captured automatically without any agent installed</li>
+        <li><span class="opt-letter">C.</span> Install and configure the unified CloudWatch agent on both the on-premises servers and the EC2 fleet</li>
+        <li><span class="opt-letter">D.</span> Enable VPC Flow Logs across the on-premises network devices and stream the output into CloudWatch Logs</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Logs</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this could ship logs from both fleets, but it uses two different agents rather than one consistent tool, directly violating the stated requirement.</li>
+          <li><strong>B.</strong> Wrong — EC2 instances don't ship logs to CloudWatch Logs automatically either; the unified agent (or an equivalent) still has to be installed there too, so this leaves the EC2 fleet's logs uncollected.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the unified CloudWatch agent runs on both on-premises servers and EC2 instances, giving the team one consistent tool that ships logs (and metrics) from both fleets into CloudWatch Logs.</li>
+          <li><strong>D.</strong> Wrong — VPC Flow Logs capture network traffic metadata for ENIs inside a VPC; they don't apply to on-premises devices and don't carry system or application log content at all.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 44 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 44</p>
+      <p class="scenario-text">A company runs workloads in us-east-1, eu-west-1, and ap-southeast-2, each region writing to its own regional CloudWatch Logs log group. The security team wants a single centralized view of ERROR-level events across all three regions, without simply pointing every instance at one region's CloudWatch Logs endpoint. What approach correctly centralizes this data?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Set every log group's retention policy to "Never expire" in each region, and have analysts review each region's console separately</li>
+        <li><span class="opt-letter">B.</span> Configure every instance's agent to publish directly to the us-east-1 regional CloudWatch Logs endpoint regardless of which region it runs in</li>
+        <li><span class="opt-letter">C.</span> Create an AWS Config aggregator that aggregates the three regions' log groups into one multi-region view</li>
+        <li><span class="opt-letter">D.</span> Configure a subscription filter on each region's log group that streams matching events to a centralized destination, such as a Kinesis stream, in one region</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Logs</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — extending retention keeps events around longer in each region individually, but it does nothing to merge three separate regional consoles into the single centralized view the team asked for.</li>
+          <li><strong>B.</strong> Wrong — CloudWatch Logs is a regional service, and forcing every agent worldwide to write cross-region to us-east-1 adds latency and isn't the supported centralization pattern, and the scenario explicitly rules out this exact approach.</li>
+          <li><strong>C.</strong> Wrong — a Config aggregator centralizes resource configuration and compliance data across regions and accounts, not the contents of CloudWatch Logs log groups; it wouldn't surface ERROR-level log events at all.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — a subscription filter on each regional log group can forward matching log events to a centralized destination (like a Kinesis stream) in one region, giving the security team a single aggregated place to review ERROR events from all three regions.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 45 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 45</p>
+      <p class="scenario-text">An application is throwing intermittent 500 errors right now, and the on-call engineer needs to see the application's real-time stack traces within the next few minutes to diagnose the bug. Which approach correctly and immediately gets them what they need?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Open the relevant CloudWatch Logs log group and tail the application's recent log streams directly</li>
+        <li><span class="opt-letter">B.</span> Query CloudTrail event history for API calls made by the application in the last hour, since CloudTrail captures all account activity</li>
+        <li><span class="opt-letter">C.</span> Wait for CloudTrail Insights to flag the error pattern, since Insights is designed to surface unusual activity automatically</li>
+        <li><span class="opt-letter">D.</span> Schedule a CloudWatch Logs Insights query to run against the log group once the current business-hours change freeze lifts later today</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Logs</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — CloudWatch Logs stores the application's actual log events, so tailing the relevant log group's recent streams is the direct, immediate way to see real-time stack traces.</li>
+          <li><strong>B.</strong> Wrong — CloudTrail records API calls made against AWS services, not an application's internal error output or stack traces; it wouldn't show anything relevant here.</li>
+          <li><strong>C.</strong> Wrong — Insights detects unusual volume or patterns in already-logged management or data events, not arbitrary application log content, and it isn't a near-instant tool anyway — it's the wrong mechanism for this need.</li>
+          <li><strong>D.</strong> Wrong — this does eventually retrieve the right data using the right tool, but deferring it until later today directly violates the stated "within the next few minutes" urgency.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 46 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 46</p>
+      <p class="scenario-text">A security team's existing CloudTrail trail already shows every time a Lambda function's code or configuration is updated, but shows no record of the function actually being invoked, even though invocations happen constantly. What must be enabled to capture the invocations?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> CloudTrail Insights on the trail, since it is designed to detect the unusually high volume of Lambda invocations</li>
+        <li><span class="opt-letter">B.</span> Data events for Lambda on the trail, since function invocations are data-plane operations that aren't captured by management events</li>
+        <li><span class="opt-letter">C.</span> "Read-only" management events on the trail, since an invocation is essentially a read operation against the function resource</li>
+        <li><span class="opt-letter">D.</span> A CloudWatch Logs subscription on the Lambda execution role to record each invocation as a CloudTrail API call</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudTrail</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Insights analyzes patterns within events the trail is already capturing; since invocations aren't being logged at all yet, there's nothing for Insights to analyze regardless of whether it's turned on.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — code and configuration changes are management (control-plane) events, logged by default. Invocations are data-plane operations, which require data events to be explicitly enabled on the trail for that function.</li>
+          <li><strong>C.</strong> Wrong — the read/write filter applies to management events, but an invocation is a data event category entirely, not a read-only management event; toggling this setting wouldn't surface it.</li>
+          <li><strong>D.</strong> Wrong — a CloudWatch Logs subscription forwards log events to another destination; it has no mechanism to inject new events into CloudTrail, so it can't be used to record invocations as CloudTrail API calls.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 47 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 47</p>
+      <p class="scenario-text">A company's audit policy mandates exactly one CloudTrail trail per account, to avoid fragmented, hard-to-correlate logs. Their single trail lives in eu-west-1 with "include global service events" turned off. During an investigation, the team can't find any record of an IAM policy change made last week, even though the trail is otherwise logging normally. What is the correct fix?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Create a second, dedicated trail in us-east-1 solely to capture IAM and other global service events</li>
+        <li><span class="opt-letter">B.</span> Move the existing trail's home region to us-east-1, since a single-Region trail only receives global service events there</li>
+        <li><span class="opt-letter">C.</span> Convert the trail to a multi-Region trail with "include global service events" enabled, so global-service activity is captured regardless of home Region</li>
+        <li><span class="opt-letter">D.</span> Enable CloudTrail Insights on the trail, since Insights is required before global service activity can be logged</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudTrail</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this would likely surface the missing IAM events, but it creates a second trail, directly violating the audit policy's one-trail-per-account mandate.</li>
+          <li><strong>B.</strong> Technically works — a single-Region trail only receives global service events when its home Region is us-east-1, so relocating it there would fix the gap — but it's an unnecessary constraint: it ties the account's entire trail to one specific Region for no operational reason, when a multi-Region trail solves the same problem without that dependency.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — IAM is a global service. A single-Region trail only receives global service events if it lives in us-east-1; a multi-Region trail, by contrast, captures them regardless of its home Region as long as "include global service events" is on. Converting the existing trail keeps the one-trail-per-account policy intact while fixing the gap for good, independent of Region.</li>
+          <li><strong>D.</strong> Wrong — Insights analyzes anomalies in events the trail is already logging; it has no role in gating whether global service events are captured in the first place.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 48 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 48</p>
+      <p class="scenario-text">A finance team's AWS bill spiked because hundreds of unexpected EC2 instances were launched over a short window overnight. They want CloudTrail to automatically flag unusual spikes in API call volume like this going forward, without manually scanning event history every day. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A CloudWatch Logs metric filter on the CloudTrail S3 delivery bucket matching "RunInstances", alerting on a manually chosen count threshold</li>
+        <li><span class="opt-letter">B.</span> An AWS Config rule that counts running EC2 instances every 24 hours and flags accounts above a static threshold</li>
+        <li><span class="opt-letter">C.</span> A CloudTrail trail with data events enabled for EC2, since RunInstances is a data-plane operation needing extra logging</li>
+        <li><span class="opt-letter">D.</span> CloudTrail Insights on the trail, to establish a baseline of normal management event activity and automatically surface unusual deviations</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudTrail</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this requires the logs to already be in CloudWatch Logs format and someone to guess a fixed threshold up front; it's a bolted-together workaround, not automatic baseline-based anomaly detection.</li>
+          <li><strong>B.</strong> Wrong — this technically could catch the spike, but checking only once every 24 hours against a fixed, manually-picked threshold isn't automatic anomaly detection, and Config tracks resource inventory, not API call volume patterns.</li>
+          <li><strong>C.</strong> Wrong — <code>RunInstances</code> is a management (control-plane) event, already captured by default; enabling data events for EC2 doesn't address this gap and adds unrelated cost.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — CloudTrail Insights automatically establishes a baseline of normal management event activity (like typical <code>RunInstances</code> volume) and flags deviations from it, exactly the automatic anomaly detection the finance team wants.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 49 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 49</p>
+      <p class="scenario-text">After a suspected compromise, a security team needs to prove — potentially in court — that the CloudTrail log files stored in S3 have not been altered or deleted since they were delivered. Which feature provides this proof?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Enable log file integrity validation on the trail, which produces periodic digest files containing hashes that can cryptographically prove the logs haven't been altered</li>
+        <li><span class="opt-letter">B.</span> Enable CloudTrail Insights on the trail, since Insights independently re-verifies every past log file's checksum</li>
+        <li><span class="opt-letter">C.</span> Turn on S3 versioning on the destination bucket, so any modified log file is only ever a still-recoverable prior version</li>
+        <li><span class="opt-letter">D.</span> Enable S3 Object Lock in governance mode on the destination bucket, since it prevents the log objects from ever being deleted</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudTrail</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — log file integrity validation generates signed digest files with hashes of the delivered log files, giving a cryptographic way to prove afterward that a specific log file was not modified or deleted — exactly the evidentiary proof needed here.</li>
+          <li><strong>B.</strong> Wrong — Insights analyzes API call volume patterns for anomalies; it has no function related to verifying whether log files have been tampered with.</li>
+          <li><strong>C.</strong> Wrong — versioning is a real, useful complementary control that preserves prior copies of overwritten objects, but it doesn't itself produce a cryptographic proof of non-tampering the way signed integrity digests do.</li>
+          <li><strong>D.</strong> Wrong — governance mode blocks deletion for most principals, but users with the special bypass permission can still override it, so it doesn't provide the guaranteed, irrefutable proof of non-tampering that court-ready evidence requires.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 50 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 50</p>
+      <p class="scenario-text">A company using AWS Organizations with 40 member accounts wants every account's CloudTrail activity — including all new accounts created in the future — automatically logged to a single centralized S3 bucket in a security account, without configuring a trail in each member account individually. What should they set up?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Manually create a CloudTrail trail in each of the 40 accounts, each configured to deliver to the same central S3 bucket via a bucket policy</li>
+        <li><span class="opt-letter">B.</span> Create an organization trail once in the management account, which automatically applies to all existing and future member accounts</li>
+        <li><span class="opt-letter">C.</span> Deploy a CloudFormation StackSet that creates an identical trail resource in every account in the organization</li>
+        <li><span class="opt-letter">D.</span> Create a CloudTrail trail in the management account with cross-account data events enabled for each member account's S3 buckets</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudTrail</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this can centralize delivery, but it requires manual setup in every one of the 40 accounts today and doesn't automatically extend to accounts created in the future, contradicting the stated goal.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — an organization trail is created once, in the management account, and automatically applies to every existing member account as well as any account created afterward, with logs delivered centrally.</li>
+          <li><strong>C.</strong> Wrong — a StackSet can deploy a trail to every account and even auto-deploy to new ones if configured, but it's a bespoke solution the team must build and maintain themselves rather than the purpose-built, natively-integrated organization trail feature.</li>
+          <li><strong>D.</strong> Wrong — cross-account data events for S3 buckets is not how organization-wide API activity logging works, and it wouldn't capture non-S3 management or data events happening in the other accounts at all.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 51 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 51</p>
+      <p class="scenario-text">A company wants to guarantee that member accounts under a specific OU can never disable CloudTrail logging, even for a moment, rather than merely being told about it after the fact. Which type of guardrail should be applied?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A detective guardrail, implemented as a Config rule, which flags the account as non-compliant if CloudTrail is disabled</li>
+        <li><span class="opt-letter">B.</span> A mandatory guardrail combined with a CloudWatch alarm that automatically re-enables CloudTrail moments after it is disabled</li>
+        <li><span class="opt-letter">C.</span> A preventive guardrail, implemented as an SCP, which blocks the disabling action outright before it can happen</li>
+        <li><span class="opt-letter">D.</span> An IAM permissions boundary applied to every role in the OU's accounts, denying the CloudTrail disable action</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Control Tower</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a detective guardrail only reports non-compliance after the fact; it doesn't stop the disable action from succeeding in the first place, which violates the "never, even for a moment" requirement.</li>
+          <li><strong>B.</strong> Wrong — this sounds like fast protection, but there's still a window where logging was actually off before anything re-enables it, and this "auto re-enable" mechanism isn't how Control Tower guardrails are implemented at all.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a preventive guardrail is enforced as an SCP, which blocks the prohibited action outright at the permissions layer, so CloudTrail can never actually be disabled in the first place.</li>
+          <li><strong>D.</strong> Wrong — permissions boundaries are per-principal IAM constructs an administrator would have to apply and maintain manually on every role; they aren't a Control Tower guardrail mechanism and wouldn't automatically cover future accounts in the OU.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 52 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 52</p>
+      <p class="scenario-text">A member account's S3 bucket has public access accidentally enabled, which trips a Control Tower detective guardrail. A week later, the bucket is still publicly accessible and the setting hasn't changed. The team assumed the guardrail would have fixed it automatically. What actually describes detective guardrail behavior?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Detective guardrails only run once, when an account first joins the landing zone, so a bucket changed afterward is never rechecked</li>
+        <li><span class="opt-letter">B.</span> Detective guardrails should have blocked the setting change entirely, so the fact it succeeded means the guardrail was misconfigured</li>
+        <li><span class="opt-letter">C.</span> Detective guardrails do remediate automatically, but only after an account has been non-compliant for a minimum of 30 days</li>
+        <li><span class="opt-letter">D.</span> Detective guardrails only report non-compliance in the Control Tower dashboard; they don't automatically remediate the underlying resource</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Control Tower</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — detective guardrails, built on Config rules, continuously evaluate resource state over time; they aren't limited to a single check at account creation.</li>
+          <li><strong>B.</strong> Wrong — blocking an action outright is the job of a preventive guardrail (SCP-based), not a detective one; the fact that a detective guardrail caught this after the change succeeded is expected behavior, not a misconfiguration.</li>
+          <li><strong>C.</strong> Wrong — this invents a 30-day auto-remediation threshold that doesn't exist; detective guardrails don't automatically remediate resources at all, regardless of how long they've been non-compliant.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — detective guardrails identify and report non-compliant resources in the Control Tower dashboard so the team can act on them; they don't take remediation action on the resource themselves.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 53 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 53</p>
+      <p class="scenario-text">A platform team currently creates new AWS accounts by hand through the Organizations console, then manually attaches SCPs, sets up a CloudTrail trail, and configures baseline IAM roles in each one — a process prone to inconsistency and human error. Which capability should replace this manual process?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Account Factory, a self-service capability that provisions new accounts already wired up with the landing zone's guardrails, logging, and baseline configuration</li>
+        <li><span class="opt-letter">B.</span> Preventive guardrails attached directly to the Organizations root, applied retroactively to catch any missed baseline steps</li>
+        <li><span class="opt-letter">C.</span> A CloudFormation StackSet with automatic deployment enabled, targeting the Organizations root so new accounts inherit the stack</li>
+        <li><span class="opt-letter">D.</span> Migrating all workloads into a single shared account instead, removing the need to provision new accounts at all</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Control Tower</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Account Factory is the purpose-built, self-service mechanism that vends new accounts pre-configured with the landing zone's guardrails, logging, and IAM baselines, eliminating the manual per-account setup.</li>
+          <li><strong>B.</strong> Wrong — guardrails restrict what actions are possible within an existing account; they don't create accounts or perform the baseline setup steps the team is doing by hand.</li>
+          <li><strong>C.</strong> Wrong — a StackSet with automatic deployment can genuinely auto-deploy resources to new accounts, but it's a bespoke solution the team has to design and maintain themselves, rather than the pre-integrated, purpose-built Account Factory.</li>
+          <li><strong>D.</strong> Wrong — collapsing into a single shared account abandons the multi-account isolation model and the standard security practice it supports, rather than actually automating the account provisioning process.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 54 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 54</p>
+      <p class="scenario-text">A company has already been running AWS Organizations for two years, with an established OU structure and several SCPs. They now want to adopt Control Tower for its guardrails and Account Factory, without dismantling their existing setup. What should they expect?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> They must first delete their existing AWS Organizations setup, since Control Tower requires building its own organization from scratch</li>
+        <li><span class="opt-letter">B.</span> Control Tower can be enabled on top of the existing Organizations setup, since it uses Organizations as its underlying plumbing and layers governance on top</li>
+        <li><span class="opt-letter">C.</span> Control Tower cannot be layered onto a pre-existing Organizations setup at all; it only works on brand-new organizations created at Control Tower setup time</li>
+        <li><span class="opt-letter">D.</span> Control Tower will run as a completely separate, parallel governance system alongside the existing Organizations account, with no shared underlying structure</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Control Tower</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this would destroy the company's two years of existing OU structure and SCPs, directly violating the requirement to keep the setup intact; it's also not actually necessary.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Control Tower is built on top of AWS Organizations, using it as the underlying plumbing. It can be enabled on an existing Organizations setup and add its governance layer without requiring the org to be rebuilt.</li>
+          <li><strong>C.</strong> Wrong — this is factually incorrect; Control Tower does support being enabled on a pre-existing Organizations setup, subject to some prerequisites, rather than only working on brand-new organizations.</li>
+          <li><strong>D.</strong> Wrong — this misrepresents the relationship between the two services; Control Tower doesn't run as a separate parallel system, it directly uses and governs the existing Organizations structure underneath.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 55 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 55</p>
+      <p class="scenario-text">A newly formed company wants every future AWS account they create to start from the same pre-configured baseline — the same OU placement, logging setup, and security tooling — rather than assembling that baseline by hand each time. Which concept describes this baseline environment itself, as opposed to the tool that provisions new accounts against it?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Account Factory, since it is the component that literally contains the OU hierarchy and baseline settings, with guardrails treated as a downstream feature of it</li>
+        <li><span class="opt-letter">B.</span> A detective guardrail set applied at the Organizations root, since guardrails are what define the baseline security posture for the whole company</li>
+        <li><span class="opt-letter">C.</span> The landing zone, the multi-account environment with pre-configured OUs, accounts, and baselines that Control Tower sets up and every future account is provisioned against</li>
+        <li><span class="opt-letter">D.</span> A single CloudFormation template stored in the management account that every new account references directly at creation time</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Control Tower</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Account Factory is the provisioning mechanism that vends new accounts into the baseline environment; it's easy to confuse with that environment, but the two are distinct concepts, and guardrails aren't a "downstream feature" of it.</li>
+          <li><strong>B.</strong> Wrong — guardrails are ongoing policy enforcement (preventive or detective) applied within the environment; they don't themselves constitute the OU/account/baseline environment being described.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the landing zone is the pre-configured multi-account environment itself — the OU hierarchy, accounts, and baselines — that Control Tower establishes and that every future account is provisioned against.</li>
+          <li><strong>D.</strong> Wrong — relying on a single template every account manually references reintroduces the hand-assembled toil the company wants to avoid, rather than using Control Tower's own automated landing zone and Account Factory mechanism.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something, or want the reasoning re-explained a different way? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/scenario-quiz.js"></script>
+</body>
+</html>
