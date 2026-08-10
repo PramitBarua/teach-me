@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Practice – VPC Basics</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">VPC Basics</a> › Scenario Practice</div>
+    <div class="module-tag">Exam Practice</div>
+    <h1>Scenario-Based Exam Practice</h1>
+    <p class="lesson-meta">Virtual Private Cloud (VPC) Basics · 45 scenarios</p>
+    <p class="source-link">Sources: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/" target="_blank">AWS VPC User Guide</a></p>
+  </div>
+
+  <p>These are exam-style scenario questions, separate from the retrieval-practice quiz at the end of each lesson. Each question has one answer that's technically possible but breaks a requirement in the scenario, one that's plausible and easy to confuse with the right answer, and one correct best choice — read carefully. Click an option to select your answer, then reveal it — your pick is highlighted in red if wrong, green marks the correct one. Once you've answered every question, check "Show my results" for your overall score and which topics to study again.</p>
+
+  <div class="scenario-set">
+    <p class="scenario-count">45 scenarios · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-topic breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+<!-- 1 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 1</p>
+      <p class="scenario-text">A finance team is creating a new VPC and, worried about noisy-neighbor performance issues, sets tenancy to Dedicated at creation time. Six months later they want to move back to shared hardware to cut costs. What should they expect?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Dedicated tenancy automatically reverts after ninety days pass</li>
+        <li><span class="opt-letter">B.</span> Tenancy only affects subnets, so the VPC setting never mattered</li>
+        <li><span class="opt-letter">C.</span> Reverting is difficult and costly, since Dedicated was hard to undo</li>
+        <li><span class="opt-letter">D.</span> Tenancy can be flipped back with a single API call at any time</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Custom VPCs</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — there is no automatic time-based reversion of tenancy described anywhere.</li>
+          <li><strong>B.</strong> Wrong — tenancy is a VPC-creation-time choice, not a subnet-level setting.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — Dedicated forces all resources onto dedicated hardware, and this choice is expensive and hard to undo once made.</li>
+          <li><strong>D.</strong> Wrong — Dedicated tenancy is described as expensive and hard to undo, not a simple toggle.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 2</p>
+      <p class="scenario-text">An architect is filling in the primary IPv4 CIDR block while creating a new VPC and wants the absolute largest address space AWS allows for a single VPC CIDR. Which block should they enter?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A /28 block, giving sixteen addresses total</li>
+        <li><span class="opt-letter">B.</span> A /16 block, giving 65,536 addresses total</li>
+        <li><span class="opt-letter">C.</span> A /8 block, giving over sixteen million addresses</li>
+        <li><span class="opt-letter">D.</span> A /24 block, giving two hundred fifty six addresses</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Custom VPCs</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — /28 is the smallest allowed VPC CIDR, the opposite end of the range from what was asked.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — /16 is the largest allowed VPC CIDR, giving 65,536 IPs, the top of the allowed range.</li>
+          <li><strong>C.</strong> Wrong — /8 is outside the allowed range entirely; AWS accepts nothing larger than /16 for a VPC.</li>
+          <li><strong>D.</strong> Wrong — /24 is a valid size but is far from the largest; /16 is bigger and allowed.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 3</p>
+      <p class="scenario-text">A VPC is created with primary CIDR 10.0.0.0/16. An engineer needs to know which address the internal DNS resolver lives at so they can reference it in a client configuration. What address should they use?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> 10.0.0.2, the VPC base address plus two</li>
+        <li><span class="opt-letter">B.</span> 10.0.0.0, the network address of the block</li>
+        <li><span class="opt-letter">C.</span> 10.0.0.1, the address of the VPC router device</li>
+        <li><span class="opt-letter">D.</span> 10.0.0.4, reserved for future AWS use</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Custom VPCs</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — the DNS resolver always lives at VPC base IP plus two, so for 10.0.0.0 that is 10.0.0.2.</li>
+          <li><strong>B.</strong> Wrong — the base address itself is the network address, not a usable resolver endpoint.</li>
+          <li><strong>C.</strong> Wrong — base plus one is the VPC router, a separate device from the DNS resolver.</li>
+          <li><strong>D.</strong> Wrong — base plus three is reserved for future AWS use, not the resolver.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 4</p>
+      <p class="scenario-text">A team launches EC2 instances with public IPv4 addresses into a new VPC but finds the instances receive no public DNS hostname. They confirm enableDnsSupport is true. What is most likely still wrong?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The VPC CIDR block is too large for hostname assignment</li>
+        <li><span class="opt-letter">B.</span> The instances were launched with Dedicated tenancy by mistake</li>
+        <li><span class="opt-letter">C.</span> enableDnsHostnames is false, since it defaults off and must be enabled</li>
+        <li><span class="opt-letter">D.</span> The subnet secondary CIDR has not yet been attached</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Custom VPCs</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — CIDR block size has no bearing on whether hostnames are assigned to instances.</li>
+          <li><strong>B.</strong> Wrong — tenancy governs hardware placement, not DNS hostname behavior for instances.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — enableDnsHostnames defaults to false and must be manually enabled; both settings must be true for public DNS hostnames.</li>
+          <li><strong>D.</strong> Wrong — secondary CIDRs are optional address space additions, unrelated to hostname assignment.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 5</p>
+      <p class="scenario-text">A company's VPC was created with a single /24 primary CIDR and is now running low on addresses as it grows. They want more IP space without recreating the VPC. What can they do?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Change the primary CIDR in place to a larger range</li>
+        <li><span class="opt-letter">B.</span> Switch the VPC tenancy to Dedicated to expand capacity</li>
+        <li><span class="opt-letter">C.</span> Enable enableDnsHostnames to unlock more address space</li>
+        <li><span class="opt-letter">D.</span> Add a secondary CIDR block to the existing VPC later on</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Custom VPCs</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the primary CIDR is fixed at creation; it is not described as changeable in place afterward.</li>
+          <li><strong>B.</strong> Wrong — tenancy governs hardware dedication, not the amount of address space available.</li>
+          <li><strong>C.</strong> Wrong — this DNS setting controls hostname assignment, not IP address capacity.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — a VPC has one mandatory primary CIDR, but optional secondary CIDRs can be added later to grow address space.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 6</p>
+      <p class="scenario-text">A solutions architect wants a single subnet whose instances get spread automatically across two Availability Zones for resilience, to save on subnet count. Is this design achievable?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, but only when the VPC uses Dedicated tenancy mode</li>
+        <li><span class="opt-letter">B.</span> No, since one subnet always maps to exactly one AZ only</li>
+        <li><span class="opt-letter">C.</span> Yes, subnets can span multiple AZs if you request it</li>
+        <li><span class="opt-letter">D.</span> No, because each AZ may only ever contain one subnet</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Subnets</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — tenancy has no effect on how subnets map to Availability Zones.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a subnet lives in exactly one AZ; the relationship is one-directional, so spanning two AZs is not possible.</li>
+          <li><strong>C.</strong> Wrong — subnets cannot span multiple AZs regardless of request; the mapping is always one subnet to one AZ.</li>
+          <li><strong>D.</strong> Wrong — an AZ can hold many subnets; only the reverse direction is restricted.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 7</p>
+      <p class="scenario-text">Two subnets, 10.0.1.0/24 and 10.0.2.0/24, sit inside the same VPC with no custom routes or security changes made yet. An instance in the first subnet tries to reach an instance in the second. What happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The connection succeeds, since same-VPC subnets reach each other by default</li>
+        <li><span class="opt-letter">B.</span> The connection fails until an internet gateway is attached</li>
+        <li><span class="opt-letter">C.</span> The connection fails until a NAT gateway is added</li>
+        <li><span class="opt-letter">D.</span> The connection succeeds only after DHCP options are replaced</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Subnets</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — subnets in the same VPC can reach each other by default with no routing configuration needed.</li>
+          <li><strong>B.</strong> Wrong — an internet gateway is required for internet access, not for communication between subnets in one VPC.</li>
+          <li><strong>C.</strong> Wrong — a NAT gateway is for outbound internet access from private subnets, not needed for intra-VPC traffic.</li>
+          <li><strong>D.</strong> Wrong — DHCP options sets configure instance IP settings like DNS, not subnet-to-subnet reachability.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 8</p>
+      <p class="scenario-text">A team provisions a new subnet using a /28 CIDR block, expecting to fit sixteen instances on it. How many addresses will actually be usable for instances in that subnet?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Eleven addresses, after five are reserved by AWS</li>
+        <li><span class="opt-letter">B.</span> Fourteen addresses, after two are reserved by AWS</li>
+        <li><span class="opt-letter">C.</span> Twelve addresses, after four are reserved by AWS</li>
+        <li><span class="opt-letter">D.</span> Sixteen addresses, matching the full block size exactly</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Subnets</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a /28 has sixteen total addresses; subtracting the five AWS reservations leaves eleven usable.</li>
+          <li><strong>B.</strong> Wrong — only two reserved understates the fixed five-address reservation AWS always applies.</li>
+          <li><strong>C.</strong> Wrong — four reserved is close but not the actual fixed count; five addresses are always reserved.</li>
+          <li><strong>D.</strong> Wrong — every subnet loses five IPs to AWS reservations regardless of size, so the full sixteen are never usable.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 9</p>
+      <p class="scenario-text">An administrator needs to change the domain name and DNS server list that instances receive via a DHCP options set already attached to a production VPC. What is the correct way to do this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Create a new options set and re-associate the VPC with it</li>
+        <li><span class="opt-letter">B.</span> Add a secondary CIDR block to force the settings to refresh</li>
+        <li><span class="opt-letter">C.</span> Edit the fields on the existing options set directly in place</li>
+        <li><span class="opt-letter">D.</span> Detach the VPC's internet gateway before editing the set</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Subnets</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — because sets are immutable, changing settings requires creating a new options set and re-associating the VPC with it.</li>
+          <li><strong>B.</strong> Wrong — CIDR blocks control address space, not DHCP option propagation, and adding one does not refresh settings.</li>
+          <li><strong>C.</strong> Wrong — DHCP options sets are immutable, so fields cannot be edited on an existing attached set.</li>
+          <li><strong>D.</strong> Wrong — the internet gateway is unrelated to DHCP options sets and does not need to be touched.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 10</p>
+      <p class="scenario-text">A subnet has no IPv6 CIDR associated with the VPC yet. An engineer tries to enable the auto-assign IPv6 setting on that subnet. What should they expect?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It silently falls back to assigning public IPv4 addresses instead</li>
+        <li><span class="opt-letter">B.</span> It works only if Dedicated tenancy is set on the VPC first</li>
+        <li><span class="opt-letter">C.</span> It works immediately, independent of any VPC-level IPv6 setup</li>
+        <li><span class="opt-letter">D.</span> It cannot work until the VPC has an IPv6 CIDR block attached</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Subnets</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — auto-assign IPv6 and auto-assign public IPv4 are separate settings with no described fallback between them.</li>
+          <li><strong>B.</strong> Wrong — tenancy governs hardware placement and has no relationship to IPv6 CIDR availability.</li>
+          <li><strong>C.</strong> Wrong — auto-assign IPv6 is not independent; it explicitly requires the VPC to already have an IPv6 CIDR block.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — auto-assign IPv6 requires the VPC to already have an IPv6 CIDR block before the subnet setting can function.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 11 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 11</p>
+      <p class="scenario-text">A route table has two entries for a destination that falls inside both: one for 10.0.0.0/16 targeting a NAT gateway, and one for 10.0.0.0/24 targeting local. Traffic destined for 10.0.0.50 is being evaluated. Which route wins?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The /16 route wins, since it was likely created first</li>
+        <li><span class="opt-letter">B.</span> The /24 route wins, since it is the longer, more specific prefix</li>
+        <li><span class="opt-letter">C.</span> Neither route wins, so the packet is dropped as ambiguous</li>
+        <li><span class="opt-letter">D.</span> Both routes are used together by splitting the traffic evenly</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Routing & Route Tables</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — route selection is based on prefix length, not creation order.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — route selection uses longest-prefix-match, so the more specific /24 route beats the /16 route.</li>
+          <li><strong>C.</strong> Wrong — overlapping routes are resolved deterministically by prefix length, not dropped as ambiguous.</li>
+          <li><strong>D.</strong> Wrong — route tables do not split traffic between overlapping routes; one route is selected.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 12 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 12</p>
+      <p class="scenario-text">A new subnet is created in a VPC and no one explicitly associates it with any route table. Which route table governs its traffic, and can that table be deleted later?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The main route table applies automatically, and it cannot be deleted</li>
+        <li><span class="opt-letter">B.</span> A custom table is auto-created for it, and it can be deleted anytime</li>
+        <li><span class="opt-letter">C.</span> The main route table applies, but it can be deleted once unused</li>
+        <li><span class="opt-letter">D.</span> No route table applies until one is manually attached by an admin</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Routing & Route Tables</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — any subnet not explicitly associated with a custom table automatically uses the main route table, which cannot be deleted, only replaced.</li>
+          <li><strong>B.</strong> Wrong — no custom table is auto-created; unassociated subnets fall back to the existing main table.</li>
+          <li><strong>C.</strong> Wrong — the main route table specifically cannot be deleted; only custom tables can be, and only when unassociated.</li>
+          <li><strong>D.</strong> Wrong — every VPC has exactly one main route table that applies by default, so a subnet is never routeless.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 13 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 13</p>
+      <p class="scenario-text">An engineer created a custom route table with a route to an internet gateway and associated it with two subnets. She now tries to delete that custom route table while the two subnets are still associated with it. What happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Deletion is blocked while any subnet remains associated with it</li>
+        <li><span class="opt-letter">B.</span> Deletion converts the table into the new main route table instead</li>
+        <li><span class="opt-letter">C.</span> Deletion succeeds only for the subnet with fewer IP addresses</li>
+        <li><span class="opt-letter">D.</span> Deletion succeeds and both subnets fall back to the main table</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Routing & Route Tables</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — custom route tables can be deleted, but only when no subnets are still associated with them, so deletion is blocked here.</li>
+          <li><strong>B.</strong> Wrong — a custom table never becomes the main table through deletion; the main table can only be replaced, not created this way.</li>
+          <li><strong>C.</strong> Wrong — deletion eligibility depends on association state, not on subnet size or IP count.</li>
+          <li><strong>D.</strong> Wrong — custom tables can only be deleted if no subnets are still associated with them; it does not auto-detach first.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 14 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 14</p>
+      <p class="scenario-text">A route table contains a local route for 10.0.0.0/16 and, after a peering setup, an added route for 10.0.0.0/16 targeting the peering connection, both with identical prefix length. Which route is used for traffic within that block?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The local route wins, since local always wins a tied prefix length</li>
+        <li><span class="opt-letter">B.</span> The route table becomes invalid and traffic in that range is dropped</li>
+        <li><span class="opt-letter">C.</span> The peering connection route wins because it was added more recently</li>
+        <li><span class="opt-letter">D.</span> Traffic alternates between the two routes on a round-robin basis</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Routing & Route Tables</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — when two routes tie in prefix length and one target is local, local always wins the tie.</li>
+          <li><strong>B.</strong> Wrong — a tie is explicitly resolved by the local-wins rule, so the table remains valid and functional.</li>
+          <li><strong>C.</strong> Wrong — recency of creation does not decide ties; only the local-target exception applies.</li>
+          <li><strong>D.</strong> Wrong — route tables select a single deterministic route, not round-robin between duplicates.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 15 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 15</p>
+      <p class="scenario-text">Instances in Subnet-A can reach instances in Subnet-B within the same VPC, but Subnet-A instances cannot reach the internet, while Subnet-B instances can. Both subnets use custom route tables. What is the most likely explanation?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Subnet-A and Subnet-B must be in different, unrelated VPCs</li>
+        <li><span class="opt-letter">B.</span> The VPC router has failed for Subnet-A but not for Subnet-B</li>
+        <li><span class="opt-letter">C.</span> Subnet-A's DHCP options set was never associated with the VPC</li>
+        <li><span class="opt-letter">D.</span> Subnet-A's route table is missing a route to an internet gateway</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Routing & Route Tables</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the two subnets are clearly communicating directly, which is only possible within the same VPC.</li>
+          <li><strong>B.</strong> Wrong — the VPC router is a single highly-available device serving the whole VPC, not per-subnet, so it cannot fail for just one subnet.</li>
+          <li><strong>C.</strong> Wrong — DHCP options sets configure IP settings like DNS, not internet routing reachability.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — local intra-VPC routing works automatically, but internet access needs an explicit route in that subnet's table to an internet gateway target.</li>
+        </ul>
+      </div>
+    </div>
+    <!-- 16 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 16</p>
+      <p class="scenario-text">An EC2 instance in a public subnet sends a request to an internet host. The instance's own OS-level network configuration shows only a private IPv4 address, yet the response arrives correctly from the internet. Where does the mapping between the instance's private IP and its public IP actually live?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Inside the subnet's route table entries</li>
+        <li><span class="opt-letter">B.</span> Inside the EC2 instance's own OS network stack</li>
+        <li><span class="opt-letter">C.</span> Inside the security group attached to the instance</li>
+        <li><span class="opt-letter">D.</span> Inside the internet gateway attached to the VPC</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Internet Gateway (IGW)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the route table only directs traffic toward the IGW, it does not store any IP address mapping.</li>
+          <li><strong>B.</strong> Wrong — the OS never sees its own public IP; the instance only knows its private IP.</li>
+          <li><strong>C.</strong> Wrong — a security group filters traffic by rule, it plays no role in address translation.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the IGW performs static NAT and holds the private-to-public IP mapping itself, translating traffic as it passes through.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 17 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 17</p>
+      <p class="scenario-text">A solutions architect wants to give a VPC two separate internet gateways so that traffic can exit through either one for redundancy. When they attempt to attach a second IGW to the same VPC, the console blocks the action. What does this confirm about IGW-to-VPC relationships?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A VPC may attach two IGWs if in different regions</li>
+        <li><span class="opt-letter">B.</span> A VPC may attach one IGW per AZ it uses</li>
+        <li><span class="opt-letter">C.</span> A VPC may attach at most one IGW at any time</li>
+        <li><span class="opt-letter">D.</span> A VPC may attach unlimited IGWs for redundancy</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Internet Gateway (IGW)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a VPC lives in one region, and the one-IGW limit applies regardless of region framing.</li>
+          <li><strong>B.</strong> Wrong — a single IGW is already region-resilient and covers every AZ in the region, so per-AZ attachment isn't how it works.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a VPC can have zero or one IGW attached, never more than one at a time.</li>
+          <li><strong>D.</strong> Wrong — this directly contradicts the strict zero-or-one limit on IGW attachment per VPC.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 18 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 18</p>
+      <p class="scenario-text">A subnet has an IGW attached to its VPC, a route table associated with it that sends 0.0.0.0/0 to the IGW, and instances launched in it still cannot be reached from the internet even though they boot successfully. Auto-assign public IPv4 was never enabled on the subnet. What is missing from the required setup?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The IGW needs a second route table binding</li>
+        <li><span class="opt-letter">B.</span> A NAT gateway must be created in the subnet</li>
+        <li><span class="opt-letter">C.</span> Instances need a public IPv4 address assigned</li>
+        <li><span class="opt-letter">D.</span> The VPC needs a second IGW for inbound traffic</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Internet Gateway (IGW)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a route table is associated with a subnet, not bound a second time to the IGW itself.</li>
+          <li><strong>B.</strong> Wrong — a NAT gateway is for private subnet outbound access, not for making a public subnet reachable inbound.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — without auto-assign public IPv4 enabled, instances launch with only private IPs, skipping the final step of the six-step public-subnet process.</li>
+          <li><strong>D.</strong> Wrong — a VPC can never have more than one IGW, so this option is impossible regardless.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 19 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 19</p>
+      <p class="scenario-text">A dual-stack VPC has instances configured with both IPv4 and IPv6 addresses. An administrator inspects an instance's OS network configuration and notices the IPv6 address shown matches exactly what external hosts see, while the IPv4 address shown is only the private one. Why does the IGW behave differently for IPv6?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> IPv6 addresses are private by default so no translation is needed</li>
+        <li><span class="opt-letter">B.</span> IPv6 traffic is translated by the route table instead of the IGW</li>
+        <li><span class="opt-letter">C.</span> IPv6 uses a second hidden IGW dedicated to translation</li>
+        <li><span class="opt-letter">D.</span> IPv6 addresses are globally routable so the IGW passes them through unchanged</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Internet Gateway (IGW)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — IPv6 addresses assigned in this scenario are globally routable, not private, which is exactly why no translation occurs.</li>
+          <li><strong>B.</strong> Wrong — route tables direct traffic paths, they do not perform any address translation for either protocol.</li>
+          <li><strong>C.</strong> Wrong — there is only ever one IGW per VPC, and it handles both address families without a second dedicated device.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — IPv6 addresses are globally routable and visible directly to the OS, so the IGW does not translate them at all, unlike its static NAT behavior for IPv4.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 20 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 20</p>
+      <p class="scenario-text">A newly created VPC has subnets, route tables, and EC2 instances, but no internet gateway has ever been created or attached to it. A team member asks whether any instance in this VPC could still be reachable from or reach the public internet. What is the correct assessment?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, if the subnet enables auto-assign public IPv4</li>
+        <li><span class="opt-letter">B.</span> No, the VPC is entirely private with no IGW attached</li>
+        <li><span class="opt-letter">C.</span> Yes, as long as the security group allows all traffic</li>
+        <li><span class="opt-letter">D.</span> Yes, if the route table has a 0.0.0.0/0 route entry</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Internet Gateway (IGW)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — auto-assign public IPv4 only assigns an address, it cannot create internet reachability without an IGW to translate and route the traffic.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a VPC with no IGW attached is entirely private; there is no path in or out to the public internet regardless of other configuration.</li>
+          <li><strong>C.</strong> Wrong — a permissive security group only controls what traffic is allowed, it cannot substitute for the missing physical path an IGW provides.</li>
+          <li><strong>D.</strong> Wrong — a default route to an IGW that does not exist has nowhere to send traffic, so this route alone changes nothing.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 21 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 21</p>
+      <p class="scenario-text">A company needs administrators to manage EC2 instances that sit in private subnets with no internet exposure. They deploy a single hardened EC2 instance in a public subnet configured for SSH access, and admins connect to that instance first before hopping to the private instances. What is this architecture pattern called?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> An internet gateway with SSH routing</li>
+        <li><span class="opt-letter">B.</span> A bastion host acting as a jump box</li>
+        <li><span class="opt-letter">C.</span> A NAT gateway forwarding admin sessions</li>
+        <li><span class="opt-letter">D.</span> A load balancer terminating SSH traffic</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Bastion Hosts</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — an IGW simply connects a VPC to the internet, it has no concept of routing SSH sessions between hosts.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a bastion host is a single EC2 instance in a public subnet used as a hardened, auditable jump box into private-subnet instances.</li>
+          <li><strong>C.</strong> Wrong — a NAT gateway handles outbound traffic from private instances to the internet, not inbound admin access into the VPC.</li>
+          <li><strong>D.</strong> Wrong — a load balancer distributes application traffic across targets, it is not designed as an administrative entry point.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 22 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 22</p>
+      <p class="scenario-text">A security review finds that a bastion host's security group allows inbound SSH from 0.0.0.0/0, and the private instances' security groups allow inbound SSH from the entire VPC CIDR range rather than from the bastion specifically. What change correctly hardens this setup according to bastion best practice?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Restrict bastion inbound to admin IPs, leave private instances open to the VPC</li>
+        <li><span class="opt-letter">B.</span> Restrict bastion inbound to admin IPs, restrict private instances to the bastion</li>
+        <li><span class="opt-letter">C.</span> Leave bastion inbound open, restrict private instances to the bastion only</li>
+        <li><span class="opt-letter">D.</span> Move the bastion into the private subnet for extra isolation</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Bastion Hosts</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this violates the requirement that private instances only trust the bastion specifically, leaving them open to any host in the VPC.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the bastion's security group should allow only known admin IPs, and private instances should allow only the bastion's IP or security group, not the whole VPC.</li>
+          <li><strong>C.</strong> Wrong — this violates the requirement that the bastion itself only accept traffic from known admin IPs rather than the whole internet.</li>
+          <li><strong>D.</strong> Wrong — a bastion must sit in a public subnet with a reachable public IP; it cannot function placed in a private subnet.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 23 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 23</p>
+      <p class="scenario-text">A junior engineer proposes replacing the company's bastion host with a NAT gateway, arguing both let traffic cross between public and private subnets so they must be interchangeable. Why is this reasoning incorrect?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A NAT gateway handles outbound access, a bastion handles inbound admin access</li>
+        <li><span class="opt-letter">B.</span> A NAT gateway sits in a private subnet, a bastion sits in a public one</li>
+        <li><span class="opt-letter">C.</span> A NAT gateway is stateful, a bastion host is stateless by design</li>
+        <li><span class="opt-letter">D.</span> A NAT gateway requires key-based authentication, a bastion does not</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Bastion Hosts</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a NAT gateway lets private instances reach out to the internet, while a bastion lets admins reach in to private instances; the directions of access solve opposite problems.</li>
+          <li><strong>B.</strong> Wrong — this reverses the facts; a NAT gateway is placed in a public subnet and a bastion must also be in a public subnet, not a private one.</li>
+          <li><strong>C.</strong> Wrong — statefulness is a firewall/connection-tracking concept unrelated to what distinguishes these two services from each other.</li>
+          <li><strong>D.</strong> Wrong — key-based authentication is a bastion hardening practice, not something meaningfully attributed to a NAT gateway at all.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 24 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 24</p>
+      <p class="scenario-text">An architect is deciding where to place a bastion host that administrators will use to reach private EC2 instances over SSH. Which subnet placement is required for the bastion to function at all?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A dedicated subnet with no route table attached</li>
+        <li><span class="opt-letter">B.</span> Either subnet, as long as a NAT gateway also exists</li>
+        <li><span class="opt-letter">C.</span> A public subnet, since it needs a reachable public IP</li>
+        <li><span class="opt-letter">D.</span> A private subnet, since it must stay hidden from attackers</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Bastion Hosts</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a subnet with no route table cannot route traffic anywhere, which would isolate the bastion entirely.</li>
+          <li><strong>B.</strong> Wrong — a NAT gateway provides outbound internet access for private instances, it does not give the bastion the inbound reachability it needs.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a bastion must be in a public subnet because it needs a public IP that admins can reach from the internet.</li>
+          <li><strong>D.</strong> Wrong — hiding it in a private subnet would make it unreachable from the internet, defeating its purpose as an entry point.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 25 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 25</p>
+      <p class="scenario-text">During an audit, a security team wants confidence that if the bastion host is ever compromised, the blast radius and forensic trail are minimized. Which combination of practices best reflects proper bastion hardening?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Full admin toolset installed, password auth only, no logging enabled</li>
+        <li><span class="opt-letter">B.</span> Full admin toolset installed, key-based auth, logging disabled</li>
+        <li><span class="opt-letter">C.</span> Minimal installed software, key-based auth only, sessions logged</li>
+        <li><span class="opt-letter">D.</span> Minimal installed software, shared password auth, sessions not logged</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Bastion Hosts</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this violates every hardening practice: extra software widens attack surface, passwords are disallowed, and unlogged sessions prevent auditing.</li>
+          <li><strong>B.</strong> Wrong — installing a full admin toolset and disabling logging both violate hardening practice despite correct key-based authentication.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — hardening practice calls for no unnecessary software, key-based authentication only, and logged sessions for audit purposes.</li>
+          <li><strong>D.</strong> Wrong — shared passwords and no session logging both violate the stated hardening requirements even though the software footprint is minimal.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 26 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 26</p>
+      <p class="scenario-text">A client opens a TCP connection to a web server on port 443. The client's OS chooses port 51422 to receive the response. A network engineer is asked to explain, in general terms, what determines that response port number. What is the correct explanation?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The firewall assigns a fixed response port per protocol</li>
+        <li><span class="opt-letter">B.</span> The client OS picks a random ephemeral port for that connection</li>
+        <li><span class="opt-letter">C.</span> The response always reuses port 80 regardless of request port</li>
+        <li><span class="opt-letter">D.</span> The server always echoes back its own listening port 443</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Stateful vs Stateless Firewalls</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — firewalls do not assign ephemeral ports, that selection is made by the client operating system.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the response phase returns to whichever ephemeral port, typically randomly chosen in the 1024-65535 range, the client OS selected for that connection.</li>
+          <li><strong>C.</strong> Wrong — port 80 has no special role here, the response port depends on the client's ephemeral choice, not a fixed reused value.</li>
+          <li><strong>D.</strong> Wrong — the well-known port 443 is the server's listening port for the request, the response goes to the client's chosen port, not back to 443.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 27 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 27</p>
+      <p class="scenario-text">A firewall evaluates every packet in isolation, with no memory of any packet that came before it, and therefore cannot recognize that a returning packet belongs to an already-approved outbound request. Which type of firewall behavior does this describe?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Stateless firewall behavior</li>
+        <li><span class="opt-letter">B.</span> Stateful firewall behavior</li>
+        <li><span class="opt-letter">C.</span> Application-layer firewall behavior</li>
+        <li><span class="opt-letter">D.</span> Connection-tracking firewall behavior</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Stateful vs Stateless Firewalls</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a stateless firewall evaluates every packet in isolation with no memory of prior packets, so it cannot tell a response belongs to an approved request.</li>
+          <li><strong>B.</strong> Wrong — a stateful firewall tracks connections and automatically allows the matching response, which is the opposite of what's described.</li>
+          <li><strong>C.</strong> Wrong — this scenario describes packet-level state tracking, not application-layer inspection, which is a different concept entirely.</li>
+          <li><strong>D.</strong> Wrong — connection tracking is exactly the capability being described as absent, so this label contradicts the scenario.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 28 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 28</p>
+      <p class="scenario-text">A team configures a stateless firewall to allow a web server to receive HTTPS requests and successfully send back responses. They only add one inbound rule permitting TCP port 443 from any client. What is missing given the requirement that responses must also reach clients?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A stateful inspection module bolted onto the same rule set</li>
+        <li><span class="opt-letter">B.</span> An inbound rule allowing traffic on port 80 as a fallback</li>
+        <li><span class="opt-letter">C.</span> A second inbound rule duplicating port 443 for redundancy</li>
+        <li><span class="opt-letter">D.</span> An outbound rule allowing the full ephemeral port range back to clients</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Stateful vs Stateless Firewalls</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — adding stateful inspection would change the firewall's fundamental behavior rather than fixing the rule set within a stateless design.</li>
+          <li><strong>B.</strong> Wrong — port 80 is unrelated to this HTTPS scenario and does not address the missing outbound response rule.</li>
+          <li><strong>C.</strong> Wrong — duplicating the same inbound rule does nothing for the outbound response leg of the connection, which is what's actually missing.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — stateless firewalls need a separate outbound rule for the response, covering the full 1024-65535 ephemeral range since the exact client port can't be predicted.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 29 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 29</p>
+      <p class="scenario-text">Comparing two firewall designs for the same request/response traffic pattern, one requires exactly two explicit rules per connection direction while the other requires only one rule for the initial request and automatically permits the matching response. What distinguishes the second design's ability to do this with just one rule?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It tracks approved connections and auto-allows their matching responses</li>
+        <li><span class="opt-letter">B.</span> It opens every ephemeral port permanently for all clients</li>
+        <li><span class="opt-letter">C.</span> It relies on the client to re-request access for each response</li>
+        <li><span class="opt-letter">D.</span> It disables port filtering entirely for return traffic</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Stateful vs Stateless Firewalls</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a stateful firewall tracks connections, so once a request is approved the matching response, even on a random ephemeral port, is automatically allowed without a separate rule.</li>
+          <li><strong>B.</strong> Wrong — permanently opening every ephemeral port would remove filtering rather than intelligently matching responses to approved requests.</li>
+          <li><strong>C.</strong> Wrong — responses are server-to-client traffic and are not re-requested by the client, so this describes no real mechanism.</li>
+          <li><strong>D.</strong> Wrong — the firewall is not disabling filtering, it is using connection state to selectively permit only the legitimate response.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 30 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 30</p>
+      <p class="scenario-text">A network designer notes that with a stateless firewall, because the exact ephemeral port a client will use cannot be predicted in advance, the outbound rule permitting responses must cover the entire 1024-65535 range rather than a single port. What is the direct consequence of this for the network's security posture?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It eliminates the need for any outbound rule at all</li>
+        <li><span class="opt-letter">B.</span> It narrows exposure since only the request port needs opening</li>
+        <li><span class="opt-letter">C.</span> It has no security consequence since ports are irrelevant to exposure</li>
+        <li><span class="opt-letter">D.</span> It creates wider exposure since a broad port range must stay open</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Stateful vs Stateless Firewalls</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a stateless firewall still requires an explicit outbound rule for responses, it does not eliminate that requirement.</li>
+          <li><strong>B.</strong> Wrong — this reverses the fact; the request port alone is not enough, the wide response range is what actually must stay open.</li>
+          <li><strong>C.</strong> Wrong — open port ranges directly affect attack surface, so claiming no consequence ignores the stated exposure tradeoff.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — having to open the full ephemeral range for responses creates wider exposure, since the specific port a client will use can't be predicted ahead of time.</li>
+        </ul>
+      </div>
+    </div>
+    <!-- 31 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 31</p>
+      <p class="scenario-text">Two EC2 instances, A and B, sit in the same subnet and communicate directly with each other. The subnet's NACL has a rule at position 100 that denies all traffic. Does this NACL rule block the traffic between A and B?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, but only if both instances share a security group</li>
+        <li><span class="opt-letter">B.</span> No, NACLs only filter traffic crossing the subnet boundary</li>
+        <li><span class="opt-letter">C.</span> Yes, unless an explicit allow rule is numbered lower</li>
+        <li><span class="opt-letter">D.</span> Yes, NACL rules apply to all traffic inside the subnet</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Network ACLs (NACLs)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — security group membership is irrelevant to whether a NACL applies; NACLs attach to subnets, not instances or SGs.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a NACL is applied at the subnet boundary and filters traffic entering or leaving the subnet; traffic between two instances in the same subnet never crosses that boundary, so it is unaffected.</li>
+          <li><strong>C.</strong> Wrong — rule ordering only matters for traffic the NACL actually evaluates, and boundary-crossing traffic is a prerequisite that isn't met here.</li>
+          <li><strong>D.</strong> Wrong — this misunderstands where a NACL filters; it never inspects intra-subnet traffic between instances, regardless of the rule.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 32 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 32</p>
+      <p class="scenario-text">A subnet's NACL has rule 50 allowing inbound TCP 443 from 0.0.0.0/0, and rule 40 denying inbound TCP 443 from 0.0.0.0/0. A client attempts to reach an instance in the subnet over HTTPS. What happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Traffic is allowed, since allow always wins over deny</li>
+        <li><span class="opt-letter">B.</span> Traffic is denied by the implicit asterisk rule instead</li>
+        <li><span class="opt-letter">C.</span> Traffic is allowed, since higher numbers take priority</li>
+        <li><span class="opt-letter">D.</span> Traffic is denied, since rule 40 is evaluated first</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Network ACLs (NACLs)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — NACLs have no concept of "allow always wins"; only rule order (lowest number first) determines the outcome.</li>
+          <li><strong>B.</strong> Wrong — the implicit deny (*) is only used when nothing else matches; rule 40 matches first, so the asterisk rule is never reached.</li>
+          <li><strong>C.</strong> Wrong — this reverses the actual evaluation order; lower-numbered rules are checked first, not higher-numbered ones.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — NACL rules are evaluated in ascending numeric order and processing stops at the first match; rule 40 is lower than rule 50, so the deny is hit first and wins even though an allow exists later.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 33 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 33</p>
+      <p class="scenario-text">A team creates a brand-new custom NACL in their VPC and does not add any rules to it yet. Before associating it with any subnet, what is its effective behavior if it were applied?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It allows all traffic in both directions by default</li>
+        <li><span class="opt-letter">B.</span> It allows inbound only, blocking all outbound traffic</li>
+        <li><span class="opt-letter">C.</span> It blocks all traffic in both directions by default</li>
+        <li><span class="opt-letter">D.</span> It copies the rules from the VPC's default NACL</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Network ACLs (NACLs)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — allow-all-by-default is the behavior of the default NACL (which starts with rule 100 allow-all), not a newly created custom NACL.</li>
+          <li><strong>B.</strong> Wrong — a custom NACL blocks both inbound and outbound by default; it does not selectively allow inbound.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a custom NACL starts with only the implicit deny rule in both directions, so the net effect is that all traffic is blocked until rules are explicitly added.</li>
+          <li><strong>D.</strong> Wrong — a custom NACL is created empty (aside from the implicit deny); it does not inherit or copy rules from the default NACL.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 34 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 34</p>
+      <p class="scenario-text">An administrator adds an inbound NACL rule allowing TCP 443 from 0.0.0.0/0 on a subnet, but web clients still cannot complete HTTPS requests to instances in that subnet. What is the most likely missing piece?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A security group rule allowing TCP 443 inbound as well</li>
+        <li><span class="opt-letter">B.</span> Renumbering the inbound rule to a lower rule number</li>
+        <li><span class="opt-letter">C.</span> An outbound rule allowing the ephemeral port range back to clients</li>
+        <li><span class="opt-letter">D.</span> Associating the same NACL with the client's own subnet</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Network ACLs (NACLs)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this is plausible in general but the scenario already establishes the inbound path is allowed; it doesn't explain a stateless-return-traffic failure the way a missing ephemeral outbound rule does.</li>
+          <li><strong>B.</strong> Wrong — rule numbering only matters when multiple rules conflict; there's no indication of a conflicting rule here, so renumbering wouldn't fix a missing return-path rule.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — NACLs are stateless, so return traffic is not automatically permitted; an outbound rule allowing the ephemeral port range is needed for the response to reach the client.</li>
+          <li><strong>D.</strong> Wrong — NACLs apply per subnet based on where the resource sits, not the client's subnet; associating the NACL with the client's subnet is not how return traffic is enabled.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 35 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 35</p>
+      <p class="scenario-text">A security team wants to explicitly block a single malicious IP address, 203.0.113.55, from reaching any resource in a subnet, while still allowing all other traffic. Which approach works, and why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Removing the default NACL from the subnet entirely</li>
+        <li><span class="opt-letter">B.</span> A security group rule, since SGs filter by source IP too</li>
+        <li><span class="opt-letter">C.</span> A security group rule referencing the malicious IP's SG</li>
+        <li><span class="opt-letter">D.</span> A NACL rule, since NACLs can explicitly deny by IP/CIDR</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Network ACLs (NACLs)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — removing a NACL association doesn't block anything; the subnet would simply fall back to another NACL, and this does nothing to target the specific IP.</li>
+          <li><strong>B.</strong> Wrong — security groups can only allow traffic; there is no explicit deny rule, so you cannot use an SG to block one IP while allowing the rest.</li>
+          <li><strong>C.</strong> Wrong — an SG source can reference another SG, but that only creates allow rules for resources with that SG attached, not a deny for an external malicious IP.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — NACLs are the only AWS firewall that can explicitly deny traffic by IP/CIDR, making them the right tool to block one specific address while allowing everything else.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 36 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 36</p>
+      <p class="scenario-text">An EC2 instance receives an inbound SSH connection that is permitted by its security group's inbound rule. No outbound rule was ever added for the response traffic. Does the SSH response reach the client?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, because SGs only track state for HTTP and HTTPS traffic</li>
+        <li><span class="opt-letter">B.</span> Yes, because security groups are stateful and auto-allow returns</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if the instance sits in a public subnet</li>
+        <li><span class="opt-letter">D.</span> No, an outbound rule must be manually added for the response</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Security Groups</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — SG statefulness applies to all allowed traffic and protocols, not a special case limited to HTTP/HTTPS.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — security groups are stateful, so an allowed inbound connection automatically permits its matching outbound response with no extra rule required.</li>
+          <li><strong>C.</strong> Wrong — statefulness is an inherent property of the security group itself, unrelated to whether the subnet is public or private.</li>
+          <li><strong>D.</strong> Wrong — this describes stateless behavior, which applies to NACLs, not security groups; SGs never require a separate return-traffic rule.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 37 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 37</p>
+      <p class="scenario-text">An architect wants to allow all traffic except from one specific known-bad IP range, while allowing everything else through to an instance. They only have security groups available. What is the outcome of trying to do this with a security group alone?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It works automatically since SGs deny unlisted CIDRs</li>
+        <li><span class="opt-letter">B.</span> It works by lowering the deny rule's priority number</li>
+        <li><span class="opt-letter">C.</span> It cannot be done — SGs have no explicit deny rule at all</li>
+        <li><span class="opt-letter">D.</span> It works by adding a deny rule above the allow-all rule</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Security Groups</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — SGs don't compare listed vs. unlisted CIDRs to infer denies; anything not explicitly allowed is implicitly denied, but that's not the same as being able to carve out an exception for one bad range while allowing all others.</li>
+          <li><strong>B.</strong> Wrong — security group rules don't have a priority-number system like NACLs, and there is no deny rule to prioritize in the first place.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — security groups can only allow traffic; there is no explicit deny rule mechanism, so blocking one specific range while allowing the rest is impossible with an SG alone (a NACL is needed instead).</li>
+          <li><strong>D.</strong> Wrong — SGs have no deny rule concept at all, so there is no "deny rule" to place above anything, regardless of ordering.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 38 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 38</p>
+      <p class="scenario-text">A cluster of application servers needs to let any member communicate with any other member on port 7000, and the cluster will scale up and down frequently as demand changes. What SG configuration avoids needing rule updates every time an instance is added or removed?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A rule allowing the entire VPC CIDR range on port 7000</li>
+        <li><span class="opt-letter">B.</span> A NACL rule permitting the subnet's own CIDR block</li>
+        <li><span class="opt-letter">C.</span> A self-referencing rule allowing traffic from the same SG</li>
+        <li><span class="opt-letter">D.</span> A rule listing each instance's private IP individually</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Security Groups</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this is broader than needed and would allow any resource in the whole VPC on that port, not just cluster members, weakening the security posture.</li>
+          <li><strong>B.</strong> Wrong — NACLs cannot reference logical groupings like "instances with this SG," and they operate at the subnet boundary, not between instances in the same subnet.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a self-referencing rule lets any two resources sharing that SG talk to each other, and it stays correct automatically as instances are added or removed with no rule updates needed.</li>
+          <li><strong>D.</strong> Wrong — this violates the scaling requirement, since listing individual IPs would require manual updates every time an instance is added or removed.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 39 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 39</p>
+      <p class="scenario-text">An EC2 instance's network interface needs to satisfy two separate requirements: one rule set for general SSH management access, and a completely different rule set for application traffic from a load balancer. How many security groups can be attached to the single ENI to achieve this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Multiple security groups can be attached at the same time</li>
+        <li><span class="opt-letter">B.</span> Two, but only if both are attached to the instance itself</li>
+        <li><span class="opt-letter">C.</span> Only one security group can ever attach to an ENI</li>
+        <li><span class="opt-letter">D.</span> None — rules must be merged into a single rule set first</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Security Groups</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a single ENI can have multiple security groups attached simultaneously, letting the SSH rule set and the application rule set coexist as separate SGs on the same interface.</li>
+          <li><strong>B.</strong> Wrong — security groups attach to the ENI, not to the instance itself, so framing it as "attached to the instance" misstates the attachment point even though the numeric answer happens to be plausible.</li>
+          <li><strong>C.</strong> Wrong — this contradicts how SGs work; ENIs support multiple attached security groups, not just one.</li>
+          <li><strong>D.</strong> Wrong — there's no need to merge rules into one SG; AWS explicitly supports attaching several SGs to cover distinct rule sets.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 40 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 40</p>
+      <p class="scenario-text">A database tier's security group needs to accept connections on port 3306 only from the web tier's instances, and the web tier's instance count changes often. Which source configuration is most maintainable for the database SG's inbound rule?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> List the current private IPs of all web tier instances</li>
+        <li><span class="opt-letter">B.</span> Allow the full VPC CIDR block as the source</li>
+        <li><span class="opt-letter">C.</span> Reference the web tier's security group as the source</li>
+        <li><span class="opt-letter">D.</span> Reference the web tier's Auto Scaling group name directly</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Security Groups</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this violates the maintainability requirement, since IPs would need constant manual updates as the web tier's instance count changes.</li>
+          <li><strong>B.</strong> Wrong — this is broader than intended, allowing any resource in the VPC to reach the database on 3306, not just the web tier.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — SG rules can reference another security group as the source, meaning any ENI with the web tier's SG attached is allowed, which stays accurate as instances scale without tracking raw IPs.</li>
+          <li><strong>D.</strong> Wrong — security group rules reference other security groups (or IPs/CIDRs), not Auto Scaling group names directly; that isn't a valid source type for an SG rule.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 41 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 41</p>
+      <p class="scenario-text">Instances in a private subnet need outbound-only internet access to download OS updates, without being reachable from the internet. A NAT Gateway is deployed in a public subnet with an Elastic IP attached. What must the private subnet's route table contain for this to work?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A route to the NAT Gateway's private subnet CIDR only</li>
+        <li><span class="opt-letter">B.</span> A default route 0.0.0.0/0 pointing to the IGW directly</li>
+        <li><span class="opt-letter">C.</span> No route needed, since NAT works without routing changes</li>
+        <li><span class="opt-letter">D.</span> A default route 0.0.0.0/0 pointing to the NAT Gateway</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: NAT & NAT Gateway</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a route limited to the NAT Gateway's own subnet CIDR wouldn't send general internet-bound traffic (0.0.0.0/0) to the NAT Gateway at all.</li>
+          <li><strong>B.</strong> Wrong — routing directly to the IGW would make instances need public IPs and be reachable inbound, violating the outbound-only, non-reachable requirement.</li>
+          <li><strong>C.</strong> Wrong — NAT Gateway functionality depends entirely on the route table directing traffic to it; without that route, private instances have no path out.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the private subnet's route table needs a default route 0.0.0.0/0 targeting the NAT Gateway so outbound traffic is directed there before reaching the internet via the IGW.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 42 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 42</p>
+      <p class="scenario-text">A company deploys a single NAT Gateway in AZ-A and routes the private subnets of AZ-A, AZ-B, and AZ-C all to it. AZ-A later suffers a complete outage. What happens to outbound internet access for private instances in AZ-B and AZ-C?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> They keep outbound access, since NAT Gateways are regionally resilient</li>
+        <li><span class="opt-letter">B.</span> They lose outbound access too, since all AZs route to AZ-A's NAT</li>
+        <li><span class="opt-letter">C.</span> They lose only inbound access, outbound is unaffected entirely</li>
+        <li><span class="opt-letter">D.</span> They keep outbound access, since each AZ has its own hidden NAT</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: NAT & NAT Gateway</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a NAT Gateway is only AZ-resilient, not regionally resilient; it survives hardware failure within its AZ but goes down if the whole AZ fails.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — routing all AZs to a single NAT Gateway in one AZ is a single point of failure; if that AZ fails, every private subnet routed to it loses outbound internet, even subnets in otherwise healthy AZs. This is the classic "zonal" NAT Gateway (the default kind, and the one this exam scope tests) — AWS has since also introduced a "regional" NAT Gateway mode that automatically expands across AZs and removes the need to deploy one per AZ, but zonal NAT Gateways still work exactly as described here and remain a common deployment.</li>
+          <li><strong>C.</strong> Wrong — NAT Gateways only ever provided outbound-only access in the first place, and that outbound path is exactly what's lost when the NAT Gateway's AZ fails.</li>
+          <li><strong>D.</strong> Wrong — there is no automatic hidden NAT Gateway per AZ; achieving per-AZ resilience with a zonal NAT Gateway requires deliberately deploying one per AZ (AWS's newer regional NAT Gateway mode automates this, but that's a distinct, opt-in resource type).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 43 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 43</p>
+      <p class="scenario-text">An engineer wants an outbound internet gateway solution for private instances that also supports attaching a security group directly to the gateway resource itself and can double as a bastion host. Which NAT option fits, and why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A NAT Gateway, since it is the AWS-recommended default</li>
+        <li><span class="opt-letter">B.</span> A NAT Instance, since it supports SGs and bastion use</li>
+        <li><span class="opt-letter">C.</span> A NAT Gateway, since it accepts SGs for inbound filtering</li>
+        <li><span class="opt-letter">D.</span> An Egress-Only Internet Gateway, since it supports SGs</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: NAT & NAT Gateway</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — while NAT Gateway is generally preferred for its managed scaling, it explicitly does not support security groups (NACLs only) and cannot serve as a bastion host, so it fails these specific requirements.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a NAT Instance is EC2-based, self-managed, does support security groups, and can double as a bastion host, matching both stated requirements.</li>
+          <li><strong>C.</strong> Wrong — this violates a stated fact directly: NAT Gateway does not support security groups at all, relying on NACLs instead.</li>
+          <li><strong>D.</strong> Wrong — an Egress-Only IGW is for IPv6 outbound-only traffic, not for SG attachment or bastion functionality, and it isn't a NAT mechanism for IPv4.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 44 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 44</p>
+      <p class="scenario-text">A workload in a dual-stack subnet needs to reach other IPv6 hosts on the internet directly over IPv6, with no inbound connections permitted and no translation of its traffic to IPv4 along the way. Which service fits, and why can't a NAT Gateway be used for this specific need?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A standard NAT Gateway configured for IPv6 addressing</li>
+        <li><span class="opt-letter">B.</span> A NAT Instance with an IPv6 Elastic IP attached to it</li>
+        <li><span class="opt-letter">C.</span> A regular Internet Gateway with a restrictive NACL rule</li>
+        <li><span class="opt-letter">D.</span> An Egress-Only Internet Gateway for IPv6 outbound traffic</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: NAT & NAT Gateway</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a NAT Gateway's IPv6 capability (NAT64) only translates traffic from IPv6-only resources to IPv4 destinations; it has no mode for native IPv6-to-IPv6 pass-through, so it can't serve this specific need even though it isn't IPv6-blind anymore.</li>
+          <li><strong>B.</strong> Wrong — Elastic IPs are IPv4 addresses used for NAT's many-to-one IPv4 translation; NAT (Gateway or Instance) is not the outbound-only IPv6-to-IPv6 mechanism this scenario needs.</li>
+          <li><strong>C.</strong> Wrong — a regular IGW provides two-way reachability for IPv6 (addresses are globally routable and public by default), which would leave the workload reachable inbound, violating the outbound-only requirement.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — an Egress-Only Internet Gateway is purpose-built for outbound-only IPv6-to-IPv6 connectivity with no inbound reachability, which is exactly what's needed when native (non-translated) IPv6 traffic must leave the VPC one-way.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 45 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 45</p>
+      <p class="scenario-text">A private instance sends a request to the internet through a NAT Gateway. Trace the source IP as the packet travels: private instance to VPC router, to NAT Gateway, to IGW, to the internet. What does the NAT Gateway do to the packet's source IP as it passes through?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Swaps the source IP to the NAT Gateway's own private IP</li>
+        <li><span class="opt-letter">B.</span> Leaves the source IP unchanged for the IGW to modify later</li>
+        <li><span class="opt-letter">C.</span> Swaps the source IP directly to the Elastic IP itself</li>
+        <li><span class="opt-letter">D.</span> Swaps the source IP to a randomly chosen public IP</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: NAT & NAT Gateway</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — the NAT Gateway records the connection and swaps the source IP to its own private IP; the IGW then swaps that to the Elastic IP as the packet continues outward.</li>
+          <li><strong>B.</strong> Wrong — the source IP is not left unchanged at the NAT Gateway; the whole point of NAT translation is that the NAT Gateway actively rewrites the source IP as traffic passes through it.</li>
+          <li><strong>C.</strong> Wrong — this skips a step; the NAT Gateway itself swaps to its private IP first, and it is the IGW that performs the subsequent swap to the Elastic IP, not the NAT Gateway directly.</li>
+          <li><strong>D.</strong> Wrong — the replacement IP isn't random; it follows a defined path (NAT Gateway's private IP, then the IGW rewrites to the fixed Elastic IP), not an arbitrary public address.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something, or want the reasoning re-explained a different way? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/scenario-quiz.js"></script>
+</body>
+</html>

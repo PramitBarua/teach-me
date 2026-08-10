@@ -58,8 +58,14 @@
 
     const blocks = container.querySelectorAll('.scenario-block');
     const marks = loadSet('ReviewMarks');
+    const comments = loadMap('Comments');
+
+    // Sole source of truth for "answered" state. An entry only exists for a
+    // block once the user has both picked an option and revealed the answer —
+    // see isAnswered()/commit() below. Picks made but never revealed are kept
+    // only in the in-memory `pendingPicks` map and do not survive a reload.
     const selections = loadMap('Selections');
-    const revealed = loadSet('Revealed');
+    const pendingPicks = {};
 
     const reviewPanel = container.querySelector('.review-list-panel');
     const reviewList = reviewPanel ? reviewPanel.querySelector('.review-list-items') : null;
@@ -74,6 +80,48 @@
     const suggestionEl = resultsPanel ? resultsPanel.querySelector('.results-suggestion') : null;
 
     let completionAnnounced = false;
+    const blockPainters = [];
+
+    function isAnswered(blockId) {
+      return Object.prototype.hasOwnProperty.call(selections, blockId);
+    }
+
+    function resetPractice() {
+      const ok = window.confirm(
+        'Reset your selections so you can practice this set again?\n\n' +
+        'Marked-for-review flags and your notes will be kept.'
+      );
+      if (!ok) return;
+
+      Object.keys(selections).forEach(function (key) { delete selections[key]; });
+      saveMap('Selections', selections);
+      Object.keys(pendingPicks).forEach(function (key) { delete pendingPicks[key]; });
+      completionAnnounced = false;
+
+      blocks.forEach(function (block) {
+        const answerPanel = block.querySelector('.answer-panel');
+        const revealBtn = block.querySelector('.reveal-btn');
+        if (answerPanel) answerPanel.classList.remove('visible');
+        if (revealBtn) revealBtn.textContent = 'Reveal answer';
+      });
+      blockPainters.forEach(function (paint) { paint(); });
+
+      if (resultsPanel) {
+        resultsPanel.classList.remove('is-complete');
+        if (resultsBody) resultsBody.style.display = 'none';
+        if (resultsToggleBtn) resultsToggleBtn.textContent = 'Show my results';
+      }
+    }
+
+    const scenarioCount = container.querySelector('.scenario-count');
+    if (scenarioCount && !container.querySelector('.reset-practice-btn')) {
+      const resetBtn = document.createElement('button');
+      resetBtn.type = 'button';
+      resetBtn.className = 'reset-practice-btn';
+      resetBtn.textContent = '↺ Reset My Answer';
+      resetBtn.addEventListener('click', resetPractice);
+      scenarioCount.insertAdjacentElement('afterend', resetBtn);
+    }
 
     function renderReviewList() {
       if (!reviewList) return;
@@ -111,11 +159,10 @@
       const topics = {};
 
       blocks.forEach(function (block) {
-        if (!revealed.has(block.id)) return;
+        if (!isAnswered(block.id)) return;
         const revealBtn = block.querySelector('.reveal-btn');
         const correctLetter = revealBtn ? revealBtn.dataset.answer : null;
         const selected = selections[block.id];
-        if (!selected) return;
 
         totalAnswered++;
         const isCorrect = selected === correctLetter;
@@ -188,7 +235,7 @@
 
     function maybeAnnounceCompletion() {
       if (!resultsPanel || completionAnnounced) return;
-      if (revealed.size < blocks.length) return;
+      if (Object.keys(selections).length < blocks.length) return;
       completionAnnounced = true;
       renderResults();
       resultsBody.style.display = 'block';
@@ -198,8 +245,9 @@
     }
 
     if (resultsToggleBtn && resultsBody) {
-      resultsPanel.classList.toggle('is-complete', revealed.size >= blocks.length && blocks.length > 0);
-      if (revealed.size >= blocks.length && blocks.length > 0) {
+      const allAnswered = blocks.length > 0 && Object.keys(selections).length >= blocks.length;
+      resultsPanel.classList.toggle('is-complete', allAnswered);
+      if (allAnswered) {
         renderResults();
         resultsBody.style.display = 'block';
         resultsToggleBtn.textContent = 'Hide my results';
@@ -244,22 +292,91 @@
       if (!revealBtn || !answerPanel) return;
       const correctLetter = revealBtn.dataset.answer;
 
-      function applySelectionVisuals() {
-        const selected = selections[block.id];
+      if (!answerPanel.querySelector('.scenario-comment')) {
+        const commentWrap = document.createElement('div');
+        commentWrap.className = 'scenario-comment';
+
+        const commentLabel = document.createElement('label');
+        commentLabel.className = 'comment-label';
+        commentLabel.htmlFor = block.id + '-comment';
+        commentLabel.textContent = '📝 My notes (optional, saved locally)';
+
+        const commentInput = document.createElement('textarea');
+        commentInput.className = 'comment-input';
+        commentInput.id = block.id + '-comment';
+        commentInput.placeholder = 'Add a note about this question…';
+        commentInput.value = comments[block.id] || '';
+
+        commentInput.addEventListener('input', function () {
+          const val = commentInput.value;
+          if (val) {
+            comments[block.id] = val;
+          } else {
+            delete comments[block.id];
+          }
+          saveMap('Comments', comments);
+        });
+
+        commentWrap.appendChild(commentLabel);
+        commentWrap.appendChild(commentInput);
+        answerPanel.appendChild(commentWrap);
+      }
+
+      // Paints option colors purely from current state — no history is
+      // consulted beyond what's in `selections` and the panel's own
+      // open/closed class, so the same rules apply whether this is a fresh
+      // page load or a live toggle:
+      //   - not answered                    -> no highlight
+      //   - answered, panel hidden ("Reveal answer" showing) -> blue on the pick
+      //   - answered, panel open ("Hide answer" showing)     -> green on correct,
+      //                                                          red on a wrong pick
+      function paint() {
+        const isOpen = answerPanel.classList.contains('visible');
+        const committed = selections[block.id];
+        const pending = pendingPicks[block.id];
+
         options.forEach(function (li) {
-          li.classList.toggle('is-selected', !revealed.has(block.id) && optionLetter(li) === selected);
+          const letter = optionLetter(li);
+          let selectedStyle = false;
+          let correctStyle = false;
+          let wrongStyle = false;
+
+          if (committed) {
+            if (isOpen) {
+              correctStyle = letter === correctLetter;
+              wrongStyle = letter === committed && committed !== correctLetter;
+            } else {
+              selectedStyle = letter === committed;
+            }
+          } else if (!isOpen && pending && letter === pending) {
+            selectedStyle = true;
+          }
+
+          li.classList.toggle('is-selected', selectedStyle);
+          li.classList.toggle('is-correct', correctStyle);
+          li.classList.toggle('is-wrong-selected', wrongStyle);
         });
       }
+      blockPainters.push(paint);
 
       options.forEach(function (li) {
         li.classList.add('selectable-option');
         li.setAttribute('tabindex', '0');
         li.setAttribute('role', 'button');
         function pick() {
-          if (revealed.has(block.id)) return; // locked once checked
-          selections[block.id] = optionLetter(li);
-          saveMap('Selections', selections);
-          applySelectionVisuals();
+          if (isAnswered(block.id)) return; // locked once answered — use Reset to change it
+          const letter = optionLetter(li);
+          if (answerPanel.classList.contains('visible')) {
+            // Answer is already open: picking now immediately satisfies both
+            // halves of "answered" (selected + revealed), so commit right away.
+            selections[block.id] = letter;
+            saveMap('Selections', selections);
+            if (resultsPanel && resultsBody.style.display === 'block') renderResults();
+            maybeAnnounceCompletion();
+          } else {
+            pendingPicks[block.id] = letter;
+          }
+          paint();
         }
         li.addEventListener('click', pick);
         li.addEventListener('keydown', function (e) {
@@ -270,43 +387,31 @@
         });
       });
 
-      applySelectionVisuals();
-
-      function paintAnswerState(isOpen) {
-        const selected = selections[block.id];
-        options.forEach(function (li) {
-          const letter = optionLetter(li);
-          const isCorrectOpt = letter === correctLetter;
-          li.classList.toggle('is-correct', isOpen && isCorrectOpt);
-          const isWrongSelected = isOpen && !!selected && letter === selected && !isCorrectOpt;
-          li.classList.toggle('is-wrong-selected', isWrongSelected);
-        });
-      }
-
-      if (revealed.has(block.id)) {
-        // Keep the panel collapsed on load (matches existing behavior) but
-        // options stay locked; state will render correctly once reopened.
-      }
-
       revealBtn.addEventListener('click', function () {
-        const isOpen = answerPanel.classList.toggle('visible');
-        revealBtn.textContent = isOpen ? 'Hide answer' : 'Reveal answer';
+        const willOpen = !answerPanel.classList.contains('visible');
 
-        paintAnswerState(isOpen);
+        if (willOpen && !isAnswered(block.id) && pendingPicks[block.id]) {
+          selections[block.id] = pendingPicks[block.id];
+          saveMap('Selections', selections);
+        }
+        // No pending pick and not yet answered: nothing to persist — the
+        // panel still opens to show the explanations, just with no option
+        // highlighted.
 
-        if (isOpen) {
+        answerPanel.classList.toggle('visible', willOpen);
+        revealBtn.textContent = willOpen ? 'Hide answer' : 'Reveal answer';
+        paint();
+
+        if (willOpen) {
           answerPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          if (!revealed.has(block.id)) {
-            revealed.add(block.id);
-            saveSet('Revealed', revealed);
-          }
-          applySelectionVisuals();
           if (resultsPanel && resultsBody.style.display === 'block') {
             renderResults();
           }
           maybeAnnounceCompletion();
         }
       });
+
+      paint();
     });
 
     renderReviewList();
