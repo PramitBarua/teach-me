@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards – IAM, Accounts &amp; AWS Organizations</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">IAM, Accounts &amp; Orgs</a> › Flashcards</div>
+    <div class="module-tag">IAM, Accounts &amp; Orgs</div>
+    <h1>Flashcards</h1>
+    <p class="lesson-meta">IAM, Accounts &amp; AWS Organizations · 22 cards</p>
+  </div>
+
+  <p>Click a card to flip it. Rate yourself honestly: <strong>Learned</strong> nudges the score up (+1), <strong>Review</strong> nudges it down (−1). Score ranges from −5 to +5 and starts at 0 (never studied) — the more negative, the more it needs repetition. Your scores are saved in this browser only.</p>
+
+  <div class="flashcard-deck"></div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">Confused about a card? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/flashcard.js"></script>
+<script>
+  const CARDS = [
+    { id: "policy-implicit-deny", type: "question", front: "What is the default outcome when no policy statement matches a request?", back: "Implicit Deny — everything in AWS is denied by default." },
+    { id: "policy-evaluation-order", type: "topic", front: "Policy evaluation order", back: "Explicit Deny → Explicit Allow → Implicit Deny. An explicit Deny always wins over an Allow." },
+
+    { id: "iam-user-limit", type: "question", front: "What is the maximum number of IAM users per AWS account?", back: "5,000 — a hard limit." },
+    { id: "arn-wildcard-vs-empty", type: "topic", front: "ARN: empty segment vs wildcard (*)", back: "An empty segment (::) means that field isn't required for this resource type. * means \"all values\" — the two are not the same." },
+
+    { id: "group-nesting", type: "question", front: "Can an IAM Group contain another IAM Group?", back: "No — only users can be members of a group." },
+    { id: "group-limits", type: "topic", front: "IAM Group limits", back: "300 groups per account (soft limit, can be raised). 10 groups per user (hard limit, cannot be raised)." },
+
+    { id: "role-trust-policy", type: "question", front: "Which policy on an IAM Role controls who is allowed to assume it?", back: "The trust policy." },
+    { id: "assume-role-flow", type: "topic", front: "Assuming a role", back: "Principal calls STS AssumeRole → trust policy is checked → AWS issues temporary credentials (key, secret, session token) with an expiry." },
+
+    { id: "lambda-s3-access", type: "question", front: "A Lambda function needs to write to S3 — what should it use instead of a hardcoded access key?", back: "An IAM execution role attached to the function." },
+    { id: "five-role-scenarios", type: "topic", front: "Five scenarios that call for an IAM Role", back: "AWS services acting on your behalf, emergency/break-glass access, corporate identity federation, external IdPs (Google/Facebook), and cross-account access." },
+
+    { id: "service-linked-editable", type: "question", front: "Can you edit the permissions of a service-linked role?", back: "No — its permissions are fixed and defined by the AWS service itself." },
+    { id: "passrole-purpose", type: "topic", front: "iam:PassRole", back: "Required to attach an existing role to a service (e.g. EC2). Separates \"who can create roles\" from \"who can assign them\" — prevents privilege escalation." },
+
+    { id: "org-management-account-count", type: "question", front: "How many management accounts can one AWS Organization have?", back: "Exactly one." },
+    { id: "org-hierarchy", type: "topic", front: "AWS Organizations hierarchy", back: "Management account (billing, never SCP-restricted) → Org Root → Organizational Units (nestable) → Member accounts." },
+
+    { id: "scp-management-account", type: "question", front: "Is the management account ever restricted by SCPs?", back: "No — it is never affected by SCPs, even ones attached at the org root." },
+    { id: "scp-effective-permissions", type: "topic", front: "SCP + IAM effective permissions", back: "Effective access = SCP allows ∩ IAM allows. SCPs only restrict a ceiling — they never grant permissions on their own." },
+
+    { id: "cw-logs-retention-level", type: "question", front: "At what level do you configure CloudWatch Logs retention?", back: "The log group level — not per stream, not per event." },
+    { id: "cw-logs-hierarchy", type: "topic", front: "CloudWatch Logs hierarchy", back: "Log Event (timestamp + message) → Log Stream (one source) → Log Group (retention & permissions live here)." },
+
+    { id: "cloudtrail-free-days", type: "question", front: "How many days of CloudTrail event history are stored for free by default?", back: "90 days, visible in the console with no trail configured." },
+    { id: "cloudtrail-vs-cloudwatch", type: "topic", front: "CloudTrail vs CloudWatch", back: "CloudTrail = who did what, when (API audit, ~15 min delay). CloudWatch = what's happening right now (metrics/logs)." },
+
+    { id: "control-tower-account-factory", type: "question", front: "Which Control Tower feature auto-provisions new accounts with governance baselines pre-applied?", back: "Account Factory." },
+    { id: "control-tower-guardrails", type: "topic", front: "Control Tower guardrails", back: "Preventive guardrails = SCPs, block non-compliant actions outright. Detective guardrails = Config rules, report non-compliance after the fact." }
+  ];
+
+  initFlashcards(CARDS, { moduleKey: "05-iam-accounts-and-aws-organizations" });
+</script>
+</body>
+</html>
