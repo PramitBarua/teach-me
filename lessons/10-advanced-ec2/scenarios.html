@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Practice – Advanced EC2</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">Advanced EC2</a> › Scenario Practice</div>
+    <div class="module-tag">Exam Practice</div>
+    <h1>Scenario-Based Exam Practice</h1>
+    <p class="lesson-meta">Advanced EC2 · 48 scenarios</p>
+    <p class="source-link">Sources: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html" target="_blank">AWS EC2 User Guide</a></p>
+  </div>
+
+  <p>These are exam-style scenario questions, separate from the retrieval-practice quiz at the end of each lesson. Each question has one answer that's technically possible but breaks a requirement in the scenario, one that's plausible and easy to confuse with the right answer, and one correct best choice — read carefully. Click an option to select your answer, then reveal it — your pick is highlighted in red if wrong, green marks the correct one. Once you've answered every question, check "Show my results" for your overall score and which topics to study again.</p>
+
+  <div class="scenario-set">
+    <p class="scenario-count">48 scenarios · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-topic breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+<!-- 1 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 1</p>
+      <p class="scenario-text">A team stops a running EC2 instance, edits its user data to add a step that installs a monitoring agent, then starts the instance again. They expect the monitoring agent to be installed on this boot. What should they actually expect?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The new user data will not execute, since user data runs only once at the instance's initial launch</li>
+        <li><span class="opt-letter">B.</span> cfn-init will detect the metadata change and install the agent automatically on boot</li>
+        <li><span class="opt-letter">C.</span> The instance will merge the old and new user data scripts and run both in sequence</li>
+        <li><span class="opt-letter">D.</span> EC2 will reject the start request because user data content cannot be changed after launch</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Bootstrapping with User Data</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — user data executes exactly once, at initial launch. A stop/start does not re-trigger it, so the edited script won't run.</li>
+          <li><strong>B.</strong> Wrong — cfn-init's metadata-watching behavior is a CloudFormation-specific feature; this scenario describes plain user data with no cfn-init involved at all.</li>
+          <li><strong>C.</strong> Wrong — EC2 treats user data as opaque and has no concept of merging or re-running scripts; it never re-executes after first launch.</li>
+          <li><strong>D.</strong> Wrong — EC2 never validates or blocks changes to user data content; it simply won't be re-executed on this instance.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 2 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 2</p>
+      <p class="scenario-text">A user data script has a subtle typo in a package name partway through installing a web application. After launch, the instance shows 2/2 status checks passed in the console. What does this tell an engineer about the application's install state?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The application definitely installed correctly, since status checks passed</li>
+        <li><span class="opt-letter">B.</span> The instance was automatically stopped once the script error was detected</li>
+        <li><span class="opt-letter">C.</span> Nothing about the application — status checks don't verify user data script success, only system reachability</li>
+        <li><span class="opt-letter">D.</span> CloudWatch automatically flagged the instance as misconfigured based on the script exit code</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Bootstrapping with User Data</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — EC2 treats user data as opaque and never validates its content; passing status checks says nothing about whether the script logically succeeded.</li>
+          <li><strong>B.</strong> Wrong — EC2 has no mechanism to detect script errors inside user data and stop the instance because of them.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — status checks verify system and instance reachability, not the outcome of a user data script; a broken install can still show a running, healthy-looking instance.</li>
+          <li><strong>D.</strong> Wrong — CloudWatch has no built-in awareness of user data script exit codes without custom instrumentation, and none is described here.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 3 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 3</p>
+      <p class="scenario-text">An architect needs to pass a database connection string into a new instance's user data script. Instance access is limited to a small ops team, but the architect is warned this method may not be appropriate for sensitive values. Why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> User data is readable by anyone with access to the instance's operating system, so it's unsuitable for long-term secrets</li>
+        <li><span class="opt-letter">B.</span> User data is limited to 1 KB, too small to hold a typical connection string</li>
+        <li><span class="opt-letter">C.</span> User data is automatically deleted before the instance finishes booting, breaking the script</li>
+        <li><span class="opt-letter">D.</span> User data can only contain binary data, not readable configuration strings</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Bootstrapping with User Data</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — user data is not secure; anyone with OS-level access to the instance can read it, so it should never carry long-term credentials.</li>
+          <li><strong>B.</strong> Wrong — the raw limit is 16 KB, not 1 KB, and size isn't the concern being raised here anyway.</li>
+          <li><strong>C.</strong> Wrong — user data persists and is retrievable from the metadata service; it isn't deleted before boot completes.</li>
+          <li><strong>D.</strong> Wrong — user data commonly holds plain-text scripts and strings; there's no binary-only restriction.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 4 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 4</p>
+      <p class="scenario-text">A script inside user data needs to install a package that requires root privileges, and the operator is unsure whether to prefix commands with <code>sudo</code>. Under what privilege level does EC2 actually execute user data on Linux instances?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> As the ec2-user account, requiring explicit sudo for privileged commands</li>
+        <li><span class="opt-letter">B.</span> As whatever IAM role is attached to the instance, translated into an OS user</li>
+        <li><span class="opt-letter">C.</span> As an unprivileged sandbox user with no filesystem write access</li>
+        <li><span class="opt-letter">D.</span> As the root user, so privileged commands run without needing sudo</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Bootstrapping with User Data</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this describes typical interactive SSH access, not how user data itself executes at launch.</li>
+          <li><strong>B.</strong> Wrong — IAM roles govern AWS API permissions delivered via metadata; they have no bearing on the OS user that executes user data.</li>
+          <li><strong>C.</strong> Wrong — user data is not sandboxed or restricted; it has full access to the instance's operating system.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — user data is executed by the operating system as the root user, so privileged commands run without needing sudo.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 5 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 5</p>
+      <p class="scenario-text">A developer wants an application on an instance to programmatically read the user data that was supplied at launch, using the same retrieval mechanism the instance itself used during boot. Which endpoint and path should the application query?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A public S3 bucket URL where AWS temporarily stores each instance's user data</li>
+        <li><span class="opt-letter">B.</span> 169.254.169.254, under the latest/user-data path</li>
+        <li><span class="opt-letter">C.</span> 169.254.169.254, under the latest/meta-data path</li>
+        <li><span class="opt-letter">D.</span> A CloudFormation stack output exposed through the AWS Systems Manager console</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Bootstrapping with User Data</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — user data isn't delivered via an S3 bucket; it comes from the instance metadata service, the same as instance metadata itself.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — user data is retrieved from the same special IP, 169.254.169.254, under the latest/user-data path rather than latest/meta-data.</li>
+          <li><strong>C.</strong> Wrong — that path retrieves instance metadata (instance ID, IAM role credentials, etc.), not the user data that was supplied at launch.</li>
+          <li><strong>D.</strong> Wrong — Systems Manager doesn't expose the raw user data payload through stack outputs; it isn't the retrieval mechanism used.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 6 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 6</p>
+      <p class="scenario-text">A fleet installs a 2 GB application package that rarely changes, plus a handful of environment-specific settings that differ per launch. The current design bakes nothing and does everything through a single user data script every time an instance launches, resulting in very long post-launch times. What change would best reduce this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Bake both the package and the environment-specific settings into one fixed AMI for every environment</li>
+        <li><span class="opt-letter">B.</span> Split the existing script into two separate user data scripts run on alternating launches</li>
+        <li><span class="opt-letter">C.</span> Bake the 2 GB package into a custom AMI and bootstrap only the small environment-specific settings</li>
+        <li><span class="opt-letter">D.</span> Increase the user data size limit so the script can run more efficiently</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Bootstrapping with User Data</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — baking everything, including the environment-specific settings, removes the flexibility needed since those settings vary per launch.</li>
+          <li><strong>B.</strong> Wrong — user data has no built-in mechanism to run only on alternating launches, and this wouldn't reduce the per-launch install time anyway.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — baking the large, static part into the AMI removes most post-launch time, while bootstrapping only the small variable configuration preserves flexibility. This is the optimal combined approach.</li>
+          <li><strong>D.</strong> Wrong — the user data size limit (16 KB raw) is a fixed platform constraint that cannot be raised, and it isn't the bottleneck described here.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 7 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 7</p>
+      <p class="scenario-text">An engineer wants an EC2 instance's Apache installation to always match a specific declared version — installing it if missing, upgrading it if outdated, and doing nothing if it's already correct — driven from within a CloudFormation template rather than a step-by-step script. Which tool is designed for this desired-state approach?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A CreationPolicy with a ResourceSignal timeout</li>
+        <li><span class="opt-letter">B.</span> A plain user data script run once at launch</li>
+        <li><span class="opt-letter">C.</span> An AWS Config managed rule for Apache compliance</li>
+        <li><span class="opt-letter">D.</span> cfn-init, using an AWS::CloudFormation::Init metadata block</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: cfn-init and CreationPolicy</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a CreationPolicy only governs whether CloudFormation waits for a success/failure signal during resource creation; it doesn't install or manage software state.</li>
+          <li><strong>B.</strong> Wrong — plain user data is procedural, running a script once; it has no built-in desired-state logic to check and reconcile installed versions.</li>
+          <li><strong>C.</strong> Wrong — AWS Config evaluates resource compliance against rules; it doesn't install, update, or manage software on an instance.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — cfn-init reads a desired-state declaration from the AWS::CloudFormation::Init metadata block and reconciles the instance to match it, doing nothing if already compliant.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 8 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 8</p>
+      <p class="scenario-text">A template defines an AWS::CloudFormation::Init block with the desired configuration for an instance. For cfn-init to actually run this configuration when the instance launches, what must the instance's user data contain?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A call invoking cfn-init with the stack, resource, and region, pointing it at the metadata to apply</li>
+        <li><span class="opt-letter">B.</span> The full desired-state configuration copied directly into the user data script</li>
+        <li><span class="opt-letter">C.</span> Nothing — cfn-init runs automatically without being referenced from user data</li>
+        <li><span class="opt-letter">D.</span> A CreationPolicy declaration embedded inline within the user data text</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: cfn-init and CreationPolicy</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — cfn-init is still invoked from user data, the same way user data always triggers bootstrapping; the line just tells cfn-init which stack, resource, and region to pull its real instructions from.</li>
+          <li><strong>B.</strong> Wrong — the whole point of cfn-init is that the desired-state configuration lives in the template's metadata block, not duplicated into the user data script.</li>
+          <li><strong>C.</strong> Wrong — cfn-init doesn't run on its own; it must be explicitly invoked, and user data is how that invocation happens.</li>
+          <li><strong>D.</strong> Wrong — a CreationPolicy is a resource attribute in the template YAML/JSON, not something declared inside user data text.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 9 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 9</p>
+      <p class="scenario-text">A running instance was originally configured by cfn-init. Later, the CloudFormation template is updated to require a newer application version, and the stack update completes successfully. The instance keeps running the old version with no further action. What configuration would have caused it to update automatically?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A larger CreationPolicy timeout so CloudFormation waits longer for the change</li>
+        <li><span class="opt-letter">B.</span> Increasing the user data size limit to accommodate the new version string</li>
+        <li><span class="opt-letter">C.</span> cfn-init configured to watch its resource's metadata for changes and reapply the desired state</li>
+        <li><span class="opt-letter">D.</span> Attaching a new IAM instance role granting the instance permission to self-update</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: cfn-init and CreationPolicy</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a CreationPolicy timeout only affects how long CloudFormation waits for a creation signal; it has no effect on whether running instances pick up later stack updates.</li>
+          <li><strong>B.</strong> Wrong — the user data size limit is unrelated to whether configuration changes get reapplied after a stack update.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — cfn-init can be configured to watch for metadata changes on its resource and reapply configuration whenever the stack updates, which plain user data cannot do at all.</li>
+          <li><strong>D.</strong> Wrong — an IAM role grants API permissions; it doesn't cause cfn-init to re-check or reapply desired-state configuration on its own.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 10 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 10</p>
+      <p class="scenario-text">A CloudFormation template launches an EC2 instance whose user data runs a bootstrapping script that silently fails partway through. No CreationPolicy is defined on the resource. What will the stack's final status be?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> CREATE_FAILED, since CloudFormation inspects the user data script's outcome</li>
+        <li><span class="opt-letter">B.</span> The stack pauses indefinitely, waiting for a cfn-signal that will never arrive</li>
+        <li><span class="opt-letter">C.</span> CREATE_COMPLETE, because CloudFormation only tracks whether EC2 reported the instance provisioned</li>
+        <li><span class="opt-letter">D.</span> ROLLBACK_COMPLETE, as CloudFormation automatically reverts failed bootstrapping</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: cfn-init and CreationPolicy</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — CloudFormation doesn't understand user data any better than EC2 does; it has no way to inspect whether the internal script succeeded.</li>
+          <li><strong>B.</strong> Wrong — waiting for a signal only happens if a CreationPolicy with ResourceSignal is explicitly configured, which this resource lacks.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — without a CreationPolicy, CloudFormation's naive process marks the resource complete as soon as EC2 reports the instance provisioned, regardless of bootstrapping success.</li>
+          <li><strong>D.</strong> Wrong — CloudFormation has no mechanism to detect or roll back based on a bootstrapping script's internal failure when no signal-based policy exists.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 11 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 11</p>
+      <p class="scenario-text">A resource defines <code>CreationPolicy: ResourceSignal: Timeout: PT15M</code>. cfn-init finishes and cfn-signal reports a failure exit code just 4 minutes into the launch. What does CloudFormation do?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Marks the resource failed immediately based on the reported signal, without waiting out the rest of the timeout</li>
+        <li><span class="opt-letter">B.</span> Waits the full 15 minutes before evaluating any signal that was received</li>
+        <li><span class="opt-letter">C.</span> Automatically retries cfn-init as many times as fit within the remaining timeout</li>
+        <li><span class="opt-letter">D.</span> Marks the resource CREATE_COMPLETE, since a signal of any kind was received</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: cfn-init and CreationPolicy</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a received failure signal fails the resource right away; CloudFormation doesn't need to wait out the remaining timeout once it has an explicit result.</li>
+          <li><strong>B.</strong> Wrong — the timeout is a maximum wait for a signal to arrive, not a mandatory delay once a signal has already been received.</li>
+          <li><strong>C.</strong> Wrong — CloudFormation has no automatic retry behavior for cfn-init; the timeout only bounds how long it waits for a signal.</li>
+          <li><strong>D.</strong> Wrong — the exit code carried by cfn-signal matters; a failure code moves the resource to a failed state, not CREATE_COMPLETE, even though a signal arrived.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 12 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 12</p>
+      <p class="scenario-text">Beyond installing packages, a template's AWS::CloudFormation::Init block also needs to create an OS user, write a configuration file with specific ownership and permissions, and ensure a service is enabled at boot. Which tool covers all of this in one declarative configuration?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A CreationPolicy, which handles OS-level configuration during creation</li>
+        <li><span class="opt-letter">B.</span> Plain user data, run as several sequential shell commands</li>
+        <li><span class="opt-letter">C.</span> cfn-init, since it manages users, files, and services as part of its desired-state model</li>
+        <li><span class="opt-letter">D.</span> AWS Systems Manager Automation documents triggered post-launch</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: cfn-init and CreationPolicy</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a CreationPolicy only controls whether CloudFormation waits for a signal; it has no role in configuring the instance's operating system.</li>
+          <li><strong>B.</strong> Wrong — user data can run shell commands procedurally, but it has none of cfn-init's declarative desired-state reconciliation for users, files, and services.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — cfn-init can manage OS users and groups, write files with specific contents/permissions/ownership, and ensure services are started or enabled at boot, all from the same metadata block.</li>
+          <li><strong>D.</strong> Wrong — this scenario's configuration is declared in the template's cfn-init metadata block, not driven through separate Systems Manager Automation documents.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 13 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 13</p>
+      <p class="scenario-text">Using the AWS CLI, an engineer creates an IAM role for EC2 with an S3 read-only policy attached, then tries to launch an instance and attach that role directly by name. The launch fails, with nothing matching found to attach. What's missing?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A trust policy allowing the S3 service to assume the role</li>
+        <li><span class="opt-letter">B.</span> An instance profile wrapping the role, which the CLI does not auto-create</li>
+        <li><span class="opt-letter">C.</span> A set of long-term access keys generated for the role</li>
+        <li><span class="opt-letter">D.</span> A security group permitting the instance to reach IAM's API endpoint</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Instance Roles and Profiles</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the role needs a trust policy allowing EC2 (not S3) to assume it, but that's a separate concern from why nothing exists to attach to the instance.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — unlike the console, the CLI doesn't automatically create a matching instance profile; a role can't attach to an instance directly, so the profile must be created and the role added to it separately.</li>
+          <li><strong>C.</strong> Wrong — instance roles use temporary STS credentials by design; generating long-term access keys is the exact bad practice this feature exists to avoid.</li>
+          <li><strong>D.</strong> Wrong — security groups control network traffic, not whether an IAM role can be attached to an instance.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 14 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 14</p>
+      <p class="scenario-text">A new hire created an IAM role for EC2 entirely through the console, attached it to an instance, and now insists they attached "a role" directly, with no separate object involved. What's actually true about what happened behind the scenes?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The console attached the role's underlying access keys directly to the instance's metadata</li>
+        <li><span class="opt-letter">B.</span> Roles genuinely attach directly to instances when created via the console, unlike the CLI</li>
+        <li><span class="opt-letter">C.</span> Nothing was attached until the instance made its first successful API call using the role</li>
+        <li><span class="opt-letter">D.</span> The console silently created a matching instance profile, and that profile is what's actually attached</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Instance Roles and Profiles</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — instance roles never involve long-term access keys attached to metadata; credentials are delivered as temporary STS tokens instead.</li>
+          <li><strong>B.</strong> Wrong — the underlying mechanism is identical everywhere; a role can never attach to an instance directly, console included.</li>
+          <li><strong>C.</strong> Wrong — the instance profile attachment happens at launch/attach time, not lazily on first API call.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — creating a role through the console automatically creates an instance profile with the same name, hiding the distinction; the profile, not the role itself, is what attaches.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 15 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 15</p>
+      <p class="scenario-text">An application on an EC2 instance has been calling the S3 API continuously for six hours using credentials obtained via its instance profile. The role has stayed attached the entire time and the app periodically re-reads its credentials. What is the state of its credentials right now?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> They expired after the first hour and every subsequent call has failed</li>
+        <li><span class="opt-letter">B.</span> They downgraded to read-only automatically after a few hours of use</li>
+        <li><span class="opt-letter">C.</span> The application must call IAM directly each hour to request fresh credentials</li>
+        <li><span class="opt-letter">D.</span> They remain valid, since EC2 and STS coordinate to keep them renewed before expiry</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Instance Roles and Profiles</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — instance role credentials are temporary but continuously renewed automatically, so they don't simply expire and fail without intervention.</li>
+          <li><strong>B.</strong> Wrong — the permissions a role's credentials carry stay scoped to its attached policy for as long as it's attached; they don't silently downgrade over time.</li>
+          <li><strong>C.</strong> Wrong — renewal happens automatically in the background via metadata; the application isn't required to make explicit IAM renewal calls.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — EC2 and STS continuously coordinate to renew instance role credentials before they expire, so as long as the role stays attached, valid credentials are always available via metadata.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 16 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 16</p>
+      <p class="scenario-text">An instance is currently running with an instance profile granting read access to one S3 bucket. Operations now needs it to also write to a DynamoDB table, and wants to avoid relaunching the instance. What's the correct way to grant this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Attach a second instance profile alongside the first one, one per required service</li>
+        <li><span class="opt-letter">B.</span> Update the permissions policy on the role behind the existing instance profile, or swap the attached instance profile for one wrapping a role with broader permissions</li>
+        <li><span class="opt-letter">C.</span> Embed a DynamoDB access key into the instance's user data for the new capability</li>
+        <li><span class="opt-letter">D.</span> Terminate and relaunch the instance, since attached instance profiles cannot change after launch</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Instance Roles and Profiles</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — an instance can only have one instance profile attached at a time; a second one can't be attached alongside the first.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — you can either broaden the existing role's policy or replace the attached instance profile with a different one, all without relaunching the instance.</li>
+          <li><strong>C.</strong> Wrong — embedding an access key reintroduces the exact long-term credential risk that instance roles are meant to eliminate.</li>
+          <li><strong>D.</strong> Wrong — the attached instance profile on a running instance can be changed or swapped without needing to terminate and relaunch it.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 17 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 17</p>
+      <p class="scenario-text">A security review finds an application on an EC2 instance calling AWS APIs using access keys hardcoded into its configuration file, even though the instance already has an instance profile attached with equivalent permissions. What should the reviewer recommend?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Rotate the hardcoded keys more frequently instead of removing them</li>
+        <li><span class="opt-letter">B.</span> Remove the hardcoded keys and let the application rely on the instance profile's temporary credentials</li>
+        <li><span class="opt-letter">C.</span> Move the hardcoded keys into the user data script instead of the config file</li>
+        <li><span class="opt-letter">D.</span> Keep both mechanisms active as a redundancy in case the instance profile is removed</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Instance Roles and Profiles</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — rotation reduces but doesn't eliminate the risk; hardcoded long-term keys remain bad practice regardless of rotation frequency.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — storing access keys is explicitly bad practice; since an equivalent instance profile already exists, the application should use its self-renewing temporary credentials instead.</li>
+          <li><strong>C.</strong> Wrong — user data is even less secure than a config file, being readable by anyone with OS access; this makes the exposure worse, not better.</li>
+          <li><strong>D.</strong> Wrong — keeping both doesn't remove the risk the hardcoded keys pose; the recommendation is to eliminate long-term keys, not keep them as a backup.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 18 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 18</p>
+      <p class="scenario-text">A CloudFormation template needs to create both an IAM role for an EC2 instance and whatever wrapper object is required to attach that role to the instance resource. Which two resource types must the template declare?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> AWS::IAM::Role and a matching CreationPolicy on the instance resource</li>
+        <li><span class="opt-letter">B.</span> AWS::IAM::Role only — CloudFormation always auto-generates the profile like the console does</li>
+        <li><span class="opt-letter">C.</span> AWS::IAM::Role and AWS::IAM::InstanceProfile, referencing the role</li>
+        <li><span class="opt-letter">D.</span> AWS::IAM::Role and an AWS::IAM::Policy resource attached directly to the EC2 instance</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Instance Roles and Profiles</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a CreationPolicy governs waiting for a creation signal; it has nothing to do with wrapping a role for attachment to an instance.</li>
+          <li><strong>B.</strong> Wrong — the console's auto-creation behavior is a console convenience only; CloudFormation, like the CLI, requires the instance profile to be declared explicitly.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — CloudFormation, like the CLI, needs both the role and a separate AWS::IAM::InstanceProfile resource that references it, since a role cannot attach to an instance directly.</li>
+          <li><strong>D.</strong> Wrong — an IAM policy can be attached to a role, but there's no mechanism to attach a policy resource directly onto an EC2 instance in place of an instance profile.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 19 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 19</p>
+      <p class="scenario-text">An application needs to store a database master password in Parameter Store such that only principals with both Parameter Store read access and the relevant KMS key permission can see the plaintext value. Which parameter type should it use?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> String, with a resource-based policy restricting who can read it</li>
+        <li><span class="opt-letter">B.</span> StringList, so the password can be split across multiple encrypted segments</li>
+        <li><span class="opt-letter">C.</span> A hierarchical path parameter, since path scoping restricts visibility on its own</li>
+        <li><span class="opt-letter">D.</span> SecureString, encrypted using KMS</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: SSM Parameter Store</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a String parameter is stored in plain text; restricting read access alone doesn't add the KMS-based encryption this requirement calls for.</li>
+          <li><strong>B.</strong> Wrong — StringList only stores a comma-separated plain-text list; it provides no encryption regardless of how the value is split.</li>
+          <li><strong>C.</strong> Wrong — hierarchy is a naming convention for organizing and scoping IAM permissions, not a mechanism for encrypting a parameter's value.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — SecureString parameters are encrypted via KMS, so reading the plaintext value requires both Parameter Store permission and the relevant CMK permission.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 20 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 20</p>
+      <p class="scenario-text">A company stores parameters under paths like <code>/dev-team-passwords/db</code> and <code>/prod-team-passwords/db</code>. They want the dev team to read and write only under their own branch, with zero visibility into the prod branch. How should this be scoped?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Grant the dev team's IAM policy access scoped to the /dev-team-passwords/ path only</li>
+        <li><span class="opt-letter">B.</span> Make every parameter under both paths a SecureString to separate the teams</li>
+        <li><span class="opt-letter">C.</span> Move the prod parameters into a separate flat namespace with no path structure</li>
+        <li><span class="opt-letter">D.</span> Enable versioning on the dev team's parameters so older values aren't visible to prod</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: SSM Parameter Store</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — IAM permissions can be scoped to an individual parameter or to a whole branch of the path hierarchy, letting the dev team be restricted to just their own tree.</li>
+          <li><strong>B.</strong> Wrong — SecureString controls whether a value is encrypted, not which team can see or access which parameter paths.</li>
+          <li><strong>C.</strong> Wrong — removing path structure from prod doesn't scope dev's access; IAM policy scoping on the existing paths is what controls visibility.</li>
+          <li><strong>D.</strong> Wrong — versioning tracks a parameter's value history over time; it has no effect on cross-team access boundaries.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 21 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 21</p>
+      <p class="scenario-text">A CloudFormation template launches EC2 instances without a hardcoded AMI ID, yet it always resolves to the current recommended Amazon Linux AMI for whatever Region the stack is deployed in. What underlying mechanism makes this possible?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> An instance role that queries the EC2 API for the newest AMI at boot time</li>
+        <li><span class="opt-letter">B.</span> A reference to an AWS-published public parameter in Parameter Store that resolves to the latest AMI ID</li>
+        <li><span class="opt-letter">C.</span> User data that selects an AMI after the instance has already launched</li>
+        <li><span class="opt-letter">D.</span> CloudFormation's built-in default AMI table, hardcoded into the service itself</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: SSM Parameter Store</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the AMI must already be selected before the instance can launch; an instance role only grants API permissions to an instance that already exists.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — AWS publishes public parameters into Parameter Store, and templates can reference these to resolve the latest AMI ID for a given OS and Region at deploy time.</li>
+          <li><strong>C.</strong> Wrong — the AMI choice determines what the instance boots from; it's fixed before launch and can't be selected retroactively via user data.</li>
+          <li><strong>D.</strong> Wrong — CloudFormation has no privileged built-in AMI table; it resolves this dynamically through an explicit parameter lookup at deploy time.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 22 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 22</p>
+      <p class="scenario-text">Several Lambda functions and EC2 instances across an account need to read configuration values from Parameter Store. The security team wants this done without distributing any long-term credentials. What's the recommended access pattern?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Distribute a shared IAM access key pair to all the Lambda functions and instances</li>
+        <li><span class="opt-letter">B.</span> Grant access to Parameter Store to those services and instances via IAM roles</li>
+        <li><span class="opt-letter">C.</span> Make every parameter public so no credentials are needed to read them</li>
+        <li><span class="opt-letter">D.</span> Embed each parameter's value directly into the Lambda deployment package instead</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: SSM Parameter Store</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — distributing a shared long-term access key is exactly the practice IAM roles are meant to replace, and it's not how Parameter Store access is typically granted.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Parameter Store is fully IAM-integrated, and EC2 instances, Lambda functions, and other applications are typically granted access via an IAM role rather than long-term credentials.</li>
+          <li><strong>C.</strong> Wrong — making parameters public removes access control entirely and isn't how Parameter Store's IAM integration is meant to be used.</li>
+          <li><strong>D.</strong> Wrong — embedding values directly defeats the purpose of centralizing configuration in Parameter Store and loses versioning and access control.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 23 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 23</p>
+      <p class="scenario-text">An application needs to store a list of allowed IP ranges as plain, unencrypted configuration in Parameter Store, with all values retrievable together as a single comma-separated entry. Which parameter type fits this need?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> StringList, storing the plain-text comma-separated values</li>
+        <li><span class="opt-letter">B.</span> SecureString, since any list of values should default to encryption</li>
+        <li><span class="opt-letter">C.</span> A hierarchical parameter tree, with one path segment per IP range</li>
+        <li><span class="opt-letter">D.</span> String, split manually into several separately named parameters</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: SSM Parameter Store</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — StringList is designed exactly for this: a plain-text, comma-separated list of values retrieved together as one parameter.</li>
+          <li><strong>B.</strong> Wrong — SecureString adds KMS encryption, which isn't needed here and isn't the defining feature that fits this "plain, single comma-separated entry" requirement.</li>
+          <li><strong>C.</strong> Wrong — a path hierarchy organizes and scopes access to separate parameters; it doesn't produce one combined comma-separated value.</li>
+          <li><strong>D.</strong> Wrong — this works but requires managing many separate parameters instead of the single StringList entry the requirement calls for.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 24 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 24</p>
+      <p class="scenario-text">A parameter's value is updated in Parameter Store, and a team wants to both see the parameter's prior values over time and trigger a downstream Lambda function automatically whenever it changes. Which capabilities of Parameter Store make this possible?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> SecureString encryption combined with a KMS key rotation schedule</li>
+        <li><span class="opt-letter">B.</span> A hierarchical path structure combined with scoped IAM permissions</li>
+        <li><span class="opt-letter">C.</span> The StringList type, which stores every historical value in one comma-separated entry</li>
+        <li><span class="opt-letter">D.</span> Built-in parameter versioning, plus change events that can drive other AWS services</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: SSM Parameter Store</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — SecureString and KMS key rotation govern encryption of the value, not version history or the ability to trigger downstream events.</li>
+          <li><strong>B.</strong> Wrong — path hierarchy and IAM scoping control organization and access, not historical values or event-driven integration.</li>
+          <li><strong>C.</strong> Wrong — StringList stores a single comma-separated set of current values, not a history of past versions.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — Parameter Store keeps versions of parameters as they change, just like S3, and parameter changes can generate events that drive other AWS services such as Lambda.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 25 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 25</p>
+      <p class="scenario-text">Your team wants to alert when a specific process's memory usage on an EC2 instance crosses a threshold, using CloudWatch metrics without installing anything extra beyond what EC2 exposes by default. The ops lead insists no extra agent should be needed since "CloudWatch already monitors EC2 metrics." Is this achievable, and why or why not?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — default EC2 metrics are external-facing (CPU, network, status checks); per-process memory requires the CloudWatch agent installed inside the OS.</li>
+        <li><span class="opt-letter">B.</span> Yes — enabling detailed 1-minute monitoring exposes all OS-level, per-process metrics automatically.</li>
+        <li><span class="opt-letter">C.</span> No — this needs AWS Systems Manager Inventory instead, since CloudWatch cannot process OS-level data under any configuration.</li>
+        <li><span class="opt-letter">D.</span> Yes — attaching an IAM role with CloudWatch full access permissions grants the console visibility into per-process memory.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Agent for EC2 Logging</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — CloudWatch's default EC2 metrics are external only; OS-level detail like per-process memory requires the CloudWatch agent running inside the instance.</li>
+          <li><strong>B.</strong> Detailed monitoring changes the frequency of existing external metrics, not their scope — it never adds OS-level, per-process visibility.</li>
+          <li><strong>C.</strong> SSM Inventory catalogs software/config data, not live per-process memory metrics — and the real fix is the CloudWatch agent, not switching services entirely.</li>
+          <li><strong>D.</strong> Permissions alone don't create data — the agent still has to be installed and configured to collect and ship the metric in the first place.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 26 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 26</p>
+      <p class="scenario-text">A fleet of 15 EC2 instances runs the CloudWatch agent, and each instance ships 4 distinct application log files to CloudWatch Logs. No custom stream naming or grouping deviates from the agent's default mapping. How many log groups and log streams should this fleet produce in total?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> 15 log groups, each containing 4 log streams — one group per instance.</li>
+        <li><span class="opt-letter">B.</span> 4 log groups, each containing 15 log streams — one group per log file, one stream per instance.</li>
+        <li><span class="opt-letter">C.</span> 1 combined log group containing 60 merged log streams for simplicity.</li>
+        <li><span class="opt-letter">D.</span> 60 log groups, one for every unique combination of instance and log file.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Agent for EC2 Logging</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> This reverses the mapping — log groups map to log files, not to individual instances.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — each distinct log file gets its own log group, and each instance sending that log gets its own stream within it: 4 groups × 15 streams.</li>
+          <li><strong>C.</strong> A single shared group would lose the per-log-file separation the agent's mapping is designed to preserve.</li>
+          <li><strong>D.</strong> The agent doesn't create a new group per instance-file pair — groups are per log file only, with streams handling the per-instance split.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 27 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 27</p>
+      <p class="scenario-text">You're setting up the CloudWatch agent on a new fleet and need it to have permission to call PutLogEvents and PutMetricData. Security requires this be done without embedding any long-term credentials on the instances. What should you do?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Generate an IAM access key and secret for a dedicated CloudWatch user, then paste them into the agent's configuration file.</li>
+        <li><span class="opt-letter">B.</span> Store the credentials in AWS Secrets Manager and have the agent fetch them once at boot via a startup script.</li>
+        <li><span class="opt-letter">C.</span> Attach an IAM role to the EC2 instance granting the necessary CloudWatch and CloudWatch Logs permissions.</li>
+        <li><span class="opt-letter">D.</span> Enable IAM database authentication on the instance so the agent inherits account-level permissions automatically.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Agent for EC2 Logging</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> This bakes in long-term credentials directly — the exact practice security wants avoided.</li>
+          <li><strong>B.</strong> This still distributes durable credentials to the instance and adds unnecessary complexity instead of using the built-in role mechanism.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the best-practice way to deliver permissions to the agent is an IAM role attached to the instance, never long-term credentials.</li>
+          <li><strong>D.</strong> IAM database authentication is an RDS feature for database logins — it has no bearing on granting the agent CloudWatch permissions.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 28 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 28</p>
+      <p class="scenario-text">An Auto Scaling group launches and terminates CloudWatch-agent-equipped instances constantly. The team wants every new instance to pick up an identical, centrally-updated agent configuration without baking a new AMI every time the config changes. What approach fits how the agent is designed to be configured at scale?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Bake the configuration file into a new custom AMI every time a change is needed, then update the launch template.</li>
+        <li><span class="opt-letter">B.</span> Configure AWS Config to push the agent configuration to each instance as part of its compliance rules.</li>
+        <li><span class="opt-letter">C.</span> Rely on CloudTrail to replicate the configuration file across every new instance automatically.</li>
+        <li><span class="opt-letter">D.</span> Store the agent configuration as a parameter in SSM Parameter Store and have each instance pull it on launch.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Agent for EC2 Logging</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> This is exactly the AMI-rebuild workflow the team explicitly wants to avoid.</li>
+          <li><strong>B.</strong> AWS Config evaluates and reports on configuration compliance — it isn't a mechanism for distributing application or agent configuration content.</li>
+          <li><strong>C.</strong> CloudTrail logs API activity for auditing and has no role in distributing configuration files to instances.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the CloudWatch agent supports pulling its configuration from SSM Parameter Store, giving the whole fleet one centrally managed, consistent configuration.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 29 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 29</p>
+      <p class="scenario-text">An engineer installs the CloudWatch agent binary on an instance and confirms the process is running, but no logs or custom metrics ever appear in CloudWatch. The instance has an attached IAM role with full CloudWatch permissions. What's the most likely missing piece?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The agent has no configuration file telling it which metrics and log files to actually capture and ship.</li>
+        <li><span class="opt-letter">B.</span> CloudWatch itself needs to be manually enabled per-region before any agent data can be ingested.</li>
+        <li><span class="opt-letter">C.</span> The instance needs enhanced networking enabled before agent traffic can reach the CloudWatch endpoint.</li>
+        <li><span class="opt-letter">D.</span> The role's permissions must be replaced with a long-term IAM user's access keys for the agent to authenticate correctly.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Agent for EC2 Logging</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — installation, configuration, and permissions are all required; here permissions and installation are done, but nothing tells the agent what to collect.</li>
+          <li><strong>B.</strong> CloudWatch is a regional service that's always available for ingestion — there's no separate manual "enable" step required.</li>
+          <li><strong>C.</strong> Enhanced networking affects instance-to-instance and general throughput/latency — it has no bearing on whether agent data reaches CloudWatch.</li>
+          <li><strong>D.</strong> The role already grants full CloudWatch permissions per the scenario, and swapping to long-term keys would be a step backward, not the fix.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 30 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 30</p>
+      <p class="scenario-text">You need to install and configure the CloudWatch agent identically across a growing fleet of 200 instances, without manually touching each one as it launches. What's the appropriate approach for this scale?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Manually SSH into each instance to install and configure the agent by hand, repeating for every new instance launched.</li>
+        <li><span class="opt-letter">B.</span> Use bootstrapping automation, such as CloudFormation or user-data scripts, to install and configure the agent identically on every instance.</li>
+        <li><span class="opt-letter">C.</span> Rely on AWS Trusted Advisor to automatically detect and install the CloudWatch agent on any instance missing it.</li>
+        <li><span class="opt-letter">D.</span> Enable AWS Config's auto-remediation feature to install the CloudWatch agent as a side effect of compliance scanning.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CloudWatch Agent for EC2 Logging</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Manual, per-instance setup is exactly what's impractical at fleet scale and what automation is meant to replace.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — at fleet scale, the agent needs to be installed and configured identically across every instance via automation such as CloudFormation or bootstrapping.</li>
+          <li><strong>C.</strong> Trusted Advisor surfaces cost, security, and performance recommendations — it isn't a mechanism for installing software on instances.</li>
+          <li><strong>D.</strong> AWS Config auto-remediation reacts to compliance drift on tracked resources — it isn't the standard mechanism for bootstrapping agent installation at launch.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 31 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 31</p>
+      <p class="scenario-text">A financial trading application needs the absolute lowest network latency and highest packets-per-second between a set of instances, and the team accepts that a single hardware failure could take every instance in the set down at once. Which placement group should they choose, and what's the AZ constraint?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Spread placement group, which can span multiple AZs and still delivers the same latency profile as cluster groups.</li>
+        <li><span class="opt-letter">B.</span> Partition placement group, letting each partition sit in a different AZ for the lowest possible latency.</li>
+        <li><span class="opt-letter">C.</span> Cluster placement group, confined to a single Availability Zone chosen by wherever the first launched instance lands.</li>
+        <li><span class="opt-letter">D.</span> Dedicated Host with a single instance family, which guarantees the lowest latency between instances on the same host.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Placement Groups</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Spread groups optimize for isolation and resilience, not tight physical proximity — they don't match cluster groups' latency profile.</li>
+          <li><strong>B.</strong> Partition groups aren't about minimizing latency across AZs — they're built for scaling isolation for topology-aware apps.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — cluster placement groups pack instances tightly for the lowest latency and highest PPS, and the AZ is locked in by wherever the first launched instance lands.</li>
+          <li><strong>D.</strong> Dedicated Hosts address per-core software licensing visibility, not instance-to-instance network latency.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 32 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 32</p>
+      <p class="scenario-text">You need exactly 6 critical file-server mirrors, each on its own separate rack with independent power and networking, all within a single AZ, guaranteed automatically with no manual partition assignment. Which placement group fits, and why does it work at this count?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Cluster placement group, since packing them physically close also guarantees separate power sources.</li>
+        <li><span class="opt-letter">B.</span> Partition placement group, since 6 instances need to be manually distributed across partitions to get isolation.</li>
+        <li><span class="opt-letter">C.</span> Dedicated Host, since paying for a full physical server guarantees rack-level isolation between 6 instances.</li>
+        <li><span class="opt-letter">D.</span> Spread placement group, since it automatically isolates each instance on separate hardware and 6 is within the 7-per-AZ limit.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Placement Groups</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Physical closeness is the opposite of isolated racks and power — cluster groups pack instances together, not apart.</li>
+          <li><strong>B.</strong> Manual partition assignment describes partition groups, not the automatic guarantee this scenario asks for — and it's unnecessary at only 6 instances.</li>
+          <li><strong>C.</strong> A Dedicated Host is a single physical server for licensing visibility — it doesn't provide 6 separately isolated racks.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — spread placement groups automatically place each instance on separate, isolated hardware, and 6 instances fits comfortably under the 7-per-AZ cap.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 33 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 33</p>
+      <p class="scenario-text">A Cassandra deployment needs 50 topology-aware instances per Availability Zone, replicated three ways, with guaranteed hardware isolation between replica groups. The team already knows spread placement groups won't work here. Which group type should they use, and how does the application benefit from it?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Partition placement group — up to 7 partitions per AZ with unlimited instances each, and Cassandra can query partition membership to place replicas intelligently.</li>
+        <li><span class="opt-letter">B.</span> Cluster placement group — packing all 50 instances tightly actually improves Cassandra's replication safety.</li>
+        <li><span class="opt-letter">C.</span> Dedicated Host — allocating a single physical server per replica group guarantees the isolation Cassandra needs.</li>
+        <li><span class="opt-letter">D.</span> Spread placement group configured with a higher instance quota specifically requested through AWS Support.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Placement Groups</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — partition groups support up to 7 partitions per AZ with no cap on instances per partition, and topology-aware apps like Cassandra can use partition membership to make intelligent replication decisions.</li>
+          <li><strong>B.</strong> Tight packing reduces isolation, not improves it — this is the opposite of what safe replication needs.</li>
+          <li><strong>C.</strong> A Dedicated Host addresses per-core licensing visibility, not distributed isolation across dozens of replicated instances.</li>
+          <li><strong>D.</strong> Spread placement groups have a hard 7-instances-per-AZ limit with no support-ticket override — the fix is switching group types, not raising a quota.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 34 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 34</p>
+      <p class="scenario-text">An instance was launched months ago outside any placement group and is now critical to a low-latency workload. The team wants to add it to an existing cluster placement group without relaunching it from scratch. What's true about doing this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Running instances can be merged into any placement group at any time with zero downtime, regardless of state.</li>
+        <li><span class="opt-letter">B.</span> The instance generally needs to be stopped first, since placement group membership changes typically require the instance not be running.</li>
+        <li><span class="opt-letter">C.</span> This can only be done by creating a brand-new AWS account, since placement group membership is fixed at the account level.</li>
+        <li><span class="opt-letter">D.</span> This requires enabling enhanced networking on the instance first, since that's a prerequisite for placement group membership changes.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Placement Groups</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Placement group membership changes for a running instance are not a zero-downtime operation — the instance typically must be stopped.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — adding an existing instance to a placement group generally requires stopping it first, since membership changes aren't applied to a running instance.</li>
+          <li><strong>C.</strong> Placement group membership is a per-instance setting, not something fixed at the account level requiring a new account.</li>
+          <li><strong>D.</strong> Enhanced networking is a prerequisite for hitting cluster placement group's peak performance numbers, not for changing group membership itself.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 35 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 35</p>
+      <p class="scenario-text">A team launches a cluster placement group with a mix of instance types and sizes, added piecemeal over several weeks as capacity became available, rather than all at once. They now complain about not achieving the maximum 10 Gbps single-stream performance. What's the likely cause, per best practice guidance?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Cluster placement groups silently cap all instances at 5 Gbps regardless of type, so this outcome was unavoidable.</li>
+        <li><span class="opt-letter">B.</span> Mixing types is irrelevant; the real cause must be a missing spread placement group layered on top.</li>
+        <li><span class="opt-letter">C.</span> Best practice is launching all instances in the group at the same time and of the same instance type so AWS can reserve consistent capacity upfront — piecemeal, mixed launches undermine that.</li>
+        <li><span class="opt-letter">D.</span> The instances need to be moved to a partition placement group instead, since only partition groups support mixed instance types at full speed.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Placement Groups</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Cluster placement groups can reach 10 Gbps single-stream — that ceiling isn't a fixed cap unrelated to how the group was built.</li>
+          <li><strong>B.</strong> Two placement group types can't be stacked on the same instances this way, and it wouldn't address the actual capacity-reservation issue.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — best practice is launching all instances at once and of the same type so AWS reserves the needed capacity upfront; piecemeal, mixed launches work against that.</li>
+          <li><strong>D.</strong> Partition groups solve isolation at scale, not instance-to-instance throughput consistency within a single tightly-packed group.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 36 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 36</p>
+      <p class="scenario-text">A company wants to launch a cluster placement group with instances split evenly across two Availability Zones in the same region, expecting the same tight physical proximity and top network performance in each AZ. What's wrong with this plan?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Nothing — cluster placement groups are specifically designed to replicate the same physical closeness across multiple AZs.</li>
+        <li><span class="opt-letter">B.</span> Nothing, as long as a spread placement group is layered underneath to handle the cross-AZ portion.</li>
+        <li><span class="opt-letter">C.</span> The plan fails only because Dedicated Hosts would be required to span multiple AZs in a cluster group.</li>
+        <li><span class="opt-letter">D.</span> A cluster placement group is confined to a single Availability Zone — determined by wherever the first launched instance lands — so it cannot span two AZs.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Placement Groups</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> This directly contradicts how cluster groups work — they are single-AZ by design, not multi-AZ.</li>
+          <li><strong>B.</strong> A spread group can't be layered underneath a cluster group to make it multi-AZ — the two are separate, mutually exclusive placement group types.</li>
+          <li><strong>C.</strong> Dedicated Hosts address licensing visibility and aren't a mechanism for spanning placement groups across AZs.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — a cluster placement group's AZ is fixed by the first instance launched into it, and the group cannot span multiple AZs.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 37 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 37</p>
+      <p class="scenario-text">A healthcare company runs a database engine licensed per physical CPU core, and the vendor requires proof of exactly which physical cores the software runs on, regardless of how much of any instance's capacity is actually used. Which EC2 purchasing option directly satisfies this licensing requirement?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Dedicated Hosts, since they allocate an entire physical server with visible, billable socket and core counts.</li>
+        <li><span class="opt-letter">B.</span> Spread placement groups, since isolating each instance on separate hardware also exposes the physical core count per license.</li>
+        <li><span class="opt-letter">C.</span> Reserved Instances, since a 1- or 3-year commitment guarantees the same physical hardware is retained for licensing purposes.</li>
+        <li><span class="opt-letter">D.</span> EBS-optimized instances, since dedicating network bandwidth also dedicates the underlying physical cores for licensing.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Dedicated Hosts</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Dedicated Hosts allocate an entire physical server to your account, with visible socket and core counts, which is exactly what per-core licensing needs.</li>
+          <li><strong>B.</strong> Spread placement groups isolate instances on separate racks for resilience — they don't expose or bill against physical core counts for licensing.</li>
+          <li><strong>C.</strong> Reserved Instances are a billing commitment, not a guarantee of retaining specific physical hardware over time.</li>
+          <li><strong>D.</strong> EBS optimization dedicates network capacity to storage traffic — it has nothing to do with physical core licensing.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 38 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 38</p>
+      <p class="scenario-text">A team allocates a Nitro-based R5 Dedicated Host with 48 total cores and wants to run one r5.12xlarge instance alongside two r5.2xlarge instances and one r5.4xlarge instance simultaneously, all within that core budget. Is this configuration supported?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — Nitro-based hosts, like older hosts, are fixed to exactly one instance size at a time.</li>
+        <li><span class="opt-letter">B.</span> Yes — Nitro-based Dedicated Hosts allow mixing different instance sizes freely as long as total usage stays within the host's core capacity.</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if a placement group is applied across all four instances to coordinate the mixed sizing.</li>
+        <li><span class="opt-letter">D.</span> No — mixed sizing on Nitro hosts is only possible across different instance families, not within the same family.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Dedicated Hosts</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Fixed single-size allocation describes older, non-Nitro hosts — Nitro-based hosts like R5 specifically allow mixing sizes.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Nitro-based Dedicated Hosts allow mixing different instance sizes at the same time, up to the host's total core capacity.</li>
+          <li><strong>C.</strong> Placement groups are explicitly unsupported in combination with Dedicated Hosts, so this wouldn't even be possible, let alone required.</li>
+          <li><strong>D.</strong> A Dedicated Host is still allocated for one specific instance family — mixed sizing applies within that family, not across unrelated families.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 39 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 39</p>
+      <p class="scenario-text">Account A owns a Dedicated Host and shares it with Account B through AWS Resource Access Manager. Account B launches 4 instances on the shared host, while Account A also has its own 2 instances running there. What is Account B able to see and manage?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> All 6 instances on the host, since RAM sharing grants full mutual visibility between the owning and receiving accounts.</li>
+        <li><span class="opt-letter">B.</span> Nothing at all, since RAM-shared Dedicated Hosts are strictly read-only for any account other than the owner.</li>
+        <li><span class="opt-letter">C.</span> Only the 4 instances Account B itself created on the shared host.</li>
+        <li><span class="opt-letter">D.</span> Only the host's overall billing and capacity configuration, but none of the running instances themselves.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Dedicated Hosts</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> RAM sharing doesn't grant the receiving account visibility into the owning account's own instances — only the owner sees everything on the host.</li>
+          <li><strong>B.</strong> The scenario shows Account B actively launching and presumably managing its own instances, so "nothing at all" contradicts that.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — an account a Dedicated Host is shared with can only see and control the instances it created itself; the owning account is the only one with full visibility.</li>
+          <li><strong>D.</strong> Billing and capacity configuration stay with the owning account — RAM sharing doesn't hand that control to the receiving account.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 40 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 40</p>
+      <p class="scenario-text">An enterprise wants to run a Red Hat Enterprise Linux (RHEL) workload on a Dedicated Host specifically to satisfy per-core licensing terms for that OS. Their infrastructure team assumes this will work the same as any other AMI. What should they be told?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> This works, but only if the RHEL AMI is first converted into a Nitro-compatible custom AMI.</li>
+        <li><span class="opt-letter">B.</span> This works, but the host must be shared via RAM with a second account first to unlock RHEL support.</li>
+        <li><span class="opt-letter">C.</span> This works fine, and RHEL is fully supported on all Dedicated Host types without restriction.</li>
+        <li><span class="opt-letter">D.</span> RHEL AMIs, along with SUSE Linux and Windows, are not supported on Dedicated Hosts, so this plan needs to change.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Dedicated Hosts</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> There's no such conversion path that unlocks RHEL support on a Dedicated Host — the restriction isn't about Nitro compatibility.</li>
+          <li><strong>B.</strong> Sharing a host via RAM changes who can use it, not which AMIs are supported on it.</li>
+          <li><strong>C.</strong> This contradicts the documented AMI restriction — RHEL is not one of the supported AMIs on Dedicated Hosts.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — RHEL, SUSE Linux, and Windows AMIs are all unsupported on Dedicated Hosts, so this plan needs a different approach.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 41 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 41</p>
+      <p class="scenario-text">A team wants to consolidate their Amazon RDS database instances onto a Dedicated Host to get the same per-core licensing visibility they use for their EC2 fleet. Is this achievable directly?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — RDS instances cannot run on a Dedicated Host at all; that licensing visibility only applies to EC2 instances placed there.</li>
+        <li><span class="opt-letter">B.</span> Yes — RDS fully supports Dedicated Host deployment as long as Multi-AZ is disabled first.</li>
+        <li><span class="opt-letter">C.</span> Yes — but only for RDS instances using the Aurora engine, which is Nitro-compatible by default.</li>
+        <li><span class="opt-letter">D.</span> No — RDS requires a separate "Dedicated Instance" purchasing option instead of a Dedicated Host.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Dedicated Hosts</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Amazon RDS instances cannot run on a Dedicated Host under any configuration; that option is limited to EC2 instances.</li>
+          <li><strong>B.</strong> Disabling Multi-AZ doesn't unlock Dedicated Host support for RDS — the restriction applies regardless of Multi-AZ settings.</li>
+          <li><strong>C.</strong> The RDS engine used doesn't change this restriction — no RDS engine, including Aurora, can run on a Dedicated Host.</li>
+          <li><strong>D.</strong> There's no separate "Dedicated Instance" product for RDS licensing visibility — the restriction is simply that RDS can't use Dedicated Hosts.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 42 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 42</p>
+      <p class="scenario-text">A team wants to combine a Dedicated Host with a spread placement group, hoping their per-core-licensed workload also gets automatic rack-level isolation across separate instances. Is this combination supported?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, and it's actually a common best-practice combination recommended for licensing-sensitive workloads needing isolation.</li>
+        <li><span class="opt-letter">B.</span> No — placement groups aren't supported in combination with Dedicated Hosts at all.</li>
+        <li><span class="opt-letter">C.</span> Yes, but only with partition placement groups specifically — spread and cluster groups remain unsupported with Dedicated Hosts.</li>
+        <li><span class="opt-letter">D.</span> No — the combination is blocked only for Nitro-based hosts; older non-Nitro hosts support placement groups normally.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EC2 Dedicated Hosts</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> This directly contradicts the documented restriction — the combination isn't supported, let alone recommended.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — placement groups of any type aren't supported in combination with Dedicated Hosts.</li>
+          <li><strong>C.</strong> There's no exception carved out for partition groups — no placement group type works alongside a Dedicated Host.</li>
+          <li><strong>D.</strong> The restriction isn't tied to Nitro vs. non-Nitro hosts — it applies to Dedicated Hosts generally.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 43 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 43</p>
+      <p class="scenario-text">An EC2 host is under heavy network load, and administrators notice instances on it experiencing inconsistent, unpredictable latency that gets worse as load increases. The instances do not have enhanced networking enabled. What's the underlying cause?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The instances are missing dedicated EBS network capacity, causing storage traffic to interfere with regular data traffic.</li>
+        <li><span class="opt-letter">B.</span> The instances are in a spread placement group, which introduces added latency from cross-rack communication overhead.</li>
+        <li><span class="opt-letter">C.</span> Without SR-IOV, the physical NIC isn't virtualization-aware, so the host CPU must broker access to it in software, adding variable delay under load.</li>
+        <li><span class="opt-letter">D.</span> The instances haven't renewed their IAM role's temporary credentials, causing degraded network throughput.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Enhanced Networking and EBS-Optimized Instances</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> That describes the EBS-optimization problem specifically — this scenario is about general data-networking latency, not storage traffic contention.</li>
+          <li><strong>B.</strong> Placement groups affect physical proximity or isolation between instances, not the NIC virtualization mechanism causing this latency pattern.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — without SR-IOV, the host must mediate access to the physical NIC in software, consuming host CPU and causing inconsistent latency that worsens under load.</li>
+          <li><strong>D.</strong> IAM role credential renewal is unrelated to network interface performance.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 44 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 44</p>
+      <p class="scenario-text">An application on io2 Provisioned IOPS volumes needs the network path between the instance and its EBS volumes to never contend with the instance's regular data traffic, even during heavy simultaneous load on both. What EC2 capability most directly ensures this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Enhanced networking, since it improves every kind of network traffic on the instance equally, including EBS traffic.</li>
+        <li><span class="opt-letter">B.</span> A cluster placement group, since tightly packing instances also isolates their storage network traffic.</li>
+        <li><span class="opt-letter">C.</span> A partition placement group, since partition isolation extends to separating storage bandwidth per partition.</li>
+        <li><span class="opt-letter">D.</span> EBS optimization, which provides dedicated network capacity for EBS traffic, separate from general data networking.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Enhanced Networking and EBS-Optimized Instances</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Enhanced networking improves general instance-to-instance and data networking — the dedicated storage path is specifically what EBS optimization provides.</li>
+          <li><strong>B.</strong> Cluster placement groups improve instance-to-instance networking within an AZ; they don't dedicate bandwidth between an instance and its EBS volumes.</li>
+          <li><strong>C.</strong> Partition groups isolate compute hardware for topology-aware apps — they don't separate storage network bandwidth from data networking.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — EBS-optimized instances get dedicated network capacity just for EBS traffic, separate from general data networking, exactly avoiding this contention.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 45 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 45</p>
+      <p class="scenario-text">A team sets up a cluster placement group hoping to reach the maximum 10 Gbps single-stream throughput between instances, but their chosen older instance type doesn't support the required networking feature. What's missing?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Enhanced networking — reaching cluster placement group's peak performance numbers requires instance types with high-performance networking and enhanced networking enabled.</li>
+        <li><span class="opt-letter">B.</span> EBS optimization — dedicating bandwidth to EBS traffic is what unlocks the 10 Gbps instance-to-instance figure.</li>
+        <li><span class="opt-letter">C.</span> A Dedicated Host allocation, since only dedicated physical servers can reach 10 Gbps single-stream speeds.</li>
+        <li><span class="opt-letter">D.</span> A larger EBS volume type, since io2 volumes are required to unlock higher single-stream network throughput.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Enhanced Networking and EBS-Optimized Instances</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — cluster placement group performance numbers require instance types with high-performance networking and enhanced networking enabled.</li>
+          <li><strong>B.</strong> EBS optimization dedicates bandwidth for storage traffic, not for instance-to-instance throughput — it doesn't unlock this figure.</li>
+          <li><strong>C.</strong> Dedicated Hosts address licensing visibility into physical hardware, not achievable network throughput between instances.</li>
+          <li><strong>D.</strong> EBS volume type governs storage IOPS/throughput, not instance-to-instance single-stream network speed.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 46 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 46</p>
+      <p class="scenario-text">A team assumes they must pay extra and manually enable a special feature on their modern EC2 instance types to get enhanced networking's latency and bandwidth benefits. What's actually true for most current instance types?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Enhanced networking must be manually enabled through a support ticket, and AWS bills separately for the improved throughput it provides.</li>
+        <li><span class="opt-letter">B.</span> Enhanced networking is free and enabled by default on most modern instance types, with no extra action required.</li>
+        <li><span class="opt-letter">C.</span> Enhanced networking is bundled exclusively with EBS-optimized pricing, so enabling one automatically enables and charges for the other.</li>
+        <li><span class="opt-letter">D.</span> Enhanced networking is only available to accounts inside an AWS Organization sharing Dedicated Hosts.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Enhanced Networking and EBS-Optimized Instances</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> There's no support-ticket requirement or separate charge — that's not how enhanced networking is delivered on modern types.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — enhanced networking is free and enabled by default on most modern instance types, needing no extra action.</li>
+          <li><strong>C.</strong> Enhanced networking and EBS optimization are two separate features with separate purposes — enabling one doesn't automatically enable or charge for the other.</li>
+          <li><strong>D.</strong> Enhanced networking has no dependency on AWS Organizations or Dedicated Host sharing — it's a per-instance-type capability.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 47 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 47</p>
+      <p class="scenario-text">A team running a mix of older, non-Nitro instance types and current-generation instance types wants to know whether they need to actively manage EBS optimization settings across the fleet. What should they expect?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> On every instance type, disabling EBS optimization improves performance by freeing up general network bandwidth for data traffic.</li>
+        <li><span class="opt-letter">B.</span> EBS optimization must always be manually enabled and paid for separately, regardless of instance generation.</li>
+        <li><span class="opt-letter">C.</span> On modern instance types it's enabled by default at no extra charge and can't meaningfully be turned off; only some older types make it optional and separately charged.</li>
+        <li><span class="opt-letter">D.</span> EBS optimization is being fully retired by AWS and replaced entirely by enhanced networking on all instance types.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Enhanced Networking and EBS-Optimized Instances</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> On modern types, disabling EBS optimization has no effect at all since the dedicated capacity is built into the hardware — it doesn't free up or improve anything.</li>
+          <li><strong>B.</strong> This is only true for some older instance types — modern types have it on by default at no extra charge.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — on modern instance types EBS optimization is default and free with no real ability to disable it; only some older types make it optional and separately charged.</li>
+          <li><strong>D.</strong> Enhanced networking and EBS optimization are distinct features solving different problems — neither is being retired or merged into the other.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 48 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 48</p>
+      <p class="scenario-text">An instance is showing two separate symptoms: inconsistent instance-to-instance latency under network load, and separately, storage I/O to its io1 volume slowing down whenever data traffic spikes. The team can only address one setting right now and wants to fix the storage-contention symptom specifically. Which setting targets that symptom?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Enhanced networking, since it's the single feature responsible for both symptoms simultaneously.</li>
+        <li><span class="opt-letter">B.</span> A cluster placement group, since tighter physical proximity reduces storage contention as a side effect.</li>
+        <li><span class="opt-letter">C.</span> A spread placement group, since hardware isolation prevents storage and data traffic from sharing a network path.</li>
+        <li><span class="opt-letter">D.</span> EBS optimization, since it specifically gives EBS traffic its own dedicated network capacity separate from data traffic — the latency symptom instead needs enhanced networking.</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Enhanced Networking and EBS-Optimized Instances</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Enhanced networking addresses general data-path latency, not the storage-specific contention — the two symptoms need two different features.</li>
+          <li><strong>B.</strong> Cluster placement groups affect instance-to-instance proximity and speed, not the dedicated bandwidth path to EBS.</li>
+          <li><strong>C.</strong> Spread placement groups isolate physical hardware for resilience — they don't create a dedicated storage network path.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — EBS optimization dedicates network capacity specifically to EBS traffic, directly fixing the storage-contention symptom, while the latency symptom is a separate problem addressed by enhanced networking.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something, or want the reasoning re-explained a different way? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/scenario-quiz.js"></script>
+</body>
+</html>

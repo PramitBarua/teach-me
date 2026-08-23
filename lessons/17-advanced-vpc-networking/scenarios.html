@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Practice – Advanced VPC Networking</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">Advanced VPC Networking</a> › Scenario Practice</div>
+    <div class="module-tag">Exam Practice</div>
+    <h1>Scenario-Based Exam Practice</h1>
+    <p class="lesson-meta">Advanced VPC Networking · 32 scenarios</p>
+    <p class="source-link">Sources: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html" target="_blank">AWS VPC User Guide</a></p>
+  </div>
+
+  <p>These are exam-style scenario questions, separate from the retrieval-practice quiz at the end of each lesson. Each question has one answer that's technically possible but breaks a requirement in the scenario, one that's plausible and easy to confuse with the right answer, and one correct best choice — read carefully. Click an option to select your answer, then reveal it — your pick is highlighted in red if wrong, green marks the correct one. Once you've answered every question, check "Show my results" for your overall score and which topics to study again.</p>
+
+  <div class="scenario-set">
+    <p class="scenario-count">32 scenarios · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-topic breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+    <!-- 1 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 1</p>
+      <p class="scenario-text">A security analyst has flow logs enabled at the VPC level and sees a suspicious spike in traffic to one instance. They want to inspect the actual byte-level contents of the suspicious packets to confirm what data was exfiltrated. Can flow logs provide this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, but only if the flow log destination is set to CloudWatch Logs rather than S3</li>
+        <li><span class="opt-letter">B.</span> Yes, switching the capture filter from "accepted" to "all" traffic exposes payload data</li>
+        <li><span class="opt-letter">C.</span> No, flow logs only ever record metadata — a packet sniffer would be needed for payload inspection</li>
+        <li><span class="opt-letter">D.</span> Yes, but only if the flow log is attached at the network interface level instead of the VPC level</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Flow Logs</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the destination (S3 vs. CloudWatch Logs) changes where records land, not what data is captured; payload contents are never included either way.</li>
+          <li><strong>B.</strong> Wrong — the accept/reject/all filter controls which traffic outcomes are logged, not whether packet contents are captured; flow logs never record payload data regardless.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — flow logs capture only metadata (IPs, ports, protocol, size, accept/reject); they never contain packet contents, so a separate tool like a packet sniffer is required for that.</li>
+          <li><strong>D.</strong> Wrong — attachment level (VPC/subnet/ENI) changes the scope of interfaces monitored, not the depth of what's captured about each packet.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 2 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 2</p>
+      <p class="scenario-text">A monitoring team wants to be alerted the instant a port-scanning attack begins against an EC2 instance, using VPC Flow Logs as the detection source. Is this a suitable design?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, flow logs have an inherent delivery delay and are not a real-time telemetry source</li>
+        <li><span class="opt-letter">B.</span> Yes, as long as the flow log destination is CloudWatch Logs rather than S3</li>
+        <li><span class="opt-letter">C.</span> Yes, as long as the flow log is attached at the ENI level rather than the VPC level</li>
+        <li><span class="opt-letter">D.</span> Yes, flow logs stream every accepted and rejected packet within milliseconds by default</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Flow Logs</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — there's a genuine delay between traffic occurring and it appearing in flow log data, so flow logs are unsuitable whenever true real-time detection is required.</li>
+          <li><strong>B.</strong> Wrong — CloudWatch Logs is a valid destination, but choosing it doesn't remove the inherent delivery delay in flow log data.</li>
+          <li><strong>C.</strong> Wrong — attachment level changes which interfaces are monitored, not how quickly log records are delivered.</li>
+          <li><strong>D.</strong> Wrong — flow logs are explicitly not real-time; this contradicts a core, tested fact about the service.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 3 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 3</p>
+      <p class="scenario-text">An architect wants a single flow log configuration that automatically covers every network interface in every subnet of a VPC, including subnets and interfaces added later, without per-subnet or per-interface setup. What should they attach the flow log to?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A flow log attached at the individual network interface level, repeated for each ENI</li>
+        <li><span class="opt-letter">B.</span> A flow log attached to the VPC itself</li>
+        <li><span class="opt-letter">C.</span> A flow log attached to only the busiest subnet, since traffic naturally aggregates there</li>
+        <li><span class="opt-letter">D.</span> A separate flow log attached to each subnet's NACL</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Flow Logs</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — ENI-level attachment only captures that one interface, and doesn't automatically extend to interfaces created later elsewhere in the VPC.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a VPC-level flow log captures every network interface in every subnet of the VPC, including future ones, from a single configuration point.</li>
+          <li><strong>C.</strong> Wrong — a subnet-level flow log only covers interfaces in that specific subnet, missing all others in the VPC.</li>
+          <li><strong>D.</strong> Wrong — flow logs attach to VPCs, subnets, or ENIs, not directly to a NACL, which isn't a valid flow log attachment point.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 4 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 4</p>
+      <p class="scenario-text">A flow log record shows a single ACCEPT entry for an inbound web request and no corresponding REJECT entry for its response. What does this most likely indicate about the firewalls involved?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The request was blocked by the NACL and never reached the instance's security group</li>
+        <li><span class="opt-letter">B.</span> Both the security group and the NACL are stateless, so only one direction is ever logged</li>
+        <li><span class="opt-letter">C.</span> The security group allowed the request, and no NACL is interfering with the automatically-permitted stateful response</li>
+        <li><span class="opt-letter">D.</span> Flow log delivery dropped the response's log line due to delivery delay</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Flow Logs</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a NACL block on the request itself would produce a REJECT record for the request, not an ACCEPT for it with a missing response line.</li>
+          <li><strong>B.</strong> Wrong — security groups are stateful, not stateless; NACLs are the stateless one. This mixes the two up.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a stateful security group only needs to permit the request explicitly; its response is automatically allowed and doesn't generate a separate evaluated log line, and no stateless NACL is rejecting anything here.</li>
+          <li><strong>D.</strong> Wrong — flow logs have delivery delay but don't selectively drop records; a genuinely rejected response leg would still appear once delivered.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 5 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 5</p>
+      <p class="scenario-text">A data engineering team has months of flow log history sitting in S3 and wants to run ad hoc SQL queries against it, paying only for the bytes each query actually scans, without standing up a database. What should they use?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Amazon Athena, querying the flow log files directly in S3</li>
+        <li><span class="opt-letter">B.</span> CloudWatch Logs Insights, pointed at the S3 bucket</li>
+        <li><span class="opt-letter">C.</span> A NAT gateway configured to aggregate the historical records</li>
+        <li><span class="opt-letter">D.</span> Re-enabling the flow log with a shorter delivery delay</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Flow Logs</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Athena is a schema-on-read SQL engine that queries data directly in S3, billing only for data scanned per query, exactly matching this ad hoc, pay-per-query need.</li>
+          <li><strong>B.</strong> Wrong — CloudWatch Logs Insights queries data stored in CloudWatch Logs, not arbitrary files sitting in S3.</li>
+          <li><strong>C.</strong> Wrong — a NAT gateway is a networking device for outbound IPv4 traffic; it has no role in querying or aggregating stored log data.</li>
+          <li><strong>D.</strong> Wrong — delivery delay affects how quickly new records appear, not the ability to run SQL queries against historical data already stored.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 6 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 6</p>
+      <p class="scenario-text">An administrator enables VPC Flow Logs at the VPC level, capturing all traffic, expecting to now see every request instances make to the EC2 instance metadata service for troubleshooting. What will they observe?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Metadata service traffic appears, but only when the capture filter is set to "all" rather than "accepted"</li>
+        <li><span class="opt-letter">B.</span> Metadata service traffic never appears in flow logs — it's unconditionally excluded regardless of configuration</li>
+        <li><span class="opt-letter">C.</span> Metadata service traffic appears only if the flow log destination is S3</li>
+        <li><span class="opt-letter">D.</span> Metadata service traffic appears, but delayed longer than regular traffic</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Flow Logs</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the accept/reject/all filter has no effect here; instance metadata service traffic is excluded unconditionally, with no configuration option bringing it back.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — traffic to the instance metadata service (along with DHCP, Amazon time server, and Windows license server traffic) is always excluded from flow logs, with no way to re-enable it.</li>
+          <li><strong>C.</strong> Wrong — destination choice (S3 vs. CloudWatch Logs) doesn't affect which traffic categories are excluded from capture.</li>
+          <li><strong>D.</strong> Wrong — this traffic isn't delayed, it's never captured at all, regardless of how long you wait.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 7 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 7</p>
+      <p class="scenario-text">A company runs IPv6-only workloads and needs them to reach software repositories on the internet, while remaining completely unreachable from any inbound internet-initiated connection. An engineer proposes deploying a NAT gateway for this. Why won't that work?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> NAT gateways are limited to a small number of concurrent connections, too few for this workload</li>
+        <li><span class="opt-letter">B.</span> NAT gateways are only deployable in specific AWS Regions that may not match this workload</li>
+        <li><span class="opt-letter">C.</span> NAT is fundamentally an IPv4 mechanism for address scarcity, a problem that doesn't exist for IPv6, so NAT gateways don't work with IPv6 at all</li>
+        <li><span class="opt-letter">D.</span> NAT gateways require a Dedicated Host to operate, which hasn't been provisioned</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Egress-Only Internet Gateway</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — connection-count limits aren't why NAT gateways fail here; the real issue is architectural incompatibility with IPv6 addressing entirely.</li>
+          <li><strong>B.</strong> Wrong — Region availability isn't the blocker; NAT gateways simply don't support IPv6 traffic in any Region.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — NAT exists to work around IPv4 address scarcity; every IPv6 address in AWS is already publicly routable, so NAT gateways are architecturally incompatible with IPv6 and can't be used for it.</li>
+          <li><strong>D.</strong> Wrong — NAT gateways have no dependency on Dedicated Hosts; that's an unrelated EC2 purchasing option.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 8 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 8</p>
+      <p class="scenario-text">A VPC has IPv6-enabled instances behind a plain internet gateway, with default, unrestricted security groups and NACLs. What is true about their exposure to the internet?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> They can be reached by connections initiated from the internet, since IPv6 traffic through a standard IGW is bidirectional</li>
+        <li><span class="opt-letter">B.</span> They are automatically protected from inbound connections, since internet gateways treat IPv6 as outbound-only by default</li>
+        <li><span class="opt-letter">C.</span> They are only reachable over IPv4, since the IGW doesn't route IPv6 without an egress-only gateway present too</li>
+        <li><span class="opt-letter">D.</span> They are unreachable unless a NAT gateway is also attached to translate the IPv6 addresses</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Egress-Only Internet Gateway</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — since every IPv6 address in AWS is publicly routable, a plain internet gateway allows traffic both out and in; with no other restriction, these instances are internet-reachable.</li>
+          <li><strong>B.</strong> Wrong — a standard IGW doesn't restrict IPv6 direction by default; it's fully bidirectional unless something else (like an egress-only IGW route, or SG/NACL rules) restricts it.</li>
+          <li><strong>C.</strong> Wrong — a standard IGW routes IPv6 traffic directly; an egress-only IGW isn't required for IPv6 to reach the internet at all, only to restrict it to outbound-only.</li>
+          <li><strong>D.</strong> Wrong — NAT gateways don't work with IPv6 and aren't part of this picture; the IGW alone already provides full IPv6 connectivity in both directions.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 9 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 9</p>
+      <p class="scenario-text">A solutions architect is asked whether an egress-only internet gateway needs to be deployed across multiple Availability Zones and manually scaled to handle peak IPv6 outbound traffic, the way some other networking components do. What's the correct answer?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, one egress-only internet gateway must be created per Availability Zone for resilience</li>
+        <li><span class="opt-letter">B.</span> No, it's highly available and auto-scaling by design, architecturally identical to a standard internet gateway</li>
+        <li><span class="opt-letter">C.</span> Yes, it requires manual scaling configuration since it only supports a single AZ per gateway</li>
+        <li><span class="opt-letter">D.</span> No, but only because it silently falls back to a NAT gateway during traffic spikes</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Egress-Only Internet Gateway</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this describes interface endpoints' AZ-scoping, not an egress-only internet gateway, whose architecture doesn't differ from a standard IGW at all.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — an egress-only internet gateway is highly available and auto-scaling exactly like a regular internet gateway; what differs is purely how it's used (outbound-only for IPv6), not its underlying architecture.</li>
+          <li><strong>C.</strong> Wrong — there's no single-AZ restriction or manual scaling requirement; it behaves like a standard IGW across all AZs the VPC uses.</li>
+          <li><strong>D.</strong> Wrong — an egress-only internet gateway has no relationship to or fallback behavior involving NAT gateways, which don't support IPv6 at all.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 10 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 10</p>
+      <p class="scenario-text">After creating and attaching an egress-only internet gateway to a VPC, IPv6 instances still cannot reach the internet at all. The gateway shows as attached and available. What is most likely missing?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A default IPv6 route (::/0) in the relevant route tables pointing at the egress-only internet gateway</li>
+        <li><span class="opt-letter">B.</span> A NAT gateway deployed alongside it to handle the actual address translation</li>
+        <li><span class="opt-letter">C.</span> Enabling "IPv6 pass-through mode" on the VPC's DHCP option set</li>
+        <li><span class="opt-letter">D.</span> A security group rule permitting the egress-only gateway's own ENI</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Egress-Only Internet Gateway</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — creating and attaching the gateway alone doesn't establish routing; a default IPv6 route in the relevant route table(s) must point at it for traffic to actually flow.</li>
+          <li><strong>B.</strong> Wrong — NAT gateways don't work with IPv6 and have no role alongside an egress-only internet gateway; no address translation is needed since IPv6 addresses are already publicly routable.</li>
+          <li><strong>C.</strong> Wrong — there's no "IPv6 pass-through mode" DHCP option; this is an invented setting, not a real configuration step.</li>
+          <li><strong>D.</strong> Wrong — an egress-only internet gateway isn't a network interface that security groups attach to; the missing piece is the route table entry, not a security group rule.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 11 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 11</p>
+      <p class="scenario-text">An IPv6-only EC2 instance behind an egress-only internet gateway opens an outbound connection to an update server. Later, unsolicited response packets arrive back for that same connection. Does the egress-only internet gateway need a separate inbound rule to let these responses through?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, a matching inbound route must be added manually for every outbound connection</li>
+        <li><span class="opt-letter">B.</span> Yes, but only if the instance is also behind a NAT gateway simultaneously</li>
+        <li><span class="opt-letter">C.</span> No, but only because security groups are separately allowing the return traffic, not the gateway itself</li>
+        <li><span class="opt-letter">D.</span> No, it's a stateful device — return traffic for an outbound-initiated connection is automatically permitted</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Egress-Only Internet Gateway</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — there's no concept of manually adding inbound routes per connection on an egress-only internet gateway; its statefulness handles this automatically.</li>
+          <li><strong>B.</strong> Wrong — NAT gateways don't work with IPv6 at all, so one can't be paired with this instance, and it isn't what makes return traffic work anyway.</li>
+          <li><strong>C.</strong> Wrong — this describes security group behavior, but the question is specifically about the gateway's own behavior, which is itself stateful independent of security groups.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — an egress-only internet gateway is a stateful device, exactly like a NAT gateway is for IPv4: return traffic for a connection the instance itself initiated is automatically permitted back through.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 12 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 12</p>
+      <p class="scenario-text">A team is comparing gateway types across IP versions and wants to know which gateway type is "not applicable" for IPv4 traffic entirely, existing purely to solve an IPv6-specific problem. Which gateway type are they describing?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A standard internet gateway, which only routes IPv6 traffic</li>
+        <li><span class="opt-letter">B.</span> A NAT gateway, since it was originally designed for IPv6 address translation</li>
+        <li><span class="opt-letter">C.</span> A gateway endpoint, since it only supports IPv6-enabled services</li>
+        <li><span class="opt-letter">D.</span> An egress-only internet gateway, since IPv4's private-address model never needed this outbound-only mechanism</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Egress-Only Internet Gateway</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a standard internet gateway routes both IPv4 and IPv6 traffic bidirectionally; it isn't IPv6-only.</li>
+          <li><strong>B.</strong> Wrong — a NAT gateway was designed for IPv4 address scarcity and doesn't work with IPv6 at all; it's the opposite of an IPv6-specific tool.</li>
+          <li><strong>C.</strong> Wrong — gateway endpoints exist to reach S3/DynamoDB privately and have nothing to do with IP version; the "not applicable" framing doesn't describe them.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — an egress-only internet gateway exists purely because IPv6 addresses are always publicly routable (no private-address concept like IPv4 has), so IPv4 never needed this outbound-only mechanism in the first place.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 13 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 13</p>
+      <p class="scenario-text">A heavily regulated company needs a VPC with absolutely no internet gateway and no NAT gateway of any kind, but its private EC2 instances must still read and write objects in an S3 bucket. What should be configured?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A NAT gateway restricted to S3-only destinations via its route table</li>
+        <li><span class="opt-letter">B.</span> Public IP addresses on the instances, scoped by a strict security group</li>
+        <li><span class="opt-letter">C.</span> A gateway endpoint for S3, associated with the relevant private subnets</li>
+        <li><span class="opt-letter">D.</span> An egress-only internet gateway with a route restricted to the S3 IP range</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Gateway)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — any NAT gateway requires an internet gateway in the VPC to function, reintroducing internet-facing infrastructure this fully private VPC must avoid.</li>
+          <li><strong>B.</strong> Wrong — public IPs need an internet gateway to be reachable at all, and assigning them contradicts the fully private requirement.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a gateway endpoint for S3 adds a prefix-list route in the subnet route tables, giving private-only instances a path to S3 with no internet gateway or NAT gateway required at all.</li>
+          <li><strong>D.</strong> Wrong — an egress-only internet gateway is an IPv6-only mechanism for internet traffic; it has no role in reaching S3 and doesn't apply here.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 14 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 14</p>
+      <p class="scenario-text">A team wants to use a gateway endpoint to give a private subnet direct access to Amazon SQS, avoiding any internet-facing path. Will this work?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, gateway endpoints support any AWS service reachable over HTTPS</li>
+        <li><span class="opt-letter">B.</span> No, SQS cannot be reached privately from within a VPC by any mechanism</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if the gateway endpoint's prefix list is manually edited to include SQS's IP range</li>
+        <li><span class="opt-letter">D.</span> No, gateway endpoints only ever support S3 and DynamoDB — SQS would need an interface endpoint instead</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Gateway)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — gateway endpoints are limited to exactly two services, S3 and DynamoDB; no other AWS service uses this mechanism, regardless of protocol.</li>
+          <li><strong>B.</strong> Wrong — SQS can be reached privately, just via an interface endpoint (PrivateLink), not a gateway endpoint.</li>
+          <li><strong>C.</strong> Wrong — the prefix list is an AWS-maintained object tied to the specific supported service; it isn't something you can manually repoint at an unsupported service.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — gateway endpoints support only S3 and DynamoDB; everything else needing private access, including SQS, uses an interface endpoint instead.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 15 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 15</p>
+      <p class="scenario-text">A VPC spans 3 Availability Zones with a gateway endpoint for DynamoDB associated with subnets in all three. One entire AZ fails. What happens to DynamoDB access from the instances in the remaining two AZs?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It continues working normally, since gateway endpoints are VPC-level objects, highly available across all AZs by design</li>
+        <li><span class="opt-letter">B.</span> It fails everywhere, since the gateway endpoint itself lived in the failed AZ</li>
+        <li><span class="opt-letter">C.</span> It requires the endpoint to be manually re-associated with the two surviving subnets</li>
+        <li><span class="opt-letter">D.</span> It works, but only after the prefix list propagates to the surviving route tables, which can take hours</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Gateway)</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a gateway endpoint is a logical, VPC-level object, not tied to any specific subnet or AZ; it's automatically highly available across every AZ the VPC uses.</li>
+          <li><strong>B.</strong> Wrong — a gateway endpoint doesn't live "in" any single AZ, so a single AZ failure doesn't take it down.</li>
+          <li><strong>C.</strong> Wrong — no manual re-association is needed; the endpoint's availability across surviving AZs is automatic.</li>
+          <li><strong>D.</strong> Wrong — there's no propagation delay scenario here; the route table entries in the surviving subnets were already in place and unaffected by the other AZ's failure.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 16 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 16</p>
+      <p class="scenario-text">A company wants a private VPC to be able to reach only two specific S3 buckets used for critical software updates — not the entire S3 service — and wants the buckets themselves to reject any request that doesn't arrive via this specific path. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A NACL on the private subnets, combined with default S3 server-side encryption</li>
+        <li><span class="opt-letter">B.</span> A route table entry pointing at an internet gateway, combined with an IAM user policy</li>
+        <li><span class="opt-letter">C.</span> A security group attached to the gateway endpoint, combined with an S3 lifecycle policy</li>
+        <li><span class="opt-letter">D.</span> An endpoint policy on the gateway endpoint, combined with a matching S3 bucket policy</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Gateway)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a NACL is a subnet-level IP/port filter with no concept of individual S3 buckets, and encryption doesn't restrict which path requests must arrive on.</li>
+          <li><strong>B.</strong> Wrong — a route to an internet gateway reintroduces internet-facing access, the opposite of what's wanted, and an IAM policy alone doesn't reject non-endpoint traffic at the bucket.</li>
+          <li><strong>C.</strong> Wrong — a gateway endpoint is not a network interface, so security groups cannot attach to it; a lifecycle policy manages object expiration, not access paths.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — an endpoint policy restricts what the gateway endpoint can reach (e.g. just the two buckets), and a matching S3 bucket policy requiring traffic to arrive via that specific endpoint closes off every other access path.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 17 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 17</p>
+      <p class="scenario-text">A company has a gateway endpoint for S3 configured in their us-east-1 VPC. They now need private instances in that same VPC to reach an S3 bucket located in ap-southeast-2. Will the existing gateway endpoint handle this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, gateway endpoints automatically route to S3 buckets in any Region worldwide</li>
+        <li><span class="opt-letter">B.</span> No, a gateway endpoint only works for the same Region it's created in — cross-Region S3 access needs another path</li>
+        <li><span class="opt-letter">C.</span> Yes, as long as the bucket policy explicitly allows the us-east-1 endpoint's ID</li>
+        <li><span class="opt-letter">D.</span> No, gateway endpoints cannot reach S3 buckets at all, only DynamoDB tables in the same Region</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Gateway)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — gateway endpoints are same-Region only; a gateway endpoint in us-east-1 cannot be used to reach a bucket in ap-southeast-2.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — gateway endpoints are scoped to the Region they're created in; reaching S3 in a different Region requires a different path (such as public internet access or another Region's own endpoint).</li>
+          <li><strong>C.</strong> Wrong — no bucket policy configuration overrides the fundamental same-Region scope limitation of a gateway endpoint.</li>
+          <li><strong>D.</strong> Wrong — gateway endpoints do support S3 directly; the limitation here is Region scope, not the service itself.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 18 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 18</p>
+      <p class="scenario-text">VPC A has a gateway endpoint for DynamoDB. VPC B is peered with VPC A and has no gateway endpoint of its own. Can instances in VPC B use VPC A's gateway endpoint to reach DynamoDB privately?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, as long as the peering connection's route tables include the DynamoDB prefix list</li>
+        <li><span class="opt-letter">B.</span> Yes, gateway endpoints are automatically shared with any peered VPC</li>
+        <li><span class="opt-letter">C.</span> No, a gateway endpoint is only usable from the VPC it's associated with, even across an active peering connection</li>
+        <li><span class="opt-letter">D.</span> No, because peering connections block all AWS-service traffic by default</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Gateway)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a gateway endpoint's prefix list route only applies within its own VPC's route tables; you cannot extend its reach into a peered VPC by editing peering routes.</li>
+          <li><strong>B.</strong> Wrong — gateway endpoints are not automatically shared across peered VPCs; each VPC needing private DynamoDB or S3 access needs its own gateway endpoint.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a gateway endpoint is same-VPC only; it isn't reachable from peered VPCs or anywhere outside the one VPC it's associated with.</li>
+          <li><strong>D.</strong> Wrong — peering connections don't categorically block AWS-service traffic; the actual limitation is that the gateway endpoint itself doesn't extend beyond its own VPC.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 19 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 19</p>
+      <p class="scenario-text">A VPC uses 3 Availability Zones and needs highly available private access to AWS Secrets Manager via an interface endpoint. What must be configured to achieve this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> One interface endpoint total, since it is automatically distributed across all AZs like a gateway endpoint</li>
+        <li><span class="opt-letter">B.</span> One interface endpoint per AZ, so three interface endpoints in total</li>
+        <li><span class="opt-letter">C.</span> A single interface endpoint, backed by a gateway endpoint for redundancy</li>
+        <li><span class="opt-letter">D.</span> One interface endpoint, plus a NAT gateway in each AZ as a fallback path</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Interface)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — unlike gateway endpoints, an interface endpoint is a genuine ENI placed in one specific subnet/AZ; it is not automatically multi-AZ.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — interface endpoints are AZ-scoped ENIs, so resilience across all 3 AZs requires one interface endpoint per AZ.</li>
+          <li><strong>C.</strong> Wrong — Secrets Manager isn't a gateway-endpoint-supported service (only S3 and DynamoDB are), so this backup path isn't available.</li>
+          <li><strong>D.</strong> Wrong — a NAT gateway has no role here; interface endpoints provide private, in-VPC access independent of NAT.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 20 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 20</p>
+      <p class="scenario-text">An interface endpoint for SNS has Private DNS enabled. An application was never modified and still resolves the default public name sns.us-east-1.amazonaws.com. What actually happens when it does so from inside the VPC?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It fails to resolve, since only the endpoint-specific DNS name works once an interface endpoint exists</li>
+        <li><span class="opt-letter">B.</span> It resolves out via the internet gateway, exactly as it would without any interface endpoint present</li>
+        <li><span class="opt-letter">C.</span> It transparently resolves to the interface endpoint's private IP, with no code changes required</li>
+        <li><span class="opt-letter">D.</span> It resolves successfully, but only after the security group on the endpoint is updated to permit DNS traffic</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Interface)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Private DNS specifically exists to make the default public name work transparently; it doesn't force applications to be rewritten to a new name.</li>
+          <li><strong>B.</strong> Wrong — Private DNS overrides the public name's resolution within the VPC precisely so this traffic stays private instead of going out via the internet gateway.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — Private DNS creates a Route 53 private hosted zone that overrides the default public service name to resolve to the interface endpoint's private IP, requiring no application changes.</li>
+          <li><strong>D.</strong> Wrong — DNS resolution via Private DNS doesn't depend on a security group update; SGs control actual traffic to the ENI, not whether the DNS override takes effect.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 21 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 21</p>
+      <p class="scenario-text">A team needs to restrict, using network-level filtering rules, exactly which EC2 instances (by security group membership) are permitted to reach a private interface endpoint. Is this achievable?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, endpoints of any kind (gateway or interface) never support security groups</li>
+        <li><span class="opt-letter">B.</span> No, this level of control is only possible with an endpoint policy, which can't reference security groups</li>
+        <li><span class="opt-letter">C.</span> Yes, but only by placing the endpoint in its own subnet governed by a NACL instead</li>
+        <li><span class="opt-letter">D.</span> Yes, since an interface endpoint is a genuine ENI, a security group can be attached to it directly</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Interface)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this is true of gateway endpoints (which aren't network interfaces), but interface endpoints are real ENIs and do support security groups.</li>
+          <li><strong>B.</strong> Wrong — an endpoint policy is a separate access-control layer; it isn't the only option, since the endpoint's own ENI can carry a security group directly.</li>
+          <li><strong>C.</strong> Wrong — a NACL is a subnet-level filter, not a per-instance or per-security-group mechanism; it's not the intended tool for this granularity.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — because an interface endpoint is a genuine network interface, a security group can be applied to it directly, allowing exactly this kind of network-level access control.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 22 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 22</p>
+      <p class="scenario-text">An architect needs private, in-VPC access to a third-party SaaS product (not an AWS service) with no additional networking infrastructure, in a regulated environment that forbids any traffic touching the public internet. What underlying AWS mechanism makes this possible?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> AWS PrivateLink, the same technology interface endpoints are built on</li>
+        <li><span class="opt-letter">B.</span> A gateway endpoint, extended to support arbitrary third-party services</li>
+        <li><span class="opt-letter">C.</span> VPC peering directly with the SaaS vendor's own AWS account</li>
+        <li><span class="opt-letter">D.</span> An egress-only internet gateway configured for the vendor's IP range</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Interface)</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — PrivateLink is the underlying technology that injects a service directly into your VPC as network interfaces; the same mechanism lets third-party vendors offer private, in-VPC access, not just AWS services.</li>
+          <li><strong>B.</strong> Wrong — gateway endpoints are permanently limited to S3 and DynamoDB only; they cannot be extended to arbitrary third-party services.</li>
+          <li><strong>C.</strong> Wrong — VPC peering connects two VPCs' networks directly and isn't how third-party SaaS products expose themselves privately to customer VPCs; that's PrivateLink's role.</li>
+          <li><strong>D.</strong> Wrong — an egress-only internet gateway is specifically an IPv6 outbound-only mechanism for general internet traffic, unrelated to injecting a specific third-party service into a VPC.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 23 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 23</p>
+      <p class="scenario-text">A company needs private access to DynamoDB and is deciding whether to use a gateway endpoint or an interface endpoint. Which statement about their options is accurate?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Only an interface endpoint works, since DynamoDB dropped gateway endpoint support</li>
+        <li><span class="opt-letter">B.</span> Either works equally well, since DynamoDB is available via both gateway and interface endpoints today</li>
+        <li><span class="opt-letter">C.</span> Only a gateway endpoint works, since DynamoDB remains gateway-endpoint-only and has no interface endpoint option</li>
+        <li><span class="opt-letter">D.</span> Neither works; DynamoDB requires a NAT gateway for private access</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Interface)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — DynamoDB never gained interface endpoint support; it remains reachable via gateway endpoint only.</li>
+          <li><strong>B.</strong> Wrong — this describes S3's current state (available via either), not DynamoDB's — DynamoDB is still gateway-endpoint-only.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — while S3 can now be reached via either type, DynamoDB remains exclusively a gateway-endpoint service with no interface endpoint option.</li>
+          <li><strong>D.</strong> Wrong — a NAT gateway isn't needed or relevant; DynamoDB is directly reachable privately via a gateway endpoint.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 24 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 24</p>
+      <p class="scenario-text">A legacy application communicates with an AWS service exclusively over UDP for performance reasons. The team wants to route this traffic privately through an interface endpoint. Will this work as expected?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, interface endpoints transparently support both TCP and UDP traffic</li>
+        <li><span class="opt-letter">B.</span> No, interface endpoints only support TCP — UDP traffic isn't supported through this mechanism</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if Private DNS is explicitly disabled first</li>
+        <li><span class="opt-letter">D.</span> No, because interface endpoints only support IPv6 traffic, and this scenario doesn't specify IPv6</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Endpoints (Interface)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — interface endpoints support TCP only; UDP traffic isn't carried through this mechanism.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — interface endpoints support TCP only and IPv4 only; a UDP-dependent workload cannot be routed through one as-is.</li>
+          <li><strong>C.</strong> Wrong — Private DNS controls name resolution behavior, not the transport protocols the endpoint supports; disabling it doesn't add UDP support.</li>
+          <li><strong>D.</strong> Wrong — interface endpoints actually support IPv4 only, not IPv6; either way, the real limitation for this scenario is TCP-only protocol support.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 25 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 25</p>
+      <p class="scenario-text">VPC A is peered with VPC B, and separately VPC B is peered with VPC C. An engineer expects an instance in VPC A to now reach an instance in VPC C through VPC B. What actually happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It works automatically, as long as VPC B's route tables include routes to both A and C's CIDRs</li>
+        <li><span class="opt-letter">B.</span> It works, but only if DNS resolution across the peer is enabled on both peering connections</li>
+        <li><span class="opt-letter">C.</span> It fails; VPC peering is never transitive, so a direct A–C peering connection would be required</li>
+        <li><span class="opt-letter">D.</span> It works, but only if security groups in all three VPCs explicitly allow it</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Peering</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — no route table configuration in the middle VPC can create transitive connectivity; peering explicitly doesn't route through an intermediary VPC no matter how it's configured.</li>
+          <li><strong>B.</strong> Wrong — DNS resolution across the peer affects hostname resolution within already-connected peered VPCs; it doesn't create a path through an intermediary VPC.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — VPC peering is never transitive: A–B and B–C connections don't produce an A–C path. A direct peering connection between A and C is required.</li>
+          <li><strong>D.</strong> Wrong — security groups only control what traffic already-existing network paths permit; they can't create a route that doesn't otherwise exist.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 26 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 26</p>
+      <p class="scenario-text">Two VPCs both use the CIDR range 10.0.0.0/16 and a team wants to create a VPC peering connection between them. What happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It works automatically; AWS transparently NATs the overlapping address ranges</li>
+        <li><span class="opt-letter">B.</span> It works, but only for subnets whose specific ranges happen not to overlap</li>
+        <li><span class="opt-letter">C.</span> It works only if one of the two VPCs is converted entirely to IPv6</li>
+        <li><span class="opt-letter">D.</span> It's not possible at all; overlapping CIDR ranges block VPC peering entirely</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Peering</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — VPC peering has no NAT mechanism to resolve address conflicts; overlapping CIDRs simply block the connection.</li>
+          <li><strong>B.</strong> Wrong — the two VPCs share the exact same /16 range, so there are no non-overlapping subnets to fall back on; the whole peering attempt fails.</li>
+          <li><strong>C.</strong> Wrong — switching a VPC to IPv6 doesn't resolve an IPv4 CIDR conflict for IPv4 peering, and isn't a real workaround AWS supports for this.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — two VPCs with overlapping IP ranges cannot be peered at all; this is a hard architectural limitation, which is why non-overlapping CIDR planning matters from the start.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 27 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 27</p>
+      <p class="scenario-text">A company has 5 VPCs in the same Region and wants every VPC to be able to communicate directly with every other VPC, using only VPC peering connections. How many peering connections are needed, and is there a better-scaling alternative?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> 5 connections, arranged so each VPC peers with exactly one neighbor</li>
+        <li><span class="opt-letter">B.</span> 4 connections, using one VPC as a central hub for the other four</li>
+        <li><span class="opt-letter">C.</span> 1 connection, since a single peering connection can link more than two VPCs at once</li>
+        <li><span class="opt-letter">D.</span> 10 connections; Transit Gateway is a more scalable, hub-and-spoke alternative</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Peering</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — one connection per neighbor in a ring doesn't give every VPC a direct path to every other VPC, since peering isn't transitive.</li>
+          <li><strong>B.</strong> Wrong — a hub arrangement only connects the hub directly to each spoke; the four spoke VPCs still can't reach each other directly, since peering doesn't route through the hub.</li>
+          <li><strong>C.</strong> Wrong — a single peering connection links exactly two VPCs, never more; it can't be used to connect all 5 at once.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — full mesh connectivity between 5 VPCs needs one connection per pair (5 choose 2 = 10), and at this scale Transit Gateway's hub-and-spoke model is the more manageable, scalable alternative.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 28 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 28</p>
+      <p class="scenario-text">A VPC peering connection has been created and accepted by the peer VPC's owner. Instances in both VPCs still cannot reach each other. Non-overlapping CIDRs are confirmed, and security groups on both sides fully permit the traffic. What is most likely missing?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Route table entries in the relevant subnets of both VPCs, pointing the peer's CIDR at the peering connection</li>
+        <li><span class="opt-letter">B.</span> Enabling DNS resolution across the peer on both sides</li>
+        <li><span class="opt-letter">C.</span> Re-accepting the peering connection a second time from both owners</li>
+        <li><span class="opt-letter">D.</span> Switching the peering connection from same-Region to cross-Region mode</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Peering</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — creating and accepting the peering connection only creates a logical gateway object; route table entries in both VPCs are also required for traffic to actually be directed across it.</li>
+          <li><strong>B.</strong> Wrong — DNS resolution across the peer affects hostname-to-IP resolution convenience, not whether the underlying network path exists at all.</li>
+          <li><strong>C.</strong> Wrong — re-accepting an already-accepted connection has no effect; acceptance already happened, and the connection is a logical object either way.</li>
+          <li><strong>D.</strong> Wrong — the connection's Region mode isn't something you toggle after creation to fix missing connectivity, and it's unrelated to the missing route table entries.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 29 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 29</p>
+      <p class="scenario-text">Two peered VPCs are in the same Region. An engineer wants a security group rule in VPC A to reference the security group ID of instances in VPC B directly, rather than hardcoding IP ranges. Is this possible?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, for same-Region peers, the peer's security group ID can be referenced directly in security group rules</li>
+        <li><span class="opt-letter">B.</span> No, security group referencing across a peering connection is never supported, regardless of Region</li>
+        <li><span class="opt-letter">C.</span> Yes, but only by first converting the peering connection into a Transit Gateway attachment</li>
+        <li><span class="opt-letter">D.</span> No, only NACLs can reference a peer's security group across a peering connection</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Peering</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — for same-Region peering connections, you can reference the peer's security group ID directly in your own rules, the same nesting trick used within a single VPC; cross-Region peers must use IP ranges instead.</li>
+          <li><strong>B.</strong> Wrong — security group referencing across a peer is supported, just restricted to same-Region peers specifically.</li>
+          <li><strong>C.</strong> Wrong — no conversion to Transit Gateway is needed; same-Region peering already supports this directly.</li>
+          <li><strong>D.</strong> Wrong — NACLs don't support referencing security groups at all (they work on IP ranges); this capability applies to security group rules, not NACLs.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 30 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 30</p>
+      <p class="scenario-text">A cross-Region VPC peering connection carries production traffic between two application tiers. A security reviewer asks what protects this traffic in transit and whether it traverses the public internet. What's the accurate answer?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Traffic is unencrypted and travels over the public internet between Regions</li>
+        <li><span class="opt-letter">B.</span> Traffic is encrypted only if a VPN is layered on top of the peering connection</li>
+        <li><span class="opt-letter">C.</span> Traffic is encrypted, but only for same-Region peering connections, not cross-Region ones</li>
+        <li><span class="opt-letter">D.</span> Traffic is always encrypted and transits AWS's own global backbone network, not the public internet</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Peering</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — peered traffic is always encrypted and never uses the public internet, even cross-Region.</li>
+          <li><strong>B.</strong> Wrong — no additional VPN layer is needed; encryption is inherent to VPC peering traffic by default.</li>
+          <li><strong>C.</strong> Wrong — encryption isn't limited to same-Region peers; it applies to peering traffic generally, including cross-Region connections.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — traffic across a peering connection is always encrypted, and cross-Region peered traffic transits AWS's own global backbone network rather than the public internet.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 31 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 31</p>
+      <p class="scenario-text">A company peers VPC A and VPC B and enables "DNS resolution across the peer" on the connection. What behavior does this specifically enable?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It automatically creates route table entries for both VPCs, removing the need to add them manually</li>
+        <li><span class="opt-letter">B.</span> It allows public DNS hostnames of instances in the peered VPC to resolve to their private IP addresses instead</li>
+        <li><span class="opt-letter">C.</span> It converts the peering connection into a transitive one, allowing pass-through to any VPC peered with B</li>
+        <li><span class="opt-letter">D.</span> It automatically resolves overlapping CIDR conflicts between the two VPCs</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Peering</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — DNS resolution across the peer has no effect on route tables; those must still be configured separately and manually.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — this optional setting lets public DNS hostnames of instances in the peered VPC resolve to their private IP addresses, so the same names work whether or not the target is peered.</li>
+          <li><strong>C.</strong> Wrong — peering remains non-transitive regardless of this DNS setting; it has no effect on routing scope at all.</li>
+          <li><strong>D.</strong> Wrong — DNS resolution settings have nothing to do with CIDR overlap, which is a hard blocker unaffected by this option.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 32 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 32</p>
+      <p class="scenario-text">A rapidly growing company already has 8 VPCs peered pairwise for full mesh connectivity and plans to add several more VPCs over the next year, all needing full connectivity with the rest. What architectural concern should this raise, and what's the recommended fix?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> None — VPC peering scales linearly with VPC count, so this growth is manageable as-is</li>
+        <li><span class="opt-letter">B.</span> The number of required pairwise connections grows quadratically; Transit Gateway's hub-and-spoke model scales far better</li>
+        <li><span class="opt-letter">C.</span> Peering connections have a hard limit of 8 total per account, so a support ticket is the only fix</li>
+        <li><span class="opt-letter">D.</span> Switching every connection to cross-Region peering would resolve the scaling problem</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: VPC Peering</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — full mesh peering connections grow combinatorially (N choose 2), not linearly, becoming unmanageable fast as VPC count increases.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — full mesh peering requires a connection per pair, growing quadratically with VPC count; Transit Gateway solves exactly this by acting as a single hub, avoiding the connection explosion.</li>
+          <li><strong>C.</strong> Wrong — there's no such fixed 8-connection cap tied to this scenario; the real issue is the combinatorial growth pattern of full mesh peering itself, not an account limit.</li>
+          <li><strong>D.</strong> Wrong — switching to cross-Region peering doesn't change the fundamental non-transitive, pairwise nature of peering; it doesn't address the scaling problem at all.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something, or want the reasoning re-explained a different way? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/scenario-quiz.js"></script>
+</body>
+</html>
