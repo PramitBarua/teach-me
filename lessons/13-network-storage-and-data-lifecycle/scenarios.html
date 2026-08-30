@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Practice – Network Storage &amp; Data Lifecycle</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">Network Storage &amp; Data Lifecycle</a> › Scenario Practice</div>
+    <div class="module-tag">Exam Practice</div>
+    <h1>Scenario-Based Exam Practice</h1>
+    <p class="lesson-meta">Network Storage &amp; Data Lifecycle · 16 scenarios</p>
+    <p class="source-link">Sources: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html" target="_blank">Amazon EFS User Guide</a> · <a href="https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html" target="_blank">AWS Backup Developer Guide</a></p>
+  </div>
+
+  <p>These are exam-style scenario questions, separate from the retrieval-practice quiz at the end of each lesson. Each question has one answer that's technically possible but breaks a requirement in the scenario, one that's plausible and easy to confuse with the right answer, and one correct best choice — read carefully. Click an option to select your answer, then reveal it — your pick is highlighted in red if wrong, green marks the correct one. Once you've answered every question, check "Show my results" for your overall score and which topics to study again.</p>
+
+  <div class="scenario-set">
+    <p class="scenario-count">16 scenarios · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-topic breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+    <!-- 1 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 1</p>
+      <p class="scenario-text">A fleet of Linux EC2 instances spans 3 Availability Zones and all need to read and write the same set of files, with access continuing uninterrupted even if any single AZ fails. What should be configured?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A shared EBS volume attached to every instance across all 3 AZs</li>
+        <li><span class="opt-letter">B.</span> An EFS file system with one mount target in each of the 3 Availability Zones</li>
+        <li><span class="opt-letter">C.</span> An EFS file system with a single mount target placed in the AZ with the most instances</li>
+        <li><span class="opt-letter">D.</span> A single Region-wide EFS endpoint with no per-AZ configuration</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EFS Architecture</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — EBS volumes attach to a single instance in a single AZ; they can't be mounted by multiple instances across AZs the way EFS can.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — mount targets are AZ-scoped ENIs, so one mount target per AZ (the same HA pattern as NAT Gateways) ensures instances in every AZ keep access if any single AZ fails.</li>
+          <li><strong>C.</strong> Wrong — a single mount target in one AZ means instances in the other two AZs lose access if that AZ fails; this doesn't provide the required resilience.</li>
+          <li><strong>D.</strong> Wrong — EFS mount targets are placed per-AZ inside the VPC; there's no single Region-wide endpoint that bypasses this architecture.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 2</p>
+      <p class="scenario-text">A WordPress-style application currently stores user-uploaded media on each instance's local disk. The team wants instances to become disposable — replaceable without losing any uploaded media, with every instance in the fleet seeing the same files. What should replace local disk storage?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A larger EBS volume attached to each instance individually</li>
+        <li><span class="opt-letter">B.</span> Instance store volumes, since they offer the highest local throughput</li>
+        <li><span class="opt-letter">C.</span> An EFS file system mounted by every instance in the fleet</li>
+        <li><span class="opt-letter">D.</span> A snapshot schedule that backs up local disk every hour</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EFS Architecture</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a larger EBS volume is still block storage tied to one instance; it doesn't let multiple instances share files or survive instance replacement.</li>
+          <li><strong>B.</strong> Wrong — instance store is ephemeral and tied even more tightly to the instance's own lifecycle than EBS; it makes the disposability problem worse, not better.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — moving media onto EFS makes instances closer to stateless: the file system lives outside any one instance, is mountable by many instances at once, and survives instance replacement.</li>
+          <li><strong>D.</strong> Wrong — scheduled snapshots protect against data loss but don't let multiple instances share live files or make an individual instance disposable without a restore step.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 3</p>
+      <p class="scenario-text">A big-data analytics workload runs highly parallel jobs across many EC2 instances simultaneously reading and writing to a shared EFS file system, prioritizing maximum aggregate throughput and tolerating some added per-operation latency. Which performance mode fits?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> General Purpose, since it is the default and requires no configuration</li>
+        <li><span class="opt-letter">B.</span> Provisioned throughput mode, since it removes latency entirely</li>
+        <li><span class="opt-letter">C.</span> Bursting performance mode, since it is designed for parallel access</li>
+        <li><span class="opt-letter">D.</span> Max I/O, since it scales to higher aggregate throughput and operations-per-second for parallel workloads</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EFS Architecture</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — General Purpose is optimized for latency-sensitive workloads like web serving, not for maximizing aggregate throughput under heavy parallelism.</li>
+          <li><strong>B.</strong> Wrong — Provisioned is a throughput mode (bandwidth independent of file system size), not a performance mode, and it doesn't eliminate latency.</li>
+          <li><strong>C.</strong> Wrong — Bursting is a throughput mode, not a performance mode; EFS's two performance modes are General Purpose and Max I/O.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — Max I/O scales to higher aggregate throughput and operations-per-second for highly parallel workloads, trading off some increased per-operation latency, exactly matching this scenario.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 4</p>
+      <p class="scenario-text">An application's I/O needs are unpredictable — mostly idle, with occasional bursts — and the team wants throughput to scale automatically with file system size rather than provisioning a fixed rate. Which EFS throughput mode fits, and what's its EBS analog?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Provisioned, the same trade-off as EBS io1</li>
+        <li><span class="opt-letter">B.</span> Max I/O, the same trade-off as EBS st1</li>
+        <li><span class="opt-letter">C.</span> Bursting, the same trade-off as EBS gp2</li>
+        <li><span class="opt-letter">D.</span> General Purpose, the same trade-off as EBS sc1</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EFS Architecture</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Provisioned throughput sets a rate independent of file system size, the opposite of the size-scaling, auto-bursting behavior this scenario wants.</li>
+          <li><strong>B.</strong> Wrong — Max I/O is a performance mode, not a throughput mode, and st1 isn't the analog being drawn here.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — Bursting throughput scales with file system size with a burst pool for spikes, the same trade-off as EBS gp2, matching this unpredictable, mostly-idle-with-bursts pattern.</li>
+          <li><strong>D.</strong> Wrong — General Purpose is a performance mode, not a throughput mode; it doesn't describe how throughput scales with size.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 5</p>
+      <p class="scenario-text">A team wants archival files on EFS to automatically move to a lower-cost storage tier as they age out of frequent use, without manually tracking and moving each file. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A lifecycle policy transitioning files to the Infrequent Access storage class based on access patterns</li>
+        <li><span class="opt-letter">B.</span> Max I/O performance mode, since it automatically archives cold data</li>
+        <li><span class="opt-letter">C.</span> Bursting throughput mode, since it reduces per-GB storage cost over time</li>
+        <li><span class="opt-letter">D.</span> The Standard storage class only, since it already minimizes cost for all access patterns</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EFS Architecture</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — mirroring S3, EFS lifecycle policies automatically transition files between Standard and Infrequent Access based on access patterns, exactly this hands-off cost optimization.</li>
+          <li><strong>B.</strong> Wrong — Max I/O is a performance mode for parallel throughput; it has no relationship to storage cost or automatic data movement.</li>
+          <li><strong>C.</strong> Wrong — Bursting is a throughput mode governing bandwidth scaling; it doesn't affect per-GB storage cost or move data between classes.</li>
+          <li><strong>D.</strong> Wrong — Standard is the default class for frequently accessed files and costs more than Infrequent Access; it doesn't minimize cost for rarely-touched archival data.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 6</p>
+      <p class="scenario-text">A design calls for a shared file system mountable by a fleet of Windows EC2 instances. A junior engineer proposes EFS. Is this a valid choice?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, EFS is officially supported for Linux instances only; FSx is the correct direction for Windows</li>
+        <li><span class="opt-letter">B.</span> Yes, EFS supports Windows and Linux instances equally</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if the file system uses the Max I/O performance mode</li>
+        <li><span class="opt-letter">D.</span> No, because EFS only supports single-instance mounting regardless of OS</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EFS Architecture</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — EFS explicitly targets Linux only; a scenario describing Windows instances needing shared file storage should point toward FSx instead.</li>
+          <li><strong>B.</strong> Wrong — EFS is officially supported for Linux instances only; it isn't a cross-platform match for Windows workloads.</li>
+          <li><strong>C.</strong> Wrong — performance mode selection has nothing to do with OS compatibility; EFS's Linux-only scope isn't affected by which performance mode is chosen.</li>
+          <li><strong>D.</strong> Wrong — EFS explicitly supports simultaneous multi-instance mounting; the actual limitation here is OS support, not mount concurrency.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 7</p>
+      <p class="scenario-text">An on-premises data center needs to mount the same EFS file system that EC2 instances inside a VPC already use, for a hybrid migration project. What must be in place, given that EFS is a private, VPC-scoped service by default?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Nothing extra; EFS is reachable from the public internet by default</li>
+        <li><span class="opt-letter">B.</span> A second, independent EFS file system replicated automatically to on-premises</li>
+        <li><span class="opt-letter">C.</span> Hybrid networking such as a VPN connection, AWS Direct Connect, or VPC peering into the VPC</li>
+        <li><span class="opt-letter">D.</span> Switching the file system's performance mode to Max I/O to enable external access</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EFS Architecture</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — EFS is VPC-scoped and not reachable from the public internet by default; some hybrid connectivity path is required.</li>
+          <li><strong>B.</strong> Wrong — EFS doesn't offer an automatic on-premises replication feature; on-premises access works by reaching into the existing VPC-based file system, not by duplicating it.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — because EFS is VPC-scoped, access from outside the VPC (like an on-premises data center) requires hybrid networking: VPC peering, a VPN connection, or Direct Connect.</li>
+          <li><strong>D.</strong> Wrong — performance mode governs throughput/latency characteristics, not network reachability from outside the VPC.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 8</p>
+      <p class="scenario-text">A team migrating a legacy Linux application to EFS needs the exact same file permission model (owners, groups, read/write/execute bits) their application already relies on. Does EFS support this out of the box?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, EFS requires rewriting all permission logic using IAM policies instead</li>
+        <li><span class="opt-letter">B.</span> Yes, EFS file systems use POSIX permissions, the standard model every Linux distribution understands</li>
+        <li><span class="opt-letter">C.</span> No, EFS only supports read-only access with no per-user permission granularity</li>
+        <li><span class="opt-letter">D.</span> Yes, but only for files stored in the Infrequent Access storage class</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: EFS Architecture</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — EFS doesn't require replacing file permissions with IAM policies; it natively uses the standard Linux permission model.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — EFS file systems use POSIX permissions, the standard permission model every Linux distribution understands, so existing owner/group/mode-bit logic carries over directly.</li>
+          <li><strong>C.</strong> Wrong — EFS supports normal read/write access with full POSIX-style per-user and per-group permissions, not just read-only.</li>
+          <li><strong>D.</strong> Wrong — POSIX permission support isn't tied to a specific storage class; it applies to the file system regardless of Standard or Infrequent Access.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 9</p>
+      <p class="scenario-text">A company runs RDS, DynamoDB, EFS, and EBS-backed EC2 instances, and currently manages backups for each with separate tools and manual scripts. What does AWS Backup offer that directly addresses this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A requirement to migrate all databases onto self-managed EC2 instances first</li>
+        <li><span class="opt-letter">B.</span> Automatic migration of DynamoDB data into RDS to simplify backup handling</li>
+        <li><span class="opt-letter">C.</span> A managed VPN tunnel connecting all resources needing backup</li>
+        <li><span class="opt-letter">D.</span> Centralized management and storage of backups across all of these services in one place</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Backup</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — AWS Backup works with existing managed services like RDS and DynamoDB directly; it doesn't require replacing them with self-managed EC2 instances.</li>
+          <li><strong>B.</strong> Wrong — AWS Backup doesn't migrate data between service types; it centrally manages backups for each service as it already exists.</li>
+          <li><strong>C.</strong> Wrong — AWS Backup is a data protection and backup consolidation service, not a network connectivity or VPN product.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — AWS Backup's core value is consolidating backup storage and configuration for many AWS services into one central place, exactly resolving this fragmented-tooling problem.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 10</p>
+      <p class="scenario-text">A financial services company must guarantee that backups cannot be deleted by anyone at all — not their own administrators, not even AWS — to satisfy a strict compliance requirement. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A default read/write vault, since backups are protected automatically once created</li>
+        <li><span class="opt-letter">B.</span> A shorter backup window, to reduce the time backups are exposed to deletion risk</li>
+        <li><span class="opt-letter">C.</span> Cross-Region copy alone, so a second copy of every backup always exists</li>
+        <li><span class="opt-letter">D.</span> AWS Backup Vault Lock, enabling WORM mode on the vault</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Backup</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — vaults are read/write by default, meaning backups inside them can be deleted unless Vault Lock is specifically enabled.</li>
+          <li><strong>B.</strong> Wrong — the backup window controls when a backup job starts and how long it runs; it has no effect on whether a stored backup can later be deleted.</li>
+          <li><strong>C.</strong> Wrong — a cross-Region copy protects against Regional failure, but the copied backup in the destination vault remains deletable unless that vault also has Vault Lock enabled.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — Vault Lock switches a vault to WORM mode; after the cool-off period, nobody, including AWS, can delete anything from it, which is exactly what this compliance requirement demands.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 11 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 11</p>
+      <p class="scenario-text">An administrator enables AWS Backup Vault Lock on a vault at 9:00 AM Monday and immediately tries to delete an existing backup from it at 10:00 AM the same day. What happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The deletion succeeds, since Vault Lock is still within its 72-hour cool-off period and not yet fully active</li>
+        <li><span class="opt-letter">B.</span> The deletion is blocked immediately, since Vault Lock takes effect the instant it's enabled</li>
+        <li><span class="opt-letter">C.</span> The deletion fails only because the backup hasn't yet reached cold storage</li>
+        <li><span class="opt-letter">D.</span> The deletion is queued and automatically applied once the cool-off period ends</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Backup</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — there's a 72-hour cool-off period after enabling Vault Lock before it's fully active; a deletion attempted just one hour in would still succeed, since immutability hasn't taken hold yet.</li>
+          <li><strong>B.</strong> Wrong — Vault Lock doesn't take effect the instant it's enabled; there's a 72-hour cool-off period before it becomes fully active.</li>
+          <li><strong>C.</strong> Wrong — cold storage transition timing is unrelated to Vault Lock's cool-off period; the relevant blocker here is simply that the cool-off hasn't elapsed.</li>
+          <li><strong>D.</strong> Wrong — AWS Backup doesn't queue a deletion request to auto-apply later; the deletion either succeeds now (pre-lock) or is permanently blocked once WORM mode is fully active.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 12 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 12</p>
+      <p class="scenario-text">A backup plan transitions backups to cold storage after 20 days and is configured to expire (delete) them after 60 days total. Does this configuration satisfy AWS Backup's rules for cold storage retention?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, since 60 days of total retention is well beyond any minimum AWS Backup enforces</li>
+        <li><span class="opt-letter">B.</span> No, because a backup must wait at least 30 days before transitioning to cold storage at all</li>
+        <li><span class="opt-letter">C.</span> No, because a backup must remain in cold storage at least 90 days before it can expire — 20+60 doesn't satisfy that</li>
+        <li><span class="opt-letter">D.</span> Yes, as long as Vault Lock is also enabled on the destination vault</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Backup</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — total retention length alone isn't the rule; the constraint specifically governs how long a backup must stay in cold storage before expiring, which this plan violates (60 - 20 = 40 days in cold storage, short of 90).</li>
+          <li><strong>B.</strong> Wrong — there's no 30-day minimum before transitioning to cold storage; the actual rule is a 90-day minimum stay once a backup is already in cold storage.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — once a backup moves to cold storage, it must stay there at least 90 days before it can expire; this plan's 40 days in cold storage (20 to transition, 60 total) falls short of that minimum.</li>
+          <li><strong>D.</strong> Wrong — Vault Lock governs whether backups can be deleted at all, not the cold-storage minimum-stay rule, and enabling it doesn't override that separate constraint.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 13 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 13</p>
+      <p class="scenario-text">A compliance officer assumes that enabling AWS Backup Vault Lock on a backup vault also automatically enables S3 Object Lock on any S3 buckets the company owns. Is this assumption correct?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, all AWS WORM features share a single account-wide toggle</li>
+        <li><span class="opt-letter">B.</span> No, AWS Backup Vault Lock, S3 Object Lock, and Glacier Vault Lock are distinct features on distinct services, despite sharing the same WORM idea</li>
+        <li><span class="opt-letter">C.</span> Yes, but only for buckets already referenced in an active backup plan</li>
+        <li><span class="opt-letter">D.</span> No, because S3 Object Lock was fully replaced by AWS Backup Vault Lock</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Backup</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — there's no single account-wide WORM toggle; each of these features is configured independently on its own service.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — all three implement the same WORM idea, but they are distinct features on distinct services; configuring one does not configure the others.</li>
+          <li><strong>C.</strong> Wrong — being referenced in a backup plan doesn't cause S3 Object Lock to be enabled on a bucket; that's a separate, manually configured S3 feature.</li>
+          <li><strong>D.</strong> Wrong — S3 Object Lock is still its own distinct, actively used feature; it hasn't been replaced by AWS Backup Vault Lock.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 14 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 14</p>
+      <p class="scenario-text">An operations team needs backups to run every 12 hours on a fine-grained schedule that a simple daily/weekly/monthly picker can't express. What should they configure within a Backup Plan?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A cron expression, for finer scheduling control down to hourly frequency</li>
+        <li><span class="opt-letter">B.</span> Multiple overlapping backup vaults, one per desired time slot</li>
+        <li><span class="opt-letter">C.</span> An on-demand backup triggered manually every 12 hours by a script</li>
+        <li><span class="opt-letter">D.</span> A weekly plan configured to repeat twice within the same day</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Backup</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Backup Plans support a cron expression for finer scheduling control, as frequently as hourly, covering exactly this 12-hour cadence need.</li>
+          <li><strong>B.</strong> Wrong — vaults are storage destinations for backup data, not a scheduling mechanism; creating more of them doesn't control backup frequency.</li>
+          <li><strong>C.</strong> Wrong — while on-demand backups exist for manual, outside-of-plan triggers, relying on a script to fire every 12 hours abandons the built-in scheduling a Backup Plan already provides via cron.</li>
+          <li><strong>D.</strong> Wrong — a weekly plan lets you pick specific days, not sub-daily repetition; it can't natively express a 12-hour cadence the way a cron expression can.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 15 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 15</p>
+      <p class="scenario-text">Before a risky maintenance change, an engineer wants to take a one-off backup of a resource right now, entirely outside of its normally scheduled Backup Plan cadence. Does AWS Backup support this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, all backups must originate from a configured Backup Plan on its defined schedule</li>
+        <li><span class="opt-letter">B.</span> Yes, on-demand backups can be triggered manually, outside of any scheduled plan</li>
+        <li><span class="opt-letter">C.</span> No, a new Backup Plan with a one-time schedule must be created and then deleted afterward</li>
+        <li><span class="opt-letter">D.</span> Yes, but only if Vault Lock is disabled first</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Backup</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Backup Plans aren't the only way to create a backup; a manual, outside-of-plan option exists specifically for cases like this.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — AWS Backup supports on-demand backups triggered manually, outside of any scheduled plan, exactly fitting a one-off pre-maintenance backup need.</li>
+          <li><strong>C.</strong> Wrong — creating and then deleting a throwaway Backup Plan is unnecessary overhead; on-demand backups exist precisely to avoid this.</li>
+          <li><strong>D.</strong> Wrong — on-demand backups aren't gated behind disabling Vault Lock; Vault Lock only prevents deletion, it doesn't block creating new backups.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 16 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 16</p>
+      <p class="scenario-text">A company wants to restore an RDS database to its exact state at 3:14 AM last Tuesday — a specific moment in time, not just the nearest daily snapshot. What capability does this require?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Cross-account backup, since only a second account's copy supports this level of precision</li>
+        <li><span class="opt-letter">B.</span> A shorter backup window, so snapshots are taken closer together</li>
+        <li><span class="opt-letter">C.</span> AWS Backup Vault Lock, since WORM mode enables timestamp-precise restores</li>
+        <li><span class="opt-letter">D.</span> Point-in-time recovery, supported by RDS (and S3) for restoring to any moment within the retention window</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: AWS Backup</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — cross-account backup is about which account stores the backup copy, not about restoring to an arbitrary point in time; it doesn't provide timestamp-level restore precision.</li>
+          <li><strong>B.</strong> Wrong — a shorter backup window changes how often full backups run, but doesn't provide restoration to an arbitrary moment between backups the way point-in-time recovery does.</li>
+          <li><strong>C.</strong> Wrong — Vault Lock is about preventing deletion (WORM), not about the granularity of what moment in time you can restore to.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — some services, including S3 and RDS, support point-in-time recovery: restoring to the resource's exact state at any moment within the retention window, not just to a specific snapshot.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something, or want the reasoning re-explained a different way? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/scenario-quiz.js"></script>
+</body>
+</html>

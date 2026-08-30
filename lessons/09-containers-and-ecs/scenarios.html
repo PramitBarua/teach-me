@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Practice – Containers &amp; ECS</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">Containers &amp; ECS</a> › Scenario Practice</div>
+    <div class="module-tag">Exam Practice</div>
+    <h1>Scenario-Based Exam Practice</h1>
+    <p class="lesson-meta">Containers &amp; ECS · 24 scenarios</p>
+    <p class="source-link">Sources: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html" target="_blank">Amazon ECS Developer Guide</a> · <a href="https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html" target="_blank">Amazon EKS User Guide</a></p>
+  </div>
+
+  <p>These are exam-style scenario questions, separate from the retrieval-practice quiz at the end of each lesson. Each question has one answer that's technically possible but breaks a requirement in the scenario, one that's plausible and easy to confuse with the right answer, and one correct best choice — read carefully. Click an option to select your answer, then reveal it — your pick is highlighted in red if wrong, green marks the correct one. Once you've answered every question, check "Show my results" for your overall score and which topics to study again.</p>
+
+  <div class="scenario-set">
+    <p class="scenario-count">24 scenarios · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-topic breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+    <!-- 1 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 1</p>
+      <p class="scenario-text">A developer is reviewing an ECS task definition and wants to know specifically where the container image location and exposed ports are declared, as distinct from where CPU, memory, and IAM permissions live. Which object holds the image and ports?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The service definition</li>
+        <li><span class="opt-letter">B.</span> The container definition</li>
+        <li><span class="opt-letter">C.</span> The task role</li>
+        <li><span class="opt-letter">D.</span> The cluster</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Concepts</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a service definition wraps tasks for scaling and resilience; it doesn't declare an image or ports.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the container definition is the pointer to where the image lives and which ports it exposes; everything else (resources, IAM, networking) lives at the task definition level.</li>
+          <li><strong>C.</strong> Wrong — the task role is an IAM role for AWS API calls, unrelated to image location or ports.</li>
+          <li><strong>D.</strong> Wrong — a cluster is where tasks and services are deployed; it has no per-container configuration of its own.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 2</p>
+      <p class="scenario-text">A container in a newly launched ECS task fails immediately, before the application even starts, with an error indicating the image could not be pulled from a private ECR repository. Which IAM role is most likely misconfigured?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The task execution role</li>
+        <li><span class="opt-letter">B.</span> The task role</li>
+        <li><span class="opt-letter">C.</span> A service-linked role for the Auto Scaling group</li>
+        <li><span class="opt-letter">D.</span> An IAM user attached to the container definition</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Concepts</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — the task execution role is assumed by the ECS agent itself, before your code runs, to pull the image from ECR and write logs; this failure mode points straight at it.</li>
+          <li><strong>B.</strong> Wrong — the task role is what your application code uses after startup to call AWS services; it has no role in pulling the container image.</li>
+          <li><strong>C.</strong> Wrong — Auto Scaling group service-linked roles govern EC2 host scaling, not ECS image pulls.</li>
+          <li><strong>D.</strong> Wrong — container definitions don't carry IAM identities of their own; permissions are granted via the task's IAM roles.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 3</p>
+      <p class="scenario-text">A running container's application code makes a call to read an object from S3, and the call fails with an access-denied error, even though the image pulled and started successfully and logs are shipping to CloudWatch normally. Which IAM role should be checked first?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The task execution role</li>
+        <li><span class="opt-letter">B.</span> A bucket policy on the ECS cluster itself</li>
+        <li><span class="opt-letter">C.</span> The task role</li>
+        <li><span class="opt-letter">D.</span> The container registry's IAM policy</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Concepts</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the task execution role only covers image pulls and log delivery, both of which are already working here; it isn't used for application-level AWS API calls.</li>
+          <li><strong>B.</strong> Wrong — an ECS cluster isn't a principal that a bucket policy would reference for this kind of access; the identity making the call is the task itself.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the task role is assumed by application code inside the container for its own AWS API calls, such as reading from S3; that's the one to check when the app itself is denied access.</li>
+          <li><strong>D.</strong> Wrong — a registry-level policy affects pulling images, not runtime S3 access from inside a running container.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 4</p>
+      <p class="scenario-text">A team launches a single ECS task directly (not wrapped in a service) to run a business-critical, long-running process. The task later crashes under load, and nothing replaces it. What's the underlying reason?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A bare task has no built-in scaling or resilience; only a service definition provides restarts and multiple copies</li>
+        <li><span class="opt-letter">B.</span> The task execution role wasn't attached, so ECS couldn't relaunch the container</li>
+        <li><span class="opt-letter">C.</span> The cluster was running in Fargate mode, which doesn't support automatic restarts</li>
+        <li><span class="opt-letter">D.</span> The container definition was missing a health check configuration</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Concepts</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a single task does not scale itself and is not highly available; if it dies, nothing replaces it. A service definition is what wraps tasks with restart handling, scaling, and load distribution.</li>
+          <li><strong>B.</strong> Wrong — the task execution role governs image pulls and logging, not whether a dead task gets relaunched; that's a service-level responsibility regardless of role configuration.</li>
+          <li><strong>C.</strong> Wrong — Fargate mode doesn't remove restart capability; the missing piece here is a service definition, independent of cluster mode.</li>
+          <li><strong>D.</strong> Wrong — a missing health check would affect load balancer routing decisions, not the fundamental fact that a bare task has no replacement mechanism at all.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 5</p>
+      <p class="scenario-text">An architect needs to specify how much CPU and memory a task consumes, which launch types (EC2 or Fargate) it's compatible with, and its networking mode. Where is this configured?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> In the container definition</li>
+        <li><span class="opt-letter">B.</span> In the ECS cluster's settings</li>
+        <li><span class="opt-letter">C.</span> In the service definition</li>
+        <li><span class="opt-letter">D.</span> In the task definition</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Concepts</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the container definition scopes down to just the image and its ports; resource and launch-type settings live one level up.</li>
+          <li><strong>B.</strong> Wrong — cluster settings apply broadly across the cluster; per-task CPU/memory/networking/launch-type compatibility is set per task definition, not per cluster.</li>
+          <li><strong>C.</strong> Wrong — a service definition controls scaling and restart behavior for tasks, not the resource or compatibility settings of the task itself.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the task definition stores CPU and memory consumption, networking mode, compatible launch types, and the task role, alongside the container definitions it bundles.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 6</p>
+      <p class="scenario-text">A task definition bundles a web server container and a companion database container that must always be scheduled and scaled together as one application unit. What is the correct way to model this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> One task definition holding both container definitions, since a task represents one application as a whole</li>
+        <li><span class="opt-letter">B.</span> Two separate task definitions, one per container, linked by a shared service definition</li>
+        <li><span class="opt-letter">C.</span> One container definition covering both containers, since they must always run together</li>
+        <li><span class="opt-letter">D.</span> Two clusters, one for the web container and one for the database container</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Concepts</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a task definition represents one application as a whole and can bundle multiple container definitions, exactly the pairing described here.</li>
+          <li><strong>B.</strong> Wrong — splitting them into separate task definitions breaks the "always scheduled together" requirement; a service can't force two independent tasks to co-locate.</li>
+          <li><strong>C.</strong> Wrong — a container definition scopes to one container's image and ports; it can't hold two separate containers.</li>
+          <li><strong>D.</strong> Wrong — splitting across two clusters doesn't achieve co-scheduling at all and adds unnecessary complexity for what a single task definition already handles.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 7</p>
+      <p class="scenario-text">An ECS cluster's Auto Scaling group maintains 6 EC2 container instances at all times, but on a typical day only 2 of them have any tasks scheduled on them. What is the company being billed for?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Only the resource usage of the tasks actually running, since ECS is serverless by default</li>
+        <li><span class="opt-letter">B.</span> All 6 EC2 instances, whether or not tasks are scheduled on them</li>
+        <li><span class="opt-letter">C.</span> Only the 2 instances with tasks scheduled, since idle instances are automatically stopped</li>
+        <li><span class="opt-letter">D.</span> Nothing, since EC2-mode clusters are covered under the ECS service fee</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Cluster Modes</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this describes Fargate's billing model, not EC2 mode; EC2 mode is explicitly not a serverless mode.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — in EC2 mode you pay for the EC2 instances backing the cluster whether or not anything is running on them; the Auto Scaling group's 6 instances are billed regardless of task placement.</li>
+          <li><strong>C.</strong> Wrong — ECS doesn't automatically stop idle container instances in EC2 mode; sizing and scaling the hosts is the customer's responsibility.</li>
+          <li><strong>D.</strong> Wrong — there's no such blanket ECS service fee that covers underlying EC2 instance costs; the EC2 instances are billed as ordinary EC2 usage.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 8</p>
+      <p class="scenario-text">A task running on a Fargate-mode cluster needs to be reachable by other resources inside the same VPC, using standard VPC networking constructs like security groups. How does this actually work under the hood?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The task is confined to AWS's shared Fargate platform and is not reachable from the VPC at all</li>
+        <li><span class="opt-letter">B.</span> The task attaches as a secondary ENI on one of the cluster's EC2 container instances</li>
+        <li><span class="opt-letter">C.</span> The task is injected into the VPC with its own ENI and an IP address from the VPC's range</li>
+        <li><span class="opt-letter">D.</span> The task requires a NAT gateway to bridge it into the VPC's address space</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Cluster Modes</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Fargate tasks aren't isolated from the VPC; each one is injected directly into it with its own network presence.</li>
+          <li><strong>B.</strong> Wrong — Fargate mode has no EC2 container instances at all, so there's no host to attach a secondary ENI to.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — each Fargate task gets its own elastic network interface and IP address from the VPC, so it behaves like any other VPC resource for connectivity, including security groups.</li>
+          <li><strong>D.</strong> Wrong — a NAT gateway handles outbound internet access for private resources; it has no role in giving a Fargate task a VPC network presence.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 9</p>
+      <p class="scenario-text">A company runs a large, steady-state containerized workload, already holds EC2 Reserved Instances they want to keep using, and is comfortable managing host scaling and patching themselves in exchange for lower cost. Which ECS cluster mode fits best?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Fargate mode, since Reserved Instance pricing applies automatically to Fargate tasks</li>
+        <li><span class="opt-letter">B.</span> A "hybrid mode" that applies Reserved Instance discounts to Fargate billing</li>
+        <li><span class="opt-letter">C.</span> Plain EC2 with no ECS at all, since Reserved Instances make containers unnecessary</li>
+        <li><span class="opt-letter">D.</span> EC2 mode, so the existing Reserved Instances can back the cluster's container hosts</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Cluster Modes</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Fargate has no concept of host-level Reserved Instances; you can't apply existing RI capacity to it.</li>
+          <li><strong>B.</strong> Wrong — no such hybrid billing mode exists; the real options are EC2 mode, Fargate mode, or mixing capacity providers, not RI discounts applied to Fargate.</li>
+          <li><strong>C.</strong> Wrong — abandoning ECS gives up orchestration benefits the workload doesn't need to sacrifice; nothing about holding RIs requires dropping containers.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — a large, consistent, price-conscious workload that already holds RIs and is willing to manage capacity is the classic case for EC2 mode, since it's plain EC2 underneath and can use existing Reserved Instance pricing.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 10</p>
+      <p class="scenario-text">A team runs short, bursty batch jobs a few times a day and wants to avoid paying for any idle host capacity between runs. Which cluster mode minimizes cost for this pattern?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Fargate mode, since it bills purely for the container resources consumed, with no host cost ever</li>
+        <li><span class="opt-letter">B.</span> EC2 mode with an Auto Scaling group sized to zero between runs</li>
+        <li><span class="opt-letter">C.</span> EC2 mode using Reserved Instances to lower the idle-time cost</li>
+        <li><span class="opt-letter">D.</span> EC2 mode, since bursty workloads always run cheaper on owned hosts</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Cluster Modes</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Fargate bills purely for container resources consumed with no host cost at all, making it the natural fit for small or bursty workloads that shouldn't pay for idle capacity.</li>
+          <li><strong>B.</strong> Wrong — while scaling to zero reduces idle cost, it reintroduces cold-start delay and management overhead that Fargate avoids entirely by design.</li>
+          <li><strong>C.</strong> Wrong — Reserved Instances still bill for the reserved capacity regardless of utilization, which doesn't solve idle-cost avoidance for bursty, infrequent jobs.</li>
+          <li><strong>D.</strong> Wrong — EC2 mode's economics favor large, consistent workloads; bursty jobs are exactly the case Fargate's per-task billing is designed to fit better.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 11 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 11</p>
+      <p class="scenario-text">A team wants one ECS cluster that can place some tasks on cost-optimized EC2 Spot capacity they already manage and other tasks on Fargate, without committing the whole cluster to a single mode. What does modern AWS documentation call the mechanism enabling this mix?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Capacity providers, which let a cluster mix EC2 and Fargate capacity rather than being locked to one mode</li>
+        <li><span class="opt-letter">B.</span> Cluster modes, since EC2 and Fargate modes can be toggled per task at runtime</li>
+        <li><span class="opt-letter">C.</span> Task execution roles, since they determine which capacity type a task lands on</li>
+        <li><span class="opt-letter">D.</span> Cross-account replication, extending capacity from a second account's cluster</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Cluster Modes</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — current AWS documentation describes launch types and capacity providers, letting a single cluster mix EC2 and Fargate capacity rather than being locked to one mode.</li>
+          <li><strong>B.</strong> Wrong — "cluster modes" is the older framing where a cluster was locked to one mode; it doesn't describe today's per-task mixing capability.</li>
+          <li><strong>C.</strong> Wrong — task execution roles govern IAM permissions for the agent, not which compute capacity a task is placed on.</li>
+          <li><strong>D.</strong> Wrong — cross-account replication is an ECR concept for distributing container images, unrelated to mixing compute capacity within one cluster.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 12 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 12</p>
+      <p class="scenario-text">A Fargate task is placed in a public subnet and assigned a public IP. A separate task, otherwise identical, is placed in a private subnet with no NAT gateway. What's true of their internet reachability?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Neither task can be reached from or reach the internet, since Fargate tasks are always isolated from the internet by default</li>
+        <li><span class="opt-letter">B.</span> Both tasks behave identically, since Fargate tasks ignore subnet routing entirely</li>
+        <li><span class="opt-letter">C.</span> The public-subnet task behaves like any internet-facing VPC resource; the private-subnet task has no path out without NAT</li>
+        <li><span class="opt-letter">D.</span> Only EC2-mode tasks are affected by subnet placement; Fargate tasks bypass subnet routing</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ECS Cluster Modes</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a Fargate task in a public subnet with a public IP is reachable from the internet, just like any other public VPC resource; isolation isn't automatic.</li>
+          <li><strong>B.</strong> Wrong — Fargate tasks are injected as real VPC resources and follow normal subnet routing rules, not some bypass mechanism.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — once injected into the VPC, a task behaves like any other VPC resource: reachable from the internet if public-subnet-plus-public-IP, and without any outbound internet path if private-subnet with no NAT gateway.</li>
+          <li><strong>D.</strong> Wrong — subnet placement and routing rules apply to Fargate tasks exactly as they would to any ENI in the VPC, EC2-mode or not.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 13 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 13</p>
+      <p class="scenario-text">A repository in a private ECR registry already contains an image tagged "v1.2". A developer tries to push a new image using the exact same tag "v1.2" in the same repository. What happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The push succeeds and both images share the tag, distinguished only by push timestamp</li>
+        <li><span class="opt-letter">B.</span> The push is blocked, since tags must be unique within a repository — a tag identifies one specific image at a time</li>
+        <li><span class="opt-letter">C.</span> The push succeeds and creates a new, separate repository automatically</li>
+        <li><span class="opt-letter">D.</span> The push succeeds since tags are only required to be unique across the entire registry, not per repository</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Container Registry (ECR)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — ECR doesn't support two images silently sharing one tag distinguished by timestamp; a tag must uniquely identify one image within its repository (typically the new push replaces what the tag points to).</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — tags must be unique within a repository; this is how a specific image version is identified and referenced within that repository.</li>
+          <li><strong>C.</strong> Wrong — ECR doesn't auto-create a new repository to resolve a tag conflict; the push targets the repository specified.</li>
+          <li><strong>D.</strong> Wrong — tag uniqueness is scoped to the repository, not the whole registry; this inverts the actual scoping rule.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 14 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 14</p>
+      <p class="scenario-text">A company wants external partners to pull a container image without needing any AWS credentials, while still requiring IAM permission for anyone pushing new versions of that image. What registry configuration satisfies this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A private registry, since it can be configured to allow anonymous reads on request</li>
+        <li><span class="opt-letter">B.</span> Enhanced scanning enabled on a private repository</li>
+        <li><span class="opt-letter">C.</span> Cross-account replication configured to each partner's AWS account</li>
+        <li><span class="opt-letter">D.</span> A public registry, which allows credential-free pulls but still gates pushes behind IAM permissions</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Container Registry (ECR)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a private registry requires IAM permissions for reads too; it has no "allow anonymous" toggle that turns it into a public registry.</li>
+          <li><strong>B.</strong> Wrong — enhanced scanning affects vulnerability detection, not who can read from or write to the registry.</li>
+          <li><strong>C.</strong> Wrong — cross-account replication copies images into accounts you control; it doesn't grant open, credential-free public access to outside partners.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — a public ECR registry allows anyone to pull without credentials, while push access still always requires IAM permissions, exactly matching this asymmetric requirement.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 15 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 15</p>
+      <p class="scenario-text">A security team requires continuous rescanning of container images for newly published CVEs, covering both the OS layer and programming-language-level packages inside the image, not just a one-time scan at push time. What should they enable?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Basic scanning, since it covers every vulnerability class by default</li>
+        <li><span class="opt-letter">B.</span> Enhanced scanning, which uses Amazon Inspector for continuous, layer-by-layer scans</li>
+        <li><span class="opt-letter">C.</span> Cross-Region replication, to duplicate the scan results in each destination Region</li>
+        <li><span class="opt-letter">D.</span> EventBridge rules configured to trigger a manual scan on every push</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Container Registry (ECR)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — basic scanning checks against a CVE database on push or on demand, but doesn't continuously rescan or cover language-level packages.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — enhanced scanning uses Amazon Inspector for continuous, layer-by-layer scanning of both the OS and language-level software packages, rescanning as new CVEs are published.</li>
+          <li><strong>C.</strong> Wrong — cross-Region replication copies image data between Regions; it has no vulnerability-scanning capability of its own.</li>
+          <li><strong>D.</strong> Wrong — EventBridge delivers events about registry activity for building workflows; it doesn't itself perform continuous vulnerability scanning.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 16 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 16</p>
+      <p class="scenario-text">A team wants an automated workflow that kicks off an image-processing pipeline the moment a new image is pushed to an ECR repository, without polling the registry. What ECR-integrated capability enables this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> EventBridge events emitted on push/pull activity, which can trigger downstream workflows</li>
+        <li><span class="opt-letter">B.</span> Basic scanning results, polled on a fixed schedule</li>
+        <li><span class="opt-letter">C.</span> The public registry's anonymous read access</li>
+        <li><span class="opt-letter">D.</span> Cross-account replication settings on the repository</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Container Registry (ECR)</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — ECR emits EventBridge events for pushes and pulls, letting an event-driven workflow react immediately without any polling.</li>
+          <li><strong>B.</strong> Wrong — basic scanning results relate to vulnerability findings, not a general-purpose event trigger for downstream workflows, and polling defeats the "without polling" requirement anyway.</li>
+          <li><strong>C.</strong> Wrong — public registry read access controls who can pull images; it has no relationship to triggering workflows on push.</li>
+          <li><strong>D.</strong> Wrong — cross-account replication copies images to another account's registry; it isn't a general event/trigger mechanism for pipelines.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 17 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 17</p>
+      <p class="scenario-text">A global company wants container images built in one Region and account to be automatically available closer to consumers in other Regions and in a separate subsidiary AWS account, without a manual push to each destination. What ECR feature addresses this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Enhanced scanning, extended across every destination Region</li>
+        <li><span class="opt-letter">B.</span> A public registry shared across all accounts and Regions</li>
+        <li><span class="opt-letter">C.</span> Increasing the image tag limit on the source repository</li>
+        <li><span class="opt-letter">D.</span> Cross-Region and cross-account replication</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Container Registry (ECR)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — enhanced scanning is a vulnerability-detection feature; it has nothing to do with distributing images across Regions or accounts.</li>
+          <li><strong>B.</strong> Wrong — making the registry public would grant open access to anyone, going far beyond the subsidiary-account distribution need, and isn't the mechanism for automatic multi-Region distribution.</li>
+          <li><strong>C.</strong> Wrong — tag limits govern how many tags an image can carry; they have no bearing on distributing images to other Regions or accounts.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — ECR supports both cross-Region and cross-account replication, automatically distributing images closer to where they're consumed without manual re-pushing.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 18 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 18</p>
+      <p class="scenario-text">A compliance team needs a complete audit trail of every API action taken against an ECR registry — who created a repository, who changed a repository policy, and when. Which AWS service provides this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Basic scanning's vulnerability report</li>
+        <li><span class="opt-letter">B.</span> The registry's near real-time CloudWatch metrics</li>
+        <li><span class="opt-letter">C.</span> CloudTrail, which logs every API action against the registry</li>
+        <li><span class="opt-letter">D.</span> EventBridge, since it only stores the most recent event per repository</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Container Registry (ECR)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — basic scanning reports on CVEs found in images, not on who took which API action against the registry.</li>
+          <li><strong>B.</strong> Wrong — CloudWatch metrics track operational counts like pushes and pulls, not a detailed, attributable audit log of every API call.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — CloudTrail logs every API action against the registry, giving the complete audit trail this compliance requirement calls for.</li>
+          <li><strong>D.</strong> Wrong — EventBridge is for driving event-driven workflows in near real time, not for retaining a durable, queryable audit history, and it doesn't store "only the most recent event" as a limitation either.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 19 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 19</p>
+      <p class="scenario-text">A team is choosing an EKS node type and wants to confirm one fact that holds true no matter which type they pick: self-managed nodes, managed node groups, or Fargate. Which statement is always true?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The customer-managed VPC hosting worker nodes is always created and configured by AWS</li>
+        <li><span class="opt-letter">B.</span> AWS always manages the control plane, including etcd, across multiple Availability Zones</li>
+        <li><span class="opt-letter">C.</span> EC2 instances always exist as worker nodes, regardless of node type</li>
+        <li><span class="opt-letter">D.</span> Fargate profiles are always required, even for self-managed nodes</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Kubernetes Service (EKS) 101</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the customer-managed VPC, where worker nodes live, is created and configured by the customer, not AWS.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the control plane, including etcd, is always AWS-managed and distributed across multiple AZs, regardless of which node type backs the workers.</li>
+          <li><strong>C.</strong> Wrong — Fargate node type removes EC2 instances entirely; pods launch directly onto serverless capacity with no nodes at all.</li>
+          <li><strong>D.</strong> Wrong — Fargate profiles are only relevant when using the Fargate node type; self-managed nodes and managed node groups don't use them.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 20 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 20</p>
+      <p class="scenario-text">A team wants to run Kubernetes pods on EKS without provisioning, patching, or scaling any EC2 instances themselves, while AWS still manages the control plane as it always does. Which node type fits?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Self-managed nodes, since they offer the most granular control</li>
+        <li><span class="opt-letter">B.</span> Managed node groups, since AWS fully replaces the underlying EC2 instances</li>
+        <li><span class="opt-letter">C.</span> EKS Anywhere, since it removes all infrastructure management</li>
+        <li><span class="opt-letter">D.</span> Fargate, since pods launch onto serverless capacity with no nodes to manage at all</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Kubernetes Service (EKS) 101</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — self-managed nodes require the team to provision, patch, and scale the EC2 instances themselves, the opposite of what's asked.</li>
+          <li><strong>B.</strong> Wrong — managed node groups still run on real EC2 instances; AWS handles their lifecycle, but instances still exist and must be sized.</li>
+          <li><strong>C.</strong> Wrong — EKS Anywhere is for running EKS on-premises or outside AWS; it doesn't describe a node type for an in-AWS EKS deployment.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — Fargate removes nodes from the picture entirely; pods launch onto serverless capacity via Fargate profiles, with no instances to provision, patch, or scale.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 21 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 21</p>
+      <p class="scenario-text">A stateful application on EKS writes files to local pod storage and expects that data to survive a pod restart. What should the architect know about default EKS storage behavior, and what's the fix?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Storage is persistent by default in EKS, so no changes are needed</li>
+        <li><span class="opt-letter">B.</span> Storage is ephemeral by default; persistent storage requires an external provider like EBS, EFS, or FSx</li>
+        <li><span class="opt-letter">C.</span> Storage persistence depends solely on which VPC the cluster uses</li>
+        <li><span class="opt-letter">D.</span> Persistent storage is only available when using self-managed nodes, not Fargate or managed node groups</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Kubernetes Service (EKS) 101</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — as in any Kubernetes cluster, storage is ephemeral by default; assuming otherwise would lose data on pod restart.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — EKS storage is ephemeral by default, and persistent storage needs an external provider — EFS, EBS, or FSx are the supported options.</li>
+          <li><strong>C.</strong> Wrong — persistence isn't a function of VPC choice; it depends on whether a persistent storage provider is configured for the pod.</li>
+          <li><strong>D.</strong> Wrong — persistent storage providers aren't restricted to self-managed nodes; they're a Kubernetes-level storage concern independent of node type.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 22 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 22</p>
+      <p class="scenario-text">In a typical EKS deployment, worker nodes running in a customer-managed VPC need to communicate with the AWS-managed control plane VPC. How does this cross-VPC communication actually happen?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Via VPC peering configured manually by the customer between the two VPCs</li>
+        <li><span class="opt-letter">B.</span> Via a Transit Gateway attachment created automatically at cluster launch</li>
+        <li><span class="opt-letter">C.</span> Via elastic network interfaces injected into the customer's VPC, which the kubelet uses to reach the control plane</li>
+        <li><span class="opt-letter">D.</span> Via a NAT gateway that translates all control-plane traffic through the public internet</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Kubernetes Service (EKS) 101</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this cross-VPC connection is handled by AWS-managed ENIs, not a customer-configured VPC peering connection.</li>
+          <li><strong>B.</strong> Wrong — EKS doesn't rely on a Transit Gateway attachment for control-plane-to-node communication; the actual mechanism is ENI injection.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the kubelet on each worker node talks to the control plane via elastic network interfaces injected into the customer's VPC, the same cross-VPC-boundary pattern used by ECS Fargate tasks.</li>
+          <li><strong>D.</strong> Wrong — control-plane communication doesn't route through a NAT gateway over the public internet; it uses the injected ENIs, and a public endpoint is a separate, optional path for administration.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 23 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 23</p>
+      <p class="scenario-text">A company already has significant investment in Kubernetes tooling and explicitly wants to avoid AWS vendor lock-in, while still deploying within AWS. Which container orchestration service best fits this stated priority, even though it isn't the more "AWS-native" option?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> ECS in Fargate mode, since it requires the least operational overhead</li>
+        <li><span class="opt-letter">B.</span> ECS in EC2 mode, since it offers the most billing flexibility</li>
+        <li><span class="opt-letter">C.</span> EKS, since it runs standard, cloud-agnostic Kubernetes extended to integrate with AWS</li>
+        <li><span class="opt-letter">D.</span> AWS Batch, since it abstracts away the orchestration layer entirely</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Kubernetes Service (EKS) 101</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — ECS, in either mode, is an AWS-native orchestrator; it doesn't offer the portability an existing Kubernetes investment or lock-in concern calls for.</li>
+          <li><strong>B.</strong> Wrong — like Fargate mode, EC2-mode ECS is still an AWS-proprietary orchestration model, not portable Kubernetes.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — EKS runs the same open-source, cloud-agnostic Kubernetes usable anywhere, just extended to integrate with AWS; this is exactly the phrasing ("vendor lock-in," "existing Kubernetes investment") that points at EKS over ECS.</li>
+          <li><strong>D.</strong> Wrong — AWS Batch is a job-scheduling service for batch computing workloads, not a Kubernetes-compatible orchestration platform.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 24 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 24</p>
+      <p class="scenario-text">A workload requires Windows-based pods and GPU acceleration. Before selecting an EKS node type, what should the architect do?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Assume any node type supports both requirements, since EKS abstracts away hardware differences</li>
+        <li><span class="opt-letter">B.</span> Switch the control plane configuration to a Windows/GPU-optimized variant</li>
+        <li><span class="opt-letter">C.</span> Change the persistent storage provider to FSx, which unlocks Windows and GPU support</li>
+        <li><span class="opt-letter">D.</span> Check the current capability matrix, since support for Windows pods and GPUs isn't uniform across node types</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Elastic Kubernetes Service (EKS) 101</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — requirements like Windows pods, GPU capability, Inferentia, Bottlerocket, Outposts, or Local Zones aren't supported uniformly across all node types; assuming so has derailed real projects.</li>
+          <li><strong>B.</strong> Wrong — the control plane runs the same way regardless of node type or workload requirements; that's not where Windows/GPU compatibility is decided.</li>
+          <li><strong>C.</strong> Wrong — FSx is a storage provider addressing persistent file storage, unrelated to compute-level Windows pod or GPU support on a node type.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — node type capability for things like Windows pods and GPUs varies and should be verified against the current capability matrix before choosing, since picking the wrong node type has derailed real projects.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something, or want the reasoning re-explained a different way? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/scenario-quiz.js"></script>
+</body>
+</html>

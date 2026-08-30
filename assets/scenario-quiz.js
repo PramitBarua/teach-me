@@ -52,19 +52,80 @@
     return topicEl.textContent.replace(/^Topic:\s*/, '').trim() || 'Unlabeled';
   }
 
+  // Fisher-Yates shuffle of the numbers 1..n.
+  function shuffledPositions(n) {
+    const positions = [];
+    for (let i = 1; i <= n; i++) positions.push(i);
+    for (let i = positions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = positions[i];
+      positions[i] = positions[j];
+      positions[j] = tmp;
+    }
+    return positions;
+  }
+
+  // Selections used to be a plain { blockId: 'A' } map — an entry only
+  // existed once a question was answered. It's now { blockId: { answered,
+  // displayNumber } } for every block, so the shuffled presentation order
+  // can survive reloads alongside the answer. Old-format entries (bare
+  // strings) trigger a one-time migration that preserves the original
+  // sequential order, since that's what the user was already looking at.
+  function loadSelections(blocks) {
+    const raw = loadMap('Selections');
+    const isOldFormat = Object.keys(raw).some(function (key) {
+      return typeof raw[key] === 'string';
+    });
+
+    if (isOldFormat) {
+      const migrated = {};
+      blocks.forEach(function (block, idx) {
+        const old = raw[block.id];
+        migrated[block.id] = {
+          answered: typeof old === 'string' ? old : null,
+          displayNumber: idx + 1
+        };
+      });
+      saveMap('Selections', migrated);
+      return migrated;
+    }
+
+    // New format already (or brand new file): fill in any block missing an
+    // entry — either a first-ever visit, or content added since last visit.
+    let dirty = false;
+    let maxDisplay = 0;
+    Object.keys(raw).forEach(function (key) {
+      if (raw[key] && typeof raw[key].displayNumber === 'number') {
+        maxDisplay = Math.max(maxDisplay, raw[key].displayNumber);
+      }
+    });
+    blocks.forEach(function (block) {
+      if (!raw[block.id]) {
+        maxDisplay++;
+        raw[block.id] = { answered: null, displayNumber: maxDisplay };
+        dirty = true;
+      }
+    });
+    if (dirty) saveMap('Selections', raw);
+    return raw;
+  }
+
   function initScenarios(containerSelector) {
     const container = document.querySelector(containerSelector || '.scenario-set');
     if (!container) return;
 
-    const blocks = container.querySelectorAll('.scenario-block');
+    const blocks = Array.from(container.querySelectorAll('.scenario-block'));
     const marks = loadSet('ReviewMarks');
     const comments = loadMap('Comments');
 
-    // Sole source of truth for "answered" state. An entry only exists for a
-    // block once the user has both picked an option and revealed the answer —
-    // see isAnswered()/commit() below. Picks made but never revealed are kept
-    // only in the in-memory `pendingPicks` map and do not survive a reload.
-    const selections = loadMap('Selections');
+    // Stable ids come from the original, unshuffled document order — never
+    // from the displayed order — so localStorage keys, #anchors, and the
+    // marked-for-review list stay valid no matter how the set is reshuffled.
+    blocks.forEach(function (block, idx) {
+      if (!block.id) block.id = 'scenario-' + (idx + 1);
+    });
+
+    const selections = loadSelections(blocks);
     const pendingPicks = {};
 
     const reviewPanel = container.querySelector('.review-list-panel');
@@ -83,8 +144,55 @@
     const blockPainters = [];
 
     function isAnswered(blockId) {
-      return Object.prototype.hasOwnProperty.call(selections, blockId);
+      const entry = selections[blockId];
+      return !!(entry && entry.answered);
     }
+
+    function countAnswered() {
+      return blocks.filter(function (block) {
+        return isAnswered(block.id);
+      }).length;
+    }
+
+    function currentDisplayOrder() {
+      return blocks.slice().sort(function (a, b) {
+        const da = selections[a.id] ? selections[a.id].displayNumber : 0;
+        const db = selections[b.id] ? selections[b.id].displayNumber : 0;
+        return da - db;
+      });
+    }
+
+    // Moves the block elements into their stored display order and renumbers
+    // the visible "Scenario N" tag to match — appendChild on an existing
+    // node relocates it, so this doesn't touch the fixed panels (review
+    // list, results) that stay put ahead of the blocks in the container.
+    function applyDisplayOrder() {
+      const ordered = currentDisplayOrder();
+      ordered.forEach(function (block, idx) {
+        container.appendChild(block);
+        const tag = block.querySelector('.scenario-tag');
+        if (tag) tag.textContent = 'Scenario ' + (idx + 1);
+      });
+      return ordered;
+    }
+
+    function reshuffle() {
+      const positions = shuffledPositions(blocks.length);
+      blocks.forEach(function (block, i) {
+        selections[block.id] = { answered: null, displayNumber: positions[i] };
+      });
+      saveMap('Selections', selections);
+    }
+
+    // Only reshuffle on a genuinely fresh start: nothing answered yet means
+    // either this is the first-ever open, or the set was just reset — in
+    // both cases there's no in-progress practice run to disturb. The moment
+    // anything is answered, the stored displayNumbers are left alone so the
+    // question the user is looking at doesn't move under them mid-practice.
+    if (countAnswered() === 0) {
+      reshuffle();
+    }
+    applyDisplayOrder();
 
     function resetPractice() {
       const ok = window.confirm(
@@ -93,10 +201,11 @@
       );
       if (!ok) return;
 
-      Object.keys(selections).forEach(function (key) { delete selections[key]; });
-      saveMap('Selections', selections);
+      reshuffle();
       Object.keys(pendingPicks).forEach(function (key) { delete pendingPicks[key]; });
       completionAnnounced = false;
+
+      applyDisplayOrder();
 
       blocks.forEach(function (block) {
         const answerPanel = block.querySelector('.answer-panel');
@@ -105,6 +214,7 @@
         if (revealBtn) revealBtn.textContent = 'Reveal answer';
       });
       blockPainters.forEach(function (paint) { paint(); });
+      renderReviewList();
 
       if (resultsPanel) {
         resultsPanel.classList.remove('is-complete');
@@ -133,7 +243,7 @@
       }
       if (reviewEmpty) reviewEmpty.style.display = 'none';
 
-      blocks.forEach(function (block) {
+      currentDisplayOrder().forEach(function (block) {
         if (!marks.has(block.id)) return;
         const li = document.createElement('li');
         const a = document.createElement('a');
@@ -162,7 +272,7 @@
         if (!isAnswered(block.id)) return;
         const revealBtn = block.querySelector('.reveal-btn');
         const correctLetter = revealBtn ? revealBtn.dataset.answer : null;
-        const selected = selections[block.id];
+        const selected = selections[block.id].answered;
 
         totalAnswered++;
         const isCorrect = selected === correctLetter;
@@ -235,7 +345,7 @@
 
     function maybeAnnounceCompletion() {
       if (!resultsPanel || completionAnnounced) return;
-      if (Object.keys(selections).length < blocks.length) return;
+      if (countAnswered() < blocks.length) return;
       completionAnnounced = true;
       renderResults();
       resultsBody.style.display = 'block';
@@ -245,7 +355,7 @@
     }
 
     if (resultsToggleBtn && resultsBody) {
-      const allAnswered = blocks.length > 0 && Object.keys(selections).length >= blocks.length;
+      const allAnswered = blocks.length > 0 && countAnswered() >= blocks.length;
       resultsPanel.classList.toggle('is-complete', allAnswered);
       if (allAnswered) {
         renderResults();
@@ -266,9 +376,7 @@
       });
     }
 
-    blocks.forEach(function (block, idx) {
-      if (!block.id) block.id = 'scenario-' + (idx + 1);
-
+    blocks.forEach(function (block) {
       const revealBtn = block.querySelector('.reveal-btn');
       const answerPanel = block.querySelector('.answer-panel');
       const options = block.querySelectorAll('.scenario-options li');
@@ -332,7 +440,7 @@
       //                                                          red on a wrong pick
       function paint() {
         const isOpen = answerPanel.classList.contains('visible');
-        const committed = selections[block.id];
+        const committed = selections[block.id] ? selections[block.id].answered : null;
         const pending = pendingPicks[block.id];
 
         options.forEach(function (li) {
@@ -369,7 +477,7 @@
           if (answerPanel.classList.contains('visible')) {
             // Answer is already open: picking now immediately satisfies both
             // halves of "answered" (selected + revealed), so commit right away.
-            selections[block.id] = letter;
+            selections[block.id].answered = letter;
             saveMap('Selections', selections);
             if (resultsPanel && resultsBody.style.display === 'block') renderResults();
             maybeAnnounceCompletion();
@@ -391,7 +499,7 @@
         const willOpen = !answerPanel.classList.contains('visible');
 
         if (willOpen && !isAnswered(block.id) && pendingPicks[block.id]) {
-          selections[block.id] = pendingPicks[block.id];
+          selections[block.id].answered = pendingPicks[block.id];
           saveMap('Selections', selections);
         }
         // No pending pick and not yet answered: nothing to persist — the
