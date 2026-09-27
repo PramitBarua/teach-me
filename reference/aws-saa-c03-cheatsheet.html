@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AWS SAA-C03 Exam Cheat Sheet</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <style>
+    :root {
+      --max-width: 1400px;
+      --sidebar-w: 280px;
+    }
+    body { font-family: var(--sans); font-size: 16px; line-height: 1.55; }
+    h1, h2, h3 { font-family: var(--sans); }
+    .container { max-width: none; margin: 0; padding: 2rem 2.5rem 4rem calc(var(--sidebar-w) + 2.5rem); }
+    @media (max-width: 980px) {
+      .container { padding-left: 1.25rem; padding-right: 1.25rem; }
+    }
+
+    /* ---- Sidebar navigation ---- */
+    #sidenav {
+      position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
+      overflow-y: auto; background: var(--code-bg); border-right: 1px solid var(--border);
+      font-family: var(--sans); font-size: 0.82rem; z-index: 50; padding-bottom: 2rem;
+    }
+    #sidenav-head { position: sticky; top: 0; background: var(--code-bg); padding: 0.9rem 0.9rem 0.6rem; border-bottom: 1px solid var(--border); z-index: 2; }
+    #sidenav-head .brand { font-weight: 700; font-size: 0.85rem; color: var(--accent); margin-bottom: 0.55rem; display: block; }
+    #searchbox { width: 100%; box-sizing: border-box; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 5px; font-family: var(--sans); font-size: 0.82rem; }
+    #search-meta { font-size: 0.7rem; color: var(--muted); margin-top: 0.35rem; min-height: 1em; }
+    #expand-controls { display: flex; gap: 0.4rem; margin-top: 0.55rem; }
+    #expand-controls button { flex: 1; font-family: var(--sans); font-size: 0.68rem; padding: 0.3rem; border: 1px solid var(--border); background: var(--bg); border-radius: 4px; cursor: pointer; color: var(--muted); }
+    #expand-controls button:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    #sidenav-list { list-style: none; margin: 0; padding: 0.4rem 0; }
+    #sidenav-list ul { list-style: none; margin: 0; padding: 0; }
+    #sidenav-list a { display: block; padding: 0.32rem 0.9rem; color: var(--text); text-decoration: none; border-left: 3px solid transparent; }
+    #sidenav-list a.sub { padding-left: 1.7rem; font-size: 0.75rem; color: var(--muted); }
+    #sidenav-list a:hover { background: var(--accent-light); }
+    #sidenav-list a.active { border-left-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 700; }
+    #sidenav-list li[hidden] { display: none; }
+
+    #sidenav-toggle {
+      display: none; position: fixed; top: 0.8rem; left: 0.8rem; z-index: 60;
+      font-family: var(--sans); font-size: 0.85rem; font-weight: 700; background: var(--accent); color: #fff;
+      border: none; border-radius: 6px; padding: 0.5rem 0.8rem; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+    @media (max-width: 980px) {
+      #sidenav-toggle { display: block; }
+      #sidenav { transform: translateX(-100%); transition: transform .2s ease; box-shadow: 2px 0 10px rgba(0,0,0,.15); }
+      #sidenav.open { transform: translateX(0); }
+    }
+
+    /* ---- Collapsible sections (native <details>) ---- */
+    details.module-section { margin-top: 2rem; padding-top: 0; border-top: 3px double var(--border); }
+    details#strategy, details#decisions { border-top: none; margin-top: 1rem; }
+    details.module-section summary {
+      cursor: pointer; list-style: none; padding: 0.9rem 0 0.6rem; display: flex; align-items: baseline; gap: 0.6rem;
+    }
+    details.module-section summary::-webkit-details-marker { display: none; }
+    details.module-section summary::before {
+      content: "▸"; color: var(--accent); font-size: 0.9em; flex-shrink: 0;
+    }
+    details.module-section[open] > summary::before { content: "▾"; }
+    details.module-section summary h2 { margin: 0; border-bottom: none; padding-bottom: 0; }
+    details.module-section > summary:hover { background: var(--accent-light); border-radius: 4px; }
+
+    .hy { display:inline-block; font-family:var(--sans); font-size:0.62rem; font-weight:700; text-transform:uppercase;
+          letter-spacing:0.05em; background:var(--warn-light); color:var(--warn); border:1px solid var(--warn);
+          border-radius:3px; padding:0.15em 0.5em; margin-left:0.5em; vertical-align:middle; white-space:nowrap; }
+    .hy::before { content: "⚡ "; }
+    .gapflag { display:inline-block; font-family:var(--sans); font-size:0.65rem; font-weight:700; text-transform:uppercase;
+          letter-spacing:0.06em; background:var(--danger-light); color:var(--danger); border:1px solid var(--danger);
+          border-radius:3px; padding:0.1em 0.5em; }
+
+    .decision-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+    @media (max-width: 700px) { .decision-grid { grid-template-columns: 1fr; } }
+    .decision-card { border:1px solid var(--border); border-left: 4px solid var(--accent); border-radius:6px; padding:0.75rem 1rem; font-family: var(--sans); font-size:0.85rem; transition: box-shadow .15s ease; }
+    .decision-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .decision-card a { font-weight:700; text-decoration:none; }
+    .decision-card a:hover { text-decoration:underline; }
+    .decision-card p { margin: 0.35rem 0 0; color: var(--muted); font-size:0.8rem; }
+
+    h3 { border-left: 3px solid var(--border); padding-left: 0.6rem; }
+    h3 code { font-size: 0.85em; }
+
+    table { display: block; overflow-x: auto; max-width: 100%; }
+    tbody tr:nth-child(even) { background: rgba(0,0,0,0.025); }
+    tbody tr:hover { background: var(--accent-light); }
+
+    .callout.exam-tip .callout-title::before { content: "💡 "; }
+    .callout.warn .callout-title::before { content: "⚠ "; }
+
+    mark.hit { background: #fde68a; color: inherit; border-radius: 2px; padding: 0 0.1em; }
+
+    .backtotop { font-family: var(--sans); font-size: 0.75rem; }
+
+    @media print {
+      #sidenav, #sidenav-toggle { display: none !important; }
+      .container { padding: 0; max-width: 100%; }
+      body { padding: 0; font-size: 11pt; }
+      .backtotop { display: none !important; }
+      details.module-section, details#strategy, details#decisions { break-before: page; border-top: none; padding-top: 0; margin-top: 0; }
+      details.module-section > *:not(summary):not(.backtotop),
+      details#strategy > *:not(summary):not(.backtotop),
+      details#decisions > *:not(summary):not(.backtotop) { display: block !important; }
+      details.module-section summary::before { display: none; }
+      h2 { break-after: avoid; }
+      table, .callout, .decision-card { break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+<button id="sidenav-toggle" aria-label="Toggle navigation">&#9776; Menu</button>
+<nav id="sidenav">
+  <div id="sidenav-head">
+    <span class="brand">SAA-C03 Cheat Sheet</span>
+    <input type="search" id="searchbox" placeholder="Search topics (e.g. NAT, DynamoDB)" autocomplete="off" />
+    <div id="search-meta"></div>
+    <div id="expand-controls">
+      <button type="button" id="expand-all">Expand all</button>
+      <button type="button" id="collapse-all">Collapse all</button>
+    </div>
+  </div>
+  <ul id="sidenav-list"></ul>
+</nav>
+<div class="container" id="top">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Reference</div>
+    <div class="module-tag">SAA-C03 · All Modules</div>
+    <h1>AWS SAA-C03 Exam Cheat Sheet</h1>
+    <p class="lesson-meta">Distilled from all 19 lesson modules (05&ndash;23) &middot; weighted by two r/AWSCertifications exam-report threads &middot; built 2026-09-13</p>
+    <p class="source-link">Primary source: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a>, cross-checked against current AWS docs (see each lesson's own citations in <code>RESOURCES.md</code>). Exam-strategy section paraphrased from two recent SAA-C03 exam-report posts shared by the learner.</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Two topics your lessons don't cover yet</div>
+    One of the two source Reddit exam reports named <strong>Amazon EMR &amp; EMR Clusters</strong> and <strong>FSx for NetApp ONTAP</strong> as tested on their exam. Neither exists anywhere in this workspace's 19 modules &mdash; there is no Hadoop/Spark/big-data lesson at all, and only FSx for Windows File Server + FSx for Lustre are covered (no ONTAP or OpenZFS). Nothing below fills that gap with invented content, per this workspace's citation rules. Recommend building two short lessons: EMR (transient vs. long-running clusters, master/core/task nodes, Hadoop/Spark/Hive, EMRFS on S3, Spot for task nodes) and FSx for ONTAP (multi-protocol NFS+SMB+iSCSI, snapshots/clones, the natural "lift-and-shift on-prem NetApp" answer &mdash; contrast with FSx-Windows being SMB/AD-only and FSx-Lustre being HPC/Linux-only).
+  </div>
+
+  <details class="module-section" id="strategy" open>
+  <summary><h2>Exam-day strategy</h2></summary>
+  <p>Paraphrased from two recent SAA-C03 exam-report posts. These are heuristics from people who just passed &mdash; not official AWS doctrine &mdash; but they're worth internalizing before you read a single service fact below.</p>
+
+  <h3>1. Read the last sentence first</h3>
+  <p>Before reading the scenario, read the question stem. It usually contains one keyword that eliminates most options outright &mdash; see the <a href="exam-keyword-mental-map.html">Exam Keyword Mental Map</a> for a branching walkthrough of each row below, including the confusable pairs.</p>
+  <table>
+    <thead><tr><th>Keyword</th><th>What it usually means</th></tr></thead>
+    <tbody>
+      <tr><td><strong>MOST cost-effective</strong></td><td>Prefer Spot/Reserved/Savings Plans, S3 lifecycle/Intelligent-Tiering, serverless-to-zero, versioned filenames over invalidation &mdash; the cheapest option that still meets every stated requirement.</td></tr>
+      <tr><td><strong>LEAST operational overhead</strong></td><td>Prefer the most fully-managed option (Aurora Serverless over self-managed HA, Fargate over EC2 mode, managed service over EC2/DIY).</td></tr>
+      <tr><td><strong>LEAST application code changes</strong></td><td>Prefer drop-in/transparent options; rule out anything requiring the app to be rewritten (e.g. ElastiCache needs app changes to check cache &mdash; DAX for DynamoDB is closer to drop-in).</td></tr>
+      <tr><td><strong>Highest/high availability</strong></td><td>Multi-AZ, multiple NAT Gateways (one per AZ), cross-zone load balancing, Auto Scaling across AZs.</td></tr>
+      <tr><td><strong>Lowest latency</strong></td><td>Caching layer (CloudFront/DAX/ElastiCache), edge locations, Global Accelerator, placement groups, provisioned concurrency.</td></tr>
+      <tr><td><strong>Disaster recovery / DR</strong></td><td>Cross-Region replication/snapshots, Aurora Global Database, S3 CRR, pilot-light/warm-standby patterns.</td></tr>
+      <tr><td><strong>Secure without internet exposure</strong></td><td>VPC endpoints (gateway/interface), PrivateLink, no public subnet/IGW involved at all.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2. The fast-kill elimination pattern</h3>
+  <p>Most 4-option SAA-C03 questions are built the same way: <strong>1 clearly wrong</strong>, <strong>1 technically possible but violates a stated requirement</strong>, <strong>2 plausible</strong>, and <strong>1 best</strong>. Kill the first two immediately, then use the keyword from step 1 to pick between the remaining two plausible options. This workspace's own scenario quizzes are deliberately built with exactly this structure (see <code>NOTES.md</code>) so practicing on them trains the right muscle.</p>
+
+  <h3>3. Identify the core domain being tested</h3>
+  <p>A large share of questions secretly reduce to one of a small number of recurring decision points &mdash; memorize these cold and most of the surrounding scenario detail becomes noise. See <a href="#decisions">the 8 high-yield decision points</a> below.</p>
+
+  <h3>4. The "overengineering" filter</h3>
+  <p>If an answer introduces an extra Region, an extra service not mentioned in the scenario, custom-built management, or unnecessary complexity, it's usually wrong. AWS's implicit exam bias is <strong>Simple + Managed + Meets the stated requirement</strong> &mdash; not the most powerful or most impressive-sounding architecture.</p>
+
+  <h3>5. When stuck between two answers</h3>
+  <p>Ask, in order: which one is more AWS-managed? Which one removes more operational responsibility from you? Which one most precisely matches the exact requirement wording (not just "close enough")? The more-managed option usually wins unless the question explicitly wants low-level control (e.g. RDS Custom, EC2, self-managed AD).</p>
+
+  <h3>6. Time management</h3>
+  <p>65 questions, 130 minutes = 2 minutes/question. First pass: answer everything you're ~70% confident in, flag the rest, move on. Don't spend 5+ minutes on one question &mdash; most people fail by getting stuck early, not by running out of raw knowledge. You need roughly 72%, not 100%.</p>
+
+  <h3>7. Don't panic on a hard streak</h3>
+  <p>Seeing 3 difficult questions in a row is normal, not a sign you're failing. Keep moving.</p>
+
+  </details>
+
+  <details class="module-section" id="decisions" open>
+  <summary><h2>The 8 high-yield decision points</h2></summary>
+  <p>One exam-report thread named these explicitly as the recurring "core domains" behind a large share of SAA-C03 questions. If you only have time to drill eight things before the exam, drill these.</p>
+  <div class="decision-grid">
+    <div class="decision-card"><a href="#rds-decision">RDS Multi-AZ instance vs. Multi-AZ cluster vs. Read Replica</a><p>Synchronous vs. asynchronous replication is the whole story &mdash; see Module 12.</p></div>
+    <div class="decision-card"><a href="#nat-vs-igw">NAT Gateway vs. Internet Gateway</a><p>1:1 static NAT, bidirectional, one-per-VPC vs. many:1, outbound-only, one-per-AZ for HA &mdash; see Module 07.</p></div>
+    <div class="decision-card"><a href="#cf-vs-ga">CloudFront vs. Global Accelerator</a><p>HTTP(S) caching vs. protocol-agnostic Anycast routing, never cached &mdash; see Module 16.</p></div>
+    <div class="decision-card"><a href="#r53-routing">Route 53 routing policies (all six)</a><p>Simple/Failover/Multivalue/Weighted/Latency/Geolocation/Geoproximity &mdash; see Module 11.</p></div>
+    <div class="decision-card"><a href="#endpoint-decision">Gateway Endpoint vs. Interface Endpoint</a><p>S3/DynamoDB-only + free + auto-HA vs. everything else + ENI-based + PrivateLink &mdash; see Module 17.</p></div>
+    <div class="decision-card"><a href="#snowball-vs-dx">Snowball (Edge) vs. Direct Connect vs. DataSync</a><p>Bulk one-time transfer with no network path vs. dedicated ongoing connectivity vs. reliable scheduled transfer over an existing link &mdash; see Module 18.</p></div>
+    <div class="decision-card"><a href="#efs-vs-ebs">EFS vs. EBS vs. FSx</a><p>Shared POSIX file storage vs. single-instance block storage vs. native Windows/HPC file systems &mdash; see Modules 08 &amp; 13 &amp; 18.</p></div>
+    <div class="decision-card"><a href="#role-vs-user">IAM Role vs. IAM User</a><p>Named, countable principal with long-term creds vs. any trusted principal with short-term STS creds &mdash; see Module 05.</p></div>
+  </div>
+
+  </details>
+
+  <!-- ================= MODULE 05 ================= -->
+  <details class="module-section" id="m05" open>
+  <summary><h2>05 &middot; IAM, Accounts &amp; Organizations</h2></summary>
+
+  <h3>IAM identity policies</h3>
+  <ul>
+    <li>JSON document attached to a user/group/role. Statement fields: <code>Sid</code> (optional), <code>Effect</code> (Allow/Deny, required), <code>Action</code>, <code>Resource</code>.</li>
+    <li>Evaluation order: <strong>Explicit Deny &rarr; Explicit Allow &rarr; Implicit Deny</strong> &mdash; deny always wins, default is implicit deny.</li>
+    <li>Managed (AWS or customer) vs. inline: prefer managed for central updates; inline only for one-off single-identity exceptions.</li>
+  </ul>
+
+  <h3 id="role-vs-user">IAM users, ARNs &amp; Roles <span class="hy">high yield</span></h3>
+  <ul>
+    <li><strong>Decision rule: use an IAM User only if you can name exactly one thing using it.</strong> Otherwise &mdash; or beyond 5,000 principals &mdash; use a Role.</li>
+    <li>ARN format: <code>arn:partition:service:region:account-id:resource-id</code>. An empty segment means "not required for that resource type" (S3 has no region/account); <code>*</code> is a wildcard, not the same as an empty segment.</li>
+    <li>Hard limits: <strong>5,000 IAM users per account</strong>; a user can belong to a <strong>max of 10 groups</strong>.</li>
+  </ul>
+  <table>
+    <thead><tr><th></th><th>IAM User</th><th>IAM Role</th></tr></thead>
+    <tbody>
+      <tr><td>Who uses it</td><td>One named entity</td><td>Any trusted principal</td></tr>
+      <tr><td>Credentials</td><td>Long-term</td><td>Short-term / temporary (STS)</td></tr>
+      <tr><td>Good for</td><td>Known, countable principals</td><td>Services, federation, unknown count</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Every role has <strong>two policies</strong>: a trust policy (who can assume it) and a permission policy (what it can do once assumed).</li>
+    <li>Assume-role flow: STS <code>AssumeRole</code> &rarr; trust policy check &rarr; temporary access key + secret + session token with an expiry.</li>
+    <li><strong>A Role can be a Principal in a resource policy; a Group cannot</strong> &mdash; recurring exam trap. Groups have no permissions of their own, can't be nested, and can't be a policy Principal.</li>
+    <li>Five scenarios that always mean "use a Role": (1) an AWS service acting on your behalf, (2) emergency/break-glass access, (3) federation with a corporate IdP (bypasses the 5,000-user cap), (4) web identity federation (Google/Facebook logins), (5) cross-account access &mdash; the trusting account needs no IAM user for the trusted account's principal.</li>
+    <li><strong>Service-linked roles</strong>: permissions are fixed/predefined by the service, can't be edited, and can't be deleted while the service is using them.</li>
+    <li><code>iam:PassRole</code> is required to <em>attach</em> an existing role to a service (e.g. launching an EC2 instance with a role) without needing rights to create/edit roles &mdash; this is what prevents privilege escalation via role attachment.</li>
+  </ul>
+
+  <h3>AWS Organizations &amp; Service Control Policies (SCPs) <span class="hy">high yield</span></h3>
+  <ul>
+    <li>One management (master) account + N member accounts. <strong>The management account is never restricted by SCPs, even at the root</strong> &mdash; best practice is to never run production workloads there.</li>
+    <li>Org Root &rarr; OUs (nestable) &rarr; accounts, with consolidated billing across every member account.</li>
+    <li>Recommended cross-account pattern: log into one identity account and <strong>assume roles</strong> into member accounts &mdash; no per-account IAM users.</li>
+    <li>SCPs set the <strong>maximum permission boundary</strong>; they never grant, only restrict. Effective access is always the <strong>intersection</strong> of what the SCP allows and what IAM allows.</li>
+    <li>Attach at Org Root (everything except the management account), an OU (cascades to nested OUs), or an individual account.</li>
+    <li><strong>Deny list</strong> (default): the <code>FullAWSAccess</code> SCP stays attached, add explicit Denies. <strong>Allow list</strong>: remove <code>FullAWSAccess</code>, add an explicit Allow-only SCP.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trap</div>
+    An <code>AdministratorAccess</code> IAM policy does <strong>not</strong> override a restrictive SCP. The SCP is a ceiling regardless of how permissive the IAM side is.
+  </div>
+
+  <h3>CloudWatch Logs vs. CloudTrail</h3>
+  <ul>
+    <li>CloudWatch Logs hierarchy: Log Event (timestamp + message) &rarr; Log Stream (one source) &rarr; Log Group (retention/permissions are set <strong>here</strong>, not per-stream).</li>
+    <li>A metric filter on a log group produces a numeric metric &rarr; CloudWatch Alarm &rarr; SNS/Auto Scaling action.</li>
+    <li><strong>CloudTrail</strong> records every API call (who did what, when). Enabled by default, 90 days of free event history in the console; deliver to S3 for longer retention.
+      <ul>
+        <li>One-region trail vs. all-regions trail (recommended &mdash; also captures global services like IAM/STS/CloudFront).</li>
+        <li><strong>Management events</strong> (control-plane, default, first copy free per Region) vs. <strong>data events</strong> (S3 object ops, Lambda invocations &mdash; data-plane, not default, extra cost).</li>
+        <li><strong>Not real-time</strong> &mdash; roughly a 15-minute delay. Use EventBridge for real-time alerting.</li>
+      </ul>
+    </li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Mental hook</div>
+    "Who did what, when?" &rarr; CloudTrail. "What's happening right now?" &rarr; CloudWatch.
+  </div>
+
+  <h3>AWS Control Tower</h3>
+  <ul>
+    <li>Sits on top of Organizations and adds automated governance. <strong>Landing Zone</strong> = the governed multi-account environment it provisions.</li>
+    <li>Guardrails: <strong>Preventive = SCPs</strong> (blocks actions) vs. <strong>Detective = AWS Config rules</strong> (flags non-compliant resources after the fact, doesn't block them).</li>
+    <li><strong>Account Factory</strong> = self-service standardized account provisioning.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 06 ================= -->
+  <details class="module-section" id="m06" open>
+  <summary><h2>06 &middot; Simple Storage Service (S3)</h2></summary>
+
+  <h3>Bucket policies vs. IAM policies</h3>
+  <ul>
+    <li>Private by default (root + creator only). A bucket policy is a resource policy &mdash; it has a <code>Principal</code> field, which identity policies never have. Quick tell for "is this a resource policy?": does it have a <code>Principal</code> key.</li>
+    <li>One bucket has one bucket policy, which can hold multiple statements.</li>
+    <li>Same-account IAM identity accessing the bucket = union of IAM policy + bucket policy (both must allow). Anonymous access = bucket policy only (no identity to attach a policy to). Cross-account = both accounts' policies must allow.</li>
+    <li>Use a bucket policy when many identities need one bucket, or when anonymous/public access is required. Use an IAM identity policy when one identity needs many buckets, or centralized IAM management is a requirement.</li>
+  </ul>
+
+  <h3>Static website hosting &amp; performance</h3>
+  <ul>
+    <li>Requires an index document + an error document. Classic scenario: "our servers are down, we need a maintenance page" &rarr; host a static page in S3 and repoint DNS.</li>
+    <li>Single-stream upload is only practical to about 5 GB. <strong>Multipart upload</strong>: recommended above ~100 MB, up to 10,000 parts, 5 MB&ndash;5 GB per part.</li>
+    <li><strong>Transfer Acceleration</strong> routes uploads via the nearest edge location over AWS's backbone &mdash; best when the uploader and bucket are geographically far apart; bucket name must be DNS-compatible (no dots); disabled by default, enabled per bucket.</li>
+  </ul>
+
+  <h3>Versioning &amp; MFA Delete</h3>
+  <ul>
+    <li>States: Disabled &rarr; Enabled &rarr; <strong>Suspended only</strong> &mdash; you can never go back to Disabled. Classic distractor.</li>
+    <li>Deleting without a version ID adds a recoverable delete marker; deleting with a specific version ID is permanent.</li>
+    <li>MFA Delete is required for (1) changing the versioning state itself, and (2) permanently deleting a specific version.</li>
+  </ul>
+
+  <h3>Encryption: KMS, CSE vs. SSE</h3>
+  <ul>
+    <li>KMS keys directly encrypt/decrypt only up to 4 KB &mdash; anything larger uses a <strong>data encryption key (DEK)</strong> via <code>GenerateDataKey</code> (returns a plaintext DEK to use-and-discard plus a ciphertext DEK to store; KMS never stores the DEK itself).</li>
+    <li>Key types: AWS-owned (no control) / AWS-managed (not configurable, can't disable) / customer-managed CMK (fully configurable, including rotation). Rotation keeps old key material, so nothing needs re-encrypting.</li>
+    <li>KMS's core value on the exam is <strong>role separation</strong> &mdash; you can grant <code>GenerateDataKey</code> without <code>Decrypt</code>.</li>
+  </ul>
+  <table>
+    <thead><tr><th>Type</th><th>Key owner</th><th>Who does the crypto</th><th>Role separation?</th></tr></thead>
+    <tbody>
+      <tr><td>SSE-C</td><td>Customer</td><td>S3</td><td>No</td></tr>
+      <tr><td>SSE-S3 (default)</td><td>AWS</td><td>S3</td><td><strong>No</strong> &mdash; a full S3 admin can decrypt everything</td></tr>
+      <tr><td>SSE-KMS</td><td>Customer-managed KMS key</td><td>S3 + KMS</td><td><strong>Yes</strong></td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Since 2023, AWS mandates SSE on all new S3 objects &mdash; no unencrypted storage.</li>
+    <li><strong>S3 Bucket Keys</strong>: an optimization for SSE-KMS at scale &mdash; KMS issues one time-limited bucket key, and S3 generates per-object DEKs locally instead of calling KMS every time, cutting cost/throttling.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trigger</div>
+    "Prevent S3 admins from reading the data" or "audit key usage/rotation" &rarr; SSE-KMS.
+  </div>
+
+  <h3>Storage classes <span class="hy">high yield</span></h3>
+  <table>
+    <thead><tr><th>Class</th><th>AZs</th><th>Retrieval fee</th><th>Min duration</th><th>Min object size</th><th>Latency</th></tr></thead>
+    <tbody>
+      <tr><td>Standard</td><td>3</td><td>None</td><td>None</td><td>None</td><td>ms</td></tr>
+      <tr><td>Standard-IA</td><td>3</td><td>Per-GB</td><td>30 days</td><td>128 KB</td><td>ms</td></tr>
+      <tr><td>One Zone-IA</td><td>1</td><td>Per-GB</td><td>30 days</td><td>128 KB</td><td>ms</td></tr>
+      <tr><td>Glacier Instant Retrieval</td><td>3</td><td>Per-GB</td><td>90 days</td><td>&mdash;</td><td>ms (instant)</td></tr>
+      <tr><td>Glacier Flexible Retrieval</td><td>3</td><td>Per-GB</td><td>90 days</td><td>40 KB</td><td>Expedited 1&ndash;5 min / Standard 3&ndash;5 hr / Bulk 5&ndash;12 hr</td></tr>
+      <tr><td>Glacier Deep Archive</td><td>3</td><td>Per-GB</td><td>180 days</td><td>40 KB</td><td>Standard ~12 hr / Bulk ~48 hr</td></tr>
+      <tr><td>Intelligent-Tiering</td><td>varies</td><td>None (monitoring fee instead)</td><td>None</td><td>&mdash;</td><td>auto-tiers by access pattern</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Decision rule:</strong> known, stable access pattern &rarr; pick a specific class. Unknown/variable access &rarr; Intelligent-Tiering.</p>
+
+  <h3>Lifecycle configuration</h3>
+  <ul>
+    <li><strong>Time-based, not access-based</strong> (access-based tiering is Intelligent-Tiering's job).</li>
+    <li>Transitions are one-way: Standard &rarr; Standard-IA &rarr; Intelligent-Tiering &rarr; One Zone-IA &rarr; Glacier Instant &rarr; Glacier Flexible &rarr; Deep Archive (One Zone-IA can't jump straight to Glacier Instant).</li>
+    <li>Objects must sit 30 days in Standard before a lifecycle rule can move them to Standard-IA/One Zone-IA (doesn't apply if uploaded directly into those classes).</li>
+  </ul>
+
+  <h3>Replication (CRR/SRR) <span class="hy">high trap density</span></h3>
+  <ul>
+    <li>CRR = cross-Region; SRR = same-Region (log aggregation, prod&rarr;test, data sovereignty).</li>
+    <li>Requires <strong>versioning enabled on both source and destination</strong>. Config lives on the source bucket: destination bucket + an IAM role that can read source/write destination. Cross-account also needs a destination bucket policy allowing the source role.</li>
+    <li><strong>Not retroactive</strong> &mdash; only objects written after enabling replicate; use Batch Replication for pre-existing objects.</li>
+    <li>Delete markers are <strong>not</strong> replicated by default. Lifecycle actions are not replicated. Glacier/Deep Archive objects are not replicated. One-way by default.</li>
+    <li>Replication Time Control (RTC) is an optional 15-minute SLA add-on.</li>
+  </ul>
+
+  <h3>Pre-signed URLs</h3>
+  <ul>
+    <li>Encodes the generating identity's permissions; valid <strong>at time of use, not creation</strong> &mdash; if the generator loses access, the URL breaks even if it hasn't expired yet.</li>
+    <li><strong>Avoid generating from an IAM role</strong> &mdash; the role's temporary credentials often expire faster than the URL's intended lifetime. Use a long-lived IAM user identity instead.</li>
+    <li>Exam triggers: share a private object externally without making it public; time-limited PUT (upload) access.</li>
+  </ul>
+
+  <h3>S3 Select / Glacier Select vs. Athena, S3 Events vs. EventBridge</h3>
+  <ul>
+    <li>S3/Glacier Select run a SQL-like filter server-side <strong>inside one large object</strong>. For SQL across <em>many</em> objects in a bucket, that's Amazon Athena instead &mdash; a common exam distractor pairing.</li>
+    <li>S3 Events go to SNS/SQS/Lambda only &mdash; simple, single-destination triggers. EventBridge supports 50+ targets, content-based filtering and transformation, and cross-service routing &mdash; pick it for complex/multi-target scenarios.</li>
+  </ul>
+
+  <h3>Access logs &amp; Object Lock (WORM)</h3>
+  <ul>
+    <li>Access logs: a source bucket (logged) and a target bucket (receives logs); log delivery needs an ACL write grant on the target. Best-effort delivery (hours), not real-time, no auto-expiry &mdash; set your own lifecycle rules on the target.</li>
+    <li>Object Lock requires versioning and applies to specific object versions.</li>
+  </ul>
+  <table>
+    <thead><tr><th>Mode</th><th>Bypassable?</th><th>Retention shortenable?</th></tr></thead>
+    <tbody>
+      <tr><td>Governance</td><td>Yes, with <code>s3:BypassGovernanceRetention</code></td><td>Yes (with bypass)</td></tr>
+      <tr><td>Compliance</td><td><strong>No &mdash; not even root</strong></td><td><strong>No</strong></td></tr>
+      <tr><td>Legal Hold</td><td>On/off flag, no period; needs <code>s3:PutObjectLegalHold</code></td><td>N/A</td></tr>
+    </tbody>
+  </table>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trigger</div>
+    "A regulator requires immutability for N years, no one including root can delete" &rarr; Compliance mode.
+  </div>
+
+  <h3>Access Points</h3>
+  <ul>
+    <li>A named endpoint per bucket with its own DNS, policy, and optional VPC restriction &mdash; turns one unwieldy bucket policy into per-team scoped policies.</li>
+    <li><strong>Delegation pattern</strong>: the bucket policy grants broad access via any access point; each access point policy does the fine-grained restriction. Both must allow &mdash; the access point policy alone is not sufficient.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 07 ================= -->
+  <details class="module-section" id="m07" open>
+  <summary><h2>07 &middot; Virtual Private Cloud (VPC) Basics</h2></summary>
+
+  <h3>VPC fundamentals, subnets &amp; routing</h3>
+  <ul>
+    <li>Regional, spans every AZ in the Region automatically; each VPC is an isolated blast radius.</li>
+    <li>CIDR range: <strong>/28 (16 IPs, smallest) to /16 (65,536 IPs, largest)</strong>. One mandatory primary CIDR + optional secondary CIDRs.</li>
+    <li>The VPC's DNS resolver always lives at <strong>base-of-CIDR + 2</strong> (e.g. 10.0.0.0/16 &rarr; resolver at 10.0.0.2). <code>enableDnsSupport</code> (default true) turns the resolver on; <code>enableDnsHostnames</code> (default false) assigns public DNS hostnames &mdash; you need both for public DNS names on instances.</li>
+    <li>One subnet = exactly one AZ, never spans AZs. <strong>5 reserved IPs per subnet</strong> (network address, +1 VPC router, +2 DNS resolver, +3 AWS reserved, last = broadcast) &mdash; a /28 has 16 raw addresses but only 11 usable.</li>
+    <li>Route tables: <strong>longest-prefix-match wins</strong>, ties go to the <code>local</code> target. The main route table (AWS-created, undeletable, default association) vs. custom route tables you create and assign to specific subnets (one at a time per subnet).</li>
+    <li>Making a subnet public = a custom route table with <code>0.0.0.0/0 &rarr; IGW</code>.</li>
+  </ul>
+
+  <h3 id="nat-vs-igw">Internet Gateway vs. NAT Gateway <span class="hy">high yield</span></h3>
+  <table>
+    <thead><tr><th></th><th>Internet Gateway</th><th>NAT Gateway</th></tr></thead>
+    <tbody>
+      <tr><td>Mapping</td><td>1 private IP &harr; 1 public IP (static NAT)</td><td>Many private IPs &rarr; 1 public IP</td></tr>
+      <tr><td>Direction</td><td>In + out</td><td><strong>Outbound-initiated only</strong> (responses allowed back)</td></tr>
+      <tr><td>Public IP</td><td>EIP or dynamic</td><td>Elastic IP (static)</td></tr>
+      <tr><td>Resilience</td><td>Region-resilient (one per VPC)</td><td><strong>AZ-resilient only</strong> &mdash; need one per AZ for full HA</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>IGW does 1:1 static NAT for IPv4 &mdash; the OS never sees the public IP. <strong>IPv6 gets no translation</strong> at all &mdash; it's publicly routable end to end and passes through the IGW unchanged. Zero or one IGW per VPC, never more.</li>
+    <li>NAT Gateway setup: it lives in a public subnet with an EIP; the private subnet's route table sends <code>0.0.0.0/0 &rarr; NAT GW</code>.</li>
+    <li><strong>HA design: one NAT Gateway per AZ</strong>, with each AZ's private subnets routing to their own AZ's NAT GW. A single NAT Gateway shared across all AZs is a classic exam failure scenario &mdash; that AZ's outage kills outbound internet for every private subnet routed to it.</li>
+    <li>NAT Gateway vs. NAT Instance: NAT Gateway is fully managed, scales to 45 Gbps, has no Security Groups (NACL only), and handles source/destination check automatically. A NAT Instance (plain EC2) is self-managed, is SG-capable, can double as a bastion, and needs source/dest check manually disabled.</li>
+  </ul>
+  <div class="callout warn">
+    <div class="callout-title">Stale course fact, corrected</div>
+    The lessons still teach "NAT Gateway does not work with IPv6 at all." AWS has since added <strong>NAT64/DNS64</strong>, letting a NAT Gateway translate IPv6-only resources to IPv4 destinations. It still has no native IPv6&harr;IPv6 pass-through, so an <strong>Egress-Only Internet Gateway</strong> remains the right answer for pure IPv6 outbound-only needs &mdash; but "NAT Gateway + IPv6 = never" is no longer strictly true.
+  </div>
+
+  <h3>Stateful vs. stateless firewalls: Security Groups vs. NACLs <span class="hy">high yield</span></h3>
+  <ul>
+    <li>A request uses a well-known port (e.g. 443); the response uses the client's random ephemeral port (1024&ndash;65535).</li>
+    <li><strong>Stateless (NACLs)</strong>: no memory &mdash; you must explicitly allow both directions, including the full ephemeral range outbound. Forgetting the ephemeral outbound rule is the #1 NACL mistake.</li>
+    <li><strong>Stateful (Security Groups)</strong>: allow the request and the response is auto-permitted &mdash; one rule needed.</li>
+  </ul>
+  <table>
+    <thead><tr><th></th><th>Network ACL</th><th>Security Group</th></tr></thead>
+    <tbody>
+      <tr><td>Scope</td><td>Subnet boundary</td><td>Attached to the ENI</td></tr>
+      <tr><td>State</td><td>Stateless</td><td>Stateful</td></tr>
+      <tr><td>Rules</td><td>Numbered, lowest first, first match wins</td><td>Allow-only, no explicit deny</td></tr>
+      <tr><td>Explicit deny by IP?</td><td><strong>Yes</strong></td><td><strong>No</strong></td></tr>
+      <tr><td>Can reference other AWS resources?</td><td>No &mdash; IP/CIDR/port/protocol only</td><td><strong>Yes</strong> &mdash; e.g. "allow from sg-webserver"</td></tr>
+      <tr><td>Default</td><td>Allow-all in+out, auto-associated to unassigned subnets</td><td>N/A</td></tr>
+      <tr><td>Custom</td><td>Implicit deny until rules added, no subnet association until assigned</td><td>N/A</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>The <code>*</code> implicit-deny NACL rule always sits at the bottom and can't be removed. One NACL per subnet, but one NACL can cover many subnets.</li>
+    <li><strong>Self-referencing SG rule</strong>: allow all traffic from members of this same SG &mdash; the canonical pattern for intra-tier/cluster communication that survives scaling in/out.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trigger</div>
+    "Block a specific bad IP address" &rarr; NACL (Security Groups cannot explicitly deny anything).
+  </div>
+
+  <h3>Bastion hosts</h3>
+  <ul>
+    <li>An EC2 instance in a public subnet acting as a hardened single entry point &mdash; admins SSH/RDP in, then hop to private instances.</li>
+    <li><strong>Bastion = inbound admin access to private instances. NAT Gateway = outbound internet access for private instances.</strong> Different problems &mdash; don't conflate them.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 08 ================= -->
+  <details class="module-section" id="m08" open>
+  <summary><h2>08 &middot; Elastic Compute Cloud (EC2) Basics</h2></summary>
+
+  <h3>EC2 architecture &amp; resilience</h3>
+  <ul>
+    <li><strong>EC2 is AZ-locked, full stop</strong> &mdash; host, ENI, subnet, and EBS all live in exactly one AZ; no cross-AZ attach for ENI or EBS.</li>
+    <li>An instance can move host (same AZ only) on host failure/maintenance, or a stop&rarr;start (not a plain reboot). It never moves AZ natively &mdash; only via an AMI/snapshot and relaunch.</li>
+  </ul>
+
+  <h3>Instance types</h3>
+  <ul>
+    <li>Five categories: General purpose (balanced, default), Compute optimized (more CPU/$), Memory optimized (more RAM/$), Accelerated computing (GPU/FPGA/ML-inference), Storage optimized (large, fast local disk).</li>
+    <li>Family letter mnemonics: <strong>C</strong>ompute, <strong>R</strong>AM, <strong>I</strong>/O, <strong>D</strong>ense storage, <strong>G</strong>PU.</li>
+    <li>Burstable/T-series (credit-based, cheap, low-baseline-CPU workloads) vs. steady-state/M-series (consistent load).</li>
+  </ul>
+
+  <h3 id="efs-vs-ebs">EBS volume types <span class="hy">high yield</span></h3>
+  <ul>
+    <li><strong>EBS is AZ-locked</strong>, same rule as EC2 &mdash; a snapshot to S3 is the only way to move data cross-AZ/Region. Volumes are decoupled from instance lifecycle (persist across stop/start), and multi-attach is supported by some types for clusters (the app must coordinate writes itself).</li>
+  </ul>
+  <table>
+    <thead><tr><th>Family</th><th>Types</th><th>Size</th><th>Max IOPS/vol</th><th>Max throughput/vol</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>General purpose SSD</td><td>gp2 / gp3</td><td>1 GiB&ndash;16 TiB</td><td>16,000</td><td>250&ndash;1,000 MB/s</td><td>gp3 decouples size from performance entirely; ~20% cheaper than gp2 at equal baseline</td></tr>
+      <tr><td>Provisioned IOPS SSD</td><td>io1 / io2</td><td>4 GiB&ndash;16 TiB</td><td>64,000</td><td>1,000 MB/s</td><td>Use for sub-ms latency or small volumes needing very high IOPS</td></tr>
+      <tr><td>Provisioned IOPS SSD</td><td>io2 Block Express</td><td>4 GiB&ndash;64 TiB</td><td>256,000</td><td>4,000 MB/s</td><td>Highest IOPS:GB ratio (1000:1)</td></tr>
+      <tr><td>HDD &mdash; Throughput Optimized</td><td>st1</td><td>125 GB&ndash;16 TB</td><td>&mdash;</td><td>500 MB/s max</td><td>Sequential only, <strong>cannot be a boot volume</strong>, big data/log processing</td></tr>
+      <tr><td>HDD &mdash; Cold</td><td>sc1</td><td>125 GB&ndash;16 TB</td><td>&mdash;</td><td>250 MB/s max</td><td>Sequential only, <strong>cannot be a boot volume</strong>, archives/cold backups</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Memorize the ordering:</strong> gp2/gp3 (16K IOPS) &lt; io1/io2 (64K) &lt; io2 Block Express (256K) &lt; instance store.</p>
+  <ul>
+    <li><strong>Instance Store</strong>: physically attached, highest raw performance, but fully <strong>ephemeral</strong> &mdash; wiped on stop/start, host migration, type change, or hardware failure. Can only be attached at launch time.</li>
+    <li><strong>Snapshots</strong>: incremental, S3-backed, region-resilient. First snapshot = full copy of used data only; later ones store only changed blocks. Restored volumes lazy-load from S3 unless you enable <strong>Fast Snapshot Restore</strong> (per snapshot per AZ, 50/Region limit, paid).</li>
+    <li><strong>EBS Encryption</strong>: uses KMS; a brand-new volume gets a new DEK, but a snapshot of an encrypted volume (and anything restored from it) reuses the source's DEK. You cannot decrypt in place &mdash; only path is an OS-level copy to a new unencrypted volume.</li>
+  </ul>
+
+  <h3>ENIs, IPs &amp; DNS</h3>
+  <ul>
+    <li>Every instance has a primary ENI (can't detach) plus optional secondary ENIs (detachable, same-AZ only). SGs attach <strong>per ENI</strong> &mdash; different SG rulesets per IP need separate ENIs.</li>
+    <li>Public DNS hostnames resolve to the private IP from inside the VPC, and the public IP from outside &mdash; dual resolution avoids an IGW hairpin for intra-VPC traffic.</li>
+    <li>Public IPv4 is <strong>dynamic</strong> (released on stop, reassigned on start; reboot doesn't change it). An Elastic IP is static. The OS never sees the public IPv4 &mdash; only IPv6 is exempt from NAT.</li>
+  </ul>
+
+  <h3>AMIs</h3>
+  <ul>
+    <li><strong>Region-specific</strong> &mdash; must be explicitly copied to use in another Region. Not AZ-specific (built from S3-backed snapshots, so it launches into any AZ in its Region).</li>
+    <li>Cannot be edited directly &mdash; must launch, modify, and create a new AMI.</li>
+  </ul>
+
+  <h3>EC2 purchase options</h3>
+  <ul>
+    <li><strong>On-Demand</strong>: default assumption, per-second billing, no commitment, no interruption, no capacity priority during a shortage (Reserved is served first).</li>
+    <li><strong>Spot</strong>: up to ~90% discount, reclaimed with short notice if price exceeds your max &mdash; good for parallel/batch/fault-tolerant/stateless work, never for anything interruption-intolerant.</li>
+    <li><strong>Reserved Instances</strong>: 1 or 3-year term; billed for the commitment even if unused. <strong>Savings Plans</strong> commit to $/hour spend instead of a specific instance type &mdash; Compute Savings Plans (EC2+Fargate+Lambda, most flexible) vs. EC2 Instance Savings Plans (EC2 only, deepest single-service discount).</li>
+    <li><strong>Dedicated Hosts</strong> (pay for the whole physical host, socket/core visibility &mdash; driven by per-socket/per-core licensing) vs. <strong>Dedicated Instances</strong> (isolated hardware, no host visibility, small hourly fee &mdash; driven by "don't share hardware" compliance without a licensing angle).</li>
+  </ul>
+
+  <h3>Status checks, scaling &amp; IMDS <span class="hy">high yield security topic</span></h3>
+  <ul>
+    <li><strong>System status check</strong> = AWS/host infrastructure problem &rarr; fix by stop/start (moves to a new host); a reboot won't help. <strong>Instance status check</strong> = your OS/config problem &rarr; fix by reboot or rebuild.</li>
+    <li>Vertical scaling has a hard ceiling and usually needs downtime; horizontal scaling needs externalized/stateless session storage since any instance can serve any request.</li>
+    <li>IMDS endpoint: <strong>169.254.169.254</strong>. <strong>IMDSv1</strong> is a plain unauthenticated GET, vulnerable to SSRF-based credential theft. <strong>IMDSv2</strong> requires a PUT for a hop-limited token first &mdash; naive SSRF usually can't forge the PUT. Instances can be configured to require IMDSv2.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trigger</div>
+    "Harden against credential theft via a web app vulnerability" &rarr; enforce IMDSv2.
+  </div>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 09 ================= -->
+  <details class="module-section" id="m09" open>
+  <summary><h2>09 &middot; Containers &amp; ECS</h2></summary>
+
+  <h3>ECS concepts</h3>
+  <ul>
+    <li>Stack: container definition (image + ports) &rarr; task definition (bundles container defs + CPU/mem + networking + task role) &rarr; task (a running instance, not self-healing) &rarr; service (wraps tasks for scaling/restart/load balancing &mdash; anything business-critical is a Service, not a bare Task).</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trap: two roles, easily confused</div>
+    <strong>Task role</strong> is assumed by your app code inside the container for its own AWS API calls. <strong>Task execution role</strong> is assumed by the ECS agent itself, before the app starts, to pull the image from ECR and ship logs to CloudWatch. "Fails to pull image / can't ship logs" is an execution-role problem, not a task-role problem.
+  </div>
+
+  <h3>EC2 vs. Fargate cluster modes</h3>
+  <ul>
+    <li>EC2 mode: your VPC, your EC2 hosts run the ECS agent, billed for hosts regardless of idle time, can use RI/Savings Plans/Spot pricing &mdash; more admin overhead for more cost control.</li>
+    <li>Fargate: no hosts to manage/patch/scale, billed purely for container resources consumed, each task gets its own ENI+IP injected into your VPC.</li>
+    <li>Exam tell: "idle capacity billing"/"managing instances" &rarr; EC2 mode. "No servers to manage"/per-task billing &rarr; Fargate.</li>
+  </ul>
+
+  <h3>ECR</h3>
+  <ul>
+    <li>One public + one private registry per account; repositories hold images; tags are unique within a repository.</li>
+    <li>Scanning: <strong>Basic</strong> (CVE check on push/on-demand, billed via ECR) vs. <strong>Enhanced</strong> (continuous, layer-by-layer, billed via Amazon Inspector).</li>
+  </ul>
+
+  <h3>EKS 101</h3>
+  <ul>
+    <li>AWS-managed control plane (including etcd) across multiple AZs, always AWS-managed regardless of node type.</li>
+    <li>Node types: self-managed EC2 in an ASG, managed node groups (still EC2, AWS handles lifecycle), or Fargate (no nodes at all).</li>
+    <li>Two-VPC architecture: an AWS-managed VPC for the control plane + your VPC for worker nodes, connected via ENIs.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam tell</div>
+    "Avoid vendor lock-in" / "already runs Kubernetes elsewhere" &rarr; EKS over ECS, even though ECS is the more AWS-native option.
+  </div>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 10 ================= -->
+  <details class="module-section" id="m10" open>
+  <summary><h2>10 &middot; Advanced EC2</h2></summary>
+
+  <h3>Bootstrapping</h3>
+  <table>
+    <thead><tr><th>Approach</th><th>Trade-off</th></tr></thead>
+    <tbody>
+      <tr><td>User data</td><td>Runs once at launch only, opaque to EC2, 16 KB cap, never put long-term credentials in it</td></tr>
+      <tr><td>cfn-init</td><td>Desired-state config; can re-apply on stack updates if configured to watch metadata</td></tr>
+      <tr><td>AMI baking</td><td>No post-launch time at all, sacrifices runtime flexibility</td></tr>
+      <tr><td>Bake + bootstrap</td><td>Optimal: bake the slow static 90%, bootstrap the fast variable 10%</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><strong>CreationPolicy + cfn-signal</strong>: without it, CloudFormation marks a resource complete as soon as EC2 reports "provisioned," regardless of whether bootstrapping inside actually succeeded.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Classic trap: instance role vs. instance profile</div>
+    A role can't attach to an EC2 instance directly &mdash; the <strong>instance profile</strong> (a thin wrapper) is what actually attaches. The console hides this by silently creating a same-named profile when you make a role; CLI/CloudFormation require creating both separately.
+  </div>
+  <ul>
+    <li><strong>SSM Parameter Store</strong>: String / StringList / SecureString (KMS-encrypted &mdash; reader needs both Parameter Store <em>and</em> the CMK permission). Hierarchical paths allow scoped IAM permissions per branch.</li>
+    <li><strong>CloudWatch agent</strong>: without it, CloudWatch only sees EC2's external face (CPU, network, status checks) &mdash; no memory-per-process or app/OS logs. One log group per log file, one log stream per instance.</li>
+  </ul>
+
+  <h3>Placement groups</h3>
+  <table>
+    <thead><tr><th>Type</th><th>Scope</th><th>Cap</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>Cluster</td><td>Single AZ, same rack</td><td>&mdash;</td><td>Max performance (10 Gbps single-stream), lowest latency; almost zero resilience</td></tr>
+      <tr><td>Spread</td><td>Can span AZs</td><td><strong>7 instances per AZ</strong></td><td>A handful of critical independent instances (domain controllers); fully automatic isolation</td></tr>
+      <tr><td>Partition</td><td>Per AZ</td><td><strong>7 partitions per AZ</strong>, unlimited instances/partition</td><td>Large topology-aware distributed systems (HDFS/HBase/Cassandra)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Dedicated Hosts &amp; networking</h3>
+  <ul>
+    <li>Whole physical server billed to you, for per-socket/per-core software licensing. Non-Nitro hosts are fixed to one instance size; Nitro hosts mix sizes freely.</li>
+    <li>Enhanced networking (SR-IOV) and EBS-optimized are both free and default-on on modern instance types.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 11 ================= -->
+  <details class="module-section" id="m11" open>
+  <summary><h2>11 &middot; Route 53 &amp; Global DNS</h2></summary>
+
+  <h3>Hosted zones &amp; CNAME vs. Alias</h3>
+  <ul>
+    <li>Public hosted zone: 4 Route 53 name servers, reachable from the public internet and from inside any VPC. Private hosted zone: same mechanics, but only resolvable from VPCs explicitly associated with it &mdash; both conditions must hold.</li>
+    <li><strong>Split-view (split-horizon) DNS</strong>: one private zone (full record set) + one public zone (subset) under the identical domain name.</li>
+  </ul>
+  <table>
+    <thead><tr><th></th><th>CNAME</th><th>Alias</th></tr></thead>
+    <tbody>
+      <tr><td>Works at zone apex?</td><td><strong>No, never</strong> (DNS-standard limitation)</td><td><strong>Yes</strong></td></tr>
+      <tr><td>Cost for AWS-target queries</td><td>Billed</td><td><strong>Free</strong></td></tr>
+      <tr><td>Standard</td><td>DNS standard</td><td>Route 53-only extension</td></tr>
+    </tbody>
+  </table>
+  <p>Default to <strong>alias</strong> for anything pointing at an AWS resource (ELB, CloudFront, API Gateway, S3 website bucket, Global Accelerator) &mdash; apex or not, it's free and it's the only way to do apex.</p>
+
+  <h3 id="r53-routing">The six routing policies <span class="hy">high yield</span></h3>
+  <table>
+    <thead><tr><th>Policy</th><th>Health checks?</th><th>One-liner</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Simple</strong></td><td><strong>No</strong> &mdash; only policy without HC support</td><td>Multiple values under one name, returned all, client picks. Default; no intelligence.</td></tr>
+      <tr><td><strong>Failover</strong></td><td>Yes (on primary)</td><td>Primary/secondary, active-<strong>passive</strong>. Not for many interchangeable resources.</td></tr>
+      <tr><td><strong>Multivalue</strong></td><td>Yes (per record)</td><td>Up to 8 healthy records returned. Active-<strong>active</strong>, cheap DNS-level availability &mdash; not a real load balancer.</td></tr>
+      <tr><td><strong>Weighted</strong></td><td>Optional</td><td><code>weight &divide; total weight</code> = return probability; weight 0 = never returned. Canary/A-B testing, simple load balancing.</td></tr>
+      <tr><td><strong>Latency</strong></td><td>Yes</td><td>Region-tagged records; picks the lowest-<em>estimated-latency</em> Region for the querying user. Optimizes for performance, not distance.</td></tr>
+      <tr><td><strong>Geolocation</strong></td><td>Optional</td><td>Tagged by subdivision/country/continent; strict match order, <strong>no match = no answer at all</strong>. About compliance/relevance, not proximity.</td></tr>
+      <tr><td><strong>Geoproximity</strong></td><td>Optional</td><td>Tagged by Region or lat/long; routes to the physically <strong>closest</strong> resource; <strong>bias</strong> can expand/shrink a resource's catchment area.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout exam-tip">
+    <div class="callout-title">The trap trio</div>
+    Latency, Geolocation, and Geoproximity are explicitly the three most likely to blur together. Latency = fastest estimated performance. Geolocation = explicit relevance match or nothing. Geoproximity = actual distance, tunable with bias.
+  </div>
+
+  <h3>Health checks &amp; DNSSEC</h3>
+  <ul>
+    <li>Three types, increasing rigor: TCP &rarr; HTTP/HTTPS (2xx/3xx) &rarr; HTTP/HTTPS + string match in the first 5,120 bytes of the body.</li>
+    <li><strong>18% threshold</strong>: more than 18% of health checkers reporting healthy = overall healthy.</li>
+    <li>Registrar (registration fee, points the TLD at your NS records) vs. hosting (allocates the 4 NS, holds the zone file) are separate jobs &mdash; a common real pattern is hosting-only: keep a third-party registrar, point its NS records at Route 53.</li>
+    <li>DNSSEC: KSK lives in KMS, hard-required in us-east-1 regardless of the zone's Region. ZSK is Route-53-internal, no KMS involved. DNSSEC caps hosted-zone TTLs at 1 week max.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 12 ================= -->
+  <details class="module-section" id="m12" open>
+  <summary><h2>12 &middot; Relational Database Service (RDS) &amp; Aurora</h2></summary>
+  <p>This workspace's own scenario-question weighting deliberately gives the intro topics (relational fundamentals, NoSQL models, ACID vs. BASE) minimal coverage and everything from "databases on EC2" onward the full treatment &mdash; that's a reasonable signal for where exam weight actually lives.</p>
+
+  <h3>Foundations (light exam weight)</h3>
+  <ul>
+    <li>NoSQL models: key-value (ElastiCache) / wide-column (DynamoDB) / document (DocumentDB) / column-OLAP (Redshift) / graph (Neptune &mdash; "social media"/"complex fluid relationships" scenarios).</li>
+    <li>CAP theorem: <strong>ACID &rarr; RDS</strong> (consistency-first). <strong>BASE &rarr; NoSQL</strong> (availability-first). DynamoDB defaults BASE but offers strongly-consistent reads on request.</li>
+    <li>Databases on EC2 is sometimes the <em>correct</em> exam answer &mdash; when you need OS-level/root DB access or an engine/version RDS doesn't offer. Don't assume it's always wrong.</li>
+  </ul>
+
+  <h3>RDS architecture essentials</h3>
+  <ul>
+    <li>"Database <em>server</em> as a service" &mdash; one instance can host multiple databases, no SSH/OS access (exception: RDS Custom).</li>
+    <li>Lives inside a VPC via a DB subnet group spanning &ge;2 AZs. Each instance has dedicated EBS-backed storage (contrast with Aurora's shared cluster storage).</li>
+  </ul>
+
+  <h3 id="rds-decision">Multi-AZ instance vs. Multi-AZ cluster vs. Read Replica <span class="hy">the core RDS decision point</span></h3>
+  <table>
+    <thead><tr><th></th><th>Multi-AZ instance</th><th>Multi-AZ cluster</th><th>Read replica</th></tr></thead>
+    <tbody>
+      <tr><td>Replication</td><td><strong>Synchronous</strong>, storage-level</td><td>Synchronous via transaction logs</td><td><strong>Asynchronous</strong></td></tr>
+      <tr><td>Standby usable for reads?</td><td><strong>No</strong></td><td><strong>Yes</strong> &mdash; 2 readers</td><td><strong>Yes</strong></td></tr>
+      <tr><td>Failover</td><td>Automatic, 60&ndash;120 sec</td><td>Automatic, ~35 sec (log-replay, faster)</td><td><strong>Manual promotion required</strong></td></tr>
+      <tr><td>Cross-Region?</td><td>No</td><td>No</td><td><strong>Yes</strong></td></tr>
+      <tr><td>Count</td><td>1 standby</td><td>2 readers</td><td>Up to <strong>5 direct replicas</strong> (chainable, lag compounds)</td></tr>
+    </tbody>
+  </table>
+  <div class="callout exam-tip">
+    <div class="callout-title">One-rule shortcut</div>
+    Synchronous = Multi-AZ (either flavor). Asynchronous = read replicas. This resolves a large share of RDS questions on its own. Read replicas are for read scaling and fast RTO on failure &mdash; <strong>not</strong> for corruption recovery (corruption replicates too; use point-in-time restore instead).
+  </div>
+
+  <h3>Aurora</h3>
+  <ul>
+    <li>1 writer + up to 15 replicas, <strong>all</strong> usable for reads (unlike RDS's standby) &mdash; Multi-AZ availability and read-scaling in one.</li>
+    <li>Shared cluster storage volume: 6 storage nodes across 3 AZs, self-healing.</li>
+    <li><strong>Backtrack</strong> (roll the cluster back in place) and <strong>Fast clone</strong> (new DB referencing original storage, stores only diffs) are Aurora-only recovery features.</li>
+  </ul>
+  <div class="callout warn">
+    <div class="callout-title">Stale course figures, corrected</div>
+    Aurora max cluster storage: course says 128 TiB, current AWS is <strong>up to 256 TiB</strong>. Aurora Global Database secondary Region limit: course says 5, current AWS allows <strong>up to 10</strong>.
+  </div>
+  <ul>
+    <li><strong>Aurora Serverless</strong>: ACU min/max range instead of instance classes, can scale to zero, per-second billing &mdash; good for infrequent/spiky workloads and dev/test.</li>
+    <li><strong>Aurora Global Database</strong>: primary Region + read-only secondary Regions, storage-layer replication &lt;1 second, one-way (distinguishes it from multi-master's bidirectional model). Use for cross-Region DR and global read scaling.</li>
+  </ul>
+
+  <h3>RDS Proxy</h3>
+  <ul>
+    <li>Sits between app and DB, maintains a long-lived connection pool, <strong>multiplexes</strong> many client connections onto fewer real DB connections &mdash; matters most for small/burstable instances and <strong>Lambda</strong> (avoids per-invocation connection overhead).</li>
+    <li>VPC-only, multi-AZ, not internet-reachable. <strong>Headline fact:</strong> reduces Aurora failover time by roughly 60&ndash;67% vs. connecting directly.</li>
+  </ul>
+
+  <h3>RDS data security &amp; RDS Custom</h3>
+  <ul>
+    <li>Encryption at rest options: KMS+EBS (host-level, all engines, default), TDE (engine-level, SQL Server/Oracle only), TDE+CloudHSM (Oracle only, zero key visibility to AWS). Encryption is one-way &mdash; can't be removed once enabled.</li>
+    <li><strong>IAM DB authentication is authentication only, not authorization</strong> &mdash; classic exam trap. The DB user's own grants still govern permissions.</li>
+    <li>RDS Custom fills the gap between RDS (no OS access) and EC2 (own everything) &mdash; but <strong>only Oracle and SQL Server</strong> are supported. Need low-level access on MySQL/MariaDB/PostgreSQL &rarr; the answer is EC2, not RDS Custom.</li>
+  </ul>
+
+  <h3>Database Migration Service (DMS)</h3>
+  <ul>
+    <li><strong>At least one endpoint must be in AWS</strong> &mdash; can't migrate on-prem&rarr;on-prem. This is the default correct answer for "migrate a DB, zero downtime" scenarios.</li>
+    <li>Task types: Full load / Full load + CDC (ongoing changes captured, cutover when caught up) / CDC only.</li>
+    <li><strong>Schema Conversion Tool (SCT)</strong> is needed only when the database engine changes (e.g. on-prem SQL Server &rarr; RDS MySQL). Same-engine migrations need no SCT.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 13 ================= -->
+  <details class="module-section" id="m13" open>
+  <summary><h2>13 &middot; Network Storage &amp; Data Lifecycle</h2></summary>
+
+  <h3>EFS <span class="hy">reddit-flagged</span></h3>
+  <ul>
+    <li><strong>File storage</strong> (NFSv4), not block storage &mdash; multiple <strong>Linux-only</strong> instances mount concurrently. Windows shared storage needs FSx instead.</li>
+    <li>Access via mount targets (ENIs in specific subnets) &mdash; one mount target per AZ for HA, same pattern as NAT Gateway.</li>
+    <li>Performance modes: General Purpose (default, latency-sensitive) vs. Max I/O (highly parallel, higher aggregate throughput, higher latency). Throughput modes: Bursting (default, scales with FS size) vs. Provisioned (independent of stored data size).</li>
+    <li>Storage classes: Standard vs. <strong>Infrequent Access (IA)</strong>, with lifecycle policies auto-transitioning &mdash; mirrors S3's model.</li>
+  </ul>
+
+  <h3>AWS Backup</h3>
+  <ul>
+    <li>Centralizes backup across EC2/VMware, EBS, EFS/FSx, RDS/Aurora/DynamoDB/Neptune/DocumentDB, S3 &mdash; one place for schedule/retention, cross-account via Organizations, cross-Region copy.</li>
+    <li>Backup Plans (schedule, window, lifecycle to cold storage, expiry) + Backup Resources + Vaults. <strong>Cold storage transition needs a 90-day minimum stay</strong> before it can expire.</li>
+    <li><strong>Vault Lock (WORM)</strong>: 72-hour cool-off after enabling, then nobody &mdash; including AWS &mdash; can delete early. A distinct product from S3 Object Lock despite the same WORM idea.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 14 ================= -->
+  <details class="module-section" id="m14" open>
+  <summary><h2>14 &middot; High Availability &amp; Scaling</h2></summary>
+
+  <h3>ELB family &amp; architecture</h3>
+  <ul>
+    <li>CLB (v1) is never the right exam answer today. ALB (v2, L7 &mdash; HTTP/HTTPS/WebSocket), NLB (v2, L4 &mdash; TCP/TLS/UDP), GWLB (L3/4, third-party appliance scaling).</li>
+    <li>One LB "object" = multiple nodes (1+ per AZ subnet you pick); a single DNS record resolves to every node. Internet-facing vs. internal only changes <strong>node</strong> IP addressing &mdash; an internet-facing LB can forward to fully-private back-end instances.</li>
+    <li><strong>Cross-zone load balancing</strong> fixes uneven per-instance load from uneven instance counts across AZs &mdash; default-ON for ALB today, but historically wasn't. Uneven load across instances &rarr; check this setting before adding more load balancers.</li>
+  </ul>
+
+  <h3>ALB vs. NLB</h3>
+  <p>Memorize NLB triggers, default to ALB otherwise. Pick <strong>NLB</strong> only for: unbroken end-to-end TLS pass-through, static IP whitelisting, absolute max performance, non-HTTP/HTTPS protocols, or PrivateLink (NLB is the mechanism PrivateLink uses). ALB always terminates HTTPS (bridging) and does true L7 routing (host header, path, method, query string, source IP).</p>
+
+  <h3>Auto Scaling Groups</h3>
+  <ul>
+    <li>Launch configurations vs. launch templates: only templates support versions, mixed instance types/Spot+On-Demand, and newer features.</li>
+    <li>Min/Desired/Max triple; self-healing works even with zero scaling policy &mdash; the cheapest HA pattern is min=desired=max=1 across multiple AZ subnets.</li>
+  </ul>
+  <div class="callout warn">
+    <div class="callout-title">Stale course fact, corrected</div>
+    Launch Configurations are <strong>fully deprecated for new accounts since Oct 2024</strong> (console-blocked since June 2023) &mdash; the lessons frame them as merely "older but fine." May still appear in scenarios describing legacy environments.
+  </div>
+  <table>
+    <thead><tr><th>Scaling policy</th><th>Behavior</th></tr></thead>
+    <tbody>
+      <tr><td>Simple</td><td>Static fixed adjustment tied to one alarm threshold</td></tr>
+      <tr><td>Step</td><td>Tiered adjustment proportional to how far the metric is from target</td></tr>
+      <tr><td><strong>Target tracking</strong></td><td>Most hands-off &mdash; set a target value (e.g. avg CPU 40%), ASG computes whatever scaling is needed</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><strong>Lifecycle hooks</strong> insert a <code>:Wait</code> state at launch/termination, default timeout 3,600 seconds, integrate with EventBridge or SNS.</li>
+    <li>Health check source: EC2 status checks (default) vs. ELB checks (richer, app-aware) &mdash; be deliberate, since a check depending on the DB will mass-replace every instance if the DB is the real problem.</li>
+    <li><strong>Health check grace period</strong>: default 300 seconds. A grace period shorter than real bootstrap time causes an infinite replacement loop &mdash; the classic exam scenario fix is to lengthen the grace period.</li>
+  </ul>
+
+  <h3>SSL handling &amp; Gateway Load Balancer</h3>
+  <table>
+    <thead><tr><th>Mode</th><th>LB sees plaintext?</th><th>Instance crypto overhead?</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Bridging</strong> (ALB default)</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td><strong>Pass-through</strong> (NLB TCP listener only)</td><td>No</td><td>Yes</td></tr>
+      <tr><td><strong>SSL offload</strong></td><td>Yes</td><td>No</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Gateway Load Balancer runs/scales third-party security appliances (firewalls, IDS/IPS) transparently. <strong>Geneve</strong> tunneling is the keyword to associate with GWLB &mdash; it encapsulates the original packet so source/dest IP:port survive being routed to a different VPC's appliance fleet.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 15 ================= -->
+  <details class="module-section" id="m15" open>
+  <summary><h2>15 &middot; Serverless &amp; Application Services</h2></summary>
+
+  <h3>AWS Lambda</h3>
+  <ul>
+    <li>Memory 128&ndash;10,240 MB (CPU scales with memory automatically, not set directly). <strong>Timeout: 900 seconds (15 min) hard ceiling</strong> &mdash; need longer, use Step Functions.</li>
+    <li>Two networking modes: public (default, reaches public AWS endpoints + internet, not VPC-private resources) vs. VPC-attached (reaches VPC resources, needs NAT+IGW or VPC endpoints for internet/public AWS services). Current architecture uses one ENI per unique subnet+SG combination, created at config time &mdash; VPC-attached Lambda is no longer a cold-start trap.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trap: two permission layers</div>
+    <strong>Execution role</strong> = what the function's code can do. <strong>Resource-based policy</strong> = who/what can invoke the function (cross-account, S3, SNS). With event source mapping (SQS/Kinesis/DynamoDB Streams), the <em>execution role</em> &mdash; not a resource policy &mdash; needs permission on the source, since the mapping polls on the function's behalf.
+  </div>
+  <ul>
+    <li>Invocation types: synchronous (caller blocks, caller retries), asynchronous (Lambda auto-retries 0&ndash;2x, can route to DLQ/destinations), event source mapping (polling component, configurable retries per source).</li>
+    <li>Versions are immutable snapshots; <code>$LATEST</code> is mutable; aliases are mutable named pointers &mdash; <strong>production traffic should target aliases, never $LATEST</strong>. Provisioned concurrency pre-inits execution contexts to eliminate cold starts (applies to a version/alias, never $LATEST).</li>
+  </ul>
+
+  <h3>EventBridge, SNS &amp; Step Functions</h3>
+  <ul>
+    <li>EventBridge = CloudWatch Events v2, same API, adds custom/third-party event buses and richer routing. Exam signal: third-party SaaS or custom application events &rarr; EventBridge, not plain CloudWatch Events.</li>
+    <li><strong>SNS</strong>: pub/sub, message up to 256 KB. <strong>Fan-out pattern (one topic &rarr; multiple SQS queues, each with its own worker pool) is a very high-yield exam pattern</strong> &mdash; memorize it. SNS pushes; SQS pulls/holds.</li>
+    <li><strong>Step Functions</strong> solve Lambda's 15-minute ceiling and statelessness for multi-step workflows. <strong>Standard</strong> (1-year max, exactly-once, auditable) vs. <strong>Express</strong> (5-minute max, at-least-once, high-volume event processing).</li>
+  </ul>
+
+  <h3>API Gateway</h3>
+  <table>
+    <thead><tr><th>Type</th><th>Fit</th></tr></thead>
+    <tbody>
+      <tr><td>REST API</td><td>Full-featured: usage plans, API keys, per-client throttling, WAF integration, private endpoints</td></tr>
+      <tr><td>HTTP API</td><td>Cheaper/lower-latency, simple Lambda/HTTP proxy, built-in CORS</td></tr>
+      <tr><td>WebSocket API</td><td>Persistent bidirectional (chat, live dashboards)</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>29-second integration timeout is still fixed for edge-optimized APIs; since 2024 it can be raised via Service Quotas for Regional and private REST APIs.</li>
+  </ul>
+
+  <h3>SQS <span class="hy">high yield</span></h3>
+  <ul>
+    <li><strong>Visibility timeout</strong> is the single most-tested SQS detail: a poll hides a message (doesn't delete it) &mdash; if not explicitly deleted before the timeout expires, it silently reappears.</li>
+  </ul>
+  <table>
+    <thead><tr><th></th><th>Standard</th><th>FIFO</th></tr></thead>
+    <tbody>
+      <tr><td>Ordering</td><td>Best effort</td><td>Strict</td></tr>
+      <tr><td>Delivery</td><td>At-least-once (dupes possible)</td><td>Exactly-once</td></tr>
+      <tr><td>Throughput</td><td>Near-infinite</td><td>300/sec (3,000/sec batched, or higher with high-throughput mode)</td></tr>
+      <tr><td>Naming</td><td>None</td><td>Must end <code>.fifo</code></td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th></th><th>Visibility timeout</th><th>Delay queue</th></tr></thead>
+    <tbody>
+      <tr><td>Message starts as</td><td>Visible</td><td>Invisible</td></tr>
+      <tr><td>Hidden when</td><td>After a consumer receives it</td><td>Immediately on send</td></tr>
+      <tr><td>Purpose</td><td>Automatic reprocessing on failure</td><td>Deliberate delay before any consumer sees it</td></tr>
+      <tr><td>Range</td><td>0s&ndash;12h (default 30s)</td><td>0s&ndash;15min (default 0)</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><strong>Dead-letter queues</strong>: a redrive policy on the source queue sets a target DLQ + <code>maxReceiveCount</code>. The enqueue timestamp carries over unchanged &mdash; always configure DLQ retention longer than the source queue's, or messages can be dropped before anyone investigates.</li>
+  </ul>
+
+  <h3>Kinesis family</h3>
+  <ul>
+    <li><strong>Data Streams</strong>: shard = unit of scale (1 MB/sec ingest, 2 MB/sec consume). Kinesis for ingestion at scale (IoT/clickstreams, many producers/consumers); default to SQS for decoupling/worker pools.</li>
+    <li><strong>Amazon Data Firehose</strong> (renamed from Kinesis Data Firehose, Feb 2024): near real-time, not real-time &mdash; buffers on 1 MB or 60 seconds, whichever first. Any Firehose-involved answer cannot be the real-time solution.</li>
+    <li><strong>Amazon Managed Service for Apache Flink</strong> (renamed from Kinesis Data Analytics, Aug 2023): its SQL-only variant is fully discontinued (blocked new apps Oct 2025, deleted Jan 2026) &mdash; teach the "real-time SQL/stream processing" concept regardless of which name the question uses.</li>
+    <li><strong>Kinesis Video Streams</strong>: the only Kinesis product for media/time-serialized data &mdash; you cannot access underlying storage directly, only via the service's own APIs.</li>
+  </ul>
+
+  <h3>Cognito: User Pools vs. Identity Pools <span class="hy">heavily tested naming trap</span></h3>
+  <table>
+    <thead><tr><th></th><th>User Pool</th><th>Identity Pool</th></tr></thead>
+    <tbody>
+      <tr><td>Job</td><td>Sign-up/sign-in/user directory</td><td>Swap identity for AWS credentials</td></tr>
+      <tr><td>Output</td><td>JWT</td><td>Temporary AWS credentials (via IAM role)</td></tr>
+      <tr><td>Grants AWS access?</td><td><strong>No</strong></td><td><strong>Yes</strong> &mdash; its entire purpose</td></tr>
+    </tbody>
+  </table>
+  <p><strong>The single most important fact: a user pool JWT cannot access most AWS services</strong> &mdash; that's identity pools' job. Swapping an external IdP token for AWS credentials is Web Identity Federation.</p>
+
+  <h3>Glue, Amazon MQ &amp; AppFlow</h3>
+  <ul>
+    <li><strong>Glue</strong>: serverless ETL. Its Data Catalog (crawlers populate it by inferring schema) is also read by Athena, Redshift Spectrum, and EMR &mdash; seeing "schema discovery" alongside those services signals Glue. Data Pipeline is closed to new customers (July 2024); Glue is now the default answer.</li>
+    <li><strong>Amazon MQ</strong>: for migrating existing on-prem brokers (JMS/AMQP/MQTT/STOMP) speaking ActiveMQ or RabbitMQ without app rewrites. <strong>Not a public service &mdash; runs inside a VPC.</strong> Default to SNS/SQS for new AWS-native work.</li>
+    <li><strong>AppFlow</strong>: managed no-code middleware for SaaS&harr;AWS data exchange (e.g. Salesforce &rarr; Redshift) &mdash; not general ETL (that's Glue), not hand-built integration.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 16 ================= -->
+  <details class="module-section" id="m16" open>
+  <summary><h2>16 &middot; Global Content Delivery &amp; Optimization</h2></summary>
+
+  <h3>CloudFront architecture</h3>
+  <ul>
+    <li>Origin &rarr; Distribution (gets a <code>*.cloudfront.net</code> domain) &rarr; Edge locations (cache, no EC2 deployable there) &rarr; Regional edge caches (between edge locations and origin).</li>
+    <li><strong>CloudFront is read-only caching</strong> &mdash; uploads always go directly to the origin. <strong>Distributions don't hold config directly &mdash; behaviors do</strong>, and more specific path-pattern behaviors take priority over the default.</li>
+  </ul>
+  <table>
+    <thead><tr><th>Distribution-level</th><th>Behavior-level (can differ per path)</th></tr></thead>
+    <tbody>
+      <tr><td>Price class, WAF association, alternate domain names, SSL cert type</td><td>Origin/origin group, viewer protocol policy, allowed HTTP methods, cache settings/TTLs, public/private restriction, Lambda@Edge</td></tr>
+    </tbody>
+  </table>
+
+  <h3>TTL, invalidations &amp; ACM</h3>
+  <ul>
+    <li><strong>Invalidation</strong> immediately expires matching objects everywhere regardless of remaining TTL &mdash; not free at volume, not instantaneous. Treat as mistake-correction, not routine deployment tooling.</li>
+    <li><strong>Better pattern: versioned filenames</strong> (e.g. <code>whiskers_v2.jpg</code>) &mdash; no invalidation cost, works even for browser-cached copies. Very common "most cost-effective content rollout" exam answer.</li>
+    <li><strong>ACM renewal</strong>: ACM-generated certs auto-renew; imported certs must be manually renewed and re-imported. Only CloudFront and load balancers can use ACM certs &mdash; <strong>EC2 is explicitly not supported</strong>, must install manually. ACM is regional, except CloudFront, which <strong>always requires the cert in us-east-1</strong> regardless of the distribution's actual traffic Region.</li>
+  </ul>
+
+  <h3>Securing the origin: OAI vs. OAC</h3>
+  <ul>
+    <li><strong>OAC has superseded OAI</strong> as AWS's recommendation &mdash; OAC supports opt-in Regions, SSE-KMS, and dynamic requests (PUT/POST/DELETE), which OAI doesn't. Both work only for S3 origins &mdash; custom origins use custom headers and/or IP allow-listing instead.</li>
+    <li><strong>Signed URL = one object. Signed cookie = a group of objects.</strong> Private behaviors secure the viewer side only &mdash; the origin still needs OAI/OAC to prevent bypass.</li>
+  </ul>
+
+  <h3>Lambda@Edge vs. CloudFront Functions</h3>
+  <ul>
+    <li>Four hook points: viewer request, origin request, origin response, viewer response.</li>
+    <li><strong>CloudFront Functions</strong> (newer, not in the original course): JavaScript only, viewer-side hooks only, sub-millisecond startup, extremely high scale &mdash; best for cache-key normalization, header manipulation, simple redirects. Lambda@Edge is still needed for anything origin-side, filesystem access, or request body.</li>
+  </ul>
+
+  <h3 id="cf-vs-ga">CloudFront vs. Global Accelerator <span class="hy">high yield</span></h3>
+  <table>
+    <thead><tr><th></th><th>CloudFront</th><th>Global Accelerator</th></tr></thead>
+    <tbody>
+      <tr><td>Layer</td><td>Content delivery (caching)</td><td>Network (raw packet routing)</td></tr>
+      <tr><td>Protocols</td><td>HTTP/HTTPS only</td><td><strong>Any TCP or UDP</strong></td></tr>
+      <tr><td>Caches content?</td><td>Yes</td><td><strong>Never</strong></td></tr>
+      <tr><td>HTTP-aware?</td><td>Yes (headers, cookies, paths)</td><td>No &mdash; no HTTP concept at all</td></tr>
+    </tbody>
+  </table>
+  <div class="callout exam-tip">
+    <div class="callout-title">Fast filter</div>
+    Caching / signed URLs / HTTP-specific behavior &rarr; CloudFront. TCP/UDP (especially non-HTTP, e.g. gaming protocols) / pure network performance with no caching mentioned &rarr; Global Accelerator. GA uses two static Anycast IPs and rides AWS's private backbone for most of the journey &mdash; it improves performance by minimizing the public-internet leg, not by "making the internet faster."
+  </div>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 17 ================= -->
+  <details class="module-section" id="m17" open>
+  <summary><h2>17 &middot; Advanced VPC Networking</h2></summary>
+
+  <h3>VPC Flow Logs</h3>
+  <ul>
+    <li><strong>Metadata only &mdash; never packet contents.</strong> Attachment levels: VPC &gt; Subnet &gt; ENI, each capturing everything downstream. Not real-time.</li>
+    <li><strong>Reading accept/reject pairs reveals which firewall acted</strong>: Security Groups are stateful &rarr; typically one log line per conversation. NACLs are stateless &rarr; a NACL blocking only the return leg produces two lines (accept + reject) for what looks like one flow.</li>
+  </ul>
+
+  <h3>Egress-Only Internet Gateway</h3>
+  <ul>
+    <li>Solves: giving IPv6 the same "outbound-only" behavior NAT gives IPv4. NAT is fundamentally an IPv4-only workaround for address scarcity &mdash; every IPv6 address is publicly routable, so there's no "private IPv6."</li>
+    <li>A plain IGW lets IPv6 flow both ways; an egress-only IGW blocks internet-initiated inbound while still allowing outbound-initiated traffic and its return (stateful).</li>
+  </ul>
+
+  <h3 id="endpoint-decision">Gateway Endpoint vs. Interface Endpoint <span class="hy">high yield</span></h3>
+  <table>
+    <thead><tr><th></th><th>Gateway endpoint</th><th>Interface endpoint</th></tr></thead>
+    <tbody>
+      <tr><td>Mechanism</td><td>Route table + prefix list</td><td>ENI + DNS (built on PrivateLink)</td></tr>
+      <tr><td>Services</td><td><strong>S3 and DynamoDB only, ever</strong></td><td>Everything else (S3 also optionally)</td></tr>
+      <tr><td>HA</td><td>Automatic, all AZs</td><td>Manual &mdash; one per AZ needed</td></tr>
+      <tr><td>Security groups?</td><td>No</td><td><strong>Yes</strong> (it's an ENI)</td></tr>
+      <tr><td>Cost</td><td>Free</td><td>Hourly + data charges</td></tr>
+    </tbody>
+  </table>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam signal</div>
+    A fully private VPC (no IGW, no NAT) needing S3/DynamoDB access &rarr; gateway endpoint. Access control: an endpoint policy plus a matching S3 bucket policy (only accept requests via that endpoint) together make a fully private bucket.
+  </div>
+
+  <h3>VPC Peering</h3>
+  <ul>
+    <li><strong>Exactly two VPCs per connection, never more, and not transitive</strong> &mdash; A&harr;B and B&harr;C gives no A&harr;C connectivity. N VPCs full-mesh needs N(N-1)/2 connections; Transit Gateway is the scalable alternative.</li>
+    <li>A peering connection needs (1) acceptance, (2) route table entries in both VPCs, (3) SG/NACL rules permitting the traffic. <strong>Overlapping CIDR ranges block peering entirely</strong> &mdash; no workaround.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 18 ================= -->
+  <details class="module-section" id="m18" open>
+  <summary><h2>18 &middot; Hybrid Environments &amp; Migration</h2></summary>
+  <p>One exam report names this module's territory directly &mdash; Transit Gateway, Microsoft AD with on-prem integration, on-premises storage, and "Snowball vs. Direct Connect" as a core tested domain. Treat this as the highest-priority module in the whole cheat sheet.</p>
+
+  <h3>AWS Site-to-Site VPN <span class="hy">high yield</span></h3>
+  <ul>
+    <li>Core components: VPC &harr; Virtual Private Gateway (VGW) &harr; VPN connection &harr; Customer Gateway (CGW).</li>
+    <li><strong>HA progression</strong>: 1 VGW + 1 CGW = 2 tunnels but a single CGW is a single point of failure ("partial HA"). Add a 2nd CGW at a separate premises/ISP + 2nd VPN connection for full HA.</li>
+    <li>Static (manually configured routes) vs. Dynamic (BGP-exchanged, supports failover/load-balancing).</li>
+    <li><strong>Throughput cap: 1.25 Gbps per connection and per VGW aggregate</strong> &mdash; the single most tested number here. Newer options past the cap: Accelerated Site-to-Site VPN and Large Bandwidth Tunnels (5 Gbps/tunnel, TGW-attached only).</li>
+  </ul>
+
+  <h3>Direct Connect <span class="hy">high yield</span></h3>
+  <ul>
+    <li>A dedicated <strong>physical</strong> connection into an AWS Region. Ordering DX is a port allocation only &mdash; AWS does not run a cable to you.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trap</div>
+    DX locations are <strong>not AWS-owned</strong> &mdash; they're third-party data centers where AWS leases a cage, and you (or a comms partner) separately lease space there.
+  </div>
+  <ul>
+    <li>Port speeds: 1/10/100/400 Gbps. Billing = hourly port charge + <em>outbound</em> data transfer (inbound is free). <strong>No built-in resilience</strong> &mdash; one physical cable &mdash; and slow to provision (weeks&ndash;months).</li>
+    <li>Virtual Interfaces: Private VIF &rarr; VGW/private VPC resources; Public VIF &rarr; AWS public-zone services or any public IP (including a VPN endpoint); Transit VIF &rarr; Transit Gateway. <strong>DX cannot reach the general internet, ever.</strong></li>
+    <li><strong>Resilience progression</strong>: single DX has 7 single points of failure &rarr; 2 ports/1 location/1 premises tolerates router/cable failure only &rarr; 2 locations/2 premises tolerates a full location failure &rarr; maximum resilience = 2 locations &times; 2 ports each &times; 2 premises.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">High-yield exam trap</div>
+    A VPN into a <strong>private</strong> VPC over Direct Connect still needs a <strong>public</strong> VIF, not private &mdash; because the VPN endpoint (VGW/TGW) has a public IP address, and a private VIF only reaches private IPs.
+  </div>
+
+  <h3>Transit Gateway <span class="hy">reddit explicitly flags 1&ndash;2 TGW questions</span></h3>
+  <ul>
+    <li><strong>The key differentiator: TGW supports transitive routing; VPC peering does not.</strong> Full-mesh peering for N VPCs explodes in connection count &mdash; TGW replaces that with one hub.</li>
+    <li>Three facts to memorize: transitive routing, TGW peering works cross-Region and cross-account riding AWS's global network, and it's shareable via AWS RAM across accounts.</li>
+  </ul>
+
+  <h3>Storage Gateway <span class="hy">on-prem storage decision tree</span></h3>
+  <table>
+    <thead><tr><th>Mode</th><th>Protocol</th><th>Primary/authoritative copy</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Volume Gateway &mdash; Stored</strong></td><td>iSCSI</td><td>On-premises</td><td>Backup/DR (not capacity relief)</td></tr>
+      <tr><td><strong>Volume Gateway &mdash; Cached</strong></td><td>iSCSI</td><td>S3</td><td>Data center extension, PB-scale with modest local cache</td></tr>
+      <tr><td><strong>Tape Gateway (VTL)</strong></td><td>iSCSI (virtual tape)</td><td>S3 (active) / Glacier (archived)</td><td>Replacing physical tape backup hardware, keeping existing backup software</td></tr>
+      <tr><td><strong>File Gateway</strong></td><td>NFS / SMB</td><td>S3</td><td>File shares mapped 1:1 to an S3 bucket</td></tr>
+    </tbody>
+  </table>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic</div>
+    "Volume"/iSCSI &rarr; Volume Gateway (then backup/DR &rarr; stored, capacity relief &rarr; cached). "Tape" &rarr; Tape Gateway, essentially without exception. "File"+NFS/SMB &rarr; File Gateway (S3 is primary here too &mdash; same mental model as Cached mode, opposite of Stored mode).
+  </div>
+
+  <h3 id="snowball-vs-dx">Snow family, DataSync &amp; the "no viable network" decision <span class="hy">reddit core domain</span></h3>
+  <div class="callout warn">
+    <div class="callout-title">Current-reality flag</div>
+    The entire <strong>Snow family closed to new customers Nov 7, 2025</strong> (Snowcone discontinued Nov 2024, Snowmobile retired ~2024). Only existing Snowball Edge customers can still order; AWS now points new customers to DataSync or the AWS Data Transfer Terminal. The exam still tests the classic decision tree below &mdash; know it, but "just order a Snowball" isn't actually orderable today for a new customer.
+  </div>
+  <ul>
+    <li><strong>Snowball</strong> (storage only): 50/80 TB, sweet spot ~10 TB&ndash;10 PB. <strong>Snowball Edge</strong> (storage + compute): choose when you need to process data as it's ingested. <strong>Snowmobile</strong>: a literal shipping container, up to 100 PB, single-site only.</li>
+    <li><strong>DataSync</strong>: managed, automated, scheduled/incremental transfer over an <em>existing</em> network link &mdash; 10 Gbps per agent-based task (~100 TB/day). AWS-to-AWS Basic mode caps at 25 million files/task (a newer Enhanced mode supports far more).</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam heuristic</div>
+    DataSync = reliable/incremental/scheduled transfer with a working network link. Snowball/Edge = huge one-time bulk transfer with <strong>no</strong> viable network path. Multiple sites with moderate data each &rarr; multiple Snowball devices (never Snowmobile); a single site &gt;~10 PB &rarr; Snowmobile.
+  </div>
+
+  <h3>AWS Directory Service <span class="hy">reddit-flagged: AD with on-prem integration</span></h3>
+  <table>
+    <thead><tr><th>Mode</th><th>Directory data stored in AWS?</th><th>On-prem integration</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Simple AD</strong></td><td>Yes (Samba 4, isolated)</td><td>None &mdash; no trust relationships</td></tr>
+      <tr><td><strong>AWS Managed Microsoft AD</strong></td><td>Yes (real AD)</td><td>Optional two-way trust over VPN/DX</td></tr>
+      <tr><td><strong>AD Connector</strong></td><td>No &mdash; pure proxy</td><td>Required continuously &mdash; fails entirely if the link drops</td></tr>
+    </tbody>
+  </table>
+  <div class="callout exam-tip">
+    <div class="callout-title">Decision order</div>
+    Simple AD for isolated/no-integration needs &rarr; Managed Microsoft AD for real-schema or trust-relationship needs &rarr; AD Connector only when directory data must never touch AWS at all.
+  </div>
+  <div class="callout warn">
+    <div class="callout-title">Current-reality flags</div>
+    Simple AD closes to new customers <strong>July 30, 2026</strong>. AWS Managed Microsoft AD now runs <strong>Windows Server 2019</strong> (was 2012 R2).
+  </div>
+
+  <h3>FSx for Windows vs. FSx for Lustre <span class="hy">reddit-flagged</span></h3>
+  <div class="callout exam-tip">
+    <div class="callout-title">The highest-yield fact in this pair</div>
+    SMB/Windows/AD keywords &rarr; FSx for Windows File Server. NFS/Linux/HPC/ML/SageMaker keywords &rarr; FSx for Lustre. EFS has zero Windows story at all.
+  </div>
+  <ul>
+    <li><strong>FSx for Windows</strong>: native Windows file system, AD-integratable with either AWS Managed Microsoft AD or a self-managed AD, native Deduplication/DFS/VSS/NTFS permissions. Throughput ceiling raised to 12 GB/s.</li>
+    <li><strong>FSx for Lustre</strong>: HPC-oriented, scales to hundreds of GB/s.</li>
+  </ul>
+  <table>
+    <thead><tr><th>Lustre deployment</th><th>Resilience</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td>Scratch</td><td>No replication &mdash; hardware failure loses data</td><td>Short-term/temp, speed over durability</td></tr>
+      <tr><td>Persistent</td><td>Replicated within one AZ (not multi-AZ), self-healing</td><td>Longer-term, hardware-failure resilience</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn">
+    <div class="callout-title">Exam trap, with a current-reality nuance</div>
+    Persistent is single-AZ, not multi-AZ &mdash; but Persistent 2 with Intelligent-Tiering now replicates across multiple AZs. SAA-C03 depth still treats Persistent as single-AZ; know both.
+  </div>
+
+  <h3>AWS Transfer Family</h3>
+  <table>
+    <thead><tr><th>Endpoint</th><th>Protocols</th><th>SG/NACL control</th></tr></thead>
+    <tbody>
+      <tr><td>Public</td><td>SFTP only</td><td>None</td></tr>
+      <tr><td>VPC, internet-facing</td><td>SFTP, FTPS, AS2</td><td>Yes</td></tr>
+      <tr><td>VPC, internal only</td><td>SFTP, FTPS, <strong>FTP</strong>, AS2</td><td>Yes</td></tr>
+    </tbody>
+  </table>
+  <p>Plain FTP is unencrypted &mdash; only allowed on the VPC internal-only endpoint, never public or internet-facing.</p>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 19 ================= -->
+  <details class="module-section" id="m19" open>
+  <summary><h2>19 &middot; Security, Deployment &amp; Operations</h2></summary>
+
+  <h3>Secrets Manager vs. Parameter Store</h3>
+  <div class="callout exam-tip">
+    <div class="callout-title">Keyword heuristic</div>
+    "Secrets"/API keys/passwords &rarr; Secrets Manager. "Rotation" (especially paired with RDS) &rarr; Secrets Manager, since Parameter Store cannot do automatic in-sync rotation at all. Plain hierarchical non-sensitive config &rarr; Parameter Store.
+  </div>
+
+  <h3>WAF <span class="hy">DDoS-protection topic</span></h3>
+  <ul>
+    <li>Protects CloudFront (global), ALB, AppSync, API Gateway (regional &mdash; the Web ACL must be created in the same Region as the resource).</li>
+    <li>One resource : one Web ACL, but one Web ACL : many resources. WCU ceiling is now 5,000 with no ticket needed (course-era figure was 1,500-with-ticket).</li>
+    <li>Rate-based rules have <strong>no "allow" action</strong> &mdash; only block/count/CAPTCHA.</li>
+  </ul>
+
+  <h3>AWS Shield <span class="hy">the DDoS-protection decision point</span></h3>
+  <table>
+    <thead><tr><th>DDoS category</th><th>OSI layer</th></tr></thead>
+    <tbody>
+      <tr><td>Network volumetric</td><td>L3</td></tr>
+      <tr><td>Network protocol (e.g. SYN floods)</td><td>L4</td></tr>
+      <tr><td>Application layer</td><td>L7</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><strong>Shield Standard</strong>: free, automatic, no config, covers L3/L4, strongest when traffic flows through Route 53/CloudFront/Global Accelerator.</li>
+    <li><strong>Shield Advanced</strong>: $3,000/month billed <em>per AWS Organization</em> (not per account), extends to L7 via WAF integration, adds cost protection and 24/7 Shield Response Team engagement.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trap</div>
+    Shield Advanced protections are <strong>not automatic</strong> &mdash; must be explicitly enabled per resource. Subscribing alone protects nothing. SRT proactive engagement additionally requires health-based detection (Route 53 health checks) configured first.
+  </div>
+  <p><strong>Decision summary:</strong> Standard = free/automatic/L3-4 baseline for everyone. Need L7/app-layer DDoS coverage, cost protection, or proactive AWS support &rarr; Shield Advanced.</p>
+
+  <h3>CloudHSM vs. KMS</h3>
+  <p>Same broad job as KMS &mdash; the exam skill is a keyword-triggered decision. Three triggers point to CloudHSM: FIPS 140-3 Level 3 for the whole appliance, industry-standard crypto APIs (PKCS#11/JCE/CNG), or an explicit single-tenant/AWS-zero-access requirement. Lives in an AWS-managed CloudHSM VPC (not yours).</p>
+
+  <h3>Config, Macie, Inspector &amp; GuardDuty</h3>
+  <div class="callout exam-tip">
+    <div class="callout-title">AWS Config: single most-tested fact</div>
+    Config is <strong>detective only, never preventive</strong> &mdash; it records configuration change history but never blocks a non-compliant change. Turning detection into action needs SNS/EventBridge &rarr; Lambda/SSM Automation layered on top.
+  </div>
+  <table>
+    <thead><tr><th>Service</th><th>Lane</th></tr></thead>
+    <tbody>
+      <tr><td><strong>GuardDuty</strong></td><td>Continuous ML/threat-intel anomaly detection, whole account &mdash; not a triggered scan, not data classification</td></tr>
+      <tr><td><strong>Macie</strong></td><td>Discovers/classifies sensitive <em>data</em> specifically inside S3</td></tr>
+      <tr><td><strong>Inspector</strong></td><td>Vulnerability/CVE scanning of <em>compute</em> (EC2, ECR images, Lambda)</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Inspector's old "Inspector Classic" (manual, duration-based) reached end of support May 2026 &mdash; current Inspector is continuous and automatic. "CVE" is still the core keyword for Inspector.</li>
+    <li>GuardDuty's foundational data sources are DNS logs, VPC Flow Logs, and CloudTrail events, with many optional protection plans added since (EKS, RDS, Lambda, Malware Protection, AI Protection).</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 20 ================= -->
+  <details class="module-section" id="m20" open>
+  <summary><h2>20 &middot; Infrastructure as Code (CloudFormation)</h2></summary>
+  <p>SAA-C03 tests CloudFormation concepts lightly, not authoring &mdash; this section is intentionally compact.</p>
+  <ul>
+    <li>A <strong>stack</strong> keeps a template's logical resources in sync with real physical resources &mdash; update the stack and CFN diffs/adds/modifies/deletes to match; delete the stack and the physical resources go too.</li>
+    <li>Key intrinsic functions: <code>Ref</code> (main value), <code>Fn::GetAtt</code> (secondary attribute), <code>Fn::GetAZs</code>+<code>Fn::Select</code>, <code>Fn::Join</code>/<code>Fn::Split</code>, <code>Fn::Sub</code> (can't reference the resource's own attributes, since it doesn't exist yet), <code>Fn::Cidr</code>.</li>
+    <li><strong>DependsOn</strong>: CFN auto-infers dependencies from <code>Ref</code>/<code>GetAtt</code>/<code>Sub</code> references. Classic exam scenario: an Elastic IP requiring an attached Internet Gateway, where nothing in the EIP's properties references the attachment &mdash; CFN can't infer it, so you need an explicit <code>DependsOn</code>.</li>
+    <li><strong>CreationPolicy</strong> (max timeout 12 hours) closes the gap where CFN marks a resource complete the moment EC2 reports "provisioned," regardless of whether bootstrapping inside actually succeeded &mdash; the instance calls <code>cfn-signal</code> when it's really done.</li>
+  </ul>
+  <table>
+    <thead><tr><th></th><th>Nested Stacks</th><th>Cross-Stack References</th></tr></thead>
+    <tbody>
+      <tr><td>Reuses</td><td>A <strong>template</strong> &mdash; each use creates a fresh physical resource</td><td>An actual <strong>resource</strong> &mdash; the same physical thing shared</td></tr>
+      <tr><td>Use when</td><td>Everything is lifecycle-linked</td><td>Consumers have independent/shorter lifecycles than the shared resource</td></tr>
+      <tr><td>Limits</td><td>Helps beat the 500-resources-per-stack cap</td><td>Same Region + same account only</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><strong>DeletionPolicy</strong> (Delete/Retain/Snapshot) only covers deletion, not replacement &mdash; a newer <code>UpdateReplacePolicy</code> attribute covers that gap.</li>
+    <li><strong>Change Sets</strong> preview the delta (no interruption / some interruption / replacement, including potential data loss) before executing an update &mdash; creating one touches nothing physical.</li>
+    <li><strong>Custom Resources</strong> are the escape hatch for anything CFN can't do natively, backed by a Lambda or SNS <code>ServiceToken</code>.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 21 ================= -->
+  <details class="module-section" id="m21" open>
+  <summary><h2>21 &middot; NoSQL Databases &amp; DynamoDB</h2></summary>
+
+  <h3>Architecture &amp; capacity <span class="hy">reddit-flagged</span></h3>
+  <ul>
+    <li>Database-<em>as-a-service</em> (no server to size/patch, contrast with RDS's database-<em>server</em>-as-a-service). Public service, reachable via internet or a gateway VPC endpoint.</li>
+    <li>Item size limit: <strong>400 KB</strong> max. <strong>1 WCU</strong> = one write &le;1 KB/sec. <strong>1 RCU</strong> = one strongly-consistent read &le;4 KB/sec. Every operation consumes at least one whole unit, rounded up.</li>
+    <li><strong>Standard-IA table class</strong>: ~60% storage cost cut vs. Standard, identical performance/durability, switchable without code changes.</li>
+  </ul>
+
+  <h3>Query vs. Scan, consistency</h3>
+  <ul>
+    <li><strong>Query</strong> requires exactly one partition key value (plus optional sort-key filter) &mdash; the cheapest way to get multiple items. <strong>Scan</strong> walks the entire table and bills for every item scanned, matched or not.</li>
+    <li>Every item replicates to 3 storage nodes across 3 AZs with one elected leader; all writes go to the leader first. <strong>Eventually consistent reads</strong> (default) can hit any node, half the RCU cost. <strong>Strongly consistent reads</strong> always hit the leader, full RCU cost.</li>
+  </ul>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam trap</div>
+    Staleness-sensitive data (financial, inventory, medical) &rarr; strongly consistent reads. Watch for per-minute rates in a capacity-math question &mdash; convert to per-second first.
+  </div>
+
+  <h3>LSI vs. GSI</h3>
+  <table>
+    <thead><tr><th></th><th>LSI</th><th>GSI</th></tr></thead>
+    <tbody>
+      <tr><td>Partition key</td><td>Same as base table</td><td>Independent, chosen freely</td></tr>
+      <tr><td>Created</td><td><strong>Only at table creation</strong></td><td>Any time</td></tr>
+      <tr><td>Capacity</td><td>Shared with base table</td><td>Own separate RCU/WCU</td></tr>
+      <tr><td>Consistency</td><td>Eventual <strong>or</strong> strong</td><td><strong>Eventual only, always</strong></td></tr>
+      <tr><td>Default limit</td><td>5 per table</td><td>20 per table</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Default guidance</strong>: unsure &rarr; GSI (flexible, independent capacity). Need strong consistency on the alternate access pattern &rarr; LSI, the one thing GSI structurally can't do.</p>
+
+  <h3>Streams, Global Tables, DAX &amp; TTL</h3>
+  <ul>
+    <li><strong>Streams</strong>: 24-hour rolling window of item-level changes, four view types (KEYS_ONLY/NEW_IMAGE/OLD_IMAGE/NEW_AND_OLD_IMAGES). Streams + Lambda = a fully event-driven trigger, zero polling.</li>
+    <li><strong>Global Tables</strong>: multi-Region, "multi-active" replication (renamed from "multi-master"), last-writer-wins conflict resolution. Same-Region as the write &rarr; strong or eventual reads possible; different Region &rarr; eventual only, no exceptions.</li>
+    <li><strong>DAX</strong>: in-memory cache purpose-built for DynamoDB, deployed inside a VPC (unlike DynamoDB itself). Item cache + query cache. <strong>Cannot serve strongly consistent reads at all</strong> &mdash; a hard rule-out for that requirement.</li>
+    <li><strong>TTL</strong>: the TTL attribute holds epoch seconds &mdash; once that time is past, DynamoDB auto-deletes the item via two independent background processes (expire, then delete).</li>
+  </ul>
+
+  <h3>Athena, ElastiCache &amp; Redshift</h3>
+  <ul>
+    <li><strong>Athena</strong>: serverless SQL over S3, schema-on-read, pay per data scanned. Now supports Apache Iceberg tables with real INSERT/UPDATE/DELETE &mdash; "Athena only reads" is no longer an absolute rule.</li>
+    <li><strong>ElastiCache</strong>: Redis (rich data structures, true Multi-AZ HA, persistence, transactions) vs. Memcached (simple strings, no true replication, multi-threaded). <strong>"No application changes needed" rules ElastiCache out</strong> &mdash; the app must actively check cache, handle misses, write back.</li>
+    <li><strong>Redshift</strong>: petabyte-scale OLAP data warehouse (vs. RDS's OLTP). Classic clusters run in <strong>one AZ</strong> &mdash; not natively HA across AZs, though resilience comes from snapshots landing in S3. Redshift Serverless and genuine Multi-AZ (GA for RA3 clusters) now exist alongside the classic single-AZ model; the exam still tests single-AZ as the foundational architecture.</li>
+  </ul>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 22 ================= -->
+  <details class="module-section" id="m22" open>
+  <summary><h2>22 &middot; Machine Learning 101</h2></summary>
+  <p>Deliberately short and high-level in the source course &mdash; architectural-level recognition only. Core pattern: ten pre-built "send data, get a result" AI APIs, plus SageMaker as the one platform for building a genuinely custom model.</p>
+  <table>
+    <thead><tr><th>Service</th><th>One-line ID</th></tr></thead>
+    <tbody>
+      <tr><td>Comprehend</td><td>NLP on text: entities, key phrases, sentiment, PII detection</td></tr>
+      <tr><td>Kendra</td><td>Intelligent enterprise search over varied data sources</td></tr>
+      <tr><td>Lex</td><td>Chatbots/voice assistants (powers Alexa) &mdash; ASR + NLU, intents/slots</td></tr>
+      <tr><td>Polly</td><td>Text-to-speech (standard &rarr; neural &rarr; newer generative-voices tier)</td></tr>
+      <tr><td>Rekognition</td><td>Image/video content analysis (objects, faces, text, moderation)</td></tr>
+      <tr><td>Textract</td><td>Document text + structure extraction, incl. ID-document normalization</td></tr>
+      <tr><td>Transcribe</td><td>Speech-to-text, plus Medical and Call Analytics variants</td></tr>
+      <tr><td>Translate</td><td>Text-to-text translation between languages</td></tr>
+      <tr><td>Forecast</td><td>Time-series forecasting from historical + related data</td></tr>
+      <tr><td>Fraud Detector</td><td>Fraud scoring via 3 model types matched to available history</td></tr>
+      <tr><td>SageMaker</td><td>The one platform for custom model build/train/deploy (vs. all the pre-built APIs above)</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn">
+    <div class="callout-title">Service-lifecycle closures (concepts still testable, product access has changed)</div>
+    Kendra closes to new customers July 30, 2026 (steers to Bedrock Knowledge Bases). Rekognition's Streaming Video Analysis and Bulk Image Analysis closed to new customers April 30, 2026, despite the course teaching live Kinesis Video Streams analysis as core. Forecast closed to new customers July 29, 2024. Fraud Detector closed to new customers November 7, 2025. SageMaker was renamed "Amazon SageMaker AI" in December 2024, now sitting alongside sibling product Amazon Bedrock.
+  </div>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+  <!-- ================= MODULE 23 ================= -->
+  <details class="module-section" id="m23" open>
+  <summary><h2>23 &middot; Other Services &amp; Features</h2></summary>
+  <table>
+    <thead><tr><th>Edge option</th><th>Sits where</th><th>Best fit</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Local Zones</strong></td><td>Near metro areas, extends a parent Region</td><td>Low-latency compute/storage/DB for one city's users</td></tr>
+      <tr><td><strong>Wavelength</strong></td><td>Inside telecom 5G networks</td><td>Ultra-low-latency mobile/5G-native apps</td></tr>
+      <tr><td><strong>Outposts</strong></td><td>Customer's own data center/colo</td><td>Full AWS infra/APIs running on-premises</td></tr>
+    </tbody>
+  </table>
+  <div class="callout exam-tip">
+    <div class="callout-title">Exam-trap detail</div>
+    A Local Zone behaves like a single AZ with no built-in redundancy of its own. Compute/low-latency access stays local, but <strong>EBS snapshots still land in S3 back in the parent Region</strong> &mdash; that's what preserves their usual multi-AZ durability, and it's a favorite exam-trap detail.
+  </div>
+  <p class="backtotop"><a href="#top">&uarr; back to top</a></p>
+  </details>
+
+</div>
+
+<script>
+(function () {
+  var container = document.querySelector('.container');
+  var sections = Array.prototype.slice.call(container.querySelectorAll(':scope > details'));
+  var list = document.getElementById('sidenav-list');
+  var slugCount = {};
+  function slugify(text) {
+    var s = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    if (!s) s = 'section';
+    if (slugCount[s]) { slugCount[s]++; s = s + '-' + slugCount[s]; } else { slugCount[s] = 1; }
+    return s;
+  }
+  function cleanTitle(h) {
+    var clone = h.cloneNode(true);
+    var spans = clone.querySelectorAll('span');
+    for (var i = 0; i < spans.length; i++) { spans[i].parentNode.removeChild(spans[i]); }
+    return clone.textContent.trim();
+  }
+
+  var linkEls = [];
+  sections.forEach(function (sec) {
+    var summary = sec.querySelector(':scope > summary');
+    var h2 = summary ? summary.querySelector('h2') : null;
+    var title = h2 ? cleanTitle(h2) : (sec.id || 'Section');
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + sec.id;
+    a.textContent = title;
+    a.dataset.target = sec.id;
+    li.appendChild(a);
+    list.appendChild(li);
+    linkEls.push({ el: a, li: li, textLower: title.toLowerCase(), targetId: sec.id, isModule: true });
+
+    var h3s = sec.querySelectorAll('h3');
+    if (h3s.length) {
+      var subUl = document.createElement('ul');
+      h3s.forEach(function (h3) {
+        var text = cleanTitle(h3);
+        if (!h3.id) { h3.id = slugify(text); }
+        var subLi = document.createElement('li');
+        var subA = document.createElement('a');
+        subA.href = '#' + h3.id;
+        subA.textContent = text;
+        subA.className = 'sub';
+        subA.dataset.target = h3.id;
+        subLi.appendChild(subA);
+        subUl.appendChild(subLi);
+        linkEls.push({ el: subA, li: subLi, textLower: text.toLowerCase(), targetId: h3.id, isModule: false });
+      });
+      li.appendChild(subUl);
+    }
+  });
+
+  // Any in-page link to a fragment: open every ancestor <details> of the target first.
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var id = a.getAttribute('href').slice(1);
+    var target = document.getElementById(id);
+    if (target) {
+      var det = target.closest('details');
+      while (det) {
+        det.open = true;
+        var parent = det.parentElement;
+        det = parent ? parent.closest('details') : null;
+      }
+    }
+    if (a.closest('#sidenav') && window.innerWidth <= 980) {
+      document.getElementById('sidenav').classList.remove('open');
+    }
+  });
+
+  function openForHash() {
+    if (location.hash) {
+      var t = document.getElementById(location.hash.slice(1));
+      if (t) {
+        var det = t.closest('details');
+        while (det) {
+          det.open = true;
+          var parent = det.parentElement;
+          det = parent ? parent.closest('details') : null;
+        }
+        t.scrollIntoView();
+      }
+    }
+  }
+  window.addEventListener('hashchange', openForHash);
+  openForHash();
+
+  // Search filter (sidebar)
+  var searchbox = document.getElementById('searchbox');
+  var meta = document.getElementById('search-meta');
+  searchbox.addEventListener('input', function () {
+    var q = searchbox.value.trim().toLowerCase();
+    if (!q) {
+      linkEls.forEach(function (le) { le.li.hidden = false; });
+      meta.textContent = '';
+      return;
+    }
+    var visibleModules = 0;
+    linkEls.filter(function (l) { return !l.isModule; }).forEach(function (le) {
+      var match = le.textLower.indexOf(q) !== -1;
+      le.li.hidden = !match;
+    });
+    linkEls.filter(function (l) { return l.isModule; }).forEach(function (le) {
+      var ownMatch = le.textLower.indexOf(q) !== -1;
+      var subLis = le.li.querySelectorAll('ul > li');
+      var anySubVisible = false;
+      subLis.forEach(function (sl) { if (!sl.hidden) anySubVisible = true; });
+      if (ownMatch) { subLis.forEach(function (sl) { sl.hidden = false; }); anySubVisible = true; }
+      var show = ownMatch || anySubVisible;
+      le.li.hidden = !show;
+      if (show) visibleModules++;
+    });
+    meta.textContent = visibleModules + ' section' + (visibleModules === 1 ? '' : 's') + ' match';
+  });
+  searchbox.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      var firstVisible = linkEls.find(function (le) { return !le.li.hidden; });
+      if (firstVisible) { firstVisible.el.click(); }
+    }
+  });
+
+  document.getElementById('expand-all').addEventListener('click', function () {
+    sections.forEach(function (s) { s.open = true; });
+  });
+  document.getElementById('collapse-all').addEventListener('click', function () {
+    sections.forEach(function (s) { s.open = false; });
+  });
+
+  document.getElementById('sidenav-toggle').addEventListener('click', function () {
+    document.getElementById('sidenav').classList.toggle('open');
+  });
+
+  var moduleLinks = linkEls.filter(function (l) { return l.isModule; });
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var link = moduleLinks.find(function (l) { return l.targetId === entry.target.id; });
+        if (!link) return;
+        if (entry.isIntersecting) {
+          moduleLinks.forEach(function (l) { l.el.classList.remove('active'); });
+          link.el.classList.add('active');
+        }
+      });
+    }, { rootMargin: '0px 0px -70% 0px', threshold: 0 });
+    sections.forEach(function (s) { observer.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

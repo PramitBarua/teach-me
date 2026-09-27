@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Practice – RDS &amp; Aurora</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">RDS & Aurora</a> › Scenario Practice</div>
+    <div class="module-tag">Exam Practice</div>
+    <h1>Scenario-Based Exam Practice</h1>
+    <p class="lesson-meta">RDS & Aurora · 69 scenarios</p>
+    <p class="source-link">Sources: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" target="_blank">AWS RDS User Guide</a> · <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html" target="_blank">AWS Aurora User Guide</a></p>
+  </div>
+
+  <p>These are exam-style scenario questions, separate from the retrieval-practice quiz at the end of each lesson. Each question has one answer that's technically possible but breaks a requirement in the scenario, one that's plausible and easy to confuse with the right answer, and one correct best choice — read carefully. Coverage is weighted toward the exam: the first 3 lessons (relational fundamentals, NoSQL models, ACID vs. BASE) are introductory and get lighter coverage, while RDS/Aurora mechanics get full depth since that's where the exam concentrates. Click an option to select your answer, then reveal it — your pick is highlighted in red if wrong, green marks the correct one. Once you've answered every question, check "Show my results" for your overall score and which topics to study again.</p>
+
+  <div class="scenario-set">
+    <p class="scenario-count">69 scenarios · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-topic breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+<!-- 1 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 1</p>
+      <p class="scenario-text">A payroll system stores one row per employee in a table keyed on employee ID. An engineer proposes inserting a second row that reuses an existing employee ID after the employee changes department, since the department value differs from the first row. Is this a valid design under standard relational rules?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — every row must still have a unique primary key value, so reusing the ID would create a duplicate key</li>
+        <li><span class="opt-letter">B.</span> Yes — differing attribute values are enough to make two rows distinct, even with a repeated primary key</li>
+        <li><span class="opt-letter">C.</span> Yes — this becomes valid the moment the table's key is changed to a composite of employee ID and department</li>
+        <li><span class="opt-letter">D.</span> No — but only because relational tables forbid any attribute value from ever repeating across two rows</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Relational Database Fundamentals</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — every row must have a unique primary key value; inserting a second row with the same employee ID duplicates the key, which a relational table doesn't allow.</li>
+          <li><strong>B.</strong> Wrong — this confuses attribute distinctness with primary key uniqueness. Differing department values don't excuse a repeated primary key.</li>
+          <li><strong>C.</strong> Wrong — that would only be valid if the table's schema were actually redefined with a composite key first, which isn't what's described; as stated, the table still has a single-column key.</li>
+          <li><strong>D.</strong> Wrong — the actual rule is that primary keys must be unique, not that every attribute value must be unique across the whole table; that overgeneralizes the rule.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 2 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 2</p>
+      <p class="scenario-text">A startup's product catalog needs new kinds of relationships between products, categories, and suppliers added every few weeks as the business model shifts, and the team wants minimal friction each time a new relationship type appears. Why might a strict relational database create ongoing friction here?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Because primary keys must be regenerated for every row whenever a new relationship type is introduced</li>
+        <li><span class="opt-letter">B.</span> Because attribute values can only be added after a table's existing relationships are fully removed</li>
+        <li><span class="opt-letter">C.</span> Because the schema, including table relationships, is fixed in advance and rigid to change once data exists</li>
+        <li><span class="opt-letter">D.</span> Because join tables are limited to exactly one composite key per pair of related tables, forever</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Relational Database Fundamentals</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — primary keys aren't tied to relationship types and never need regeneration when a new relationship appears.</li>
+          <li><strong>B.</strong> Wrong — attributes and relationships aren't linked this way; removing relationships isn't a prerequisite for adding attributes.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a relational schema, including the relationships between tables, is declared before data goes in and is rigid to change, which is exactly what makes fast-changing relationship shapes costly to accommodate.</li>
+          <li><strong>D.</strong> Wrong — this describes a fabricated constraint; join tables aren't inherently capped at one composite key per table pair.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 3 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 3</p>
+      <p class="scenario-text">An engineering team needs a database for a session-cache layer that just stores an opaque blob of session data behind a unique key, with no need for the database to inspect or query anything inside that blob. Which NoSQL model best fits, and why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Document database, because it can query deeply nested attributes inside the value that gets stored</li>
+        <li><span class="opt-letter">B.</span> Key-value store, because the database treats the value as opaque and only needs a unique key for lookup</li>
+        <li><span class="opt-letter">C.</span> Wide column store, because it requires a shared key structure across every item in the table</li>
+        <li><span class="opt-letter">D.</span> Graph database, because nodes and edges can represent the relationship between a session and a user</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: NoSQL Database Models</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — document databases make the value queryable, which is more capability than this scenario needs; the requirement is explicitly that the value stays opaque.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a key-value store has no awareness of what's inside the value, making it the simplest and fastest fit when only unique-key lookups of an opaque blob are needed.</li>
+          <li><strong>C.</strong> Wrong — wide column stores add structural rules around shared key composition that this simple opaque-blob use case doesn't require.</li>
+          <li><strong>D.</strong> Wrong — graph databases exist to make relationships between entities fast to query, but this scenario has no relationships to model at all.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 4 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 4</p>
+      <p class="scenario-text">An exam question describes DynamoDB being used with strict all-or-nothing, multi-item update guarantees, explicitly labelled as an "ACID" capability layered onto an otherwise NoSQL database. What feature is most likely being described?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> RDS Multi-AZ synchronous replication, since only relational engines can ever offer ACID guarantees</li>
+        <li><span class="opt-letter">B.</span> DynamoDB's default eventually-consistent read behavior, which already satisfies ACID requirements</li>
+        <li><span class="opt-letter">C.</span> The CAP theorem's partition tolerance guarantee being permanently enabled for the table</li>
+        <li><span class="opt-letter">D.</span> DynamoDB transactions, a feature that layers ACID guarantees onto an otherwise BASE-style database</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: ACID vs. BASE</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this isn't a DynamoDB feature at all, and it wrongly claims relational engines are the only source of ACID guarantees.</li>
+          <li><strong>B.</strong> Wrong — DynamoDB's default reads are eventually consistent, which is BASE-style behavior, the opposite of ACID's strict consistency.</li>
+          <li><strong>C.</strong> Wrong — partition tolerance is a CAP theorem property, not an ACID feature, and isn't something you "enable" for a table.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — DynamoDB transactions specifically layer ACID-style all-or-nothing guarantees onto DynamoDB, which is otherwise a BASE-style, eventually-consistent database by default.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 5 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 5</p>
+      <p class="scenario-text">A team needs to run a niche, recently-released database engine that RDS does not support anywhere in its list of managed engines, and switching engines isn't an option given existing application code. What does this suggest about running that database on EC2 in this specific case?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It's never justified — RDS should always be re-evaluated regardless of the specific engine requirement</li>
+        <li><span class="opt-letter">B.</span> It's a legitimate justification for choosing EC2, since RDS doesn't offer every database engine or version</li>
+        <li><span class="opt-letter">C.</span> It's unnecessary, because every current and future engine version is eventually added to RDS automatically</li>
+        <li><span class="opt-letter">D.</span> It's only legitimate if the decision comes purely from leadership preference rather than a technical need</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Databases on EC2</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — needing an engine or version AWS doesn't offer is called out as a legitimate justification for EC2, not something to dismiss outright.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — needing a database engine or version RDS doesn't offer is a legitimate reason to run on EC2, even though EC2 is usually the worse option overall.</li>
+          <li><strong>C.</strong> Wrong — RDS's engine list is not guaranteed to expand to cover every engine version automatically; this is a fabricated claim.</li>
+          <li><strong>D.</strong> Wrong — this reverses the lesson's framing: a pure leadership preference is the justification worth challenging, while a genuine unsupported-engine need is the stronger, legitimate one.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 6 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 6</p>
+      <p class="scenario-text">A workload is completely idle most nights and heavy for a few hours each morning, and the team wants a database that can scale down to no compute cost automatically during idle periods. Is a database hosted directly on EC2 well suited to this pattern?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — the instance can be stopped manually during idle hours, satisfying the automatic scale-to-zero requirement</li>
+        <li><span class="opt-letter">B.</span> Yes — EC2-hosted databases inherit the same automatic pause-and-resume behavior that Aurora Serverless offers</li>
+        <li><span class="opt-letter">C.</span> No — but only because EC2 instances are contractually required to keep running for 24 hours once started</li>
+        <li><span class="opt-letter">D.</span> No — EC2 is simply on or off, and can't scale to zero or burst automatically the way some managed products can</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Databases on EC2</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — manually stopping an instance isn't automatic scaling; the requirement was specifically for automatic behavior, which manual stopping doesn't satisfy.</li>
+          <li><strong>B.</strong> Wrong — this is the exact opposite of the lesson's point: Aurora Serverless offers automatic pause/resume, but plain EC2-hosted databases do not.</li>
+          <li><strong>C.</strong> Wrong — there's no such minimum-runtime requirement; this is a fabricated reason for the correct "no."</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — EC2 has no serverless option; it's on or off, so it can't automatically scale to zero or burst the way some managed database products can.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 7 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 7</p>
+      <p class="scenario-text">A company runs its production database on a single EC2 instance backed by one EBS volume, with no additional replication configured. The Availability Zone hosting that instance experiences a full outage. What happens to the database?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It becomes unavailable, since both the EC2 instance and its EBS volume live in a single AZ with no built-in resilience</li>
+        <li><span class="opt-letter">B.</span> It automatically fails over to a standby EBS volume that AWS maintains in a different AZ by default</li>
+        <li><span class="opt-letter">C.</span> It remains available, since EBS volumes are automatically replicated to a second Availability Zone by default</li>
+        <li><span class="opt-letter">D.</span> It becomes read-only automatically until the Availability Zone recovers, preserving query access</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Databases on EC2</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — an EC2 instance and its EBS volume both live in one Availability Zone, so if that AZ fails, the database fails unless you've built your own cross-AZ replication.</li>
+          <li><strong>B.</strong> Wrong — AWS doesn't automatically maintain a cross-AZ standby EBS volume for you; that architecture has to be built deliberately.</li>
+          <li><strong>C.</strong> Wrong — EBS volumes are bound to a single AZ, not automatically replicated across AZs; this is a common but incorrect assumption.</li>
+          <li><strong>D.</strong> Wrong — there's no automatic read-only failback behavior for a single-AZ EC2 database; it simply becomes unavailable during the outage.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 8 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 8</p>
+      <p class="scenario-text">A team currently runs its app server and database on the same EC2 instance. They plan to eventually migrate the database to RDS but want an intermediate step now that doesn't require re-architecting the application tier. What should they do first, and what's a side effect of placing the two instances in different AZs?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Move the database into RDS immediately, since RDS migration requires no application changes at all</li>
+        <li><span class="opt-letter">B.</span> Keep both tiers on one instance, since splitting them offers no benefit until RDS migration is complete</li>
+        <li><span class="opt-letter">C.</span> Split the database onto its own instance now; a different AZ than the app tier incurs a small data transfer cost</li>
+        <li><span class="opt-letter">D.</span> Split the database onto its own instance now; a different AZ than the app tier is always free, like same-AZ traffic</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Databases on EC2</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this skips the described intermediate step entirely and overstates how effortless an RDS migration is.</li>
+          <li><strong>B.</strong> Wrong — splitting the database out of the monolithic stack is described as a useful first step in its own right, ahead of any RDS migration.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — splitting the database onto its own instance decouples it from the app tier and eases a later RDS migration; if split across AZs, cross-AZ data transfer carries a small cost, unlike free same-AZ private IP traffic.</li>
+          <li><strong>D.</strong> Wrong — cross-AZ data transfer does carry a small cost; only same-AZ private IP traffic is free, so this reverses the actual pricing behavior.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 9 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 9</p>
+      <p class="scenario-text">A team currently on RDS is evaluating a move to a self-managed database on EC2 purely to gain more control, without any specific technical requirement driving the decision. Which operational responsibility would shift entirely onto their team as a result?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Nothing changes — AWS continues to patch both the OS and the database engine automatically on EC2</li>
+        <li><span class="opt-letter">B.</span> Patching the OS and the database engine, plus owning backup and disaster-recovery planning end-to-end</li>
+        <li><span class="opt-letter">C.</span> Only patching the database engine, since AWS still manages OS patches on EC2 the same way it does on RDS</li>
+        <li><span class="opt-letter">D.</span> Only enabling encryption at rest, since every other operational task remains automated on EC2 by default</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Databases on EC2</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this is precisely backwards; on EC2 you patch the OS and the database engine yourself, unlike on RDS.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — running a database on EC2 means owning both OS and engine patching, plus backup and disaster-recovery planning end-to-end, none of which RDS requires of you.</li>
+          <li><strong>C.</strong> Wrong — AWS does not manage OS patching on a self-managed EC2 database the way it does with RDS; OS patching also becomes the team's job.</li>
+          <li><strong>D.</strong> Wrong — encryption is only one small piece; admin overhead, availability design, and replication all shift onto the team as well.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 10 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 10</p>
+      <p class="scenario-text">A team provisions a single RDS instance and wants to know whether they can host an "orders" database and a completely separate "analytics" database on that same instance, rather than provisioning two separate instances. Is this supported?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — RDS instances are limited to exactly one database each, matching the phrase database-as-a-service</li>
+        <li><span class="opt-letter">B.</span> No — hosting multiple databases on one instance requires Aurora specifically, not standard RDS engines</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if Multi-AZ is enabled first, since a single-AZ instance is capped at one database</li>
+        <li><span class="opt-letter">D.</span> Yes — an RDS instance is more accurately a database server as a service and can host multiple databases</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Architecture</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — "database as a service" is called out as an imprecise label; a single instance can host multiple databases.</li>
+          <li><strong>B.</strong> Wrong — hosting multiple databases per instance is a standard RDS capability, not something exclusive to Aurora.</li>
+          <li><strong>C.</strong> Wrong — Multi-AZ controls availability, not how many databases an instance can host; there's no such cap being lifted by it.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — you provision and pay for a database server, more precisely a "database server as a service," and that server can host multiple individual databases.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 11 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 11</p>
+      <p class="scenario-text">An architect is defining where a new RDS instance can be placed and wants the flexibility to fail over across at least two Availability Zones, while keeping the instance unreachable from the public internet. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A DB subnet group listing private subnets across at least two AZs, avoiding public subnets entirely</li>
+        <li><span class="opt-letter">B.</span> A DB subnet group listing a single public subnet, since public addressing is required for Multi-AZ failover</li>
+        <li><span class="opt-letter">C.</span> A DB subnet group listing private subnets, but confined to a single Availability Zone for simplicity</li>
+        <li><span class="opt-letter">D.</span> No subnet group at all, since RDS instances are reachable over the public internet by default like S3</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Architecture</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a DB subnet group listing private subnets across at least two AZs keeps the instance off the public internet while giving it the AZ flexibility needed for failover.</li>
+          <li><strong>B.</strong> Wrong — public addressing is not required for Multi-AZ failover, and public subnets are strongly discouraged for RDS on security grounds.</li>
+          <li><strong>C.</strong> Wrong — a single-AZ subnet group undermines the stated goal of failing over across at least two AZs; best practice is to span multiple AZs.</li>
+          <li><strong>D.</strong> Wrong — unlike S3, RDS is not a public service; it runs inside a VPC and requires a DB subnet group to be placed at all.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 12 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 12</p>
+      <p class="scenario-text">A team compares provisioning storage for a standard RDS PostgreSQL instance versus an Aurora PostgreSQL cluster. How does each actually obtain its underlying storage?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Both use one shared cluster storage volume accessible to every instance in the deployment</li>
+        <li><span class="opt-letter">B.</span> Standard RDS uses shared cluster storage across instances, while Aurora gives each instance its own EBS volume</li>
+        <li><span class="opt-letter">C.</span> Standard RDS gives each instance its own dedicated EBS-backed storage, while Aurora uses shared cluster storage</li>
+        <li><span class="opt-letter">D.</span> Neither uses EBS or cluster storage — both stream data directly from S3 on every read and write</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Architecture</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — shared cluster storage describes Aurora only; standard RDS instances each have dedicated storage instead.</li>
+          <li><strong>B.</strong> Wrong — this reverses the actual relationship between the two products' storage models.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — each standard RDS instance has its own dedicated EBS-backed storage, while Aurora instances share a common cluster storage volume, a key architectural distinction between the two.</li>
+          <li><strong>D.</strong> Wrong — neither product streams every read and write directly from S3; RDS uses EBS, and Aurora uses its own shared cluster storage layer.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 13 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 13</p>
+      <p class="scenario-text">A team needs the absolute latest committed data guaranteed on failover, and separately wants a scalable way to serve read-heavy reporting queries without impacting the primary. Which replication types map to each of these two needs, respectively?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Read replicas for guaranteed-latest failover data, and Multi-AZ standbys for scalable reporting reads</li>
+        <li><span class="opt-letter">B.</span> Multi-AZ standbys, synchronous, for guaranteed failover data, and read replicas, asynchronous, for reporting</li>
+        <li><span class="opt-letter">C.</span> Multi-AZ standbys for both needs, since synchronous replication also scales horizontally for reporting reads</li>
+        <li><span class="opt-letter">D.</span> Read replicas for both needs, since asynchronous replication still guarantees zero data loss on failover</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Architecture</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this swaps the two: read replicas are asynchronous and don't guarantee the latest data, and Multi-AZ standbys aren't usable for reads at all.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Multi-AZ primary-to-standby replication is synchronous, so the standby always matches the primary for failover; read replicas use asynchronous replication and exist to scale read traffic.</li>
+          <li><strong>C.</strong> Wrong — a Multi-AZ standby isn't used for reads at all; it exists purely for failover readiness, not read scaling.</li>
+          <li><strong>D.</strong> Wrong — asynchronous read replica replication doesn't guarantee zero data loss on failover, since the replica can lag behind the primary.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 14 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 14</p>
+      <p class="scenario-text">A startup assumes their RDS bill will rise mainly when their app issues more SQL queries per second, and that enabling Multi-AZ is free since it's "just a backup copy." Are these two assumptions correct?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Both are correct — RDS billing scales with query volume, and Multi-AZ standbys are provided free</li>
+        <li><span class="opt-letter">B.</span> Query volume billing is correct, but Multi-AZ does carry an extra cost for the standby instance</li>
+        <li><span class="opt-letter">C.</span> Neither is correct — RDS billing is entirely flat regardless of instance size or storage provisioned</li>
+        <li><span class="opt-letter">D.</span> Neither is correct — billing is based on resource allocation, and Multi-AZ adds cost for the standby</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Architecture</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — RDS billing is based on resource allocation, not query volume, and Multi-AZ adds cost for the extra standby instance.</li>
+          <li><strong>B.</strong> Wrong — RDS billing isn't driven by query volume at all; it's tied to instance size, storage, and similar provisioned resources.</li>
+          <li><strong>C.</strong> Wrong — billing isn't flat; larger instances, more storage, and Provisioned IOPS all raise the bill, along with Multi-AZ.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — RDS is billed like EC2, based on resource allocation such as instance size and storage, not query count, and Multi-AZ adds cost for the extra standby instance.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 15 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 15</p>
+      <p class="scenario-text">An application connects directly to the DB C-name endpoint of a Multi-AZ instance deployment and issues both read and write queries. During normal operation, with no failover in progress, where do these queries actually go?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> All of them go to the primary — the standby is never used for reads or writes, only failover readiness</li>
+        <li><span class="opt-letter">B.</span> Reads are automatically load-balanced to the standby, while writes are routed only to the primary</li>
+        <li><span class="opt-letter">C.</span> Both reads and writes are split evenly between the primary and standby via C-name load balancing</li>
+        <li><span class="opt-letter">D.</span> All of them go to whichever instance currently has the lowest CPU utilization, primary or standby</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Multi-AZ: Instance vs. Cluster</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — in Multi-AZ instance mode, all reads and writes go through the primary via the DB C-name; the standby's only job is to be ready for failover.</li>
+          <li><strong>B.</strong> Wrong — the standby in instance mode never serves reads; there's no load balancing of read traffic to it at all.</li>
+          <li><strong>C.</strong> Wrong — there's no load-balancing behavior built into the C-name in instance mode; it always resolves to the primary.</li>
+          <li><strong>D.</strong> Wrong — routing isn't based on CPU utilization; the C-name simply points at the primary until a failover changes that.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 16 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 16</p>
+      <p class="scenario-text">A team on RDS Multi-AZ cluster mode wants application read traffic load-balanced automatically across the available readers, while writes and admin operations go to a single stable address pointing at the writer. Which two endpoints should they use, respectively?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The reader endpoint for writes and admin, and the cluster endpoint for load-balanced reads</li>
+        <li><span class="opt-letter">B.</span> Individual instance endpoints for both reads and writes, since they auto-fail over when connected directly</li>
+        <li><span class="opt-letter">C.</span> The reader endpoint for load-balanced reads, and the cluster endpoint for writes and admin operations</li>
+        <li><span class="opt-letter">D.</span> The cluster endpoint for both, since the reader endpoint only exists in Aurora, not RDS Multi-AZ clusters</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Multi-AZ: Instance vs. Cluster</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this swaps the two endpoints' purposes; the cluster endpoint is for writes and admin, not the reader endpoint.</li>
+          <li><strong>B.</strong> Wrong — instance endpoints are generally for testing only and provide no automatic failover when connected to directly.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the reader endpoint load-balances read traffic across available readers, while the cluster endpoint points at the writer for reads, writes, and admin.</li>
+          <li><strong>D.</strong> Wrong — RDS Multi-AZ cluster mode does have its own reader endpoint; it isn't an Aurora-exclusive feature.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 17 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 17</p>
+      <p class="scenario-text">An architect needs to explain why a Multi-AZ cluster deployment typically recovers from a failure faster, around 35 seconds plus log replay, than a Multi-AZ instance deployment's 60–120 seconds. What's the underlying reason?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Cluster mode skips DNS updates entirely during failover, while instance mode always waits on DNS</li>
+        <li><span class="opt-letter">B.</span> Cluster mode replicates via transaction logs rather than the full storage-level sync instance mode uses</li>
+        <li><span class="opt-letter">C.</span> Cluster mode's readers sit in the same Availability Zone as the writer, avoiding cross-AZ failover delay</li>
+        <li><span class="opt-letter">D.</span> Cluster mode uses manual, administrator-triggered failover, which completes faster than automatic detection</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Multi-AZ: Instance vs. Cluster</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — both modes involve an endpoint change on failover; cluster mode doesn't skip DNS mechanics entirely.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — cluster mode replicates using transaction logs rather than full storage-level synchronous replication, which is what drops its failover time to roughly 35 seconds plus log replay, versus 60–120 seconds for instance mode.</li>
+          <li><strong>C.</strong> Wrong — cluster mode readers are placed in different Availability Zones from the writer, not the same one, which is what provides the resilience.</li>
+          <li><strong>D.</strong> Wrong — cluster mode failover isn't dependent on a manual administrator trigger; the speed difference comes from the replication mechanism, not who initiates it.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 18 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 18</p>
+      <p class="scenario-text">In RDS Multi-AZ cluster mode, a write is being evaluated for durability guarantees. According to the underlying commit rule and hardware model, when is a write considered committed, and what hardware underpins the cluster?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A write commits once it reaches the writer alone, and the cluster runs on standard EC2 hardware</li>
+        <li><span class="opt-letter">B.</span> A write commits once every reader confirms it, and the cluster runs on standard hardware with EBS only</li>
+        <li><span class="opt-letter">C.</span> A write commits once the writer flushes straight to EBS, bypassing local storage, on Graviton hardware</li>
+        <li><span class="opt-letter">D.</span> A write commits once sent to the writer and confirmed by at least one reader, on Graviton with local NVMe</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Multi-AZ: Instance vs. Cluster</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a commit requires confirmation from at least one reader too, and cluster mode runs on Graviton with local NVMe, not standard EC2 hardware.</li>
+          <li><strong>B.</strong> Wrong — commit requires confirmation from at least one reader, not every reader, and the hardware includes local NVMe, not EBS alone.</li>
+          <li><strong>C.</strong> Wrong — writes go to local NVMe storage first and are flushed to EBS afterward, not the reverse.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — a write is committed once sent to the writer and confirmed by at least one reader, and cluster mode runs on Graviton processors with local NVMe SSD storage, writing locally first before flushing to EBS.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 19 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 19</p>
+      <p class="scenario-text">A colleague argues that RDS Multi-AZ cluster mode is basically the same as Aurora, since both offer a writer and multiple usable readers spread across Availability Zones. What key architectural fact proves this assumption wrong?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Each instance in an RDS Multi-AZ cluster still has its own dedicated local storage, unlike Aurora's shared volume</li>
+        <li><span class="opt-letter">B.</span> RDS Multi-AZ clusters can't span more than one AZ, while Aurora clusters always span at least three</li>
+        <li><span class="opt-letter">C.</span> RDS Multi-AZ clusters don't support a reader endpoint at all, a capability exclusive to Aurora</li>
+        <li><span class="opt-letter">D.</span> RDS Multi-AZ cluster readers can't serve any read traffic, exactly like standard Multi-AZ instance standbys</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Multi-AZ: Instance vs. Cluster</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — each RDS Multi-AZ cluster instance keeps its own dedicated local storage, unlike Aurora, where every instance shares one common cluster storage volume.</li>
+          <li><strong>B.</strong> Wrong — an RDS Multi-AZ cluster does span multiple Availability Zones; single-AZ operation isn't how it's designed.</li>
+          <li><strong>C.</strong> Wrong — RDS Multi-AZ clusters do have their own reader endpoint that load-balances read traffic across readers.</li>
+          <li><strong>D.</strong> Wrong — unlike Multi-AZ instance mode's standby, cluster mode readers are usable for read traffic, provided the app routes reads there.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 20 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 20</p>
+      <p class="scenario-text">A team sets automated backup retention to 7 days but also takes a manual snapshot before a risky schema migration. Ninety days later, with no further action taken by anyone, does that manual snapshot still exist?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — manual snapshots follow the same 0–35 day retention ceiling that automated backups use</li>
+        <li><span class="opt-letter">B.</span> No — manual snapshots are deleted automatically 30 days after creation regardless of any settings</li>
+        <li><span class="opt-letter">C.</span> Yes — manual snapshots never expire on their own and persist until explicitly deleted</li>
+        <li><span class="opt-letter">D.</span> Yes, but only because the instance itself was also deleted, which pauses automated cleanup</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Backups, Snapshots &amp; Restore</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the 0–35 day retention ceiling applies to automated backups; manual snapshots are explicitly not bound by that window.</li>
+          <li><strong>B.</strong> Wrong — there's no automatic 30-day deletion rule for manual snapshots; they persist indefinitely by design.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — manual snapshots never expire on their own and persist until you explicitly delete them, independent of the automated backup retention setting.</li>
+          <li><strong>D.</strong> Wrong — manual snapshots persist regardless of whether the source instance still exists; deletion of the instance isn't what keeps them alive.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 21 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 21</p>
+      <p class="scenario-text">A database experiences data corruption at 9:13am. The most recent automated backup snapshot completed at 1:00am, and RDS writes transaction logs to S3 every 5 minutes. Using point-in-time restore, roughly how close to 9:13am can the database be restored?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Only back to 1:00am, since point-in-time restore is limited strictly to the most recent snapshot</li>
+        <li><span class="opt-letter">B.</span> To approximately 9:10am, since the nearest snapshot is replayed forward using transaction logs</li>
+        <li><span class="opt-letter">C.</span> Exactly to 9:13am, with zero data loss, since transaction logs capture every write instantly</li>
+        <li><span class="opt-letter">D.</span> This isn't possible at all, since point-in-time restore only works when Multi-AZ is enabled</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Backups, Snapshots &amp; Restore</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — transaction logs are replayed on top of the nearest snapshot, extending recovery well past the snapshot's own timestamp.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — point-in-time restore combines the nearest backup snapshot with transaction logs (captured every 5 minutes), so the database can be restored to close to the failure time, roughly 9:10am.</li>
+          <li><strong>C.</strong> Wrong — the recovery granularity is roughly 5 minutes based on transaction log intervals, not instantaneous, so exact zero-loss restore to the failure second isn't guaranteed.</li>
+          <li><strong>D.</strong> Wrong — point-in-time restore doesn't require Multi-AZ; it relies on automated backups plus transaction logs, which are captured regardless of Multi-AZ status.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 22 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 22</p>
+      <p class="scenario-text">After a production incident, an engineer restores an RDS instance from an automated backup and then simply waits, assuming the original instance's endpoint will start serving the restored data automatically. What actually happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The original endpoint is repointed to the restored data automatically, requiring no application changes</li>
+        <li><span class="opt-letter">B.</span> The restore fails outright, since RDS can't restore automated backups without a manual snapshot present</li>
+        <li><span class="opt-letter">C.</span> The original instance is restored in place, overwriting its current data with the backup's contents</li>
+        <li><span class="opt-letter">D.</span> The restore creates a brand-new instance with a new endpoint, requiring the app to be reconfigured</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Backups, Snapshots &amp; Restore</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the original endpoint doesn't automatically repoint anywhere; restoring produces a separate, new instance and endpoint.</li>
+          <li><strong>B.</strong> Wrong — automated backup restores don't require a manual snapshot to exist; automated backups plus transaction logs are enough on their own.</li>
+          <li><strong>C.</strong> Wrong — restore is never in-place on the original instance; it always produces a brand-new instance rather than overwriting the existing one.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — restoring always creates a brand-new RDS instance with a new endpoint, so the application must be updated to point at it; there's no in-place restore.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 23 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 23</p>
+      <p class="scenario-text">An administrator sets an RDS instance's automated backup retention period to 0 to reduce storage costs, believing this only shortens how long backups are kept. What actually happens as a result?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Automated backups are disabled entirely, not merely shortened, since 0 is a special off value</li>
+        <li><span class="opt-letter">B.</span> Nothing changes in practice, since RDS silently enforces a minimum retention of 1 day regardless</li>
+        <li><span class="opt-letter">C.</span> Only manual snapshots are affected, since automated backups always retain a minimum of 7 days</li>
+        <li><span class="opt-letter">D.</span> Automated backups continue as before, but transaction logs stop being written to S3 entirely</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Backups, Snapshots &amp; Restore</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — the retention period is configurable from 0 to 35 days, and setting it to 0 doesn't just shorten backups, it disables automated backups entirely.</li>
+          <li><strong>B.</strong> Wrong — there's no silent 1-day minimum being enforced; a value of 0 genuinely turns automated backups off.</li>
+          <li><strong>C.</strong> Wrong — manual snapshots are independent of this setting altogether, and automated backups have no hidden 7-day floor.</li>
+          <li><strong>D.</strong> Wrong — automated backups don't continue at retention 0; transaction logs are part of the same automated backup mechanism that gets disabled.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 24 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 24</p>
+      <p class="scenario-text">A compliance team assumes that because RDS automated backups are stored redundantly across multiple Availability Zones by default, those same backups are also automatically copied to a second AWS Region for disaster recovery. Is this assumption correct?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — cross-Region backup replication is enabled by default the moment automated backups are turned on</li>
+        <li><span class="opt-letter">B.</span> Yes — cross-Region replication happens automatically once retention is set above 7 days</li>
+        <li><span class="opt-letter">C.</span> No — cross-Region replication of backups and transaction logs must be explicitly enabled, at its own cost</li>
+        <li><span class="opt-letter">D.</span> No — cross-Region replication is only available for manual snapshots, never automated backups or logs</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Backups, Snapshots &amp; Restore</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — cross-Region replication is not the default; multi-AZ redundancy within a Region doesn't imply cross-Region copying.</li>
+          <li><strong>B.</strong> Wrong — the retention period value has no bearing on whether cross-Region replication is active; it must be turned on explicitly regardless.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — backups and transaction logs can optionally be replicated to another Region, but this isn't the default; it must be explicitly enabled, and cross-Region copy plus storage costs apply.</li>
+          <li><strong>D.</strong> Wrong — both snapshots and transaction logs can be replicated cross-Region; it isn't limited to manual snapshots only.</li>
+        </ul>
+      </div>
+    </div>
+<!-- 25 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 25</p>
+      <p class="scenario-text">A retail application writes a new order to an RDS PostgreSQL primary and, half a second later, reads it back from a same-Region read replica as part of the same checkout flow — the order isn't there yet. What explains this behavior?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The primary and replica are Multi-AZ partners, and Multi-AZ failover briefly hid the new row</li>
+        <li><span class="opt-letter">B.</span> Read replica replication is asynchronous, so the replica can lag slightly behind the primary</li>
+        <li><span class="opt-letter">C.</span> The replica had already reached its 5-direct-replica limit, so it silently dropped the write</li>
+        <li><span class="opt-letter">D.</span> The checkout flow accidentally wrote to a promoted, now-standalone former replica instead</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Read Replicas</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Multi-AZ standbys use synchronous replication and aren't readable at all; that's a different feature from asynchronous read replicas, and mixing them up here doesn't explain the missing row.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — read replica replication is asynchronous, committing on the primary first and applying to the replica afterward, so a brief lag between write and read-back is expected.</li>
+          <li><strong>C.</strong> Wrong — the 5-direct-replica limit affects how many replicas can be created, not whether an existing replica applies incoming writes.</li>
+          <li><strong>D.</strong> Wrong — a promoted replica becomes a standalone instance disconnected from the primary; nothing here indicates promotion occurred.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 26 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 26</p>
+      <p class="scenario-text">A production RDS MySQL primary is hit by a faulty migration script that corrupts several tables. The on-call engineer proposes promoting the existing read replica to fix this quickly, reasoning that promotion gives a clean copy almost instantly. Is this the right recovery step?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, because promotion always produces a fully independent, verified-clean instance</li>
+        <li><span class="opt-letter">B.</span> Yes, but only after first converting the replica into a Multi-AZ standby</li>
+        <li><span class="opt-letter">C.</span> No, replicated writes almost certainly already corrupted the replica too — use point-in-time restore instead</li>
+        <li><span class="opt-letter">D.</span> No, because read replicas cannot be promoted once corruption is detected on the primary</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Read Replicas</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — promotion produces an independent instance, but "clean" isn't guaranteed — whatever was already replicated, including corruption, comes along with it.</li>
+          <li><strong>B.</strong> Wrong — Multi-AZ standbys are synchronous and unreadable; converting to one wouldn't undo already-replicated corrupted writes, and it isn't a real conversion path anyway.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — ongoing asynchronous replication means the corrupted rows were very likely already applied to the replica before anyone noticed; point-in-time restore from backup is the correct tool for corruption, not promotion.</li>
+          <li><strong>D.</strong> Wrong — replicas can still be promoted after corruption is detected; the problem is that the resulting instance itself contains the same corrupted data.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 27 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 27</p>
+      <p class="scenario-text">A team needs a secondary RDS instance that can serve live SELECT queries from a reporting dashboard during business hours, while the primary keeps handling transactional writes. Which feature satisfies this, and why does the alternative not?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A read replica, since unlike a Multi-AZ standby it can actually be queried for reads</li>
+        <li><span class="opt-letter">B.</span> A Multi-AZ standby, since it stays continuously synchronized and is safe to query</li>
+        <li><span class="opt-letter">C.</span> A read replica, since it automatically fails over the moment the primary is busy</li>
+        <li><span class="opt-letter">D.</span> A Multi-AZ standby, since it accepts read traffic once promoted to primary</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Read Replicas</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a read replica has its own endpoint and is genuinely queryable at any time, whereas a Multi-AZ standby exists purely for failover and cannot serve reads.</li>
+          <li><strong>B.</strong> Wrong — a Multi-AZ standby is synchronously updated but is not readable at all during normal operation; it exists solely as a failover target.</li>
+          <li><strong>C.</strong> Wrong — read replicas don't auto-failover based on primary load; automatic failover is a Multi-AZ behavior, and promotion of a replica is always manual.</li>
+          <li><strong>D.</strong> Wrong — a standby only becomes queryable after being promoted to primary during failover, which defeats the purpose of a live, continuously-available reporting target.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 28 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 28</p>
+      <p class="scenario-text">After promoting an RDS read replica to recover from a primary instance failure, what is true about the newly promoted instance going forward?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It keeps forwarding all writes back to the original primary for durability</li>
+        <li><span class="opt-letter">B.</span> It remains read-only permanently, only accepting reads from applications</li>
+        <li><span class="opt-letter">C.</span> It automatically re-links as a replica the moment the old primary returns</li>
+        <li><span class="opt-letter">D.</span> It behaves as a fully standalone, independent instance accepting reads and writes</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Read Replicas</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — once promoted, the instance operates independently; it has no ongoing relationship that forwards writes to the former primary.</li>
+          <li><strong>B.</strong> Wrong — the whole point of promotion is to lift the read-only restriction; a promoted replica accepts writes just like any standalone instance.</li>
+          <li><strong>C.</strong> Wrong — promotion is a one-way, manual action; there's no automatic re-linking if the original primary comes back online.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — after promotion, a read replica behaves as a fully functional, standalone RDS instance, accepting both reads and writes with no special connection to its former source.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 29 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 29</p>
+      <p class="scenario-text">A company's primary RDS database runs in eu-west-1, but a large customer base in ap-southeast-1 complains about slow report queries. The team wants those users reading from a nearby copy of the data without adding load to the primary. What should they deploy, and where?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A Multi-AZ standby instance deployed inside the ap-southeast-1 Region</li>
+        <li><span class="opt-letter">B.</span> A cross-Region read replica deployed within the ap-southeast-1 Region</li>
+        <li><span class="opt-letter">C.</span> A same-Region read replica in eu-west-1, paired with Route 53 latency routing</li>
+        <li><span class="opt-letter">D.</span> A manual snapshot copied into ap-southeast-1 and restored nightly for reads</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Read Replicas</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Multi-AZ deployments are confined to a single Region and their standby isn't readable at all, so this can't serve local reads in a different Region.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — RDS supports cross-Region read replicas, letting AWS handle the cross-Region networking so ap-southeast-1 users can read locally with low latency.</li>
+          <li><strong>C.</strong> Wrong — a replica kept in eu-west-1 still requires ap-southeast-1 users to cross the same distance to reach it; latency routing doesn't shorten that physical path.</li>
+          <li><strong>D.</strong> Wrong — a nightly-restored snapshot is a static, stale copy re-created on a schedule, not a live, continuously up-to-date queryable replica.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 30 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 30</p>
+      <p class="scenario-text">An existing unencrypted RDS PostgreSQL instance holds two years of production data, and compliance now requires encryption at rest with no data loss. What is the correct path to achieve this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Take a snapshot, copy it with encryption enabled, and restore a new encrypted instance</li>
+        <li><span class="opt-letter">B.</span> Enable the encryption-at-rest setting directly on the running instance in place</li>
+        <li><span class="opt-letter">C.</span> Turn on TDE for the instance, since it retroactively encrypts data on any engine</li>
+        <li><span class="opt-letter">D.</span> Attach an EBS-encrypted volume to the existing instance and remount the database</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Data Security</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — encryption at rest can only be set at creation time, so the standard path is snapshotting the unencrypted instance, copying that snapshot with encryption enabled, and restoring a new instance from the encrypted copy.</li>
+          <li><strong>B.</strong> Wrong — there is no in-place toggle for encryption at rest on an existing RDS instance; it must be set up through a new instance instead.</li>
+          <li><strong>C.</strong> Wrong — TDE is limited to Microsoft SQL Server and Oracle, not a universal, retroactive mechanism available on PostgreSQL or any other engine.</li>
+          <li><strong>D.</strong> Wrong — RDS doesn't expose or let you swap the underlying EBS volumes directly; encryption is managed by RDS itself, not through manual volume attachment.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 31 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 31</p>
+      <p class="scenario-text">A DBA wants to understand exactly where encryption happens for an RDS instance's data at rest, comparing default KMS-based encryption against TDE on SQL Server. Which statement correctly distinguishes the two?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Both encrypt inside the database engine before data ever leaves it</li>
+        <li><span class="opt-letter">B.</span> Both encrypt at the host layer, with the engine unaware encryption is happening</li>
+        <li><span class="opt-letter">C.</span> KMS + EBS encrypts at the host layer, while TDE encrypts inside the engine itself</li>
+        <li><span class="opt-letter">D.</span> KMS + EBS encrypts inside the engine, while TDE encrypts at the host layer</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Data Security</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this describes TDE only; default KMS + EBS encryption happens at the host, below the engine, not inside it.</li>
+          <li><strong>B.</strong> Wrong — this describes KMS + EBS only; TDE is engine-level and happens before data leaves the database engine.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — KMS + EBS encryption happens at the host layer, with the engine writing as if unencrypted, while TDE performs encryption inside the engine itself before data ever leaves it.</li>
+          <li><strong>D.</strong> Wrong — this reverses the two mechanisms; KMS + EBS is host-layer, and TDE is the engine-layer approach.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 32 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 32</p>
+      <p class="scenario-text">A regulated financial services client requires that AWS itself never have any access to their database encryption keys, on an Oracle RDS workload. Which configuration meets this bar?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Default KMS + EBS encryption using an AWS-managed CMK for the instance</li>
+        <li><span class="opt-letter">B.</span> Default KMS + EBS encryption using a customer-managed CMK for the instance</li>
+        <li><span class="opt-letter">C.</span> TDE alone on the Oracle instance, with keys generated and stored in KMS</li>
+        <li><span class="opt-letter">D.</span> TDE combined with CloudHSM, keeping keys in a customer-controlled hardware module</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Data Security</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — an AWS-managed CMK is fully controlled and used within AWS's own KMS infrastructure, which doesn't meet a zero-AWS-access requirement.</li>
+          <li><strong>B.</strong> Wrong — even a customer-managed CMK still lives inside AWS KMS, which is AWS infrastructure with some level of involvement in key usage.</li>
+          <li><strong>C.</strong> Wrong — TDE without CloudHSM still relies on KMS-hosted keys, which doesn't eliminate AWS's involvement in key management.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — pairing TDE with CloudHSM keeps keys in a customer-managed hardware security module, giving zero key exposure to AWS at all.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 33 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 33</p>
+      <p class="scenario-text">A security team wants two things on an RDS MySQL instance: connections encrypted in transit enforced for one specific high-privilege database user, and confirmation that a newly created read replica of an encrypted primary will also be encrypted. What should they expect?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> SSL/TLS can only be enforced instance-wide, and the replica must be encrypted separately with its own CMK</li>
+        <li><span class="opt-letter">B.</span> SSL/TLS can be mandated per database user, and the replica automatically inherits the primary's CMK</li>
+        <li><span class="opt-letter">C.</span> SSL/TLS is always mandatory by default, and the replica is created unencrypted regardless of the primary</li>
+        <li><span class="opt-letter">D.</span> SSL/TLS cannot be enforced on RDS at all, and encrypted replicas require manual key re-entry each time</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Data Security</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — SSL/TLS enforcement can be scoped to an individual database user, not only applied instance-wide, and replicas don't need a separately chosen CMK.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — RDS lets SSL/TLS be made mandatory for a specific user, and storage, logs, snapshots, and replicas of an encrypted instance all inherit the same CMK automatically.</li>
+          <li><strong>C.</strong> Wrong — SSL/TLS support exists on every engine but isn't mandatory by default; and an encrypted primary's replica is also encrypted, not left unencrypted.</li>
+          <li><strong>D.</strong> Wrong — RDS does support enforcing SSL/TLS per user, and encrypted replicas inherit the CMK automatically without any manual re-entry step.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 34 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 34</p>
+      <p class="scenario-text">A team enabled encryption at rest on a new RDS instance during creation, and now a cost-cutting review asks whether it can simply be switched back off on the same instance. What's the answer?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — encryption at rest cannot be removed; a new unencrypted instance would need to be created and data migrated</li>
+        <li><span class="opt-letter">B.</span> Yes — a single API call disables encryption at rest on the running instance with no downtime</li>
+        <li><span class="opt-letter">C.</span> No — encryption can never be changed at all, even by creating a new instance from scratch</li>
+        <li><span class="opt-letter">D.</span> Yes — but only if the instance is first converted to use TDE instead of KMS-based encryption</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Data Security</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — once enabled, encryption at rest is permanent for that instance; removing it requires creating a new, unencrypted instance and migrating the data across.</li>
+          <li><strong>B.</strong> Wrong — there's no toggle to disable encryption in place on a running instance; it's fixed at creation time and can't be turned off later.</li>
+          <li><strong>C.</strong> Wrong — encryption status absolutely can change, just not on the existing instance — a brand-new unencrypted instance with migrated data is the valid path.</li>
+          <li><strong>D.</strong> Wrong — switching to TDE doesn't unlock the ability to remove encryption from the current instance; the same in-place restriction still applies.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 35 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 35</p>
+      <p class="scenario-text">A team running a legacy application on MariaDB needs root-level OS access to install a custom kernel module the application depends on. Would RDS Custom meet this need?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, because RDS Custom grants OS access to every RDS-supported engine</li>
+        <li><span class="opt-letter">B.</span> Yes, as long as Multi-AZ is also enabled alongside RDS Custom</li>
+        <li><span class="opt-letter">C.</span> No, RDS Custom only supports Oracle and SQL Server — MariaDB would need EC2</li>
+        <li><span class="opt-letter">D.</span> No, RDS Custom never grants OS-level access regardless of engine</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Custom</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — RDS Custom's OS access is limited to two specific engines, not every engine RDS supports.</li>
+          <li><strong>B.</strong> Wrong — Multi-AZ is an availability feature unrelated to which engines RDS Custom supports.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — RDS Custom currently supports only Oracle and SQL Server, so a MariaDB requirement for OS-level access would need to run on EC2 instead.</li>
+          <li><strong>D.</strong> Wrong — RDS Custom does grant OS-level access via SSH, RDP, or Session Manager; the limitation is the engine, not the access model.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 36 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 36</p>
+      <p class="scenario-text">An administrator needs to manually install a custom Oracle patch on an RDS Custom instance outside of AWS's normal update path. What must happen immediately before making that change, and why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Nothing — RDS Custom allows unrestricted manual changes at any time with no preparation</li>
+        <li><span class="opt-letter">B.</span> The instance must first be converted to a plain EC2-hosted database</li>
+        <li><span class="opt-letter">C.</span> All automated backups must be deleted so they don't conflict with the patch</li>
+        <li><span class="opt-letter">D.</span> Database automation must be paused, since it still runs in the background and could conflict</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Custom</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — RDS Custom still runs background automation continuously; making changes without preparation risks the automation conflicting with the manual work.</li>
+          <li><strong>B.</strong> Wrong — converting to plain EC2 isn't required or part of the RDS Custom customization workflow at all.</li>
+          <li><strong>C.</strong> Wrong — deleting backups isn't the required precaution here; pausing automation is what protects the change from conflicting processes.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — because RDS Custom still runs RDS-style automation in the background, that automation must be paused before manual changes, then resumed afterward.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 37 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 37</p>
+      <p class="scenario-text">A team compares standard RDS with RDS Custom and wants to know which one exposes the underlying EC2 instances, EBS volumes, and backups directly in their AWS account. What's the distinction?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> RDS Custom exposes EC2, EBS, and backups in the account; standard RDS hides them</li>
+        <li><span class="opt-letter">B.</span> Standard RDS exposes EC2, EBS, and backups; RDS Custom hides them like standard RDS</li>
+        <li><span class="opt-letter">C.</span> Both expose the same underlying EC2 and EBS resources directly in the account</li>
+        <li><span class="opt-letter">D.</span> Neither exposes underlying EC2 or EBS resources — both fully abstract the infrastructure</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Custom</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — RDS Custom's EC2 instances, EBS volumes, and backups are all visible in the customer's account, unlike standard RDS which hides that infrastructure entirely.</li>
+          <li><strong>B.</strong> Wrong — this reverses the actual behavior; standard RDS is the one that hides EC2, EBS, and backups from the account.</li>
+          <li><strong>C.</strong> Wrong — standard RDS specifically does not expose these resources directly, so they aren't the same in this respect.</li>
+          <li><strong>D.</strong> Wrong — RDS Custom is the exception here — it deliberately surfaces the EC2 instances, EBS volumes, and backups in the account.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 38 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 38</p>
+      <p class="scenario-text">Across on-premises, EC2-hosted databases, standard RDS, and RDS Custom, one responsibility never shifts to AWS no matter the model chosen. Which one, and why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> OS patching, because customers must always patch the operating system themselves</li>
+        <li><span class="opt-letter">B.</span> Application optimization, because it depends on business logic only the customer understands</li>
+        <li><span class="opt-letter">C.</span> Hardware maintenance, because customers are always responsible for physical servers</li>
+        <li><span class="opt-letter">D.</span> Automated backups, because AWS never manages backup schedules in any RDS model</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Custom</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — OS patching responsibility does shift: AWS handles it fully under standard RDS, unlike on-premises or EC2.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — application optimization remains with the customer across every model, since it depends on business logic and query design that only the customer understands.</li>
+          <li><strong>C.</strong> Wrong — hardware is the one thing AWS always owns starting from EC2 onward; customers aren't responsible for physical servers in any AWS-hosted model.</li>
+          <li><strong>D.</strong> Wrong — AWS does manage automated backups under standard RDS and largely under RDS Custom too; this isn't a customer-constant responsibility.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 39 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 39</p>
+      <p class="scenario-text">A team needs full OS-level customization for a legacy SQL Server application, but still wants AWS to automate patching, backups, and failover wherever possible rather than owning everything themselves. Which option best matches this trade-off, positioned between standard RDS and self-managed EC2?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Standard RDS, since it already permits SSH access when the engine is SQL Server</li>
+        <li><span class="opt-letter">B.</span> A self-managed EC2 instance, since it offers the most automation of the three options</li>
+        <li><span class="opt-letter">C.</span> RDS Custom, since it keeps RDS-style automation while allowing OS and engine access</li>
+        <li><span class="opt-letter">D.</span> Aurora Serverless, since it removes the need to manage OS or engine versions entirely</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Custom</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — standard RDS never exposes OS-level or SSH access on any engine, including SQL Server; that access is exactly what's missing there.</li>
+          <li><strong>B.</strong> Wrong — self-managed EC2 offers full control but the least automation of the three, requiring the customer to own patching, backups, and HA entirely.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — RDS Custom sits between RDS and EC2, retaining RDS-style automation while still allowing OS and engine-level customization for legacy needs.</li>
+          <li><strong>D.</strong> Wrong — Aurora Serverless is a scaling model for Aurora, not a solution for OS-level access, and doesn't apply to a SQL Server legacy customization requirement.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 40 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 40</p>
+      <p class="scenario-text">An Aurora cluster has a primary and three replicas. An application needs its read-heavy reporting queries automatically load-balanced across whichever replicas are currently available, without hardcoding individual instance addresses. Which endpoint should it use?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The cluster endpoint, since it always includes all replicas for load balancing</li>
+        <li><span class="opt-letter">B.</span> An instance endpoint for each replica, cycled through manually by the application</li>
+        <li><span class="opt-letter">C.</span> A custom endpoint, since only custom endpoints support any load balancing at all</li>
+        <li><span class="opt-letter">D.</span> The reader endpoint, since it automatically load-balances across available replicas</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Amazon Aurora Architecture</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the cluster endpoint always points at the primary, for reads and writes, and doesn't perform any load balancing across replicas.</li>
+          <li><strong>B.</strong> Wrong — instance endpoints target one specific instance each and are meant mainly for testing, not automatic load balancing across many replicas.</li>
+          <li><strong>C.</strong> Wrong — custom endpoints are user-defined subsets of instances for specific purposes; they aren't the default mechanism for automatic load balancing.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the reader endpoint automatically load-balances read traffic across all currently available replicas, incorporating new replicas as they're added.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 41 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 41</p>
+      <p class="scenario-text">One of the six storage nodes underlying an Aurora cluster's shared volume develops a disk segment failure. What happens to the cluster as a result?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Aurora self-heals the affected segment automatically using data from the other nodes</li>
+        <li><span class="opt-letter">B.</span> The cluster becomes unavailable until an administrator restores from the latest snapshot</li>
+        <li><span class="opt-letter">C.</span> The primary instance automatically fails over to a replica in a different Availability Zone</li>
+        <li><span class="opt-letter">D.</span> All replicas are disconnected until a new 6-node storage volume is manually provisioned</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Amazon Aurora Architecture</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Aurora automatically self-heals disk segment failures using data from the other storage nodes, reducing the need for snapshot or point-in-time restores after this kind of failure.</li>
+          <li><strong>B.</strong> Wrong — a snapshot restore isn't needed for a routine disk segment failure; Aurora's storage layer repairs itself using the other nodes automatically.</li>
+          <li><strong>C.</strong> Wrong — a single storage segment failure doesn't trigger a compute-level primary failover; storage self-healing operates independently of instance failover.</li>
+          <li><strong>D.</strong> Wrong — Aurora doesn't require manually re-provisioning the storage volume for a segment failure; the shared volume repairs itself without administrator action.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 42 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 42</p>
+      <p class="scenario-text">A dev team wants to spin up a near-instant, storage-efficient copy of a large production Aurora database for a one-off testing task, without waiting for a full data copy to complete. Which feature fits, and how does it stay storage-efficient?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Backtrack, because it creates a second cluster referencing only the differences since the last rollback point</li>
+        <li><span class="opt-letter">B.</span> Fast clone, because it references the original storage and only stores data that later diverges</li>
+        <li><span class="opt-letter">C.</span> A standard snapshot restore, because snapshots only ever store the changed blocks since creation</li>
+        <li><span class="opt-letter">D.</span> A cross-Region read replica, because replicas share the same underlying cluster storage volume</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Amazon Aurora Architecture</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Backtrack rolls an existing cluster back in place to an earlier point in time; it doesn't create a second cluster or reference storage the way fast clone does.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — fast clone creates a new database almost instantly by referencing the original's existing storage, only consuming additional storage for data that diverges afterward.</li>
+          <li><strong>C.</strong> Wrong — a standard snapshot restore copies the full dataset into a new instance and doesn't share underlying storage with the source the way a fast clone does.</li>
+          <li><strong>D.</strong> Wrong — a read replica belongs to its own replication relationship with a primary; it doesn't work as an instant, differencing testing clone the way fast clone does.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 43 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 43</p>
+      <p class="scenario-text">An Aurora cluster's consumed storage peaked at 80 GiB during a data import, then dropped back down to 60 GiB after a cleanup job deleted old rows. What does the team's storage bill reflect immediately afterward?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> 60 GiB, since Aurora storage billing always tracks currently stored data in real time</li>
+        <li><span class="opt-letter">B.</span> 0 GiB, since Aurora storage cost resets whenever data is deleted from a cluster</li>
+        <li><span class="opt-letter">C.</span> 80 GiB, since Aurora bills on a high-watermark basis until a new cluster is created</li>
+        <li><span class="opt-letter">D.</span> 140 GiB, since Aurora sums the peak and current usage together for billing purposes</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Amazon Aurora Architecture</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Aurora billing follows a high-watermark model, not a real-time reflection of currently stored data, so the drop to 60 GiB isn't immediately reflected.</li>
+          <li><strong>B.</strong> Wrong — deleting data doesn't reset storage billing to zero; the high-watermark figure persists as the billed amount.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — Aurora bills storage based on a high-watermark: once usage peaks at 80 GiB, that figure persists as the billed amount even after freeing space, until a new cluster is created and data migrated.</li>
+          <li><strong>D.</strong> Wrong — Aurora doesn't sum peak and current usage together; the billed figure is simply the high-watermark reached, not an additive total.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 44 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 44</p>
+      <p class="scenario-text">A team is deciding between a standard RDS Multi-AZ deployment and an Aurora cluster for a workload that needs several possible failover targets beyond just one standby. What does Aurora offer here that Multi-AZ doesn't?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Aurora allows exactly one replica, matching the Multi-AZ standby limit, but with faster failover</li>
+        <li><span class="opt-letter">B.</span> Aurora replicas require manual promotion before becoming eligible failover targets</li>
+        <li><span class="opt-letter">C.</span> Aurora supports failover only to replicas in the same Availability Zone as the primary</li>
+        <li><span class="opt-letter">D.</span> Aurora supports up to 15 replicas, and any of them can serve as a failover target</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Amazon Aurora Architecture</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Aurora's replica limit is far higher than Multi-AZ's single standby, not matched to it; this understates Aurora's actual capacity.</li>
+          <li><strong>B.</strong> Wrong — Aurora replicas don't require manual promotion to be eligible failover targets; any of them can already serve that role automatically during failover.</li>
+          <li><strong>C.</strong> Wrong — Aurora's replicas and failover aren't restricted to a single Availability Zone; the cluster's storage and replicas span multiple AZs.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — Aurora supports up to 15 replicas, a large jump from RDS's single Multi-AZ standby, and any of those replicas can act as a failover target.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 45 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 45</p>
+      <p class="scenario-text">A team configures an Aurora Serverless cluster for a dev/test database with a minimum ACU setting that allows scaling all the way down during idle periods. What happens overnight when there are zero active connections?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Compute scales to zero and the cluster is billed only for storage until traffic resumes</li>
+        <li><span class="opt-letter">B.</span> Compute stays at the configured minimum ACU floor, since it can never fully pause</li>
+        <li><span class="opt-letter">C.</span> The cluster automatically deletes itself to avoid incurring any overnight charges</li>
+        <li><span class="opt-letter">D.</span> Compute scales up to the maximum ACU as a safety margin against sudden traffic</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Serverless</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Aurora Serverless can scale compute all the way to zero and pause the cluster during idle periods, leaving only the storage consumption charge.</li>
+          <li><strong>B.</strong> Wrong — Aurora Serverless can scale below any nonzero floor all the way to a fully paused state; it isn't locked to a nonzero minimum.</li>
+          <li><strong>C.</strong> Wrong — pausing to zero compute doesn't involve deleting the cluster; the cluster and its data remain intact, simply with compute paused.</li>
+          <li><strong>D.</strong> Wrong — idle periods trigger scaling down toward zero, not up toward the maximum; scaling up happens in response to increased load, not idleness.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 46 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 46</p>
+      <p class="scenario-text">A finance team compares Aurora Serverless billing against Aurora provisioned for a workload with short, unpredictable bursts of activity throughout the day. How is Aurora Serverless compute billed?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A flat hourly rate regardless of how many ACUs are actually consumed</li>
+        <li><span class="opt-letter">B.</span> Per-second, based on the ACUs actually consumed during that time</li>
+        <li><span class="opt-letter">C.</span> A flat daily rate based on the maximum ACU configured for the cluster</li>
+        <li><span class="opt-letter">D.</span> Per-connection, charged once for each new client connection established</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Serverless</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Aurora Serverless doesn't bill a flat hourly rate; billing tracks actual ACU consumption at much finer granularity than that.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Aurora Serverless bills compute per-second, based on the ACUs actually consumed, which suits short, unpredictable bursts well.</li>
+          <li><strong>C.</strong> Wrong — billing isn't based on the configured maximum ACU ceiling; it reflects actual consumption, not the upper bound set for the cluster.</li>
+          <li><strong>D.</strong> Wrong — Aurora Serverless billing isn't tied to the number of client connections established; it's based on ACU consumption over time.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 47 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 47</p>
+      <p class="scenario-text">During a traffic spike, an Aurora Serverless cluster scales up to larger compute capacity. Existing application connections stay intact throughout the transition. What makes this possible?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The application maintains a direct, persistent connection to one fixed ACU at all times</li>
+        <li><span class="opt-letter">B.</span> DNS records are updated instantly so clients silently reconnect to new capacity</li>
+        <li><span class="opt-letter">C.</span> A shared, AWS-managed proxy fleet brokers connections between the app and the active ACU</li>
+        <li><span class="opt-letter">D.</span> RDS Proxy is automatically attached to every Aurora Serverless cluster by default</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Serverless</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — applications never connect directly to a specific ACU; that direct model would be exactly what breaks during a scaling transition.</li>
+          <li><strong>B.</strong> Wrong — the seamlessness isn't achieved through DNS record updates and client reconnects; it's handled by a proxy layer, not DNS propagation.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a shared, AWS-managed proxy fleet sits between the application and whichever ACU is currently serving the cluster, making capacity changes invisible to the client connection.</li>
+          <li><strong>D.</strong> Wrong — RDS Proxy and the Aurora Serverless proxy fleet are conceptually similar but separate mechanisms; RDS Proxy isn't what's automatically attached here.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 48 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 48</p>
+      <p class="scenario-text">When an Aurora Serverless cluster needs to scale up quickly in response to a traffic spike, new compute capacity comes online in a matter of seconds. What underlying mechanism enables this speed?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Pre-provisioned dedicated instance classes reserved exclusively for that customer's account</li>
+        <li><span class="opt-letter">B.</span> A background snapshot restore that completes just before traffic reaches the new peak</li>
+        <li><span class="opt-letter">C.</span> New EC2 instances are launched fresh from an AMI each time capacity needs to grow</li>
+        <li><span class="opt-letter">D.</span> ACUs are allocated from a stateless, AWS-managed warm pool shared across customers</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Serverless</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Aurora Serverless doesn't reserve dedicated instance classes per customer; that's closer to how Aurora provisioned instance sizing works instead.</li>
+          <li><strong>B.</strong> Wrong — scaling capacity isn't achieved through a snapshot restore process; that would be far too slow to explain seconds-level scaling responsiveness.</li>
+          <li><strong>C.</strong> Wrong — new capacity doesn't come from freshly launching EC2 instances from an AMI on demand; that process is too slow for Aurora Serverless's scaling speed.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — ACUs are allocated from a stateless warm pool managed by AWS and shared across customers, which is what makes new capacity fast to bring online.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 49 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 49</p>
+      <p class="scenario-text">A multi-tenant SaaS platform has infrastructure costs that need to track closely with actual customer usage and revenue, rather than being fixed regardless of load. Which Aurora option fits best, and why does Aurora provisioned fit less well here?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Aurora Serverless, because compute cost scales with actual load instead of a fixed instance size</li>
+        <li><span class="opt-letter">B.</span> Aurora provisioned, because its fixed instance size guarantees the lowest possible cost per tenant</li>
+        <li><span class="opt-letter">C.</span> Aurora Serverless, because it eliminates storage costs entirely for multi-tenant workloads</li>
+        <li><span class="opt-letter">D.</span> Aurora provisioned, because it automatically scales ACUs between a configured min and max</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Serverless</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Aurora Serverless scales compute in line with actual load, so infrastructure cost tracks with usage and revenue rather than staying fixed regardless of tenant activity.</li>
+          <li><strong>B.</strong> Wrong — a fixed instance size in Aurora provisioned doesn't scale down with lighter tenant load, so it doesn't guarantee the lowest cost as usage varies.</li>
+          <li><strong>C.</strong> Wrong — Aurora Serverless still incurs storage costs; only compute can scale to near-zero, not storage, so storage cost isn't eliminated.</li>
+          <li><strong>D.</strong> Wrong — ACU-based min/max scaling is an Aurora Serverless behavior, not a feature of Aurora provisioned, which uses fixed instance classes instead.</li>
+        </ul>
+      </div>
+    </div>
+<!-- 50 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 50</p>
+      <p class="scenario-text">A company runs Aurora Global Database with a primary cluster in us-east-1 and a secondary Region in ap-southeast-1. A developer proposes writing directly to the secondary Region during business hours to reduce latency for APAC users, alongside normal writes to the primary. Will this work under normal operation?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — secondary Regions are entirely read-only during normal operation; all writes must go to the primary</li>
+        <li><span class="opt-letter">B.</span> Yes, as long as the write goes through a dedicated writer endpoint provisioned on the secondary</li>
+        <li><span class="opt-letter">C.</span> Yes — this is exactly what multi-master mode provides, and Global Database uses the same mechanism</li>
+        <li><span class="opt-letter">D.</span> No — Global Database blocks all read and write traffic to secondary Regions until a promotion occurs</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Global Database</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — under normal operation, secondary Regions in a Global Database are entirely read-only; writes can only be accepted after a secondary is promoted, such as during disaster recovery.</li>
+          <li><strong>B.</strong> Wrong — secondary Regions have no writer endpoint under normal operation; there is no configuration that lets them accept writes without promotion.</li>
+          <li><strong>C.</strong> Wrong — this describes multi-master mode, a different Aurora feature where every instance accepts writes; Global Database replication is one-way, primary to secondary.</li>
+          <li><strong>D.</strong> Wrong — secondary Regions do serve read traffic during normal operation; only writes are blocked, not reads.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 51 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 51</p>
+      <p class="scenario-text">An architect adds three secondary Regions to an existing Aurora Global Database cluster and worries this will noticeably slow write throughput on the primary, since the engine has to replicate to each additional Region. Is this concern justified?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — each secondary Region proportionally increases compute-layer replication load on the primary</li>
+        <li><span class="opt-letter">B.</span> No — replication happens at the storage layer, independent of compute, so primary performance is unaffected</li>
+        <li><span class="opt-letter">C.</span> Yes, but only once more than five secondary Regions are attached to the same cluster</li>
+        <li><span class="opt-letter">D.</span> No — secondary Regions replicate only schema metadata, never the actual row-level data</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Global Database</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — replication is storage-layer, not compute-layer; it doesn't consume CPU on the primary's writer instance regardless of how many secondaries exist.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — because replication happens at the storage layer rather than through the database engine, adding secondary Regions adds no CPU load to the primary.</li>
+          <li><strong>C.</strong> Wrong — there's no compute threshold where storage-layer replication suddenly starts costing CPU; the mechanism stays off the compute path regardless of secondary count.</li>
+          <li><strong>D.</strong> Wrong — Global Database replicates actual data, not just schema metadata; that's what lets secondaries serve real read traffic.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 52 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 52</p>
+      <p class="scenario-text">The primary Region of an Aurora Global Database cluster needs extra local read capacity for a reporting workload, kept entirely separate from the DR-focused secondary Regions. How many read replicas can be added within the primary Region's own cluster?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Up to 16, matching the per-secondary-Region replica limit exactly</li>
+        <li><span class="opt-letter">B.</span> Zero — once Global Database is enabled, the primary can no longer hold local replicas</li>
+        <li><span class="opt-letter">C.</span> Up to 15, the same limit as a standalone, non-global Aurora cluster</li>
+        <li><span class="opt-letter">D.</span> Unlimited, since Global Database removes the standard per-cluster replica cap</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Global Database</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — 16 is the per-secondary-Region limit, not the primary's; this swaps the two numbers.</li>
+          <li><strong>B.</strong> Wrong — the primary Region still behaves like a normal Aurora cluster and can hold local read replicas under Global Database.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the primary Region behaves like a standalone Aurora cluster: one writer plus up to 15 read replicas, unaffected by any secondary Regions attached.</li>
+          <li><strong>D.</strong> Wrong — Global Database doesn't remove the primary's standard replica cap; that cap still applies.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 53 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 53</p>
+      <p class="scenario-text">The primary Region hosting an Aurora Global Database cluster suffers a complete regional outage. The operations team must restore write capability as fast as possible while minimizing data loss. What should they do?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Restore the latest automated snapshot into a brand-new cluster in another Region</li>
+        <li><span class="opt-letter">B.</span> Wait, since cross-Region failover happens automatically with no manual action required</li>
+        <li><span class="opt-letter">C.</span> Build a new Global Database cluster from scratch and reload it from the last backup</li>
+        <li><span class="opt-letter">D.</span> Promote a secondary Region's cluster to read-write, since replication lag is typically under one second</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Global Database</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a snapshot restore is far slower than promoting an already-replicating secondary and ignores the point of running Global Database.</li>
+          <li><strong>B.</strong> Wrong — promoting a secondary Region is a deliberate action the team takes, not an automatic background process.</li>
+          <li><strong>C.</strong> Wrong — rebuilding from scratch is slow and defeats the purpose of having secondaries already replicating in near real time.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — promoting a secondary Region to read-write is the designed recovery path; sub-second replication lag keeps both RPO and RTO low.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 54 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 54</p>
+      <p class="scenario-text">A team is choosing between an Aurora Global Database secondary Region and a standard Aurora Cross-Region Read Replica to serve low-latency European reads, with a hard requirement of sub-second replication lag for DR readiness. Which option meets that requirement?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A Global Database secondary Region, since replication happens at the storage layer in under a second</li>
+        <li><span class="opt-letter">B.</span> A standard Cross-Region Read Replica, since both features use the same storage-layer path</li>
+        <li><span class="opt-letter">C.</span> Either option, since Aurora replicates all cross-Region reads identically regardless of feature</li>
+        <li><span class="opt-letter">D.</span> A standard Cross-Region Read Replica, provided it sits in the same Availability Zone as the primary</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Global Database</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Global Database's storage-layer replication is purpose-built for this, typically completing in under a second, unlike older cross-Region replication approaches.</li>
+          <li><strong>B.</strong> Wrong — the two features are distinct mechanisms with different replication paths and typical lag characteristics; they aren't interchangeable.</li>
+          <li><strong>C.</strong> Wrong — the two features behave differently, which is precisely why Global Database exists as the purpose-built option for low-lag cross-Region use.</li>
+          <li><strong>D.</strong> Wrong — a cross-Region replica is, by definition, in a different Region than the primary; "same Availability Zone as the primary" is not a valid configuration for it.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 55 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 55</p>
+      <p class="scenario-text">A team compares a single-master Aurora cluster to a multi-master one and wants to know specifically why single-master failover takes noticeably longer when the primary instance fails. What is the reason?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Single-master clusters use slower, non-SSD-backed shared storage than multi-master clusters</li>
+        <li><span class="opt-letter">B.</span> A replica must be promoted to read-write and the cluster endpoint must repoint before writes resume</li>
+        <li><span class="opt-letter">C.</span> Single-master clusters can only run in a single Availability Zone, delaying any failover</li>
+        <li><span class="opt-letter">D.</span> Single-master clusters must complete a full manual snapshot before any replica can be promoted</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Multi-Master Writes</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — both modes share the same underlying cluster storage architecture; storage speed isn't what differentiates failover time.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — in single-master mode a replica must be promoted from read-only to read-write and the cluster endpoint must repoint before writes can resume, and that promotion step is what makes failover slower.</li>
+          <li><strong>C.</strong> Wrong — single-master Aurora clusters span multiple Availability Zones just like multi-master ones; AZ count isn't the distinguishing factor.</li>
+          <li><strong>D.</strong> Wrong — no manual snapshot step is required before promotion; failover doesn't depend on taking a fresh backup first.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 56 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 56</p>
+      <p class="scenario-text">In a multi-master Aurora cluster, two instances each receive a write to the same row at nearly the same moment. What determines whether either write actually commits?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The cluster endpoint arbitrates between the two instances and forwards only one write</li>
+        <li><span class="opt-letter">B.</span> Both writes are applied immediately, and a background job reconciles conflicts afterward</li>
+        <li><span class="opt-letter">C.</span> Each write needs quorum confirmation from storage nodes; one failing to reach quorum is rejected</li>
+        <li><span class="opt-letter">D.</span> All writes cluster-wide pause automatically until an administrator resolves the conflict</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Multi-Master Writes</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — multi-master clusters have no cluster endpoint at all, so nothing exists to arbitrate between instances this way.</li>
+          <li><strong>B.</strong> Wrong — conflicting writes aren't both applied and merged later; a quorum-based confirmation process resolves this at commit time.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the instance receiving a write proposes it to every storage node; if a quorum confirms, it commits, and a write that fails to reach quorum is cancelled with an error returned to the application.</li>
+          <li><strong>D.</strong> Wrong — writes aren't paused cluster-wide for manual review; conflicting writes are rejected individually through the quorum mechanism.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 57 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 57</p>
+      <p class="scenario-text">A team enables multi-master mode on their Aurora cluster and assumes their application is now automatically fault-tolerant to instance failure, without changing any application code. Is this assumption correct?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — the cluster's built-in load balancer automatically redirects writes to a surviving instance</li>
+        <li><span class="opt-letter">B.</span> Yes — the cluster endpoint automatically reroutes any failed writes to another writer</li>
+        <li><span class="opt-letter">C.</span> Yes, as long as automated backups are configured with a short retention window</li>
+        <li><span class="opt-letter">D.</span> No — the application must be designed to hold multiple writer connections and redirect traffic itself</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Multi-Master Writes</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — multi-master clusters provide no built-in load balancing; the application must distribute operations across instances itself.</li>
+          <li><strong>B.</strong> Wrong — multi-master clusters have no cluster endpoint at all, so nothing exists to reroute writes automatically.</li>
+          <li><strong>C.</strong> Wrong — backup retention is unrelated to write availability during an instance failure; it doesn't grant fault tolerance.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — multi-master removes the promotion delay and gives the ability to redirect writes, but the application must be explicitly built to hold multiple writer connections and manage that failover logic itself.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 58 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 58</p>
+      <p class="scenario-text">A developer migrating an application to a multi-master Aurora cluster expects to keep using the single cluster endpoint their app already connects to, the same way it worked on their single-master cluster. Will this work?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — multi-master clusters have no cluster endpoint; the app must connect to instances directly</li>
+        <li><span class="opt-letter">B.</span> Yes — the cluster endpoint still exists and load-balances across all writers automatically</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if the application enables IAM authentication on that endpoint</li>
+        <li><span class="opt-letter">D.</span> No — multi-master clusters instead expose a reader endpoint that round-robins across writers</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Multi-Master Writes</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — multi-master clusters have no cluster endpoint at all; the application connects directly to individual instances and decides how to distribute operations across them.</li>
+          <li><strong>B.</strong> Wrong — no cluster endpoint exists in multi-master mode, so there's nothing to load-balance across writers automatically.</li>
+          <li><strong>C.</strong> Wrong — IAM authentication is a credential mechanism and doesn't conjure a cluster endpoint that isn't part of the multi-master architecture.</li>
+          <li><strong>D.</strong> Wrong — a round-robin reader endpoint isn't how multi-master works; there's simply no built-in endpoint of any kind.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 59 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 59</p>
+      <p class="scenario-text">A DBA used to standard single-master Aurora read replicas, which only ever serve reads, is told the cluster is being switched to multi-master mode. What fundamentally changes about the other instances in the cluster?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Nothing — multi-master only changes failover behavior; other instances stay read-only</li>
+        <li><span class="opt-letter">B.</span> Every instance becomes able to accept both reads and writes, not just the primary</li>
+        <li><span class="opt-letter">C.</span> The other instances become Global Database secondary Regions that can be promoted independently</li>
+        <li><span class="opt-letter">D.</span> The other instances stay read-only, but replication lag drops to exactly zero</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Aurora Multi-Master Writes</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — multi-master fundamentally changes writability, not just failover; the other instances stop being read-only.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — multi-master mode makes every instance in the cluster able to both read and write, unlike single-master where only the primary writes.</li>
+          <li><strong>C.</strong> Wrong — this describes Aurora Global Database, a separate feature for cross-Region replication and DR, not multi-master's same-Region, all-writer architecture.</li>
+          <li><strong>D.</strong> Wrong — multi-master isn't about eliminating replication lag on read-only replicas; it's about making instances writable, which this option ignores entirely.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 60 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 60</p>
+      <p class="scenario-text">A fleet of Lambda functions each open a new direct connection to an RDS for MySQL database, on a small db.t3.medium instance, on every invocation. During traffic spikes they see "too many connections" errors even though CPU and memory are barely used. What is the best fix?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Increase automated backup retention so more connection slots are allocated</li>
+        <li><span class="opt-letter">B.</span> Add read replicas so Lambda invocations can spread connections across more instances</li>
+        <li><span class="opt-letter">C.</span> Put RDS Proxy in front of the database to pool and multiplex the short-lived connections</li>
+        <li><span class="opt-letter">D.</span> Resize to a larger instance class purely to raise the raw connection ceiling</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Proxy</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — backup retention has no relationship to how many concurrent connections a database can serve.</li>
+          <li><strong>B.</strong> Wrong — each replica still needs its own set of connections; spreading direct connections across more instances doesn't solve pooling, it just relocates the problem.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — RDS Proxy maintains a long-lived connection pool and multiplexes many client connections over fewer actual database connections, which is exactly the fix for connection exhaustion on a small instance class.</li>
+          <li><strong>D.</strong> Wrong — this treats the symptom, not the cause, and is the costlier route; the lesson frames this exact overhead-on-small-instances scenario as RDS Proxy's headline use case instead.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 61 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 61</p>
+      <p class="scenario-text">An application currently connects directly to an Aurora cluster endpoint, and during failover it must wait for DNS propagation and reconnect itself, causing several seconds of downtime. The team wants to cut that downtime with minimal code changes. What should they do, and roughly how much does it typically help?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Add a second Aurora reader instance, which reduces failover time to zero automatically</li>
+        <li><span class="opt-letter">B.</span> Enable Multi-AZ, which caches DNS resolution so no reconnect is ever needed</li>
+        <li><span class="opt-letter">C.</span> Switch to Aurora Serverless, which removes failover time entirely by dropping fixed instances</li>
+        <li><span class="opt-letter">D.</span> Put RDS Proxy in front of it; it typically cuts Aurora failover time by roughly 60–67%</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Proxy</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — an added reader doesn't eliminate promotion or reconnect delay for a direct-connecting application; it doesn't address the described problem at all.</li>
+          <li><strong>B.</strong> Wrong — Multi-AZ provides a standby for failover, but it doesn't cache DNS or remove the application's own reconnect requirement.</li>
+          <li><strong>C.</strong> Wrong — Aurora Serverless changes the compute/billing model; it doesn't eliminate failover time or the reconnect problem described here.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — clients stay connected to the same proxy endpoint while it reconnects to the new primary in the background, and this typically reduces Aurora failover time by roughly 60–67%.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 62 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 62</p>
+      <p class="scenario-text">A Lambda function already has an IAM execution role with database access permissions. The team wants it to authenticate through RDS Proxy without embedding or rotating a database password in code. Is this possible?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — RDS Proxy can use IAM authentication, including the role Lambda already has</li>
+        <li><span class="opt-letter">B.</span> No — RDS Proxy only supports username/password stored in Secrets Manager, never IAM</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if the Lambda function is also given a public IP to reach the proxy</li>
+        <li><span class="opt-letter">D.</span> No — IAM authentication only works on the Aurora endpoint, and stops once a proxy is added</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Proxy</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — RDS Proxy can enforce SSL/TLS and use existing IAM authentication, including credentials Lambda already has via its execution role.</li>
+          <li><strong>B.</strong> Wrong — IAM authentication is explicitly supported by RDS Proxy; it isn't limited to Secrets Manager passwords.</li>
+          <li><strong>C.</strong> Wrong — RDS Proxy runs only within a VPC and isn't reachable from the public internet; a public IP is neither needed nor relevant here.</li>
+          <li><strong>D.</strong> Wrong — RDS Proxy is specifically designed to carry IAM authentication through to the backend, not to disable it.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 63 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 63</p>
+      <p class="scenario-text">A partner company outside AWS wants to connect directly to an application's RDS Proxy endpoint from their own on-premises network over the public internet, bypassing the VPC entirely. Is this possible?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, as long as a public IP address is explicitly assigned to the proxy</li>
+        <li><span class="opt-letter">B.</span> No — RDS Proxy is only reachable from within a VPC or VPC-connected networks</li>
+        <li><span class="opt-letter">C.</span> Yes, but only once SSL/TLS enforcement is enabled on the proxy first</li>
+        <li><span class="opt-letter">D.</span> Yes, if the partner authenticates with IAM credentials instead of a password</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Proxy</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — RDS Proxy runs only within a VPC across multiple AZs; no configuration assigns it a public IP for internet access.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — RDS Proxy is explicitly VPC-only and is never reachable from the public internet, regardless of network setup.</li>
+          <li><strong>C.</strong> Wrong — SSL/TLS enforcement secures traffic in transit but doesn't change the proxy's VPC-only network reachability.</li>
+          <li><strong>D.</strong> Wrong — the authentication method used doesn't override the fundamental VPC-only reachability of the proxy.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 64 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 64</p>
+      <p class="scenario-text">A backend engineer proposes solving frequent "too many connections" errors by writing custom connection-pooling logic inside the application itself, rather than adopting RDS Proxy, arguing the outcome is the same either way. What is a key practical difference the engineer is overlooking?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> None — application-level pooling and RDS Proxy behave identically during failover</li>
+        <li><span class="opt-letter">B.</span> Application-level pooling automatically enforces SSL/TLS and IAM the same way RDS Proxy does</li>
+        <li><span class="opt-letter">C.</span> RDS Proxy transparently reconnects to a new primary during failover, which hand-rolled pooling must implement itself</li>
+        <li><span class="opt-letter">D.</span> Application-level pooling runs inside the VPC automatically, while RDS Proxy needs a public load balancer</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: RDS Proxy</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — custom in-application pooling doesn't get the proxy's background reconnect-to-new-primary behavior; that difference matters most exactly during failover.</li>
+          <li><strong>B.</strong> Wrong — SSL/TLS enforcement and IAM authentication are RDS Proxy features; hand-rolled application pooling doesn't gain these automatically.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — RDS Proxy detects backend failover and establishes new connections to the new primary in the background, so requests simply wait briefly; custom application pooling has to build that reconnect logic itself.</li>
+          <li><strong>D.</strong> Wrong — RDS Proxy is the one that runs only within a VPC and is never publicly reachable; it needs no separate public-facing load balancer.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 65 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 65</p>
+      <p class="scenario-text">A company wants to use DMS to migrate data directly between two on-premises MySQL databases in different data centers, with no AWS-hosted database involved at any point. Is this a valid DMS migration?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, as long as the DMS replication instance itself is deployed inside AWS</li>
+        <li><span class="opt-letter">B.</span> Yes, since DMS supports MySQL as both a source and a target engine</li>
+        <li><span class="opt-letter">C.</span> Yes, but only if the Schema Conversion Tool bridges the two on-premises environments first</li>
+        <li><span class="opt-letter">D.</span> No — at least one endpoint must be inside AWS; DMS cannot migrate on-premises to on-premises</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Database Migration Service (DMS)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the hard rule concerns the source and target endpoints, not where the replication instance itself runs; both endpoints on-premises is still disallowed.</li>
+          <li><strong>B.</strong> Wrong — engine support isn't the blocker here; the constraint is about endpoint location, not which engines DMS can talk to.</li>
+          <li><strong>C.</strong> Wrong — SCT converts schemas between engines; it does nothing to satisfy the requirement that one endpoint sit inside AWS.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the one hard rule is that at least one endpoint must be inside AWS; DMS cannot migrate between two on-premises databases.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 66 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 66</p>
+      <p class="scenario-text">A company must migrate a live production database to RDS with essentially zero downtime, meaning changes made to the source during the migration window must not be lost at cutover. Which DMS task type should they choose?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Full load + CDC, so existing data is copied and ongoing changes are captured until cutover</li>
+        <li><span class="opt-letter">B.</span> Full load only, since it captures the complete dataset in a single consistent pass</li>
+        <li><span class="opt-letter">C.</span> CDC only, since it captures every change made to the source database</li>
+        <li><span class="opt-letter">D.</span> Schema Conversion Tool, since it replicates both schema and ongoing data changes</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Database Migration Service (DMS)</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — full load + CDC migrates existing data and captures ongoing changes during the migration, letting the team cut over once changes reach a steady state with nothing lost.</li>
+          <li><strong>B.</strong> Wrong — full load alone only migrates existing data; any changes made to the source during the copy would be missed at cutover, violating the zero-loss requirement.</li>
+          <li><strong>C.</strong> Wrong — CDC only assumes the bulk data was already loaded some other way; used alone here it would miss the initial dataset entirely.</li>
+          <li><strong>D.</strong> Wrong — SCT converts schema and code objects; it doesn't perform data migration or change capture on its own.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 67 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 67</p>
+      <p class="scenario-text">A company is migrating an on-premises PostgreSQL database to Amazon RDS for PostgreSQL — the same engine on both ends. Is the Schema Conversion Tool required as part of this migration?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, because any migration into AWS requires SCT to validate the schema first</li>
+        <li><span class="opt-letter">B.</span> No — SCT is only needed when source and target use different engines; DMS alone suffices</li>
+        <li><span class="opt-letter">C.</span> Yes, but only once the database exceeds roughly one terabyte in size</li>
+        <li><span class="opt-letter">D.</span> No, because DMS cannot migrate PostgreSQL databases without a third-party tool</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Database Migration Service (DMS)</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — SCT isn't required for every AWS migration; it's needed specifically when the source and target engines differ, which isn't the case here.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — SCT is used only when the database engine changes; since both sides here are PostgreSQL, DMS alone handles the migration, including CDC for near-zero downtime.</li>
+          <li><strong>C.</strong> Wrong — SCT's trigger is an engine change, not database size; a large same-engine migration still doesn't need SCT.</li>
+          <li><strong>D.</strong> Wrong — PostgreSQL is one of DMS's supported engines on both source and target sides; no third-party tool is required.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 68 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 68</p>
+      <p class="scenario-text">A company has an 80TB on-premises Oracle database that must move to an Aurora PostgreSQL-compatible cluster, but their internet uplink is far too slow to transfer that volume in a reasonable time. What is the correct sequence of tools?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> DMS alone, with a CDC-only task configured to minimize network transfer</li>
+        <li><span class="opt-letter">B.</span> SCT alone, since it can transfer arbitrarily large datasets directly over the internet</li>
+        <li><span class="opt-letter">C.</span> SCT stages data onto a Snowball device shipped to AWS and loaded into S3; DMS migrates from there</li>
+        <li><span class="opt-letter">D.</span> A DMS replication instance on the largest EC2 type, to brute-force the existing network link</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Database Migration Service (DMS)</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — CDC-only assumes the bulk data is already loaded by some other means; it doesn't solve the problem of getting the initial 80TB into AWS over a slow link.</li>
+          <li><strong>B.</strong> Wrong — SCT converts schema and stages data locally, but it doesn't replace the physical transport step needed for a dataset this large.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — SCT extracts and converts the data locally, it's loaded onto a Snowball device and shipped to AWS, AWS loads it into S3, and DMS migrates from S3 into the target.</li>
+          <li><strong>D.</strong> Wrong — a bigger replication instance doesn't fix a bandwidth-limited network link; the bottleneck is the uplink itself, not compute.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 69 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 69</p>
+      <p class="scenario-text">A team migrating on-premises SQL Server to an Aurora MySQL-compatible cluster expects DMS alone to handle converting stored procedures, table definitions, and other schema objects to the new engine's format. Is this expectation correct?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — DMS automatically converts both schema and data whenever the target engine differs</li>
+        <li><span class="opt-letter">B.</span> Yes, as long as the replication task uses "full load + CDC" instead of "full load"</li>
+        <li><span class="opt-letter">C.</span> No — DMS cannot migrate between SQL Server and Aurora MySQL-compatible at all</li>
+        <li><span class="opt-letter">D.</span> No — DMS only moves data; SCT is required to convert schema when the engine changes</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Database Migration Service (DMS)</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — DMS moves data, not schema; an engine change doesn't trigger automatic schema conversion inside DMS itself.</li>
+          <li><strong>B.</strong> Wrong — the full load / full load + CDC / CDC only choice governs how data is migrated, not whether schema gets converted.</li>
+          <li><strong>C.</strong> Wrong — this migration is achievable; it just requires SCT for schema conversion alongside DMS for the data, since engines differ.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — DMS moves data only; when source and target use different engines, the standalone Schema Conversion Tool is needed to convert schema and code objects first.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something, or want the reasoning re-explained a different way? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/scenario-quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Practice – Route 53 & Global DNS</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb"><a href="index.html">Route 53 & Global DNS</a> › Scenario Practice</div>
+    <div class="module-tag">Exam Practice</div>
+    <h1>Scenario-Based Exam Practice</h1>
+    <p class="lesson-meta">Route 53 & Global DNS · 65 scenarios</p>
+    <p class="source-link">Sources: <a href="https://learn.cantrill.io/p/aws-certified-solutions-architect-associate" target="_blank">Adrian Cantrill SAA-C03</a> · <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html" target="_blank">Amazon Route 53 Developer Guide</a></p>
+  </div>
+
+  <p>These are exam-style scenario questions, separate from the retrieval-practice quiz at the end of each lesson. Each question has one answer that's technically possible but breaks a requirement in the scenario, one that's plausible and easy to confuse with the right answer, and one correct best choice — read carefully. Click an option to select your answer, then reveal it — your pick is highlighted in red if wrong, green marks the correct one. Once you've answered every question, check "Show my results" for your overall score and which topics to study again.</p>
+
+  <div class="scenario-set">
+    <p class="scenario-count">65 scenarios · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-topic breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+<!-- 1 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 1</p>
+      <p class="scenario-text">Animals For Life runs a public hosted zone for animalsforlife.org and needs DNS resolution to keep working even if an entire AWS Region suffers a total outage. A teammate proposes running the zone's name servers in one Region with Multi-AZ redundancy, plus a replicated standby copy in a second Region for failover. Does Route 53 need this kind of custom multi-Region design to survive a regional outage?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — Route 53's name servers are already globally distributed and each holds the same dataset, so no Region-level failover design is required</li>
+        <li><span class="opt-letter">B.</span> Yes — without the proposed Multi-AZ-plus-standby-Region design, one Region's outage would take the whole hosted zone offline</li>
+        <li><span class="opt-letter">C.</span> No, but only because Route 53 automatically fails the zone over to a warm-standby Region within seconds of an outage</li>
+        <li><span class="opt-letter">D.</span> No, but only because CloudFront edge locations cache the zone's DNS responses so the origin Region's health is irrelevant</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Public Hosted Zones</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Route 53's name servers are distributed globally and all serve the same dataset, so the service keeps functioning even during a full Regional outage, with no extra design needed.</li>
+          <li><strong>B.</strong> Wrong — this misunderstands Route 53's architecture; a single Region's outage doesn't take a hosted zone offline in the first place, so the proposed design solves a problem that doesn't exist.</li>
+          <li><strong>C.</strong> Wrong — Route 53 doesn't fail hosted zones over to a standby Region; its resilience comes from name servers already being global by design, not a DR failover process.</li>
+          <li><strong>D.</strong> Wrong — CloudFront caches content at the edge, but it isn't what makes a Route 53 hosted zone itself resilient to a Regional outage.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 2 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 2</p>
+      <p class="scenario-text">A resolver with an empty cache looks up app.animalsforlife.org for the very first time. Which sequence of servers does it walk through before finally reaching the four Route 53 name servers that hold the answer?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The four Route 53 name servers directly, skipping the root and TLD servers, since browsers cache their addresses</li>
+        <li><span class="opt-letter">B.</span> The DNS root servers, then the .org TLD servers, then the four Route 53 name servers for the zone</li>
+        <li><span class="opt-letter">C.</span> The .org TLD servers first, then the DNS root servers, then the four Route 53 name servers</li>
+        <li><span class="opt-letter">D.</span> The DNS root servers, then straight to the origin web server, bypassing Route 53 entirely</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Public Hosted Zones</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — no fresh resolver already knows the four Route 53 name servers; it must walk the tree starting from the root to discover them.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — this is "walking the tree": root servers point to the .org TLD servers, which point to the four Route 53 name servers for the zone, and only then does Route 53 answer.</li>
+          <li><strong>C.</strong> Wrong — this reverses the delegation order; the root servers must be consulted before the TLD servers, not after.</li>
+          <li><strong>D.</strong> Wrong — the chain doesn't skip Route 53 and go straight to an origin server; the TLD servers delegate specifically to the zone's name servers.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 3 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 3</p>
+      <p class="scenario-text">An EC2 instance sits in a private subnet with no NAT gateway or internet gateway route, inside a VPC that has DNS resolution enabled. It needs to resolve a record in the company's public hosted zone for animalsforlife.org, hosted in Route 53. Given it has no route to the public internet, how does it resolve the record?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> By querying one of the four Route 53 name servers directly over the public internet</li>
+        <li><span class="opt-letter">B.</span> By converting the zone to a private hosted zone and associating it with the VPC</li>
+        <li><span class="opt-letter">C.</span> By querying the Route 53 resolver that lives at the VPC's base +2 address</li>
+        <li><span class="opt-letter">D.</span> By using a Direct Connect DNS forwarding rule to reach the four name servers</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Public Hosted Zones</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this instance has no route to the public internet, so it can't reach the four name servers directly; and it doesn't need to when DNS resolution is enabled.</li>
+          <li><strong>B.</strong> Wrong — converting a public zone to private would remove public reachability entirely; the instance can already reach the public zone via the VPC resolver without any conversion.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — with DNS resolution enabled, instances inside the VPC query public hosted zones through the Route 53 resolver at the VPC's base +2 address, with no internet route required.</li>
+          <li><strong>D.</strong> Wrong — no such Direct Connect DNS forwarding step exists for this; the built-in VPC resolver handles this natively without any extra configuration.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 4 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 4</p>
+      <p class="scenario-text">catagram.io is registered with a third-party registrar (Hover), but the team wants Route 53 to host its DNS going forward, with zero downtime during the cutover. What is the correct order of steps?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Update the NS records at Hover first, then create the matching Route 53 hosted zone afterward</li>
+        <li><span class="opt-letter">B.</span> Re-register the domain a second time directly through Route 53 domain registration</li>
+        <li><span class="opt-letter">C.</span> Create a private hosted zone and associate it with the production VPC, skipping any change at Hover</li>
+        <li><span class="opt-letter">D.</span> Create a public hosted zone in Route 53 to get its four name servers, then update the NS records at Hover</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Public Hosted Zones</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — pointing NS records at a hosted zone that doesn't exist yet breaks resolution during the gap; the zone must be created first.</li>
+          <li><strong>B.</strong> Wrong — the domain is already registered elsewhere; only the DNS hosting needs to move, not the registration itself.</li>
+          <li><strong>C.</strong> Wrong — a private hosted zone is only reachable from associated VPCs, not the public internet, so it can't serve the domain to public visitors.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — first create the public hosted zone in Route 53 to obtain its four allocated name servers, then update the NS records at Hover to point to them.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 5 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 5</p>
+      <p class="scenario-text">A startup is estimating Route 53 costs before launch. Their public hosted zone will exist for months before the site is announced, so it will receive almost no queries at first, but it must exist from day one. Which cost components should they budget for?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Only the per-query charge applies; simply having the hosted zone exist costs nothing at all</li>
+        <li><span class="opt-letter">B.</span> A monthly fee is charged per hosted zone, plus a small additional charge per DNS query it serves</li>
+        <li><span class="opt-letter">C.</span> Only a one-time setup fee applies when the hosted zone is created, with no recurring charges after</li>
+        <li><span class="opt-letter">D.</span> A monthly fee is charged per hosted zone, but VPC-resolver queries are billed at a separate premium rate</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Public Hosted Zones</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a monthly fee applies to the hosted zone's existence regardless of query volume; it isn't free just because queries are rare.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — there's a monthly fee per hosted zone, plus a small per-query charge, and both apply from the moment the zone is created.</li>
+          <li><strong>C.</strong> Wrong — the monthly fee is recurring, not a one-time setup charge; this resembles a domain registration fee model, not hosted zone billing.</li>
+          <li><strong>D.</strong> Wrong — there's no separate premium rate for queries answered via the VPC resolver; this invents a billing distinction that doesn't exist.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 6 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 6</p>
+      <p class="scenario-text">An EC2 instance sits inside VPC-A, which is associated with a private hosted zone for internal.animalsforlife.org. A separate on-premises application, connected to VPC-A over a Site-to-Site VPN, also points its resolver at the VPC's base +2 address to try resolving records in that same zone. Which statement correctly describes what each client can resolve?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Only the EC2 instance can resolve it; the on-premises app isn't running inside the associated VPC</li>
+        <li><span class="opt-letter">B.</span> Both clients can resolve it, since VPC-A's association covers anything network-reachable to its resolver</li>
+        <li><span class="opt-letter">C.</span> Neither can resolve it unless the private hosted zone is also converted into a public hosted zone</li>
+        <li><span class="opt-letter">D.</span> Only the on-premises app can resolve it, since VPN traffic is treated as originating inside the VPC</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Private Hosted Zones</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — two conditions must both be true: the querying service must be running inside a VPC, and that VPC must be associated with the zone. The on-premises app fails the first condition even though VPC-A meets the second.</li>
+          <li><strong>B.</strong> Wrong — mere network reachability to the resolver address isn't the same as running inside the associated VPC; the on-premises app doesn't meet both required conditions.</li>
+          <li><strong>C.</strong> Wrong — converting to a public zone would defeat the purpose of keeping internal records private, and isn't required for the EC2 instance, which already resolves the zone fine.</li>
+          <li><strong>D.</strong> Wrong — Site-to-Site VPN traffic isn't treated as originating inside the VPC for private-hosted-zone resolution purposes; the on-premises app still fails the "running inside the VPC" condition.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 7 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 7</p>
+      <p class="scenario-text">A retailer wants employees on the corporate VPC who resolve shop.animalsforlife.org to reach an internal staging environment, while customers on the public internet resolving that very same name reach the live public storefront. Security insists staging must never be reachable from outside the VPC. What design satisfies this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> One public hosted zone with two records for the name, selected via latency-based routing</li>
+        <li><span class="opt-letter">B.</span> A single hosted zone using weighted routing, sending 0% of public traffic to the staging record</li>
+        <li><span class="opt-letter">C.</span> A private zone for the name associated with the VPC, plus a separate public zone for the same name</li>
+        <li><span class="opt-letter">D.</span> A public zone with the staging record restricted by a resolver query-source-IP rule</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Private Hosted Zones</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — latency-based routing picks the lowest-latency value, not "inside VPC vs. public internet," and a public zone can't hide the staging record from outside anyway.</li>
+          <li><strong>B.</strong> Wrong — weighted routing distributes by percentage, not by requester origin; 0% still doesn't guarantee external invisibility within a single public zone.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — this is split-view DNS: a private hosted zone associated with the corporate VPC answers for staging, and a separate public hosted zone for the same domain name serves only the storefront record.</li>
+          <li><strong>D.</strong> Wrong — public hosted zones don't support restricting a record's visibility by querying source IP this way; that isn't how the split-view pattern works.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 8 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 8</p>
+      <p class="scenario-text">Following an acquisition, a private hosted zone lives in Account A, but the workload VPC lives in Account B — a separate account, not yet joined into any AWS Organization. The team wants to associate the zone with that VPC using only the Route 53 console. Will this work?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — the console fully supports selecting a VPC that belongs to a different AWS account</li>
+        <li><span class="opt-letter">B.</span> Yes, but only after the two accounts are joined into the same AWS Organization first</li>
+        <li><span class="opt-letter">C.</span> No — cross-account association isn't possible under any method whatsoever</li>
+        <li><span class="opt-letter">D.</span> No — cross-account association requires the CLI or API, not the console</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Private Hosted Zones</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the console only supports associating VPCs within the same account; cross-account VPCs aren't selectable there.</li>
+          <li><strong>B.</strong> Wrong — Organization membership doesn't change the requirement; cross-account association still needs the CLI or API regardless of Organization structure.</li>
+          <li><strong>C.</strong> Wrong — cross-account association is possible, just not through the console; the CLI or API supports it directly.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — same-account association can use the console, CLI, or API, but associating a zone with a VPC in a different account requires the CLI or API.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 9 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 9</p>
+      <p class="scenario-text">Security wants a record like payroll-db.internal.animalsforlife.org that must never be resolvable by anyone outside specifically approved VPCs — not even other VPCs in the same AWS account. Which approach satisfies this, and what happens to a same-account VPC that's deliberately left unassociated?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A private zone with only the approved VPCs associated; an unassociated VPC gets no access at all</li>
+        <li><span class="opt-letter">B.</span> A public zone with the record hidden via a resource policy restricting which VPCs may query it</li>
+        <li><span class="opt-letter">C.</span> A private zone associated with the account's default VPC only, since all VPCs inherit that automatically</li>
+        <li><span class="opt-letter">D.</span> A private zone that relies on the account's IAM policies alone to block unapproved VPCs</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Private Hosted Zones</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — associate only the approved VPCs with the private hosted zone; a VPC left unassociated has no access at all, in exactly the same position as a random internet user.</li>
+          <li><strong>B.</strong> Wrong — public hosted zones don't support restricting which VPCs may query a given record; anything in a public zone is visible to any public resolver.</li>
+          <li><strong>C.</strong> Wrong — VPC associations aren't automatically inherited by other VPCs in the account; each VPC must be explicitly associated with the zone.</li>
+          <li><strong>D.</strong> Wrong — IAM policies control management-plane API access, not DNS resolution access, which is governed by explicit VPC association.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 10 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 10</p>
+      <p class="scenario-text">A junior engineer asks whether a private hosted zone uses different DNS record types or a different resolver address than a public hosted zone, beyond simply who is allowed to reach it.</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — private zones support only A records, while public zones support MX, TXT, and more</li>
+        <li><span class="opt-letter">B.</span> No — private zones use the same record types and the same base +2 resolver mechanics as public zones</li>
+        <li><span class="opt-letter">C.</span> Yes — private zones require a dedicated resolver endpoint address distinct from the base +2 address</li>
+        <li><span class="opt-letter">D.</span> Yes — private zones use a completely separate global name-server fleet from public zones</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Private Hosted Zones</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a private hosted zone works exactly like a public one, supporting the same range of record types, not a restricted subset.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — private hosted zones use the same record types and resolver mechanics as public ones; the only difference is reachability, limited solely to associated VPCs.</li>
+          <li><strong>C.</strong> Wrong — this confuses private hosted zones with a separate real feature (Route 53 Resolver endpoints); private zones themselves still use the VPC's base +2 address.</li>
+          <li><strong>D.</strong> Wrong — private hosted zones don't get their own separate global name-server fleet; the distinction is about reachability, not infrastructure.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 11 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 11</p>
+      <p class="scenario-text">Animals For Life needs the naked domain animalsforlife.org (no www) to point at an Application Load Balancer, which only publishes a DNS name, not a static IP. An engineer tries creating a CNAME record directly on animalsforlife.org and it's rejected. Why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Because Route 53 hosted zones don't support CNAME records at any level, apex or otherwise</li>
+        <li><span class="opt-letter">B.</span> Because the ALB doesn't expose any DNS name that a CNAME could ever target</li>
+        <li><span class="opt-letter">C.</span> Because the DNS standard itself forbids a CNAME record at the zone apex, on any provider</li>
+        <li><span class="opt-letter">D.</span> Because CNAME records incur an extra creation fee specifically when placed at the apex</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CNAME vs. Route 53 Alias</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Route 53 fully supports CNAME records at non-apex names like www.animalsforlife.org; the restriction is specific to the apex.</li>
+          <li><strong>B.</strong> Wrong — the ALB does hand back a DNS name; that's precisely why a CNAME or alias record is being attempted here in the first place.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — this isn't an AWS restriction; the DNS standard itself forbids a CNAME at the zone apex, on any DNS provider, which is exactly why alias records exist.</li>
+          <li><strong>D.</strong> Wrong — the real cost distinction is about per-query billing (CNAME queries to AWS resources are billed, alias queries are free), not a record-creation fee tied to apex placement.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 12 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 12</p>
+      <p class="scenario-text">A cost-conscious team is choosing between a CNAME and an alias record for www.animalsforlife.org, which will point at a CloudFront distribution and receive millions of queries a month. Both types are technically legal here since it isn't the zone apex. Which minimizes ongoing Route 53 query costs, and why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> CNAME — alias only avoids charges for queries made from inside a VPC, not from the internet</li>
+        <li><span class="opt-letter">B.</span> Neither — Route 53 charges the same per-query rate for CNAME and alias records regardless</li>
+        <li><span class="opt-letter">C.</span> Alias — Route 53 caches alias responses free of charge only after the first million monthly queries</li>
+        <li><span class="opt-letter">D.</span> Alias — Route 53 doesn't charge for alias queries to AWS resources, while CNAME queries are billed</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CNAME vs. Route 53 Alias</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this invents a VPC-vs-internet billing split that doesn't exist; alias queries to AWS resources are free regardless of where the query originates.</li>
+          <li><strong>B.</strong> Wrong — this contradicts the actual pricing model, where alias queries to AWS resources are free and CNAME queries are billed.</li>
+          <li><strong>C.</strong> Wrong — there's no million-query free tier or caching threshold like this; alias queries to AWS resources are simply free from the first query.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — Route 53 doesn't charge for alias queries made to AWS resources, while the equivalent CNAME queries are billed, making alias the cheaper choice at scale.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 13 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 13</p>
+      <p class="scenario-text">An engineer is pointing one alias record at an API Gateway custom domain (which hands back an A record) and a second alias record at a resource that itself provides a CNAME-style mapping to another name. How should the record type of each alias be chosen?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Match each alias's type to whatever the target itself provides — A for one, CNAME for the other</li>
+        <li><span class="opt-letter">B.</span> Create both as CNAME record aliases, since alias is fundamentally built on the CNAME mechanism</li>
+        <li><span class="opt-letter">C.</span> Create both as A record aliases, since alias records default to A regardless of the target</li>
+        <li><span class="opt-letter">D.</span> Use a dedicated "AWS alias" record type reserved specifically for AWS resource targets</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CNAME vs. Route 53 Alias</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — "alias" isn't its own record type, it's a flag on an existing type; match it to whatever the target resource provides, an A record alias for an A-providing target and a CNAME record alias for a CNAME-providing one.</li>
+          <li><strong>B.</strong> Wrong — alias isn't always CNAME-based; a target that hands back an A record needs an A record alias, not a CNAME record alias.</li>
+          <li><strong>C.</strong> Wrong — alias records don't default to A regardless of the target; the type must match what the target itself provides.</li>
+          <li><strong>D.</strong> Wrong — there's no distinct "AWS alias" record type; alias is a modifier applied on top of standard types like A or CNAME.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 14 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 14</p>
+      <p class="scenario-text">www.animalsforlife.org (not the zone apex) needs to point at an Elastic Load Balancer. Since it isn't the apex, a plain CNAME would be technically legal here. Should the team still default to an alias record, and why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — CNAME should be preferred, since alias records only function at the zone apex</li>
+        <li><span class="opt-letter">B.</span> Yes — alias works at both apex and non-apex names, and it makes ELB queries free instead of billed</li>
+        <li><span class="opt-letter">C.</span> No — CNAME and alias perform identically here in every respect, so the choice is irrelevant</li>
+        <li><span class="opt-letter">D.</span> Yes — but only because CNAME records for ELB targets are deprecated and no longer creatable</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CNAME vs. Route 53 Alias</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — alias records work fine at non-apex names too; apex support is an added capability, not the only place alias functions.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — alias records work at both apex and non-apex names, and AWS makes alias queries to AWS resources free, specifically to encourage defaulting to alias even where CNAME would also work.</li>
+          <li><strong>C.</strong> Wrong — the two aren't identical here; alias queries to the ELB are free while equivalent CNAME queries are billed, a real practical difference.</li>
+          <li><strong>D.</strong> Wrong — CNAME records for ELB targets aren't deprecated or blocked; they remain creatable, alias is simply the recommended, cost-free default.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 15 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 15</p>
+      <p class="scenario-text">A multinational is migrating DNS hosting away from Route 53 to a different provider next year, but wants today's records to remain valid afterward with minimal rework. For a subdomain pointing at an AWS resource, does relying on an alias record support that portability goal?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — alias records are part of the general DNS standard and resolve from any provider</li>
+        <li><span class="opt-letter">B.</span> Yes — alias records automatically convert into equivalent CNAME records once the zone leaves Route 53</li>
+        <li><span class="opt-letter">C.</span> No — alias only works while Route 53 hosts the domain; CNAME would be the portable choice</li>
+        <li><span class="opt-letter">D.</span> No — neither survives migration; every record would need to become a static-IP A record</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: CNAME vs. Route 53 Alias</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — alias is a Route 53-specific extension to the DNS standard, not part of the standard itself; it only functions while Route 53 hosts the domain.</li>
+          <li><strong>B.</strong> Wrong — there's no automatic conversion of alias records into CNAME records upon migration; alias records simply stop being valid outside Route 53.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — alias only works while Route 53 hosts the zone; a CNAME, being a DNS-standard mechanism (though billed for AWS-resource queries), would remain valid after migrating providers.</li>
+          <li><strong>D.</strong> Wrong — this overstates the problem; a DNS-standard CNAME record does survive a hosting migration, so not every record needs to become a static A record.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 16 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 16</p>
+      <p class="scenario-text">A record www.animalsforlife.org uses simple routing with 3 values pointing at 3 independent app servers. One of the three servers crashes hard and stops responding entirely. A client queries the record moments later. What does Route 53 return?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Only the 2 healthy values, since Route 53 silently drops values it detects as unreachable</li>
+        <li><span class="opt-letter">B.</span> The query fails outright, since one of the three servers behind the record is unreachable</li>
+        <li><span class="opt-letter">C.</span> All 3 values, but reordered so the crashed server's value always appears last</li>
+        <li><span class="opt-letter">D.</span> All 3 values in random order, exactly as if every server were healthy</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Simple Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this implies health awareness that simple routing doesn't have; it can't detect the crash or drop the value.</li>
+          <li><strong>B.</strong> Wrong — simple routing doesn't fail the whole query because one server is down; it simply has no awareness of server health to act on.</li>
+          <li><strong>C.</strong> Wrong — simple routing doesn't reorder or rank values by health; order is random, not health-based, and it has no way to detect the crash anyway.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — simple routing is the one Route 53 policy with no health check support; all 3 values are still returned in random order, including the crashed server's.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 17 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 17</p>
+      <p class="scenario-text">Which of these four requirements is the best fit for simple routing, with no need to ever swap to a different Route 53 routing policy?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A record pointing at one standalone web server, needing no health logic or traffic split</li>
+        <li><span class="opt-letter">B.</span> Automatically redirecting traffic to a backup S3 bucket the instant a health check fails</li>
+        <li><span class="opt-letter">C.</span> Sending exactly 5% of production traffic to a canary release for testing purposes</li>
+        <li><span class="opt-letter">D.</span> Directing each user to whichever AWS Region gives them the lowest network latency</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Simple Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a single server needing no health-check-based logic or traffic splitting is exactly simple routing's use case; it's the default, no-frills policy.</li>
+          <li><strong>B.</strong> Wrong — automatic failover on health-check failure is failover routing's job; simple routing has no health check capability to trigger it.</li>
+          <li><strong>C.</strong> Wrong — sending a specific traffic percentage to a canary release is a weighted routing use case, which simple routing can't express.</li>
+          <li><strong>D.</strong> Wrong — directing users by lowest latency is latency-based routing's job; simple routing has no concept of Region or latency.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 18 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 18</p>
+      <p class="scenario-text">An engineer is asked to name the single characteristic that distinguishes simple routing from every other Route 53 routing policy covered in this course. What's the correct distinguishing trait?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> It's restricted to private hosted zones only and can't be used in a public zone</li>
+        <li><span class="opt-letter">B.</span> It has no support for health checks at all, unlike every other routing policy</li>
+        <li><span class="opt-letter">C.</span> It only supports CNAME records and can't be applied to A or AAAA records</li>
+        <li><span class="opt-letter">D.</span> It only permits a single value per record name, unlike the other policies</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Simple Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — simple routing works in both public and private hosted zones; that isn't a limitation that sets it apart.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — simple routing is the only Route 53 policy with no health check integration at all; every other policy supports health checks in some form.</li>
+          <li><strong>C.</strong> Wrong — simple routing supports standard record types like A and AAAA; there's no restriction limiting it to CNAME only.</li>
+          <li><strong>D.</strong> Wrong — simple routing does support multiple values per record name; that isn't the limitation being tested here.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 19 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 19</p>
+      <p class="scenario-text">A new engineer creates a record in a public hosted zone through the console and doesn't touch the routing policy dropdown at all. Which routing policy does the record end up using, and what does that imply if they add three values to it later?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Failover routing, since it's the safest default AWS applies automatically to protect records</li>
+        <li><span class="opt-letter">B.</span> Weighted routing with all values defaulted to equal weight, mimicking round-robin behavior</li>
+        <li><span class="opt-letter">C.</span> Simple routing, meaning all three values return to every client in random order with no health check</li>
+        <li><span class="opt-letter">D.</span> Latency-based routing, since Route 53 automatically optimizes for the client's Region</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Simple Routing</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — failover routing isn't the default; it's a deliberately chosen policy that requires its own configuration, including health checks.</li>
+          <li><strong>B.</strong> Wrong — weighted routing isn't the default policy, and it requires explicit weight configuration; it isn't applied automatically as a round-robin substitute.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — simple routing is the default Route 53 policy; all values under the name are returned to clients in random order, with no health-check awareness.</li>
+          <li><strong>D.</strong> Wrong — latency-based routing isn't the default and requires explicit Region-to-record mapping; Route 53 doesn't apply it automatically.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 20 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 20</p>
+      <p class="scenario-text">A team assumes that when a simple-routing record returns 3 IP addresses, Route 53 has already picked the "best" one and listed it first, so their client application only ever tries the first address in the list. Is this assumption safe?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — Route 53 always orders simple routing values by an internal health ranking</li>
+        <li><span class="opt-letter">B.</span> Yes — Route 53 places the lowest-latency value first, based on the resolver's location</li>
+        <li><span class="opt-letter">C.</span> No — Route 53 returns exactly one value chosen at random, never revealing the other two</li>
+        <li><span class="opt-letter">D.</span> No — Route 53 returns all values in random order; the client must choose which to use</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Simple Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — simple routing has no health check awareness, so there's no internal health ranking behind the order of values.</li>
+          <li><strong>B.</strong> Wrong — ordering by lowest latency is latency-based routing's behavior, not simple routing's; simple routing has no such concept.</li>
+          <li><strong>C.</strong> Wrong — simple routing returns all of the values under the name, not just one; the client sees the full set.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — a simple routing query returns all values in random order, and the client itself is responsible for picking which one to connect to.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 21 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 21</p>
+      <p class="scenario-text">A health check's globally distributed checkers report the endpoint healthy from exactly 18% of them on the latest evaluation, with the rest reporting unhealthy. Records tied to this check are configured to stop being returned whenever it goes unhealthy. Does querying the record still return this endpoint's value right now?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No — Route 53 requires more than 18% reporting healthy, so exactly 18% is unhealthy</li>
+        <li><span class="opt-letter">B.</span> Yes — 18% exactly clears the healthy threshold, so the check is healthy</li>
+        <li><span class="opt-letter">C.</span> It depends entirely on the configured failure threshold, which overrides the 18% figure</li>
+        <li><span class="opt-letter">D.</span> Yes — Route 53 rounds 18% up to the nearest boundary that clears the threshold</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Health Checks</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Route 53 requires more than 18% of checkers to report healthy for the overall status to be healthy; exactly 18% falls short, so the check is unhealthy and the value is withheld.</li>
+          <li><strong>B.</strong> Wrong — the threshold is strictly "more than 18%," not "18% or more"; exactly 18% does not clear the bar.</li>
+          <li><strong>C.</strong> Wrong — the 18% figure is a fixed aggregation rule; the failure threshold (consecutive pass/fail count) is a separate, unrelated setting.</li>
+          <li><strong>D.</strong> Wrong — there's no rounding behavior applied to the 18% aggregation figure; it's a clean more-than-18%-vs-18%-or-fewer split.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 22 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 22</p>
+      <p class="scenario-text">A team configures a health check that only opens a TCP connection to port 443 and considers the endpoint healthy the moment that connection completes, without inspecting any HTTP response. Later they discover the web server process was hung and returning no valid pages, yet the check reported healthy the whole time. What's the most direct fix?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Reduce the check interval from 30 seconds to 10 seconds so failures are caught sooner</li>
+        <li><span class="opt-letter">B.</span> Switch to an HTTP/HTTPS check, which also requires a 2xx or 3xx status within the time limit</li>
+        <li><span class="opt-letter">C.</span> Switch to a CloudWatch alarm check tied to the instance's network-in metric instead</li>
+        <li><span class="opt-letter">D.</span> Lower the failure threshold to 1 so a single bad TCP result flips the status immediately</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Health Checks</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a faster interval catches the same blind spot sooner, but doesn't fix the root cause: TCP checks can't see that the app itself is hung.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — an HTTP/HTTPS check requires a 2xx or 3xx status to be returned within the time limit, not just a completed TCP connection, catching a hung app that TCP alone would miss.</li>
+          <li><strong>C.</strong> Wrong — network-in traffic volume doesn't reflect whether the application itself is serving valid pages; it's the wrong signal for this failure mode.</li>
+          <li><strong>D.</strong> Wrong — lowering the failure threshold changes how many bad results are needed before flipping status, but a TCP check still can't detect a hung application in the first place.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 23 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 23</p>
+      <p class="scenario-text">An application is made up of three independently health-checked components — web, API, and database connectivity — each already with its own Route 53 health check. The team wants one overall health signal representing the whole application. What should they build?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A single endpoint check pointed at the load balancer URL, replacing the three component checks</li>
+        <li><span class="opt-letter">B.</span> A CloudWatch alarm check watching only the database's CPU utilization metric</li>
+        <li><span class="opt-letter">C.</span> A calculated health check referencing the three existing component checks together</li>
+        <li><span class="opt-letter">D.</span> Three separate simple-routing records, relying on clients to detect failures themselves</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Health Checks</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this discards the granular per-component checks the requirement wants combined, replacing them instead of rolling them up.</li>
+          <li><strong>B.</strong> Wrong — this only reflects one narrow metric on one component, not a combined signal across web, API, and database checks.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a calculated check is a check of other checks, letting the three component-level health checks roll up into one overall application health signal.</li>
+          <li><strong>D.</strong> Wrong — this conflates routing policy with health check design; simple routing doesn't provide any health-check rollup mechanism at all.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 24 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 24</p>
+      <p class="scenario-text">A team wants a routing policy that distributes traffic across multiple values under one record name AND automatically stops returning any value whose health check has failed. They're considering simple routing, since it already supports multiple values per name. Does simple routing meet the health-check half of this requirement?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes — simple routing automatically checks each value's TCP reachability before responding</li>
+        <li><span class="opt-letter">B.</span> Yes — simple routing supports health checks the same way every other Route 53 policy does</li>
+        <li><span class="opt-letter">C.</span> No — simple routing supports health checks, but only inside private hosted zones</li>
+        <li><span class="opt-letter">D.</span> No — simple routing is the only policy with no health check support at all</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Health Checks</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — simple routing has no built-in TCP reachability check on its values; it returns all values regardless of their health.</li>
+          <li><strong>B.</strong> Wrong — this directly contradicts the fact that simple routing is the exception; every other policy supports health checks, but simple routing does not.</li>
+          <li><strong>C.</strong> Wrong — there's no such public-vs-private distinction for simple routing's health check support; it lacks health checks in either zone type.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — simple routing is the only Route 53 routing policy with no health check support at all, so an unhealthy value would still be returned to clients.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 25 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 25</p>
+      <p class="scenario-text">A payment-processing fleet needs its Route 53 health check to reflect a deep, in-application metric — a custom "failed transaction rate" published by the app itself via the CloudWatch agent — rather than anything visible from a plain network probe. Which health check type fits, and how does it relate to that metric?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A CloudWatch alarm check, reacting to an alarm state that reflects deep in-app metrics</li>
+        <li><span class="opt-letter">B.</span> An HTTP/HTTPS check with string matching against the rate rendered as page text</li>
+        <li><span class="opt-letter">C.</span> A TCP check against the payment port, since any TCP failure implies degraded transactions</li>
+        <li><span class="opt-letter">D.</span> A calculated check combining two identical TCP checks against the same endpoint</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Health Checks</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a CloudWatch alarm check reacts to the state of a CloudWatch alarm, which can reflect deep in-OS or in-application metrics published via the CloudWatch agent, exactly fitting a custom internal metric like this.</li>
+          <li><strong>B.</strong> Wrong — rendering an internal metric as HTML text just to string-match it is an awkward workaround; it isn't the natural mechanism for a custom application metric.</li>
+          <li><strong>C.</strong> Wrong — a TCP check only confirms a connection completes; it has no visibility into application-level metrics like a transaction failure rate.</li>
+          <li><strong>D.</strong> Wrong — a calculated check combines the results of other health checks; duplicating one TCP check twice doesn't produce a meaningful metric-based signal.</li>
+        </ul>
+      </div>
+    </div>
+<!-- 26 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 26</p>
+      <p class="scenario-text">A company runs its primary application on an EC2 instance behind a Route 53 failover record, with a secondary record pointing at a static S3 "site is down" page. The health check attached to the primary just started failing. What does Route 53 return for the next DNS query?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Both the primary and secondary values together, letting the client decide which one to use</li>
+        <li><span class="opt-letter">B.</span> The secondary S3 page's value, since the primary is currently failing its health check</li>
+        <li><span class="opt-letter">C.</span> The primary's value, served for a grace period until three consecutive failures roll up</li>
+        <li><span class="opt-letter">D.</span> No value at all, until the primary's health check starts passing again</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Failover Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — failover routing is a binary switch, not a set of returned values a client picks between; that behavior belongs to multivalue routing, not failover.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the moment the primary fails its health check, Route 53 automatically starts returning the secondary's value instead, with no further configuration needed.</li>
+          <li><strong>C.</strong> Wrong — there's no grace period or failure-count threshold in basic failover routing; the switch to the secondary happens as soon as the health check reports unhealthy.</li>
+          <li><strong>D.</strong> Wrong — failover routing doesn't return an empty answer while a secondary exists; it returns the secondary's value instead of going silent.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 27 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 27</p>
+      <p class="scenario-text">A team needs six interchangeable API servers all actively serving live traffic at the same time, with DNS distributing requests across all of them. Is failover routing a suitable choice for this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, as long as all six records are marked primary at the same time</li>
+        <li><span class="opt-letter">B.</span> Yes, failover natively balances traffic across up to eight healthy primaries</li>
+        <li><span class="opt-letter">C.</span> Yes, provided a health check is attached to each of the six records</li>
+        <li><span class="opt-letter">D.</span> No, failover is a one-primary-one-secondary, active-passive relationship</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Failover Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — failover routing's structure doesn't allow every record to be "primary" simultaneously; it's fundamentally built around exactly one primary and one secondary.</li>
+          <li><strong>B.</strong> Wrong — this describes multivalue routing's up-to-8-healthy-records behavior, not failover, which has no such multi-primary balancing mode.</li>
+          <li><strong>C.</strong> Wrong — attaching health checks to all six records doesn't turn failover's one-primary-one-secondary structure into an active-active pool.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — failover routing implements active-passive failover between exactly one primary and one secondary; many simultaneously active resources call for multivalue or weighted routing instead.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 28 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 28</p>
+      <p class="scenario-text">An engineer configures a failover record and attaches a health check only to the secondary S3 static page, leaving the primary EC2 instance without one. If the primary EC2 instance goes down, will Route 53 correctly fail traffic over to the secondary?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, the check needs to be on the primary or a primary outage won't be detected</li>
+        <li><span class="opt-letter">B.</span> Yes, Route 53 auto-detects a failed primary no matter where the check sits</li>
+        <li><span class="opt-letter">C.</span> No, a working failover setup needs checks on both the primary and secondary</li>
+        <li><span class="opt-letter">D.</span> Yes, as long as multivalue routing is also enabled for the same name</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Failover Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — the health check that drives the failover decision attaches to the primary record; without it there, a primary outage is never detected and the switch to the secondary won't trigger.</li>
+          <li><strong>B.</strong> Wrong — Route 53 doesn't infer primary health independently of a configured check; the check's pass/fail state on the primary is what actually drives the decision.</li>
+          <li><strong>C.</strong> Wrong — basic failover routing's mechanism only needs the check on the primary; the secondary doesn't require one of its own for the switch to work.</li>
+          <li><strong>D.</strong> Wrong — enabling a separate routing policy on the same name doesn't substitute for attaching the health check where failover actually needs it.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 29 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 29</p>
+      <p class="scenario-text">A failover record's primary EC2 instance recovers from an earlier outage and starts passing its health check again. What happens to the DNS answers Route 53 gives out for that record next?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The secondary keeps being served until an operator manually reverts it</li>
+        <li><span class="opt-letter">B.</span> Primary and secondary alternate fifty-fifty during a short grace window</li>
+        <li><span class="opt-letter">C.</span> Route 53 automatically resumes returning the primary's value again</li>
+        <li><span class="opt-letter">D.</span> The failover policy must be deleted and recreated to fail back</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Failover Routing</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — failover routing switches automatically based on health check state, with no other configuration needed, in either direction, so no manual revert step exists.</li>
+          <li><strong>B.</strong> Wrong — there's no blended, alternating grace window in failover routing's mechanism; it's a clean binary switch driven purely by the primary's health check state.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — while the primary is healthy, queries resolve to the primary's value; once its health check passes again, Route 53 automatically resumes returning it, with no other configuration needed.</li>
+          <li><strong>D.</strong> Wrong — nothing about the failover record needs to be deleted or recreated; the switch back to primary happens automatically once its check passes.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 30 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 30</p>
+      <p class="scenario-text">A team wants to send 90% of traffic to a new application version and 10% to the old one, gradually shifting the split over several weeks while both versions stay healthy and active. Is failover routing the right tool for this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, make the new version primary with weight 90 and the old one secondary with weight 10</li>
+        <li><span class="opt-letter">B.</span> No, gradually splitting traffic by percentage is what weighted routing does</li>
+        <li><span class="opt-letter">C.</span> Yes, failover supports percentage control once a health check threshold is set</li>
+        <li><span class="opt-letter">D.</span> Yes, designate the new version primary since primaries get traffic by share</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Failover Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — failover records aren't given a percentage weight field; primary and secondary are a binary designation, not a proportional split.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a gradually adjustable percentage split between two actively-serving versions is exactly weighted routing's use case, not failover's all-or-nothing primary/secondary switch.</li>
+          <li><strong>C.</strong> Wrong — failover routing has no percentage-based traffic control mechanism at all, health check threshold or otherwise; it only switches fully between primary and secondary.</li>
+          <li><strong>D.</strong> Wrong — being "primary" in failover routing means receiving all traffic while healthy, not a designated share of it; it isn't a proportional concept.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 31 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 31</p>
+      <p class="scenario-text">A multivalue routing record has 12 associated values, and health checks currently report all 12 as healthy. How many values does a client typically receive in a single query response?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Up to 8 of the healthy values, selected at random from the 12</li>
+        <li><span class="opt-letter">B.</span> All 12 healthy values, since the cap applies only when some are unhealthy</li>
+        <li><span class="opt-letter">C.</span> Just 1 value, the one with the lowest measured latency</li>
+        <li><span class="opt-letter">D.</span> All 8 lowest-numbered records, returned in a fixed, consistent order</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Multi-Value Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Route 53 returns up to 8 healthy records per query; with 12 healthy records available, 8 are selected at random each time.</li>
+          <li><strong>B.</strong> Wrong — the 8-value cap applies regardless of how many records are healthy; it's not a rule that only kicks in once some records are unhealthy.</li>
+          <li><strong>C.</strong> Wrong — multivalue routing doesn't pick a single "best" value by latency; that behavior belongs to latency-based routing, a different policy entirely.</li>
+          <li><strong>D.</strong> Wrong — the 8 values returned are selected at random, not by record order, and the specific set can differ between queries.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 32 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 32</p>
+      <p class="scenario-text">Five multivalue records share a name, but none of the five has a health check attached. One backing instance goes down. Will Route 53 automatically exclude that instance's value from responses?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, multivalue excludes unreachable resources even with no check configured</li>
+        <li><span class="opt-letter">B.</span> Yes, but only because a hosted-zone-level default check applies automatically</li>
+        <li><span class="opt-letter">C.</span> No, multivalue never excludes a record no matter how checks are set up</li>
+        <li><span class="opt-letter">D.</span> No, without its own check attached that record behaves like simple routing</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Multi-Value Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — exclusion in multivalue routing depends on a health check being attached to that specific record; it isn't automatic without one configured.</li>
+          <li><strong>B.</strong> Wrong — there's no hosted-zone-level default health check that silently applies to records; each record's own check is what enables its exclusion.</li>
+          <li><strong>C.</strong> Wrong — multivalue routing does exclude down resources, but only for records that actually have a health check attached to them.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — any record failing its check is excluded, but a record with no health check attached is never evaluated, so it keeps being returned exactly as simple routing would.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 33 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 33</p>
+      <p class="scenario-text">A team has six equally-capable web servers, each independently health-checked, and wants all six actively serving requests while any unhealthy one is automatically dropped from DNS answers. Which routing policy best fits this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Failover routing, rotating which server is designated primary on a schedule</li>
+        <li><span class="opt-letter">B.</span> Weighted routing, with an identical equal weight set on all six servers</li>
+        <li><span class="opt-letter">C.</span> Multivalue routing, built for many equally-capable active resources</li>
+        <li><span class="opt-letter">D.</span> Latency-based routing, pointing every user at whichever Region is nearest</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Multi-Value Routing</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — failover routing is structured around one primary and one secondary, active-passive; it isn't designed for six simultaneously active resources.</li>
+          <li><strong>B.</strong> Wrong — equal weights would roughly spread traffic, but weighted routing is designed for controlled proportional splits, not the simple many-equal-active-resources use case described.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — multivalue routing is exactly this: many equally-capable resources, all active, each independently health-checked, with unhealthy ones automatically dropped.</li>
+          <li><strong>D.</strong> Wrong — latency-based routing selects one Region per user based on performance; it doesn't describe distributing traffic across six equal peer servers.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 34 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 34</p>
+      <p class="scenario-text">An architect wants multivalue routing to perform actual connection-level load balancing and connection draining, the way an Application Load Balancer would. Does multivalue routing provide this?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, it only returns healthy IPs for DNS with no connection-level logic</li>
+        <li><span class="opt-letter">B.</span> Yes, once health checks are attached it balances connections like an ALB</li>
+        <li><span class="opt-letter">C.</span> No, and it also can't do any health checking at all, unlike failover</li>
+        <li><span class="opt-letter">D.</span> Yes, but only when every record's target is a Network Load Balancer</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Multi-Value Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — multivalue routing is not a substitute for a real load balancer; there's no connection-level logic, just which IPs get handed back to the client from DNS.</li>
+          <li><strong>B.</strong> Wrong — health checks only control which values are excluded from DNS responses; they don't add connection-level balancing behavior of the kind an ALB performs.</li>
+          <li><strong>C.</strong> Wrong — multivalue routing does support health checking, per record; that part of the claim is incorrect even though it also lacks connection-level logic.</li>
+          <li><strong>D.</strong> Wrong — the target type of individual records doesn't change multivalue routing's fundamental nature as DNS-level answer selection, not connection balancing.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 35 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 35</p>
+      <p class="scenario-text">A team configures 10 multivalue records under one name but attaches health checks to only 3 of them, leaving 7 unchecked. Those 7 backing instances all go down. What happens to responses for those 7 records?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> All 10 are excluded together, since every record under a name must share one check config</li>
+        <li><span class="opt-letter">B.</span> The 7 unchecked ones keep being returned, since exclusion needs an attached check</li>
+        <li><span class="opt-letter">C.</span> The 7 unchecked ones are excluded once AWS's default monitor sees 8 failures</li>
+        <li><span class="opt-letter">D.</span> The whole record set silently falls back to plain simple routing behavior</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Multi-Value Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — there's no requirement that every record under a name share identical health check configuration; each record's check (or lack of one) is independent.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — exclusion only happens for records with a health check attached; the 7 unchecked records are never evaluated, so their values keep being returned regardless of their real status.</li>
+          <li><strong>C.</strong> Wrong — there's no default monitor that kicks in after a fixed failure count for records lacking their own configured health check.</li>
+          <li><strong>D.</strong> Wrong — the presence of some unchecked records doesn't change the routing policy applied to the whole record set; the 3 checked records still get properly excluded when unhealthy.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 36 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 36</p>
+      <p class="scenario-text">Four weighted records under the same name have weights 5, 15, 30, and 50. Roughly what fraction of queries return the record with weight 15?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> About 25%, since there are four records sharing the name</li>
+        <li><span class="opt-letter">B.</span> About 50%, since it's the second-largest of the four weights</li>
+        <li><span class="opt-letter">C.</span> About 15%, since 15 out of a total weight of 100</li>
+        <li><span class="opt-letter">D.</span> It can't be found unless weights are rescaled to sum to 100 first</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Weighted Routing</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — return frequency isn't an even split across however many records exist; it's driven entirely by each record's weight relative to the total weight.</li>
+          <li><strong>B.</strong> Wrong — being the second-largest weight among the four doesn't determine its share; only the weight-to-total-weight ratio does, and 15 is far from 50%.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — Route 53 sums all weights (5+15+30+50 = 100) and returns each record with probability weight ÷ total weight, so 15/100 = 15%.</li>
+          <li><strong>D.</strong> Wrong — the weight ÷ total-weight formula works regardless of whether the weights happen to sum to 100; they don't need to add up to any particular number.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 37 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 37</p>
+      <p class="scenario-text">A team wants to temporarily stop one record in a weighted set from ever being returned, without deleting it, while the other records keep behaving normally. What should they do?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Remove that record's health check so it gets skipped during selection</li>
+        <li><span class="opt-letter">B.</span> Set every record's weight to 0 in order to isolate the one being paused</li>
+        <li><span class="opt-letter">C.</span> Switch just that one record's policy to failover, as the secondary</li>
+        <li><span class="opt-letter">D.</span> Set that one record's weight to 0, leaving the other records unchanged</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Weighted Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — removing a health check changes whether unhealthy picks get skipped, but has no effect on whether the weight calculation ever selects that record at all.</li>
+          <li><strong>B.</strong> Wrong — setting every record's weight to 0 flips the rule so that all of them are returned, the opposite of pulling just one record out of rotation.</li>
+          <li><strong>C.</strong> Wrong — changing the routing policy for a single record isn't how weighted routing works; it also disrupts the shared weighted relationship between all the records.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — setting a single record's weight to 0 means it's never returned, without needing to delete it, while the other records' behavior is unaffected.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 38 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 38</p>
+      <p class="scenario-text">During a migration, an engineer accidentally sets all 5 weighted records under a name to weight 0. What does Route 53 return for the next query?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No records at all; the query resolves to NXDOMAIN</li>
+        <li><span class="opt-letter">B.</span> Only the first-created record, used as a built-in fallback</li>
+        <li><span class="opt-letter">C.</span> Route 53 rejects the change and reverts to the prior weights</li>
+        <li><span class="opt-letter">D.</span> All 5 records, since the rule flips when every weight is 0</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Weighted Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this is the intuitive guess, but it's not how the edge case behaves; a single record at weight 0 is what gets skipped, not a set where every record is 0.</li>
+          <li><strong>B.</strong> Wrong — there's no built-in fallback that privileges whichever record was created first; nothing about creation order factors into weighted selection.</li>
+          <li><strong>C.</strong> Wrong — Route 53 doesn't validate or revert weight values on save; setting all weights to 0 is accepted and simply changes selection behavior.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — while a single record with weight 0 is never returned, if every record for that name has weight 0, the rule flips and all of them are returned instead.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 39 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 39</p>
+      <p class="scenario-text">A team is rolling out a new application version to 10% of traffic while the old version, still fully healthy and active, serves the rest — gradually increasing the new version's share over the following weeks. Which routing policy fits this best?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Multivalue routing, adding the new version as a 9th record among 8 old ones</li>
+        <li><span class="opt-letter">B.</span> Failover routing, with the old version primary and the new version secondary</li>
+        <li><span class="opt-letter">C.</span> Weighted routing, with weights on each version reflecting the traffic split</li>
+        <li><span class="opt-letter">D.</span> Latency-based routing, pointing the new version at nearby Regions only</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Weighted Routing</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — multivalue routing returns up to 8 healthy values essentially at random; it has no mechanism for a controlled, adjustable percentage split like 10/90.</li>
+          <li><strong>B.</strong> Wrong — failover routing is a binary active-passive switch based on health, not a gradual, adjustable percentage split between two actively-serving versions.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — this is the standard canary/A-B testing use case for weighted routing: assign each version a weight so Route 53 returns it in proportion to weight ÷ total weight.</li>
+          <li><strong>D.</strong> Wrong — latency-based routing selects a Region by measured performance, not by an intentional, adjustable traffic percentage between two versions of an app.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 40 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 40</p>
+      <p class="scenario-text">Three weighted records have weights 25, 25, and 50, each with a health check attached. On one query, the weight-50 record is the one selected by the weight calculation, but it turns out to be unhealthy. What happens?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The total weight is recalculated to 50, excluding the unhealthy record</li>
+        <li><span class="opt-letter">B.</span> The pick is skipped and re-rolled; the total weight used doesn't change</li>
+        <li><span class="opt-letter">C.</span> The query returns no answer until that record's check passes again</li>
+        <li><span class="opt-letter">D.</span> Its full weight of 50 is transferred to whichever record is picked next</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Weighted Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — health status doesn't change the weight calculation itself; the total weight isn't recalculated to exclude unhealthy records.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — an unhealthy pick is simply skipped and the selection process repeats until a healthy record comes up, with the underlying weight totals left untouched.</li>
+          <li><strong>C.</strong> Wrong — weighted routing doesn't fail the query outright when a selected record is unhealthy; it retries the selection instead of returning nothing.</li>
+          <li><strong>D.</strong> Wrong — there's no mechanism that transfers an unhealthy record's weight onto a specific other record; the pool and its weights simply stay as configured.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 41 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 41</p>
+      <p class="scenario-text">A global app has latency-based records tagged us-east-1, eu-west-1, and ap-southeast-2. A user in Brazil queries the record. What does Route 53 consult to decide which Region's record to return?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> AWS's maintained database of measured latency to each Region</li>
+        <li><span class="opt-letter">B.</span> The physical distance in kilometers between Brazil and each Region</li>
+        <li><span class="opt-letter">C.</span> The ISO country or continent code tagged on each record</li>
+        <li><span class="opt-letter">D.</span> A fixed percentage weight assigned to each Region for that name</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Latency-Based Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Route 53 identifies the user's approximate location and consults AWS's background database of measured latency between locations and each Region, returning the lowest-latency one.</li>
+          <li><strong>B.</strong> Wrong — latency routing doesn't calculate physical distance; that's the mechanism behind geoproximity routing, a separate policy.</li>
+          <li><strong>C.</strong> Wrong — matching records to a user's ISO country or continent code is geolocation routing's mechanism, not latency routing's.</li>
+          <li><strong>D.</strong> Wrong — a fixed percentage weight per Region describes weighted routing, an unrelated policy with no concept of measured performance.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 42 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 42</p>
+      <p class="scenario-text">A sudden undersea cable fault spikes real round-trip latency from Brazil to us-east-1 right now. Will Route 53's latency-based routing reflect this instantly on the very next query from a Brazilian user?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, Route 53 re-measures actual round-trip time before every query</li>
+        <li><span class="opt-letter">B.</span> Yes, via live probes continuously run by the Route 53 health-check fleet</li>
+        <li><span class="opt-letter">C.</span> No, the latency database is a background dataset, not real-time</li>
+        <li><span class="opt-letter">D.</span> No, because the database never updates once it's first configured</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Latency-Based Routing</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — latency routing doesn't perform a live round-trip measurement per query; it consults a separately maintained dataset instead.</li>
+          <li><strong>B.</strong> Wrong — the latency database isn't populated by the Route 53 health-check fleet running live probes for scoring; it's a separately maintained background dataset.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the latency database AWS uses is not real-time; it's a maintained background dataset, so it won't reflect a sudden local network problem immediately.</li>
+          <li><strong>D.</strong> Wrong — the database is maintained and updated over time; it's just not continuously real-time, so this overstates how static it is.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 43 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 43</p>
+      <p class="scenario-text">Health checks are attached to a set of latency-based records. For a given user, the record with the lowest measured latency is currently unhealthy. What does Route 53 do?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Moves on to the record with the next-lowest latency instead</li>
+        <li><span class="opt-letter">B.</span> Falls back to a random record, ignoring latency for that query</li>
+        <li><span class="opt-letter">C.</span> Returns no answer until that Region's health check passes again</li>
+        <li><span class="opt-letter">D.</span> Switches the record's entire policy to geolocation for that query</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Latency-Based Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — latency routing combines with health checks; if the lowest-latency record is unhealthy, Route 53 moves on to the record with the next-lowest latency instead.</li>
+          <li><strong>B.</strong> Wrong — latency routing doesn't abandon its latency-based logic and pick randomly; it specifically selects the next-best latency option among healthy records.</li>
+          <li><strong>C.</strong> Wrong — latency routing doesn't withhold an answer while waiting on one Region's health check; it continues serving from the next-lowest-latency healthy record.</li>
+          <li><strong>D.</strong> Wrong — a health check failure on one record doesn't change the routing policy applied to the whole record set; latency routing keeps operating, just skipping the unhealthy option.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 44 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 44</p>
+      <p class="scenario-text">For a particular user, undersea cable routing makes a physically farther AWS Region measurably faster than the Region that's actually closest to them. Which Region does latency-based routing return for that user?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The physically nearest Region always, since latency tracks distance directly</li>
+        <li><span class="opt-letter">B.</span> Whichever Region has the highest weight assigned for that country</li>
+        <li><span class="opt-letter">C.</span> The Region chosen by a geoproximity bias applied to the nearest one</li>
+        <li><span class="opt-letter">D.</span> The Region with the lowest expected latency, not the closest one</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Latency-Based Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — this is exactly the assumption latency routing breaks: it picks the Region that will likely feel fastest, which is not always the one that's physically closest.</li>
+          <li><strong>B.</strong> Wrong — weighted-style percentage assignment per country isn't part of latency routing's mechanism; it uses measured latency, not weights.</li>
+          <li><strong>C.</strong> Wrong — geoproximity routing is a separate, explicitly distance-based policy; nothing in this scenario configures geoproximity bias, and latency routing doesn't apply one.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — latency routing returns the Region with the lowest expected latency to the user, which is not always the Region that's physically closest.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 45 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 45</p>
+      <p class="scenario-text">A global application wants each user routed to whichever AWS Region will feel fastest for them, using AWS's own measured performance data rather than manually mapping countries or picking arbitrary traffic percentages. Which routing policy fits this goal?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Geolocation routing, manually mapping each country to its nearest Region</li>
+        <li><span class="opt-letter">B.</span> Latency-based routing, using AWS's measured data to pick the fastest Region</li>
+        <li><span class="opt-letter">C.</span> Weighted routing, splitting traffic evenly across every Region</li>
+        <li><span class="opt-letter">D.</span> Multivalue routing, returning up to 8 regional records at random</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Latency-Based Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — geolocation routing requires manually mapping countries or continents to records; it doesn't use AWS's measured performance data, which the requirement explicitly wants to avoid.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — latency-based routing consults AWS's maintained latency database to return the Region expected to be fastest for each user, matching the stated goal exactly.</li>
+          <li><strong>C.</strong> Wrong — weighted routing splits traffic by an arbitrarily assigned percentage, not by measured performance, which is precisely what the requirement wants to avoid.</li>
+          <li><strong>D.</strong> Wrong — multivalue routing returns a random subset of healthy records with no concept of measured performance or user-perceived speed at all.</li>
+        </ul>
+      </div>
+    </div>
+<!-- 46 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 46</p>
+      <p class="scenario-text">A gaming company holds streaming rights only for Germany and wants unauthorized regions to receive nothing at all rather than being redirected elsewhere. They configure a geolocation record tagged for "Germany" only, with no default record. A user in Poland queries the record. What is returned?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No answer at all, since Poland matches no tagged subdivision, country, or continent, and no default record exists</li>
+        <li><span class="opt-letter">B.</span> The Germany record, because Route 53 falls back to the nearest neighboring country when no exact match exists</li>
+        <li><span class="opt-letter">C.</span> The Europe continent record, since Route 53 automatically synthesizes a continent match from any tagged country</li>
+        <li><span class="opt-letter">D.</span> Whichever record answers fastest, since Route 53 falls back to latency-based selection when no match exists</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geolocation Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — geolocation only returns records explicitly relevant to the user's own tagged location; with no match at any level and no default configured, Route 53 returns no answer at all.</li>
+          <li><strong>B.</strong> Wrong — geolocation never falls back to a "nearest neighboring" tagged record; that proximity-based fallback describes geoproximity, not geolocation.</li>
+          <li><strong>C.</strong> Wrong — Route 53 doesn't invent a continent-level match from a country tag; only an explicitly tagged continent record would match at that tier.</li>
+          <li><strong>D.</strong> Wrong — geolocation doesn't fall back to latency-based selection; when nothing matches and there's no default, the result is simply no answer.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 47 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 47</p>
+      <p class="scenario-text">A hosted zone has geolocation records tagged for "New York" (subdivision), "US" (country), and "North America" (continent). A user browsing from Florida sends a query. Which record does Route 53 return, and why?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The New York subdivision record, since it is the most specific tag configured anywhere in the zone</li>
+        <li><span class="opt-letter">B.</span> The US country record, since Florida has no subdivision match and Route 53 stops at the first matching tier</li>
+        <li><span class="opt-letter">C.</span> The North America continent record, since Route 53 always prefers the broadest tag when several are configured</li>
+        <li><span class="opt-letter">D.</span> No answer, since geolocation requires an exact subdivision match for every US-based query to succeed</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geolocation Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — subdivision matching only applies when the record is tagged for the user's own state; Florida doesn't match a New York-tagged record just because both are US states.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Florida has no subdivision-level record, so Route 53 moves to the country tier, finds "US," and stops there — the matching order halts at the first hit.</li>
+          <li><strong>C.</strong> Wrong — Route 53 checks subdivision, then country, then continent in strict order; it only reaches the continent tier if no country match exists, which isn't the case here.</li>
+          <li><strong>D.</strong> Wrong — a match is found at the country level, so this never falls through to no-answer; geolocation stops as soon as any tier matches.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 48 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 48</p>
+      <p class="scenario-text">A broadcaster is legally required to prevent viewers outside licensed countries from ever reaching a live stream, even if that means some users get no stream instead of being sent to a nearby licensed server. Which routing policy fits this hard requirement?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Latency-based routing, so viewers outside licensed countries are sent to whichever Region responds fastest</li>
+        <li><span class="opt-letter">B.</span> Geoproximity routing, so unauthorized viewers are routed to the nearest licensed resource instead of blocked</li>
+        <li><span class="opt-letter">C.</span> Geolocation routing, since it restricts access to only explicitly tagged countries and returns nothing otherwise</li>
+        <li><span class="opt-letter">D.</span> Multi-value answer routing, returning several licensed servers so unauthorized viewers can pick one</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geolocation Routing</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — latency routing always sends every user to the fastest-performing Region for them, with no concept of restricting access by country; it directly violates the hard requirement.</li>
+          <li><strong>B.</strong> Wrong — geoproximity routes by physical distance to the nearest resource, which would still deliver the stream to unauthorized viewers via a nearby server; it doesn't restrict access at all.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — geolocation is designed exactly for content restriction by actual location: tag only licensed countries, and everyone else gets no answer since nothing matches.</li>
+          <li><strong>D.</strong> Wrong — multi-value routing returns several healthy records for any client to choose from, with no location restriction; unauthorized viewers would still receive a usable answer.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 49 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 49</p>
+      <p class="scenario-text">An architect assumes that because a Canada-tagged geolocation record exists, users physically nearest to Canada — such as those in the northern US border states — will automatically receive it even without their own tag. Is this assumption correct?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, because geolocation always falls back to the nearest tagged neighbor when a user's location isn't tagged</li>
+        <li><span class="opt-letter">B.</span> Yes, because geolocation calculates real distance between the user and each tagged record, just like geoproximity</li>
+        <li><span class="opt-letter">C.</span> No, but only because Canada here is a country-level tag rather than a continent-level tag</li>
+        <li><span class="opt-letter">D.</span> No, geolocation matches only a user's own tagged location, never proximity to a different tagged region</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geolocation Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — geolocation has no "nearest neighboring tag" fallback; without a match for the user's own location and no default, the result is no answer, not the closest tagged region.</li>
+          <li><strong>B.</strong> Wrong — this describes geoproximity's distance calculation, not geolocation; geolocation only matches explicit location tags, it never computes physical distance.</li>
+          <li><strong>C.</strong> Wrong — the tier of the Canada tag isn't the reason; regardless of subdivision, country, or continent level, geolocation never matches based on a user's proximity to a different tagged location.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — geolocation strictly matches a user's own tagged subdivision, country, or continent; it has no concept of routing based on nearness to a record tagged for somewhere else.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 50 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 50</p>
+      <p class="scenario-text">A hosted zone has geolocation records tagged for "US," "Canada," and a "Default" record, with no continent-level tags configured. A user in Brazil queries the record. What is returned?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The Default record, since no subdivision, country, or continent match exists for Brazil and default catches the rest</li>
+        <li><span class="opt-letter">B.</span> No answer, since South America has no continent-level record explicitly configured anywhere in the zone</li>
+        <li><span class="opt-letter">C.</span> The Canada record, since it is the geographically closest of the configured options to Brazil</li>
+        <li><span class="opt-letter">D.</span> The US record, since Brazil sits within the wider Americas region that the US record implicitly covers</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geolocation Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Brazil matches no subdivision, country, or continent tag, so Route 53 falls through to the configured default record, the last tier before no answer.</li>
+          <li><strong>B.</strong> Wrong — a default record exists precisely to catch cases like this; Route 53 only returns no answer when nothing matches at any tier, including default.</li>
+          <li><strong>C.</strong> Wrong — geolocation never selects based on which tagged record is geographically closest; that proximity logic belongs to geoproximity, not geolocation.</li>
+          <li><strong>D.</strong> Wrong — a country tag only matches users in that specific country; "US" doesn't implicitly extend to cover other countries in the same hemisphere.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 51 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 51</p>
+      <p class="scenario-text">A team needs a routing policy that calculates actual physical distance between the user and each resource, rather than relying on estimated network performance data. Which routing policy provides this, and what distinguishes it from latency-based routing?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Weighted routing, since it lets you assign a percentage split reflecting the physical distance between resources</li>
+        <li><span class="opt-letter">B.</span> Geoproximity routing, since it computes real physical distance rather than latency's estimated performance data</li>
+        <li><span class="opt-letter">C.</span> Latency-based routing, since AWS's latency measurements are themselves based on real geographic distance</li>
+        <li><span class="opt-letter">D.</span> Geolocation routing, since it matches a user's tagged location to the geographically nearest configured record</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geoproximity Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — weighted routing splits traffic by a fixed percentage you assign, with no awareness of physical distance between the user and any resource at all.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — geoproximity calculates actual physical distance between the user and each resource, unlike latency routing, which relies on an estimated-performance database instead.</li>
+          <li><strong>C.</strong> Wrong — latency routing uses measured/estimated network performance between the user and each Region, not a raw geographic distance calculation; that's geoproximity's mechanism, not latency's.</li>
+          <li><strong>D.</strong> Wrong — geolocation matches a user's own tagged location to an explicitly tagged record; it never calculates distance or selects the nearest resource the way geoproximity does.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 52 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 52</p>
+      <p class="scenario-text">Resources exist in Ireland and Singapore. Without bias, users in India are closer to Singapore and route there. Singapore is now over capacity, and the team wants a meaningful share of Indian traffic redirected to the underused Ireland resource, while keeping the routing logic fundamentally distance-based. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A weighted record splitting traffic between Ireland and Singapore by a fixed percentage</li>
+        <li><span class="opt-letter">B.</span> A positive bias on the Singapore resource, growing its already-large service area even further</li>
+        <li><span class="opt-letter">C.</span> A positive bias on the Ireland resource, expanding its effective area to pull in Indian traffic</li>
+        <li><span class="opt-letter">D.</span> A geolocation record tagging India specifically to point at the Ireland resource</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geoproximity Routing</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — weighted routing isn't part of geoproximity's mechanism and abandons distance-based logic entirely, contradicting the requirement to keep routing fundamentally distance-based.</li>
+          <li><strong>B.</strong> Wrong — growing Singapore's area would pull in even more traffic toward the already over-capacity resource, the opposite of the intended outcome.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a positive bias on Ireland expands its effective service area far enough to pull in Indian traffic, while the decision stays purely distance-based under the hood.</li>
+          <li><strong>D.</strong> Wrong — tagging India via geolocation abandons distance-based logic for explicit location matching, contradicting the stated requirement to stay distance-based.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 53 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 53</p>
+      <p class="scenario-text">A company runs one resource on EC2 in ap-southeast-1 and another in an on-premises data center with no AWS presence. They want to include both in a single geoproximity configuration. How should each resource be defined?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Both resources need explicit latitude/longitude, since geoproximity never accepts AWS Region tags directly</li>
+        <li><span class="opt-letter">B.</span> Both resources need an AWS Region tag, since geoproximity can only route to Regions, not external endpoints</li>
+        <li><span class="opt-letter">C.</span> The EC2 resource needs latitude/longitude, while the on-premises resource gets an AWS Region tag instead</li>
+        <li><span class="opt-letter">D.</span> The EC2 resource is tagged with its AWS Region, while the on-premises resource gets explicit latitude/longitude</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geoproximity Routing</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — an AWS-based resource can be tagged directly with its Region; requiring coordinates for it too is unnecessary and not how geoproximity resource definitions work.</li>
+          <li><strong>B.</strong> Wrong — a non-AWS resource has no Region to tag; geoproximity supports external resources precisely by accepting explicit latitude/longitude coordinates instead.</li>
+          <li><strong>C.</strong> Wrong — this reverses the correct pairing; the AWS resource takes the Region tag, and the external, non-AWS resource is the one needing explicit coordinates.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — an AWS resource is tagged with its Region directly, while an external resource with no AWS presence is given explicit latitude/longitude coordinates instead.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 54 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 54</p>
+      <p class="scenario-text">A user in Saudi Arabia queries three separately-configured hosted zones for three different companies: one uses latency-based routing, one uses geolocation, and one uses geoproximity, each with resources in the UK and Australia and no bias applied anywhere. Which pairing correctly matches each policy to what determines its answer?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Latency: estimated Region performance; geolocation: explicit tag match, possibly no answer; geoproximity: pure distance</li>
+        <li><span class="opt-letter">B.</span> Latency: pure physical distance; geolocation: estimated Region performance; geoproximity: explicit tag match</li>
+        <li><span class="opt-letter">C.</span> Latency: explicit tag match, possibly no answer; geolocation: pure distance; geoproximity: estimated performance</li>
+        <li><span class="opt-letter">D.</span> All three ultimately resolve to the same nearest-resource answer whenever no bias or tag conflicts exist</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geoproximity Routing</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — latency uses estimated Region performance; geolocation matches an explicit location tag and can return no answer; geoproximity uses pure physical distance, adjustable with bias.</li>
+          <li><strong>B.</strong> Wrong — this reshuffles the three mechanisms into the wrong pairings; latency is not distance-based and geolocation is not performance-based.</li>
+          <li><strong>C.</strong> Wrong — this also reshuffles the pairings incorrectly; explicit-tag "possibly no answer" behavior belongs to geolocation, not latency, and distance belongs to geoproximity, not geolocation.</li>
+          <li><strong>D.</strong> Wrong — the three policies use genuinely different underlying logic and can easily disagree even with no bias or conflicts; they don't converge on one guaranteed shared answer.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 55 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 55</p>
+      <p class="scenario-text">A company strongly prefers, for contractual reasons, that most traffic from a wide surrounding area be served from its Frankfurt resource rather than a physically closer resource in Warsaw. The team wants the routing decision to remain fundamentally distance-based rather than switching to a different policy family. What should they do?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Switch to geolocation routing and tag the surrounding countries directly to the Frankfurt resource</li>
+        <li><span class="opt-letter">B.</span> Apply a positive bias to the Frankfurt resource, expanding its effective area over the surrounding region</li>
+        <li><span class="opt-letter">C.</span> Apply a matched negative bias to Warsaw, since bias values must always be applied in equal pairs</li>
+        <li><span class="opt-letter">D.</span> Switch to weighted routing and assign Frankfurt a higher percentage weight than Warsaw</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Geoproximity Routing</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — switching to geolocation abandons distance-based routing entirely for explicit tag matching, contradicting the requirement to stay fundamentally distance-based.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a positive bias on Frankfurt grows its effective service area over the surrounding region, deliberately shifting load toward it for business reasons while staying distance-based.</li>
+          <li><strong>C.</strong> Wrong — there is no requirement that bias values be applied in matched, equal pairs; a single positive bias on the preferred resource is sufficient on its own.</li>
+          <li><strong>D.</strong> Wrong — switching to weighted routing abandons distance-based logic for a fixed percentage split, contradicting the stated requirement to remain distance-based.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 56 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 56</p>
+      <p class="scenario-text">A company has used a third-party registrar for a decade due to a corporate discount and does not want to change that relationship, but wants its DNS managed with Route 53's routing policies and health checks. What should they configure?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Transfer the domain registration to Route 53 first, then create a hosted zone for it there</li>
+        <li><span class="opt-letter">B.</span> Create a private hosted zone in Route 53 and associate it with their VPCs</li>
+        <li><span class="opt-letter">C.</span> Create a public hosted zone in Route 53 and update the domain's NS records at the existing registrar</li>
+        <li><span class="opt-letter">D.</span> Create a hosted zone with another third-party DNS provider and leave the registrar unchanged</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Interoperability</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — transferring the registration would change the very registrar relationship the company explicitly wants to keep, violating the stated constraint.</li>
+          <li><strong>B.</strong> Wrong — a private hosted zone is only reachable from associated VPCs, not the public internet, so it wouldn't serve public DNS traffic for the domain.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — this is the "hosting only" architecture: keep the existing registrar untouched, create a public hosted zone in Route 53, and update NS records at the registrar to point at it.</li>
+          <li><strong>D.</strong> Wrong — this keeps the registrar unchanged but doesn't move hosting to Route 53 at all, so the company never gains Route 53's routing policies or health checks.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 57 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 57</p>
+      <p class="scenario-text">A domain is registered through Route 53, but its DNS zone file is hosted entirely with a separate third-party DNS provider. A support engineer needs to edit a record for this domain. Where must that change be made?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> In the Route 53 console, since registering through Route 53 always keeps the authoritative zone there too</li>
+        <li><span class="opt-letter">B.</span> In the .org registry's own management console directly, since it stores the domain's records</li>
+        <li><span class="opt-letter">C.</span> In both Route 53 and the third party at once, since the zone file is mirrored between the two</li>
+        <li><span class="opt-letter">D.</span> With the third-party DNS provider, since it hosts the zone file even though Route 53 is only registrar</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Interoperability</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — being registered through Route 53 doesn't guarantee hosting is there too; registrar and hosting are separable, and in this scenario hosting sits elsewhere.</li>
+          <li><strong>B.</strong> Wrong — a TLD registry only stores the domain's delegation (NS) information for the registrar relationship; it doesn't host the actual zone file with its resource records.</li>
+          <li><strong>C.</strong> Wrong — there's no dual-storage or mirroring arrangement between a registrar and a hosting provider; exactly one place holds the authoritative zone file at a time.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — when Route 53 is registrar-only, a separate third-party provider hosts the actual zone file and name servers, so edits must be made there.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 58 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 58</p>
+      <p class="scenario-text">An account shows two separate charges for one domain registered and hosted through Route 53: a periodic fee tied to a 1- or 3-year term, and a separate monthly fee that continues regardless of the registration term. Which two Route 53 functions do these charges correspond to?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The periodic fee is for the registrar function; the monthly fee is for hosting the zone</li>
+        <li><span class="opt-letter">B.</span> The periodic fee is for hosting the zone; the monthly fee is for the registrar function</li>
+        <li><span class="opt-letter">C.</span> Both fees are for the registrar function, billed at two different intervals for redundancy</li>
+        <li><span class="opt-letter">D.</span> The periodic fee is for DNSSEC key management; the monthly fee is for the registrar function</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Interoperability</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — the registrar function is billed as a periodic registration fee (per 1 or 3 years) while hosting the zone is billed as an ongoing monthly hosted-zone fee.</li>
+          <li><strong>B.</strong> Wrong — this reverses the two functions; hosting is the recurring monthly charge, and the term-based fee belongs to the registrar function, not the other way around.</li>
+          <li><strong>C.</strong> Wrong — registering and hosting are conceptually and financially distinct services, not the same function billed twice; only one of the two fees relates to the registrar.</li>
+          <li><strong>D.</strong> Wrong — DNSSEC key management is a separate, optional feature you can enable afterward; it isn't one of the two default charges tied simply to registering and hosting a domain.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 59 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 59</p>
+      <p class="scenario-text">An architect proposes using Route 53 purely as the registrar for a new domain while a separate third-party service hosts the actual zone file, specifically to gain Route 53's routing policies and health checks. Does this design achieve their stated goal?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Yes, because the registrar function is where routing policies and health checks are actually implemented</li>
+        <li><span class="opt-letter">B.</span> No, because routing policies and health checks are hosting features, and hosting here sits with the third party</li>
+        <li><span class="opt-letter">C.</span> Yes, because registrar and hosting providers automatically share routing configuration once registered</li>
+        <li><span class="opt-letter">D.</span> No, because Route 53 cannot act as registrar unless it also hosts the zone for that same domain</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Interoperability</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — routing policies and health checks are features of hosting the zone, not of the registrar function; this gets the two roles backwards.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — routing policies and health checks live with the hosted zone, and here hosting sits with the third party, so this registrar-only design never delivers what the architect wants.</li>
+          <li><strong>C.</strong> Wrong — there's no automatic configuration sharing between a registrar and a separate hosting provider; they operate independently once split apart like this.</li>
+          <li><strong>D.</strong> Wrong — Route 53 can absolutely function as registrar-only while a different provider hosts the zone; this is a valid, documented split, just not one that meets the architect's goal.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 60 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 60</p>
+      <p class="scenario-text">A domain has been registered with a third-party registrar for six years. The owner now wants Route 53 hosting without waiting for any renewal or transfer window. Can the switch to Route 53 hosting be made right now, and what exactly changes?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, changing which service hosts a domain's zone file is only possible during a renewal window</li>
+        <li><span class="opt-letter">B.</span> Yes, but only the registrar's own record changes — no NS record update is required to move hosting</li>
+        <li><span class="opt-letter">C.</span> Yes, at any time — create a public hosted zone in Route 53 and update NS records at the registrar</li>
+        <li><span class="opt-letter">D.</span> Yes, but the registration must first be transferred to Route 53 before hosting can move</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: Route 53 Interoperability</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — moving hosting to Route 53 isn't tied to a renewal window; the "hosting only" setup can be done either at initial registration or years later on an already-registered domain.</li>
+          <li><strong>B.</strong> Wrong — the actual mechanism requires updating the domain's NS records at the registrar to point at Route 53's four name servers; that update is exactly what moves hosting.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — the switch can be made at any time by creating a public hosted zone in Route 53 and pointing the existing registrar's NS records at its four name servers.</li>
+          <li><strong>D.</strong> Wrong — registrar and hosting are separable; hosting can move to Route 53 without ever transferring the registration itself, since that's the whole point of "hosting only."</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 61 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 61</p>
+      <p class="scenario-text">A hosted zone lives in eu-west-2. The team is enabling DNSSEC and needs to create the asymmetric KMS key that will back the key-signing key. Which Region must that KMS key be created in?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> eu-west-2, matching the hosted zone's own Region for consistency</li>
+        <li><span class="opt-letter">B.</span> us-west-2, since KMS asymmetric keys are only available in US-based Regions</li>
+        <li><span class="opt-letter">C.</span> Whichever Region is set as the account's default Region in IAM settings</li>
+        <li><span class="opt-letter">D.</span> us-east-1, regardless of which Region the hosted zone itself is associated with</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: DNSSEC with Route 53</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the KSK's backing KMS key doesn't follow the hosted zone's own Region; it has a hard, fixed Region requirement instead.</li>
+          <li><strong>B.</strong> Wrong — KMS asymmetric keys aren't restricted to US Regions generally; the DNSSEC requirement is a specific fixed Region, not a broader "US only" rule.</li>
+          <li><strong>C.</strong> Wrong — the account's default Region setting has no bearing on this; DNSSEC's KSK key has a hard requirement that overrides any account-level default.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the asymmetric KMS key backing a hosted zone's key-signing key must be created in us-east-1, regardless of the hosted zone's own Region.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 62 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 62</p>
+      <p class="scenario-text">During a DNSSEC design review, an engineer claims the zone-signing key must be backed by the same KMS asymmetric key used for the key-signing key, for consistency. Is this claim accurate?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> No, the ZSK is created and managed entirely internally by Route 53, with no KMS involvement</li>
+        <li><span class="opt-letter">B.</span> Yes, both keys share the identical KMS key so a single rotation event covers both</li>
+        <li><span class="opt-letter">C.</span> No, the ZSK does use KMS, but a separate symmetric key rather than the KSK's own key</li>
+        <li><span class="opt-letter">D.</span> Yes, but only the ZSK's public portion sits in KMS while the private portion stays in Route 53</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: DNSSEC with Route 53</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Route 53 creates and manages the zone-signing key entirely internally; KMS is not involved in ZSK creation or management at all, unlike the KSK.</li>
+          <li><strong>B.</strong> Wrong — the ZSK doesn't share the KSK's KMS key or any KMS key at all; it's generated and held internally by Route 53, separate from KMS entirely.</li>
+          <li><strong>C.</strong> Wrong — the ZSK doesn't involve KMS in any form, symmetric or asymmetric; only the KSK is backed by a KMS asymmetric key.</li>
+          <li><strong>D.</strong> Wrong — there's no split storage of the ZSK between KMS and Route 53; the entire ZSK, public and private, is managed internally by Route 53 without KMS.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 63 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 63</p>
+      <p class="scenario-text">A hosted zone has DNSSEC enabled: the DNSKEY record and its RRSIG are published correctly inside the zone itself. Resolvers still cannot validate the chain of trust for this domain. What is most likely missing?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> A ZSK-backed KMS key, since without it the DNSKEY record can't be considered complete</li>
+        <li><span class="opt-letter">B.</span> A DS record in the parent zone, linking a hash of the KSK's public part into the chain</li>
+        <li><span class="opt-letter">C.</span> A second DNSKEY record inside the zone representing the parent zone's own signing key</li>
+        <li><span class="opt-letter">D.</span> A CloudWatch alarm for DNSSEC internal failure, required before validation can succeed</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: DNSSEC with Route 53</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the ZSK is never backed by a KMS key, and its absence wouldn't relate to a missing chain-of-trust link at the parent zone; this describes a nonexistent requirement.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — even with a valid DNSKEY and RRSIG inside the zone, the chain of trust is incomplete until a DS record — a hash of the KSK's public part — is added to the parent zone.</li>
+          <li><strong>C.</strong> Wrong — the parent zone doesn't need a copy of a DNSKEY record from the child zone; it needs a DS record, a hash reference, not a duplicated signing key.</li>
+          <li><strong>D.</strong> Wrong — a CloudWatch alarm is an operational monitoring tool for detecting failures after the fact; it isn't itself required for the chain of trust to validate successfully.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 64 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 64</p>
+      <p class="scenario-text">A domain's hosting is on Route 53, but the domain was registered years ago through a separate third-party registrar that was never changed. The team enables DNSSEC signing on the hosted zone. How does the required DS record get added to the parent zone in this setup?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> Route 53 adds it automatically, exactly as it would if the domain were also registered there</li>
+        <li><span class="opt-letter">B.</span> It cannot be added at all, since DNSSEC requires registration and hosting both through Route 53</li>
+        <li><span class="opt-letter">C.</span> It must be added manually at the third-party registrar, since automatic publication needs Route 53 as registrar</li>
+        <li><span class="opt-letter">D.</span> The third-party registrar automatically detects the new DNSKEY and generates the DS record itself</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: DNSSEC with Route 53</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — automatic DS record addition from the console/CLI only works when the domain is registered through Route 53; that isn't the case in this split registrar/hosting setup.</li>
+          <li><strong>B.</strong> Wrong — DNSSEC doesn't require the domain to be both registered and hosted through Route 53; registrar and hosting can be split, and DNSSEC still works with a manual step.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — when the domain is registered elsewhere, the DS record must be added manually at that third-party registrar, since automatic publication only applies when Route 53 is the registrar.</li>
+          <li><strong>D.</strong> Wrong — third-party registrars don't automatically detect a new DNSKEY record and generate a matching DS record; that step has to be performed manually.</li>
+        </ul>
+      </div>
+    </div>
+
+<!-- 65 -->
+    <div class="scenario-block">
+      <p class="scenario-tag">Scenario 65</p>
+      <p class="scenario-text">A VPC has DNSSEC validation for VPCs enabled. A record in a DNSSEC-enabled hosted zone fails signature validation due to a misconfigured key. What happens when a resolver inside that VPC queries the record?</p>
+      <ul class="scenario-options">
+        <li><span class="opt-letter">A.</span> The record is returned normally, since validation only logs a warning rather than affecting the response</li>
+        <li><span class="opt-letter">B.</span> The query is answered from a cached unsigned copy of the record, bypassing validation entirely</li>
+        <li><span class="opt-letter">C.</span> The zone automatically falls back to serving the record unsigned until the key issue is fixed</li>
+        <li><span class="opt-letter">D.</span> The record is withheld and not returned to the resolver, since it failed signature validation</li>
+      </ul>
+      <div class="scenario-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Topic: DNSSEC with Route 53</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — with DNSSEC validation enabled for the VPC, a failed validation isn't just logged; it directly changes what's returned to the resolver.</li>
+          <li><strong>B.</strong> Wrong — there's no unsigned cached fallback mechanism used to bypass a failed validation; the described behavior is withholding, not silently serving stale data.</li>
+          <li><strong>C.</strong> Wrong — a DNSSEC-enabled zone doesn't automatically revert to unsigned serving on a key failure; the zone stays DNSSEC-enabled and the failing record is withheld instead.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — for DNSSEC-enabled zones with validation turned on for the VPC, any record that fails signature validation is withheld rather than returned to the resolver.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="index.html">↑ Back to module index</a>
+    </div>
+    <p style="margin-top:1.5rem">Confused about something, or want the reasoning re-explained a different way? Type <strong>/teach</strong> followed by your question.</p>
+  </div>
+
+</div>
+<script src="../../assets/scenario-quiz.js"></script>
+</body>
+</html>

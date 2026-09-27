@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Keyword Mental Map</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <style>
+    :root { --max-width: 900px; }
+    body { font-family: var(--sans); font-size: 16px; line-height: 1.55; }
+    h1, h2, h3 { font-family: var(--sans); }
+
+    /* ---- Quick-scan strip ---- */
+    .scan-strip { border-collapse: collapse; width: 100%; margin: 1.25rem 0 2.5rem; font-size: 0.88rem; }
+    .scan-strip th, .scan-strip td { border-bottom: 1px solid var(--border); padding: 0.5rem 0.6rem; text-align: left; vertical-align: top; }
+    .scan-strip th { font-family: var(--sans); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .scan-strip td.kw { font-weight: 700; white-space: nowrap; }
+    .scan-strip td.pick { font-family: var(--mono); font-size: 0.83rem; }
+    .scan-strip tr:hover { background: var(--accent-light); }
+    .scan-strip a { text-decoration: none; }
+
+    /* ---- Keyword mind-map cards ---- */
+    .kw-card { border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem 1.6rem 1.6rem; margin: 2.25rem 0; scroll-margin-top: 1rem; }
+    .kw-bubble {
+      display: inline-block; background: var(--accent); color: #fff; font-weight: 800;
+      font-size: 1.05rem; letter-spacing: 0.01em; padding: 0.45rem 1.15rem; border-radius: 999px;
+    }
+    .kw-signal { color: var(--muted); font-size: 0.9rem; margin: 0.7rem 0 0; }
+    .kw-signal em { font-style: italic; }
+    .kw-anchor {
+      margin: 0.9rem 0 0; padding: 0.7rem 1rem; background: var(--code-bg); border-radius: 8px;
+      font-size: 0.92rem;
+    }
+    .kw-anchor .label { font-family: var(--sans); font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--accent); display: block; margin-bottom: 0.2rem; }
+
+    .mm-branches { position: relative; margin-top: 1.2rem; padding-left: 1.4rem; border-left: 3px solid var(--border); }
+    .mm-branch { position: relative; margin: 1rem 0; padding-left: 1rem; }
+    .mm-branch::before {
+      content: ""; position: absolute; left: -1.4rem; top: 0.65rem; width: 1.3rem; height: 2px; background: var(--border);
+    }
+    .mm-branch .cond { font-weight: 700; font-size: 0.88rem; }
+    .mm-branch .cond .rule-out { font-weight: 400; color: var(--danger); }
+    .mm-branch .services { font-family: var(--mono); font-size: 0.85rem; margin-top: 0.2rem; color: var(--text); }
+    .mm-branch .services .tag {
+      display: inline-block; background: var(--accent-light); color: var(--accent); border-radius: 4px;
+      padding: 0.1em 0.5em; margin: 0.15em 0.25em 0.15em 0; font-family: var(--mono); font-size: 0.82rem;
+    }
+
+    .confuse { margin-top: 1rem; }
+    .confuse .callout-title::before { content: "\26A0\FE0F "; }
+
+    /* ---- Confusable pairs section ---- */
+    .pair-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 640px) { .pair-grid { grid-template-columns: 1fr; } }
+    .pair-side { border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem 1rem; }
+    .pair-side h4 { margin: 0 0 0.4rem; font-family: var(--sans); font-size: 0.92rem; }
+    .pair-side p { margin: 0; font-size: 0.85rem; color: var(--muted); }
+    .pair-vs { text-align: center; font-family: var(--sans); font-size: 0.75rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em; margin: 0.4rem 0; }
+
+    .backtotop { font-family: var(--sans); font-size: 0.75rem; }
+
+    @media print {
+      .scan-strip a { color: inherit; }
+      .kw-card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="container" id="top">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Reference</div>
+    <div class="module-tag">SAA-C03 · Cross-Module</div>
+    <h1>Exam Keyword Mental Map</h1>
+    <p class="lesson-meta">A branching mental map for the seven keywords in <a href="aws-saa-c03-cheatsheet.html#strategy">the cheat sheet's "Read the last sentence first" section</a> &mdash; spot the keyword in the question stem, follow the branch that matches the scenario detail, land on the service.</p>
+    <p class="source-link">Source: this workspace's own <a href="aws-saa-c03-cheatsheet.html">aws-saa-c03-cheatsheet.html</a>, expanded with the surrounding per-module facts that explain <em>why</em> each branch resolves the way it does.</p>
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">How to use this page</div>
+    Each card starts from one exam keyword, gives the single "first reach for" default, then branches into the specific scenario details that actually decide between the candidates. The keyword alone rarely picks the answer &mdash; it just narrows the field to one branch's few services. A "Don't confuse with" box flags the keyword's usual trap pairing.
+  </div>
+
+  <h2>30-second scan</h2>
+  <table class="scan-strip">
+    <thead><tr><th>Keyword</th><th>First reach for</th></tr></thead>
+    <tbody>
+      <tr><td class="kw"><a href="#kw-cost">MOST cost-effective</a></td><td class="pick">Spot / Reserved+Savings Plans / lifecycle-to-cold-storage / scale-to-zero</td></tr>
+      <tr><td class="kw"><a href="#kw-overhead">LEAST operational overhead</a></td><td class="pick">The most fully-managed option on the table</td></tr>
+      <tr><td class="kw"><a href="#kw-codechange">LEAST application code changes</a></td><td class="pick">DAX over ElastiCache &middot; anything "drop-in"</td></tr>
+      <tr><td class="kw"><a href="#kw-ha">Highest / high availability</a></td><td class="pick">Multi-AZ everything &mdash; one resource per AZ</td></tr>
+      <tr><td class="kw"><a href="#kw-latency">Lowest latency</a></td><td class="pick">Put a cache or an edge in front of the slow thing</td></tr>
+      <tr><td class="kw"><a href="#kw-dr">Disaster recovery / DR</a></td><td class="pick">Cross-<strong>Region</strong> replication, not cross-AZ</td></tr>
+      <tr><td class="kw"><a href="#kw-secure">Secure without internet exposure</a></td><td class="pick">VPC endpoint (gateway for S3/DynamoDB, interface for everything else)</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ 1. COST ============ -->
+  <div class="kw-card" id="kw-cost">
+    <span class="kw-bubble">MOST cost-effective</span>
+    <p class="kw-signal">Signal words: <em>"most cost-effective," "cheapest," "minimize cost," "reduce spend."</em></p>
+    <div class="kw-anchor"><span class="label">First reach for</span>The cheapest option that <strong>still satisfies every other stated requirement</strong> &mdash; this is a filter applied after the requirements, never a reason to violate one of them.</div>
+
+    <div class="mm-branches">
+      <div class="mm-branch">
+        <div class="cond">Compute pricing model</div>
+        <div class="services">
+          <span class="tag">Spot</span> interruptible / batch / fault-tolerant / stateless work &middot;
+          <span class="tag">Reserved Instances</span> or <span class="tag">Savings Plans</span> known steady-state, 1&ndash;3yr commitment &middot;
+          <span class="cond rule-out">rule out On-Demand</span> as the cost-effective answer whenever a commitment or interruption tolerance is mentioned
+        </div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Storage with unpredictable or aging access pattern</div>
+        <div class="services">
+          <span class="tag">S3 Lifecycle</span> known, stable transition schedule &middot;
+          <span class="tag">S3 Intelligent-Tiering</span> unknown/variable access pattern &middot;
+          <span class="tag">EBS gp3</span> over provisioned-IOPS unless a specific IOPS number is actually required
+        </div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Spiky, idle, or unpredictable workload</div>
+        <div class="services">
+          <span class="tag">Lambda</span> &middot; <span class="tag">Fargate</span> &middot; <span class="tag">Aurora Serverless</span> &middot; <span class="tag">DynamoDB on-demand</span>
+          &mdash; anything that scales to zero beats an always-on EC2/RDS instance sized for peak
+        </div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Rolling out new static content via CloudFront</div>
+        <div class="services"><span class="tag">Versioned filenames</span> (e.g. <code>whiskers_v2.jpg</code>) over <span class="cond rule-out">CloudFront invalidation</span>, which isn't free at volume</div>
+      </div>
+    </div>
+
+    <div class="callout warn confuse">
+      <div class="callout-title">Don't confuse with</div>
+      <a href="#kw-overhead">LEAST operational overhead</a> &mdash; the cheapest-per-hour option and the least-management option are often different services (e.g. self-managed EC2 can be cheaper than Fargate but is <em>more</em> overhead). Check which word the question actually uses.
+    </div>
+  </div>
+
+  <!-- ============ 2. OPERATIONAL OVERHEAD ============ -->
+  <div class="kw-card" id="kw-overhead">
+    <span class="kw-bubble">LEAST operational overhead</span>
+    <p class="kw-signal">Signal words: <em>"least admin effort," "minimal management," "no servers to manage," "hands-off."</em></p>
+    <div class="kw-anchor"><span class="label">First reach for</span>Whichever candidate is the <strong>most fully AWS-managed</strong> &mdash; the one that removes the most patching/scaling/failover work from you, even if it costs more per hour.</div>
+
+    <div class="mm-branches">
+      <div class="mm-branch">
+        <div class="cond">Relational database, HA required</div>
+        <div class="services"><span class="tag">Aurora Serverless</span> over self-managed Multi-AZ HA on EC2, and over <span class="cond rule-out">RDS Custom</span> (which trades managed-ness for OS access on purpose)</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Container compute</div>
+        <div class="services"><span class="tag">Fargate</span> over ECS/EKS EC2 mode &mdash; "idle capacity billing" or "managing instances" in the stem means EC2 mode is the wrong answer here</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">General compute</div>
+        <div class="services"><span class="tag">Lambda</span> over EC2 whenever the workload fits within Lambda's execution model (&le;15 min, stateless)</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">"When stuck between two otherwise-equal answers"</div>
+        <div class="services">Pick whichever is more AWS-managed &mdash; the cheat sheet's own tie-breaker rule for this exact situation</div>
+      </div>
+    </div>
+
+    <div class="callout warn confuse">
+      <div class="callout-title">Don't confuse with</div>
+      <a href="#kw-cost">MOST cost-effective</a> (see above) and <a href="#kw-codechange">LEAST application code changes</a> &mdash; overhead is about who manages the infrastructure, not what the app's own code has to do or how much it costs.
+    </div>
+  </div>
+
+  <!-- ============ 3. CODE CHANGES ============ -->
+  <div class="kw-card" id="kw-codechange">
+    <span class="kw-bubble">LEAST application code changes</span>
+    <p class="kw-signal">Signal words: <em>"without modifying the application," "transparent to the application," "no code changes."</em></p>
+    <div class="kw-anchor"><span class="label">First reach for</span>The option the application doesn't have to know about &mdash; if a solution requires the app to explicitly check-cache-then-fallback, it's disqualified by this exact keyword.</div>
+
+    <div class="mm-branches">
+      <div class="mm-branch">
+        <div class="cond">Caching in front of DynamoDB</div>
+        <div class="services"><span class="tag">DAX</span> &mdash; API-compatible, close to drop-in</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Caching in front of RDS/Aurora</div>
+        <div class="services">
+          <span class="cond rule-out">ElastiCache is the trap here</span> &mdash; it needs the app to actively check the cache, handle misses, and write back. If the stem says "no application changes," ElastiCache is being deliberately ruled out even though it's the "obvious" caching answer.
+        </div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Swapping credentials/identity without a rewrite</div>
+        <div class="services">Prefer IAM roles / instance profiles over hard-coded credentials &mdash; the app calls the SDK the same way either way</div>
+      </div>
+    </div>
+
+    <div class="callout warn confuse">
+      <div class="callout-title">Don't confuse with</div>
+      <a href="#kw-latency">Lowest latency</a> &mdash; both keywords can point at a caching layer, but "lowest latency" doesn't rule out ElastiCache the way "least code changes" does. Read which constraint is actually stated.
+    </div>
+  </div>
+
+  <!-- ============ 4. HA ============ -->
+  <div class="kw-card" id="kw-ha">
+    <span class="kw-bubble">Highest / high availability</span>
+    <p class="kw-signal">Signal words: <em>"highly available," "survive an AZ failure," "no single point of failure," "resilient."</em></p>
+    <div class="kw-anchor"><span class="label">First reach for</span><strong>Multi-AZ, within one Region</strong> &mdash; duplicate the resource across at least two Availability Zones. This is a same-Region concern; see the DR card below for the cross-Region version.</div>
+
+    <div class="mm-branches">
+      <div class="mm-branch">
+        <div class="cond">Outbound internet from private subnets</div>
+        <div class="services"><span class="tag">NAT Gateway &times; 1 per AZ</span> &mdash; a single shared NAT Gateway is the classic exam failure scenario: that AZ's outage kills outbound internet for every private subnet routed to it</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Load-balanced web tier with uneven per-instance load</div>
+        <div class="services"><span class="tag">Cross-zone load balancing</span> &mdash; check this setting before assuming you need more load balancers</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Compute fleet</div>
+        <div class="services"><span class="tag">Auto Scaling Group across &ge;2 AZ subnets</span> &mdash; self-healing works even with zero scaling policy; min=desired=max=1 spread across AZs is the cheapest HA pattern</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Relational database</div>
+        <div class="services"><span class="tag">RDS/Aurora Multi-AZ</span> &mdash; synchronous replication to a standby/reader in a second AZ, automatic failover</div>
+      </div>
+    </div>
+
+    <div class="callout warn confuse">
+      <div class="callout-title">Don't confuse with</div>
+      <a href="#kw-dr">Disaster recovery / DR</a> &mdash; the single most-tested distinction in this whole list. <strong>HA = survives an AZ failure, inside one Region. DR = survives a whole-Region failure.</strong> A Multi-AZ RDS instance gives you HA; it gives you <em>zero</em> DR, because Multi-AZ never leaves the Region.
+    </div>
+  </div>
+
+  <!-- ============ 5. LATENCY ============ -->
+  <div class="kw-card" id="kw-latency">
+    <span class="kw-bubble">Lowest latency</span>
+    <p class="kw-signal">Signal words: <em>"lowest latency," "fastest response time," "improve performance for end users."</em></p>
+    <div class="kw-anchor"><span class="label">First reach for</span>Put something faster and closer in front of the slow thing &mdash; a cache, an edge location, or a physically nearer path &mdash; rather than making the slow thing itself faster.</div>
+
+    <div class="mm-branches">
+      <div class="mm-branch">
+        <div class="cond">Static/cacheable content, global users, HTTP(S)</div>
+        <div class="services"><span class="tag">CloudFront</span> edge locations</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Database reads</div>
+        <div class="services"><span class="tag">DAX</span> in front of DynamoDB &middot; <span class="tag">ElastiCache</span> in front of RDS/Aurora</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Non-HTTP protocol, or raw network performance with no caching mentioned</div>
+        <div class="services"><span class="tag">Global Accelerator</span> &mdash; two static Anycast IPs, rides AWS's private backbone instead of the public internet</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Tightly-coupled compute needing single-digit-microsecond network hops</div>
+        <div class="services"><span class="tag">Cluster placement group</span> &mdash; single AZ, same rack, max throughput/lowest latency, at the cost of almost zero resilience</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Lambda cold starts</div>
+        <div class="services"><span class="tag">Provisioned concurrency</span> &mdash; pre-inits execution contexts on a version/alias (never <code>$LATEST</code>)</div>
+      </div>
+    </div>
+
+    <div class="callout warn confuse">
+      <div class="callout-title">Don't confuse with</div>
+      CloudFront vs. Global Accelerator specifically: caching / signed URLs / HTTP-specific behavior &rarr; CloudFront. TCP/UDP or "no HTTP concept at all" &rarr; Global Accelerator, which never caches anything.
+    </div>
+  </div>
+
+  <!-- ============ 6. DR ============ -->
+  <div class="kw-card" id="kw-dr">
+    <span class="kw-bubble">Disaster recovery / DR</span>
+    <p class="kw-signal">Signal words: <em>"disaster recovery," "if the Region becomes unavailable," "RTO/RPO," "business continuity."</em></p>
+    <div class="kw-anchor"><span class="label">First reach for</span><strong>Cross-Region</strong> replication of data, plus one of the four standard DR patterns (in increasing cost/speed): backup &amp; restore &rarr; pilot light &rarr; warm standby &rarr; multi-site active-active.</div>
+
+    <div class="mm-branches">
+      <div class="mm-branch">
+        <div class="cond">Relational database, need fast cross-Region failover</div>
+        <div class="services"><span class="tag">Aurora Global Database</span> &mdash; storage-layer replication &lt;1 second, one primary Region + read-only secondary Regions</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Object storage</div>
+        <div class="services"><span class="tag">S3 Cross-Region Replication (CRR)</span></div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">EC2/EBS-based workloads</div>
+        <div class="services"><span class="tag">EBS snapshot copy</span> to another Region &middot; <span class="tag">AMI copy</span> to another Region &mdash; the only way to move either resource out of its home AZ/Region at all</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">"Minimal cost, can tolerate hours of downtime" vs. "must fail over in minutes"</div>
+        <div class="services">Cheaper/slower &rarr; <span class="tag">pilot light</span> (core services idle, scaled up on failover) &middot; more expensive/faster &rarr; <span class="tag">warm standby</span> (scaled-down copy always running)</div>
+      </div>
+    </div>
+
+    <div class="callout warn confuse">
+      <div class="callout-title">Don't confuse with</div>
+      <a href="#kw-ha">Highest / high availability</a> &mdash; see that card's note. If the failure scenario named in the question is "an Availability Zone," you want HA (Multi-AZ). If it's "the Region," you want DR (cross-Region). Multi-AZ alone never answers a DR question.
+    </div>
+  </div>
+
+  <!-- ============ 7. SECURE NO INTERNET ============ -->
+  <div class="kw-card" id="kw-secure">
+    <span class="kw-bubble">Secure without internet exposure</span>
+    <p class="kw-signal">Signal words: <em>"without traversing the public internet," "no internet gateway," "fully private," "without exposing to the internet."</em></p>
+    <div class="kw-anchor"><span class="label">First reach for</span>A <strong>VPC endpoint</strong> &mdash; keep the traffic on AWS's private network end to end, with no IGW and no NAT Gateway involved at all.</div>
+
+    <div class="mm-branches">
+      <div class="mm-branch">
+        <div class="cond">Private subnet needs S3 or DynamoDB only</div>
+        <div class="services"><span class="tag">Gateway Endpoint</span> &mdash; free, automatic HA across all AZs, route-table + prefix-list based</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">Private subnet needs any other AWS service (or wants S3 via ENI too)</div>
+        <div class="services"><span class="tag">Interface Endpoint</span> (PrivateLink) &mdash; ENI-based, one per AZ needed manually, security-group-capable</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">VPC-to-VPC private connectivity</div>
+        <div class="services"><span class="tag">VPC Peering</span> (2 VPCs, no transitive routing) or <span class="tag">Transit Gateway</span> (many VPCs, transitive) &mdash; never routed over the public internet either way</div>
+      </div>
+      <div class="mm-branch">
+        <div class="cond">On-premises to a private VPC</div>
+        <div class="services"><span class="tag">Site-to-Site VPN</span> or <span class="tag">Direct Connect (private VIF)</span> &mdash; note a VPN riding over Direct Connect still needs a <em>public</em> VIF, since the VPN endpoint itself has a public IP</div>
+      </div>
+    </div>
+
+    <div class="callout warn confuse">
+      <div class="callout-title">Don't confuse with</div>
+      "Block one specific bad IP address" is a Network ACL question, not a VPC-endpoint question &mdash; Security Groups can't explicitly deny, and endpoints control <em>which service</em> is reachable, not <em>which caller IP</em> is blocked.
+    </div>
+  </div>
+
+  <h2>Confusable pairs, side by side</h2>
+  <p style="color:var(--muted); font-size:0.88rem; margin-top:-0.5rem">The three mix-ups that account for a disproportionate share of wrong answers on this whole keyword list.</p>
+
+  <div class="pair-grid">
+    <div class="pair-side"><h4>Cost-effective</h4><p>Cheapest option that still meets every requirement. Can conflict with "least overhead" &mdash; self-managed is sometimes cheaper but always more work.</p></div>
+    <div class="pair-side"><h4>Least overhead</h4><p>Most AWS-managed option, regardless of raw price. The tie-breaker when two answers both "work."</p></div>
+  </div>
+  <div class="pair-vs">vs.</div>
+
+  <div class="pair-grid">
+    <div class="pair-side"><h4>High availability</h4><p>Survives an <strong>Availability Zone</strong> failure. Stays inside one Region. Multi-AZ is the keyword.</p></div>
+    <div class="pair-side"><h4>Disaster recovery</h4><p>Survives a <strong>Region</strong> failure. Always involves a second Region. Multi-AZ alone never satisfies this.</p></div>
+  </div>
+  <div class="pair-vs">vs.</div>
+
+  <div class="pair-grid">
+    <div class="pair-side"><h4>Lowest latency</h4><p>A performance goal &mdash; caching, edge locations, proximity. Often uses the same services (Multi-AZ setups) as HA, but for a different reason.</p></div>
+    <div class="pair-side"><h4>High availability</h4><p>A resilience goal &mdash; survive a failure. Don't pick a latency-motivated answer (e.g. Global Accelerator) when the question is actually about failover.</p></div>
+  </div>
+
+  <p class="backtotop" style="margin-top:2rem"><a href="#top">&uarr; back to top</a> &middot; <a href="aws-saa-c03-cheatsheet.html">&larr; back to the full cheat sheet</a></p>
+
+</div>
+</body>
+</html>

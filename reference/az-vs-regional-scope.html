@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AZ-Bound vs. Regional Service Scope</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <style>
+    :root { --max-width: 1100px; }
+    body { font-family: var(--sans); font-size: 16px; line-height: 1.55; }
+    h1, h2, h3 { font-family: var(--sans); }
+
+    #searchwrap { position: sticky; top: 0; background: var(--bg); padding: 0.75rem 0; border-bottom: 1px solid var(--border); z-index: 10; margin-bottom: 1.5rem; }
+    #searchbox { width: 100%; box-sizing: border-box; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; font-family: var(--sans); font-size: 0.95rem; }
+    #search-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; min-height: 1em; }
+
+    .scope-badge {
+      display: inline-block; font-family: var(--sans); font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em; padding: 0.2em 0.65em; border-radius: 3px;
+      border: 1px solid; white-space: nowrap;
+    }
+    .scope-global  { color: #6d28d9; background: #ede9fe; border-color: #6d28d9; }
+    .scope-az      { color: var(--danger); background: var(--danger-light); border-color: var(--danger); }
+    .scope-auto    { color: var(--success); background: var(--success-light); border-color: var(--success); }
+    .scope-choose  { color: var(--accent); background: var(--accent-light); border-color: var(--accent); }
+
+    section.scope-group { margin-top: 2.5rem; }
+    section.scope-group h2 { display: flex; align-items: center; gap: 0.6rem; }
+    table { display: block; overflow-x: auto; max-width: 100%; }
+    tbody tr:nth-child(even) { background: rgba(0,0,0,0.025); }
+    td.svc { font-weight: 700; }
+    td.mod { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+    tr[hidden] { display: none; }
+    section[data-empty="true"] { display: none; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1rem 0 0; font-size: 0.82rem; color: var(--muted); align-items: center; }
+    .legend .scope-badge { margin-right: 0.35rem; }
+
+    @media print {
+      #searchwrap { display: none !important; }
+      section { break-inside: avoid-page; }
+    }
+  </style>
+</head>
+<body>
+<div class="container" id="top">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Reference</div>
+    <div class="module-tag">SAA-C03 · Cross-Module</div>
+    <h1>AZ-Bound vs. Regional Service Scope</h1>
+    <p class="lesson-meta">One quick-glance answer to "does this live in one Availability Zone, or does AWS spread it across the Region for me?" &mdash; compiled only from services actually covered in this workspace's lessons (modules 05&ndash;23).</p>
+    <p class="source-link">Facts pulled from this workspace's own lessons and <a href="aws-saa-c03-cheatsheet.html">aws-saa-c03-cheatsheet.html</a>; click any service to jump to the lesson it's taught in.</p>
+  </div>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The pattern behind almost every row below</div>
+    <p style="margin-top:0.4rem"><strong>A Region contains many Availability Zones. A VPC is Region-wide; a Subnet is exactly one AZ, never more.</strong> That single relationship predicts most of this page:</p>
+    <ul style="margin-bottom:0">
+      <li>Anything that has to live <em>inside a subnet</em> &mdash; an EC2 instance, an EBS volume, an ENI, a NAT Gateway, a Dedicated Host &mdash; is pinned to that subnet's one AZ. AWS never silently moves it to another AZ for you.</li>
+      <li>Anything that sits <em>above</em> the VPC/subnet layer entirely &mdash; S3, DynamoDB, Lambda's control plane, an ECS/EKS control plane &mdash; is Regional, and AWS spreads its own internals across AZs without you doing anything.</li>
+      <li>A lot of the "high-yield" exam content in this course is really about the middle case: a Regional, logical resource (ALB, Auto Scaling Group, RDS Multi-AZ, an Interface VPC Endpoint) whose underlying pieces still have to be placed into specific AZ subnets &mdash; <strong>by you</strong>. Get the AZ placement wrong and the HA story falls apart even though the "resource" itself is Regional.</li>
+      <li>Only a handful of services skip the Region concept altogether: Route 53, CloudFront, IAM/STS, Organizations, and Global Accelerator.</li>
+    </ul>
+  </div>
+
+  <div id="searchwrap">
+    <input type="search" id="searchbox" placeholder="Filter by service name (e.g. NAT, RDS, S3, Lambda)&hellip;" autocomplete="off" />
+    <div id="search-meta"></div>
+  </div>
+
+  <div class="legend">
+    <span><span class="scope-badge scope-global">Global</span> no Region at all</span>
+    <span><span class="scope-badge scope-az">AZ-bound</span> lives in exactly one AZ &mdash; you build the multi-AZ pattern</span>
+    <span><span class="scope-badge scope-auto">Regional &middot; auto</span> spans AZs by default, nothing to configure</span>
+    <span><span class="scope-badge scope-choose">Regional &middot; you choose</span> Regional resource, but you pick which AZs it lands in</span>
+  </div>
+
+  <!-- ============ GLOBAL ============ -->
+  <section class="scope-group" data-group="global">
+    <h2><span class="scope-badge scope-global">Global</span> No Region at all</h2>
+    <table>
+      <thead><tr><th>Service</th><th>Why it's global</th><th>Lesson</th></tr></thead>
+      <tbody>
+        <tr><td class="svc">Route 53</td><td>DNS, hosted zones, health checks &mdash; the "global service location and discovery" layer above every Region.</td><td class="mod"><a href="../lessons/11-route-53-global-dns/index.html">Mod 11</a></td></tr>
+        <tr><td class="svc">CloudFront</td><td>One distribution serves every edge location worldwide; the distribution itself has no home Region (only its ACM cert must sit in us-east-1).</td><td class="mod"><a href="../lessons/16-global-content-delivery-and-optimization/0001-cloudfront-architecture.html">Mod 16</a></td></tr>
+        <tr><td class="svc">Global Accelerator</td><td>Two static Anycast IPs route into endpoint groups across Regions &mdash; it exists specifically to sit above the Region layer.</td><td class="mod"><a href="../lessons/16-global-content-delivery-and-optimization/0010-global-accelerator.html">Mod 16</a></td></tr>
+        <tr><td class="svc">IAM &amp; STS</td><td>Users, groups, roles and policies apply account-wide with no Region field &mdash; confirmed by this workspace's own CloudTrail lesson, which lists IAM/STS alongside CloudFront as the "global services" an all-Regions trail is needed to capture.</td><td class="mod"><a href="../lessons/05-iam-accounts-and-aws-organizations/0001-iam-identity-policies.html">Mod 05</a></td></tr>
+        <tr><td class="svc">AWS Organizations</td><td>The management account, OUs, member accounts and SCPs are one account-wide structure &mdash; there's no per-Region org.</td><td class="mod"><a href="../lessons/05-iam-accounts-and-aws-organizations/0007-aws-organizations.html">Mod 05</a></td></tr>
+        <tr><td class="svc">AWS Shield</td><td>Standard is automatic protection for every AWS customer with no per-Region opt-in; Advanced is subscribed and billed <strong>per Organization</strong>, not per account or Region.</td><td class="mod"><a href="../lessons/19-security-deployment-and-operations/0004-aws-shield.html">Mod 19</a></td></tr>
+        <tr><td class="svc">AWS WAF <em>(CloudFront scope only)</em></td><td>A Web ACL scoped to CloudFront is global, matching CloudFront itself. The same WAF service is <strong>Regional</strong> when protecting an ALB/API Gateway/AppSync &mdash; see the Regional table below for that case.</td><td class="mod"><a href="../lessons/19-security-deployment-and-operations/0003-web-application-firewall-waf.html">Mod 19</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ AZ-BOUND ============ -->
+  <section class="scope-group" data-group="az">
+    <h2><span class="scope-badge scope-az">AZ-bound</span> Lives in exactly one Availability Zone</h2>
+    <p style="color:var(--muted); font-size:0.85rem; margin-top:-0.5rem">If the AZ hosting one of these fails, the resource fails with it. High availability means <em>you</em> deploy more than one, in different AZs &mdash; AWS never relocates these across an AZ boundary on its own.</p>
+    <table>
+      <thead><tr><th>Service / resource</th><th>What's pinned to one AZ</th><th>Lesson</th></tr></thead>
+      <tbody>
+        <tr><td class="svc">VPC Subnet</td><td>The foundational case &mdash; <strong>one subnet = exactly one AZ, never spans AZs.</strong> Every other row on this list ultimately traces back to this rule.</td><td class="mod"><a href="../lessons/07-virtual-private-cloud-vpc-basics/0002-vpc-subnets.html">Mod 07</a></td></tr>
+        <tr><td class="svc">EC2 instance</td><td>"AZ-locked, full stop" &mdash; host, ENI, subnet and attached EBS all live in exactly one AZ; an instance only ever moves host within the <em>same</em> AZ, never across AZs (only a relaunch from an AMI/snapshot can move it).</td><td class="mod"><a href="../lessons/08-elastic-compute-cloud-ec2-basics/0002-ec2-architecture-and-resilience.html">Mod 08</a></td></tr>
+        <tr><td class="svc">EBS volume</td><td>Same AZ-lock as EC2 &mdash; no cross-AZ attach. A snapshot to S3 is the only way to move the data to another AZ or Region.</td><td class="mod"><a href="../lessons/08-elastic-compute-cloud-ec2-basics/0006-ebs-service-architecture.html">Mod 08</a></td></tr>
+        <tr><td class="svc">EC2 Instance Store</td><td>Physically attached to the host itself &mdash; even more tightly bound than EBS; wiped entirely on stop/start or host migration, let alone an AZ change.</td><td class="mod"><a href="../lessons/08-elastic-compute-cloud-ec2-basics/0010-instance-store-volumes-architecture.html">Mod 08</a></td></tr>
+        <tr><td class="svc">Elastic Network Interface (secondary ENI)</td><td>Detachable, but only ever re-attachable within the <strong>same AZ</strong> as where it was created.</td><td class="mod"><a href="../lessons/08-elastic-compute-cloud-ec2-basics/0014-network-interfaces-instance-ips-and-dns.html">Mod 08</a></td></tr>
+        <tr><td class="svc">NAT Gateway</td><td>"AZ-resilient only &mdash; need one per AZ for full HA." A single NAT Gateway shared across all AZs is the classic exam failure scenario: that AZ's outage kills outbound internet for every private subnet routed to it.</td><td class="mod"><a href="../lessons/07-virtual-private-cloud-vpc-basics/0009-nat-gateway.html">Mod 07</a></td></tr>
+        <tr><td class="svc">EC2 Dedicated Host</td><td>A specific physical server, which by definition sits in one specific AZ.</td><td class="mod"><a href="../lessons/10-advanced-ec2/0007-ec2-dedicated-hosts.html">Mod 10</a></td></tr>
+        <tr><td class="svc">Cluster Placement Group</td><td>"Single AZ, same rack" &mdash; the whole point is minimum-latency proximity, which caps it to one AZ with almost zero built-in resilience.</td><td class="mod"><a href="../lessons/10-advanced-ec2/0006-ec2-placement-groups.html">Mod 10</a></td></tr>
+        <tr><td class="svc">RDS DB instance (Single-AZ)</td><td>The default deployment: one instance in one AZ. The surrounding DB subnet group must span &ge;2 AZs only so you have the option to <em>enable</em> Multi-AZ later &mdash; on its own, a Single-AZ instance has no standby.</td><td class="mod"><a href="../lessons/12-relational-database-service-rds/0005-rds-architecture.html">Mod 12</a></td></tr>
+        <tr><td class="svc">Amazon S3 One Zone-IA</td><td>The deliberate exception inside S3 &mdash; every other S3 storage class replicates across 3 AZs automatically, but One Zone-IA is explicitly stored in a single AZ (cheaper, but lost entirely if that AZ is destroyed).</td><td class="mod"><a href="../lessons/06-simple-storage-service-s3/0008-s3-storage-classes-part1.html">Mod 06</a></td></tr>
+        <tr><td class="svc">Amazon Redshift (classic cluster)</td><td>"Classic clusters run in one AZ &mdash; not natively HA across AZs," with resilience instead coming from snapshots landing in S3. (Redshift Serverless and genuine Multi-AZ for RA3 clusters now exist alongside this, but the classic architecture the exam tests is single-AZ.)</td><td class="mod"><a href="../lessons/21-nosql-databases-and-dynamodb/0011-redshift-architecture.html">Mod 21</a></td></tr>
+        <tr><td class="svc">ElastiCache for Memcached (node)</td><td>"No true replication" &mdash; a given node has no cross-AZ copy of itself, unlike Redis.</td><td class="mod"><a href="../lessons/21-nosql-databases-and-dynamodb/0010-elasticache.html">Mod 21</a></td></tr>
+        <tr><td class="svc">FSx for Lustre &mdash; Scratch</td><td>No replication at all &mdash; a hardware failure in that one AZ loses the data outright. Chosen for speed over durability.</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0015-fsx-for-lustre.html">Mod 18</a></td></tr>
+        <tr><td class="svc">FSx for Lustre &mdash; Persistent (Gen 1)</td><td>"Replicated within one AZ (not multi-AZ)," self-healing against disk failure but not an AZ outage. (Persistent 2 with Intelligent-Tiering is the newer exception &mdash; see the Regional/you-choose table.)</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0015-fsx-for-lustre.html">Mod 18</a></td></tr>
+        <tr><td class="svc">AWS Local Zone</td><td>"Behaves like a single AZ with no built-in redundancy of its own" &mdash; it's an extension of a parent Region, not a resilient location in itself. EBS snapshots still land in S3 back in the parent Region.</td><td class="mod"><a href="../lessons/23-other-services-and-features/0001-aws-local-zones.html">Mod 23</a></td></tr>
+        <tr><td class="svc">AWS Direct Connect connection</td><td>Not technically an "AZ," but the same single-point-of-failure pattern: one physical cable into one DX location. "No built-in resilience" &mdash; a full HA design needs multiple locations and premises, a choice you make (see Regional/you-choose).</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0004-direct-connect-concepts.html">Mod 18</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ REGIONAL - AUTO ============ -->
+  <section class="scope-group" data-group="auto">
+    <h2><span class="scope-badge scope-auto">Regional &middot; automatic</span> Spans AZs by default &mdash; nothing to configure</h2>
+    <p style="color:var(--muted); font-size:0.85rem; margin-top:-0.5rem">You interact with these as one Regional endpoint. AWS distributes the underlying storage/compute across multiple AZs on its own, with no AZ picker in the console.</p>
+    <table>
+      <thead><tr><th>Service</th><th>How the AZ spread happens automatically</th><th>Lesson</th></tr></thead>
+      <tbody>
+        <tr><td class="svc">VPC</td><td>"Regional, spans every AZ in the Region automatically" &mdash; you never provision a VPC per AZ, only subnets.</td><td class="mod"><a href="../lessons/07-virtual-private-cloud-vpc-basics/0001-vpc-fundamentals.html">Mod 07</a></td></tr>
+        <tr><td class="svc">S3 (Standard, Standard-IA, Glacier tiers)</td><td>Every class except One Zone-IA stores across <strong>3 AZs</strong> automatically &mdash; this is literally a column in the lesson's storage-class comparison table.</td><td class="mod"><a href="../lessons/06-simple-storage-service-s3/0008-s3-storage-classes-part1.html">Mod 06</a></td></tr>
+        <tr><td class="svc">DynamoDB</td><td>"Every item replicates to 3 storage nodes across 3 AZs" with one elected leader &mdash; built into the base service, not an optional setting.</td><td class="mod"><a href="../lessons/21-nosql-databases-and-dynamodb/0001-dynamodb-architecture.html">Mod 21</a></td></tr>
+        <tr><td class="svc">Aurora (cluster storage)</td><td>"Shared cluster storage volume: 6 storage nodes across 3 AZs, self-healing" &mdash; the key architectural difference from RDS's per-instance EBS volume.</td><td class="mod"><a href="../lessons/12-relational-database-service-rds/0011-aurora-architecture.html">Mod 12</a></td></tr>
+        <tr><td class="svc">AWS Lambda (default networking mode)</td><td>AWS places execution environments across AZs on your behalf; you only step into AZ-placement decisions once you attach the function to a VPC (see Regional/you-choose).</td><td class="mod"><a href="../lessons/15-serverless-and-application-services/0003-aws-lambda-part1.html">Mod 15</a></td></tr>
+        <tr><td class="svc">EKS control plane</td><td>"AWS-managed control plane (including etcd) across multiple AZs, always AWS-managed regardless of node type" &mdash; the worker nodes are a separate, you-choose decision (see below).</td><td class="mod"><a href="../lessons/09-containers-and-ecs/0004-elastic-kubernetes-service-eks.html">Mod 09</a></td></tr>
+        <tr><td class="svc">ECS cluster (the logical construct)</td><td>A cluster itself is just a Regional namespace with no AZ concept; the tasks/services placed into it are where AZ choice actually happens (see below).</td><td class="mod"><a href="../lessons/09-containers-and-ecs/0001-ecs-concepts.html">Mod 09</a></td></tr>
+        <tr><td class="svc">S3 Gateway VPC Endpoint</td><td>"Automatic, all AZs" &mdash; the one thing that structurally distinguishes it from an Interface Endpoint.</td><td class="mod"><a href="../lessons/17-advanced-vpc-networking/0003-vpc-endpoints-gateway.html">Mod 17</a></td></tr>
+        <tr><td class="svc">EFS (filesystem data)</td><td>The filesystem's data durability spans multiple AZs in the Region automatically; only the <em>mount targets</em> (the access points) are a per-AZ resource you create yourself (see below).</td><td class="mod"><a href="../lessons/13-network-storage-and-data-lifecycle/0001-efs-architecture.html">Mod 13</a></td></tr>
+        <tr><td class="svc">SQS, SNS, EventBridge, Step Functions</td><td>Fully-managed Regional services with AWS-managed redundancy behind the scenes &mdash; no AZ configuration is ever exposed to you.</td><td class="mod"><a href="../lessons/15-serverless-and-application-services/0011-simple-queue-service.html">Mod 15</a></td></tr>
+        <tr><td class="svc">Kinesis (Data Streams / Firehose / Managed Flink / Video Streams)</td><td>Regional ingestion/processing services; shard/stream placement across AZs is entirely AWS-managed.</td><td class="mod"><a href="../lessons/15-serverless-and-application-services/0015-kinesis-data-streams.html">Mod 15</a></td></tr>
+        <tr><td class="svc">API Gateway</td><td>Regional (or edge-optimized, which layers CloudFront in front) &mdash; no AZ concept exposed to the user.</td><td class="mod"><a href="../lessons/15-serverless-and-application-services/0010-api-gateway-101.html">Mod 15</a></td></tr>
+        <tr><td class="svc">Amazon Cognito, AWS Glue, AWS AppFlow</td><td>Fully-managed Regional application services with no AZ picker.</td><td class="mod"><a href="../lessons/15-serverless-and-application-services/0019-amazon-cognito-user-and-identity-pools.html">Mod 15</a></td></tr>
+        <tr><td class="svc">Amazon Athena</td><td>Serverless SQL over S3 &mdash; you never provision compute, so there's nothing to place into an AZ.</td><td class="mod"><a href="../lessons/21-nosql-databases-and-dynamodb/0009-amazon-athena.html">Mod 21</a></td></tr>
+        <tr><td class="svc">AWS Transit Gateway</td><td>A Regional hub that works cross-Region and cross-account riding AWS's own network &mdash; AWS manages its internal AZ redundancy.</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0007-transit-gateway.html">Mod 18</a></td></tr>
+        <tr><td class="svc">Secrets Manager, AWS Config, Macie, Inspector, GuardDuty</td><td>Regional control/security services (one per Region, some support cross-Region aggregation) &mdash; they don't deploy anything into a subnet, so there's no AZ to place.</td><td class="mod"><a href="../lessons/19-security-deployment-and-operations/0001-aws-secrets-manager.html">Mod 19</a></td></tr>
+        <tr><td class="svc">CloudFormation (stacks / StackSets)</td><td>Purely a control-plane service &mdash; a stack lives in one Region (StackSets span many), but CloudFormation itself never occupies a subnet or an AZ.</td><td class="mod"><a href="../lessons/20-infrastructure-as-code-cloudformation/index.html">Mod 20</a></td></tr>
+        <tr><td class="svc">Comprehend, Kendra, Lex, Polly, Rekognition, Textract, Transcribe, Translate, Forecast, Fraud Detector, SageMaker</td><td>All ten pre-built AI APIs plus SageMaker are Regional, fully-managed services with no AZ concept exposed to the caller.</td><td class="mod"><a href="../lessons/22-machine-learning-101/index.html">Mod 22</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ REGIONAL - YOU CHOOSE ============ -->
+  <section class="scope-group" data-group="choose">
+    <h2><span class="scope-badge scope-choose">Regional &middot; you choose</span> A Regional resource whose pieces you place into specific AZs</h2>
+    <p style="color:var(--muted); font-size:0.85rem; margin-top:-0.5rem">This is where most of the course's "high-yield" HA-design content actually lives: the resource is Regional and logical, but its real availability depends entirely on which AZs <em>you</em> spread it across.</p>
+    <table>
+      <thead><tr><th>Service</th><th>What you place, and where</th><th>Lesson</th></tr></thead>
+      <tbody>
+        <tr><td class="svc">ALB / NLB / Gateway Load Balancer</td><td>"One LB 'object' = multiple nodes (1+ per AZ subnet you pick)" &mdash; you choose which AZ subnets get a node; a single DNS record then resolves to every node across them.</td><td class="mod"><a href="../lessons/14-ha-and-scaling/0003-elb-architecture-part1.html">Mod 14</a></td></tr>
+        <tr><td class="svc">Auto Scaling Group</td><td>Spans exactly the AZ subnets you attach to it; self-healing works across those subnets even with zero scaling policy &mdash; the cheapest HA pattern is min=desired=max=1 spread across multiple AZ subnets.</td><td class="mod"><a href="../lessons/14-ha-and-scaling/0007-auto-scaling-groups.html">Mod 14</a></td></tr>
+        <tr><td class="svc">RDS Multi-AZ (instance or cluster)</td><td>The DB subnet group spans &ge;2 AZs; enabling Multi-AZ adds a synchronous standby (instance) or up to 2 additional readers (cluster) in a second AZ you don't individually pick &mdash; it comes from the subnet group.</td><td class="mod"><a href="../lessons/12-relational-database-service-rds/0006-rds-multi-az-instance-vs-cluster.html">Mod 12</a></td></tr>
+        <tr><td class="svc">RDS Read Replica</td><td>Can be created same-AZ, cross-AZ, or cross-Region &mdash; a per-replica choice you make at creation time.</td><td class="mod"><a href="../lessons/12-relational-database-service-rds/0008-rds-read-replicas.html">Mod 12</a></td></tr>
+        <tr><td class="svc">RDS Proxy</td><td>"VPC-only, multi-AZ" &mdash; it deploys across the AZs of the DB subnet group you give it.</td><td class="mod"><a href="../lessons/12-relational-database-service-rds/0015-rds-proxy.html">Mod 12</a></td></tr>
+        <tr><td class="svc">DMS replication instance</td><td>A managed instance you can optionally deploy in Multi-AZ, exactly like an RDS instance's own Multi-AZ option.</td><td class="mod"><a href="../lessons/12-relational-database-service-rds/0016-database-migration-service-dms.html">Mod 12</a></td></tr>
+        <tr><td class="svc">Interface VPC Endpoint (PrivateLink)</td><td>"Manual &mdash; one per AZ needed," unlike the Gateway Endpoint's automatic coverage &mdash; you create one ENI per AZ subnet you want it reachable from.</td><td class="mod"><a href="../lessons/17-advanced-vpc-networking/0004-vpc-endpoints-interface.html">Mod 17</a></td></tr>
+        <tr><td class="svc">EFS Mount Targets</td><td>"One mount target per AZ for HA" &mdash; the same one-per-AZ pattern as NAT Gateway and Interface Endpoints, except here the underlying data is already Regional; only the access point is per-AZ.</td><td class="mod"><a href="../lessons/13-network-storage-and-data-lifecycle/0001-efs-architecture.html">Mod 13</a></td></tr>
+        <tr><td class="svc">ECS/EKS tasks, services &amp; worker nodes</td><td>Fargate tasks and EC2 worker nodes are placed into whichever subnets (AZs) you configure for the service or node group &mdash; the control plane is auto-multi-AZ, but your compute isn't unless you spread it yourself.</td><td class="mod"><a href="../lessons/09-containers-and-ecs/0002-ecs-cluster-modes.html">Mod 09</a></td></tr>
+        <tr><td class="svc">ElastiCache for Redis (replication group)</td><td>"True Multi-AZ HA" &mdash; but the primary and its replicas are placed into the specific AZs your subnet group covers.</td><td class="mod"><a href="../lessons/21-nosql-databases-and-dynamodb/0010-elasticache.html">Mod 21</a></td></tr>
+        <tr><td class="svc">FSx for Lustre &mdash; Persistent 2 (Intelligent-Tiering)</td><td>The newer exception to the single-AZ Persistent default &mdash; it can replicate across multiple AZs, a deployment choice at creation.</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0015-fsx-for-lustre.html">Mod 18</a></td></tr>
+        <tr><td class="svc">FSx for Windows File Server</td><td>Deploys with either a Single-AZ or Multi-AZ file server, a choice you make at creation (the lesson focuses on AD integration and throughput rather than this deployment option, so treat it as a lighter-confidence entry).</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0014-fsx-for-windows-file-server.html">Mod 18</a></td></tr>
+        <tr><td class="svc">AWS CloudHSM cluster</td><td>Runs inside an AWS-managed CloudHSM VPC; best-practice HA is achieved by adding HSMs into more than one AZ within that cluster &mdash; a design decision you make.</td><td class="mod"><a href="../lessons/19-security-deployment-and-operations/0005-cloudhsm.html">Mod 19</a></td></tr>
+        <tr><td class="svc">AWS WAF <em>(ALB / API Gateway / AppSync scope)</em></td><td>Regional here (unlike the CloudFront case above) &mdash; "the Web ACL must be created in the same Region as the resource" it protects.</td><td class="mod"><a href="../lessons/19-security-deployment-and-operations/0003-web-application-firewall-waf.html">Mod 19</a></td></tr>
+        <tr><td class="svc">Site-to-Site VPN / Virtual Private Gateway</td><td>The VGW attaches per-VPC (Regional); true HA comes from a second Customer Gateway at a separate premises/ISP &mdash; a design choice, not something AWS does for you.</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0003-aws-site-to-site-vpn.html">Mod 18</a></td></tr>
+        <tr><td class="svc">Direct Connect (resilience progression)</td><td>You choose how many locations, ports and premises to use &mdash; the progression from "7 single points of failure" to maximum resilience (2 locations &times; 2 ports &times; 2 premises) is entirely your architecture decision.</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0005-direct-connect-resilience.html">Mod 18</a></td></tr>
+        <tr><td class="svc">Storage Gateway (any mode)</td><td>A gateway appliance you deploy on-prem or on EC2 &mdash; its resilience is entirely your own design, not an AWS-managed AZ concept.</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0008-storage-gateway-volume.html">Mod 18</a></td></tr>
+        <tr><td class="svc">AWS Transfer Family (VPC endpoint)</td><td>The VPC-hosted endpoint types are placed into whichever subnets you configure.</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0016-aws-transfer-family.html">Mod 18</a></td></tr>
+        <tr><td class="svc">Placement Groups &mdash; Spread &amp; Partition</td><td>Spread "can span AZs"; Partition is "per AZ" with up to 7 partitions per AZ &mdash; both let you decide the AZ spread, unlike Cluster (always single-AZ).</td><td class="mod"><a href="../lessons/10-advanced-ec2/0006-ec2-placement-groups.html">Mod 10</a></td></tr>
+        <tr><td class="svc">AWS Directory Service (Managed Microsoft AD)</td><td>Deploys domain controllers across the AZs of the VPC/subnets you specify for redundancy (a standard multi-AZ pattern; not spelled out in the lesson's own text, so treat as a lighter-confidence entry).</td><td class="mod"><a href="../lessons/18-hybrid-environments-and-migration/0012-directory-service.html">Mod 18</a></td></tr>
+        <tr><td class="svc">Amazon MQ</td><td>Runs inside a VPC as either a single-instance or active/standby broker &mdash; active/standby places the two brokers in AZs you choose.</td><td class="mod"><a href="../lessons/15-serverless-and-application-services/0021-amazon-mq-101.html">Mod 15</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <p style="margin-top:2.5rem; font-size:0.8rem; color:var(--muted)">A few entries above are flagged as "lighter-confidence" where this workspace's lessons don't spell out the exact AZ mechanics and the note relies on standard, current AWS architecture instead &mdash; everything else traces directly to a specific lesson fact.</p>
+
+</div>
+<script>
+(function () {
+  var box = document.getElementById('searchbox');
+  var meta = document.getElementById('search-meta');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section.scope-group'));
+
+  function filter() {
+    var q = box.value.trim().toLowerCase();
+    var totalShown = 0;
+    sections.forEach(function (section) {
+      var rows = section.querySelectorAll('tbody tr');
+      var shownInSection = 0;
+      rows.forEach(function (row) {
+        var text = row.textContent.toLowerCase();
+        var match = !q || text.indexOf(q) !== -1;
+        row.hidden = !match;
+        if (match) shownInSection++;
+      });
+      section.dataset.empty = shownInSection === 0 ? 'true' : 'false';
+      totalShown += shownInSection;
+    });
+    meta.textContent = q ? (totalShown + ' matching service' + (totalShown === 1 ? '' : 's')) : '';
+  }
+
+  box.addEventListener('input', filter);
+})();
+</script>
+</body>
+</html>
