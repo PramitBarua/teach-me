@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Question Bank – Part 11 (Q251–275)</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Exam Question Bank › Part 11 (Q251–275)</div>
+    <div class="module-tag">Official-Style Practice Exam</div>
+    <h1>AWS SAA-C03 Exam Questions &amp; Answers — Part 11</h1>
+    <p class="lesson-meta">Standalone question bank · 25 questions (251–275) · separate from the per-module scenarios.html sets</p>
+    <p class="source-link">Also in this bank: <a href="part-1.html">Part 1 (Q1–25)</a> · <a href="part-2.html">Part 2 (Q26–50)</a> · <a href="part-3.html">Part 3 (Q51–75)</a> · <a href="part-4.html">Part 4 (Q76–100)</a> · <a href="part-5.html">Part 5 (Q101–125)</a> · <a href="part-6.html">Part 6 (Q126–150)</a> · <a href="part-7.html">Part 7 (Q151–175)</a> · <a href="part-8.html">Part 8 (Q176–200)</a> · <a href="part-9.html">Part 9 (Q201–225)</a> · <a href="part-10.html">Part 10 (Q226–250)</a> · <a href="part-12.html">Part 12 (Q276–300)</a> · <a href="part-13.html">Part 13 (Q301–325)</a> · <a href="part-14.html">Part 14 (Q326–350)</a> · <a href="part-15.html">Part 15 (Q351–375)</a> · <a href="part-16.html">Part 16 (Q376–400)</a> · <a href="part-17.html">Part 17 (Q401–420)</a> · <a href="part-18.html">Part 18 (Q421–440)</a> · <a href="part-19.html">Part 19 (Q441–460)</a> · <a href="part-20.html">Part 20 (Q461–480)</a> · <a href="part-21.html">Part 21 (Q481–500)</a></p>
+  </div>
+
+  <p>This is the eleventh set in the same standalone exam question bank as <a href="part-1.html">Part 1</a>, <a href="part-2.html">Part 2</a>, <a href="part-3.html">Part 3</a>, <a href="part-4.html">Part 4</a>, <a href="part-5.html">Part 5</a>, <a href="part-6.html">Part 6</a>, <a href="part-7.html">Part 7</a>, <a href="part-8.html">Part 8</a>, <a href="part-9.html">Part 9</a>, and <a href="part-10.html">Part 10</a> — transcribed from another batch of official-style AWS SAA-C03 practice questions, kept in <code>exam-question-bank/</code> instead of under <code>lessons/</code>. Most questions have exactly one correct answer; a few are marked <strong>Select N</strong> and require picking multiple options (checkboxes instead of a single pick), just like the real exam. Click option(s) to select your answer, then reveal it: your pick is highlighted in red if wrong, green marks every correct option (including ones you missed). Once you've answered every question, check "Show my results" for your overall score and a breakdown by exam domain.</p>
+
+  <div class="exam-set" data-start-number="251">
+    <p class="exam-count">25 questions · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-domain breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+    <!-- 251 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 251</p>
+      <p class="exam-text">A company hosts a website on Amazon EC2 instances behind an Application Load Balancer (ALB). The website serves static content. Website traffic is increasing, and the company is concerned about a potential increase in cost. What should a solutions architect do to reduce costs?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create an Amazon CloudFront distribution to cache static files at edge locations</li>
+        <li><span class="opt-letter">B.</span> Create an Amazon ElastiCache cluster. Connect the ALB to the ElastiCache cluster to serve cached files</li>
+        <li><span class="opt-letter">C.</span> Create an AWS WAF web ACL and associate it with the ALB. Add a rule to the web ACL to cache static files</li>
+        <li><span class="opt-letter">D.</span> Create a second ALB in an alternative AWS Region. Route user traffic to the closest Region to minimize data transfer costs</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — CloudFront serves the static files from edge caches, so fewer requests reach the ALB and EC2 instances, and CloudFront data transfer out is cheaper than serving it from EC2.</li>
+          <li><strong>B.</strong> Wrong — an ALB can't use ElastiCache as a target or cache; ElastiCache is an in-memory store your application code talks to.</li>
+          <li><strong>C.</strong> Wrong — AWS WAF filters requests; it has no caching feature.</li>
+          <li><strong>D.</strong> Wrong — a second Region doubles the infrastructure and doesn't take any load off the origin.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 252 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 252</p>
+      <p class="exam-text">A company runs its application on an Oracle database. The company plans to quickly migrate to AWS because of limited resources for the database, backup administration, and data center maintenance. The application uses third-party database features that require privileged access.</p>
+      <p class="exam-text">Which solution will help the company migrate the database to AWS MOST cost-effectively?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Migrate the database to Amazon RDS for Oracle. Replace third-party features with cloud services.</li>
+        <li><span class="opt-letter">B.</span> Migrate the database to Amazon RDS Custom for Oracle. Customize the database settings to support third-party features.</li>
+        <li><span class="opt-letter">C.</span> Migrate the database to an Amazon EC2 Amazon Machine Image (AMI) for Oracle. Customize the database settings to support third-party features.</li>
+        <li><span class="opt-letter">D.</span> Migrate the database to Amazon RDS for PostgreSQL by rewriting the application code to remove dependency on Oracle APEX.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <p class="answer-line" style="color:var(--warn); font-size:0.85rem;">⚠️ Current-state note: AWS has announced end of support for RDS Custom for Oracle (March 31, 2027). The exam still tests it as the answer for 'managed Oracle that needs privileged or OS access'.</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — RDS for Oracle gives no OS or privileged access, and replacing the third-party features is slow, not a quick migration.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — RDS Custom gives privileged (OS and database) access for third-party features while AWS still handles backups and maintenance.</li>
+          <li><strong>C.</strong> Wrong — Oracle on EC2 works, but the company keeps all the backup and database administration it lacks the resources for.</li>
+          <li><strong>D.</strong> Wrong — rewriting the application is the slowest and most expensive option.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 253 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 253</p>
+      <p class="exam-text">A company is building a new web-based customer relationship management application. The application will use several Amazon EC2 instances that are backed by Amazon Elastic Block Store (Amazon EBS) volumes behind an Application Load Balancer (ALB). The application will also use an Amazon Aurora database. All data for the application must be encrypted at rest and in transit.</p>
+      <p class="exam-text">Which solution will meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use AWS Key Management Service (AWS KMS) certificates on the ALB to encrypt data in transit. Use AWS Certificate Manager (ACM) to encrypt the EBS volumes and Aurora database storage at rest.</li>
+        <li><span class="opt-letter">B.</span> Use the AWS root account to log in to the AWS Management Console. Upload the company's encryption certificates. While in the root account, select the option to turn on encryption for all data at rest and in transit for the account.</li>
+        <li><span class="opt-letter">C.</span> Use AWS Key Management Service (AWS KMS) to encrypt the EBS volumes and Aurora database storage at rest. Attach an AWS Certificate Manager (ACM) certificate to the ALB to encrypt data in transit.</li>
+        <li><span class="opt-letter">D.</span> Use BitLocker to encrypt all data at rest. Import the company's TLS certificate keys to AWS Key Management Service (AWS KMS). Attach the KMS keys to the ALB to encrypt data in transit.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — the roles are swapped: KMS holds encryption keys, not TLS certificates, and ACM issues certificates, not storage encryption.</li>
+          <li><strong>B.</strong> Wrong — there's no account-wide 'encrypt everything' switch, and using the root user for daily tasks is against best practice.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — KMS keys encrypt EBS and Aurora storage at rest, and an ACM certificate on the ALB's HTTPS listener encrypts data in transit.</li>
+          <li><strong>D.</strong> Wrong — BitLocker doesn't cover Aurora, and an ALB uses certificates (from ACM or IAM), not KMS keys, for TLS.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 254 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 254</p>
+      <p class="exam-text">A company previously migrated its data warehouse solution to AWS. The company also has an AWS Direct Connect connection. Corporate office users query the data warehouse using a visualization tool. The average size of a query returned by the data warehouse is 50 MB and each webpage sent by the visualization tool is approximately 500 KB. Result sets returned by the data warehouse are not cached.</p>
+      <p class="exam-text">Which solution provides the LOWEST data transfer egress cost for the company?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Host the visualization tool on premises and query the data warehouse directly over the internet.</li>
+        <li><span class="opt-letter">B.</span> Host the visualization tool in the same AWS Region as the data warehouse. Access it over the internet.</li>
+        <li><span class="opt-letter">C.</span> Host the visualization tool on premises and query the data warehouse directly over a Direct Connect connection at a location in the same AWS Region.</li>
+        <li><span class="opt-letter">D.</span> Host the visualization tool in the same AWS Region as the data warehouse and access it over a Direct Connect connection at a location in the same Region.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — every 50 MB result set leaves AWS at the internet egress rate, the most expensive combination.</li>
+          <li><strong>B.</strong> Wrong — only 500 KB pages leave AWS, but at the internet rate, which is higher than the Direct Connect rate.</li>
+          <li><strong>C.</strong> Wrong — Direct Connect egress is cheaper, but each query still sends 50 MB out of AWS.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the 50 MB results stay inside the Region; only the 500 KB pages leave, and at the lower Direct Connect data transfer rate.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 255 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 255</p>
+      <p class="exam-text">A company is deploying a new application on Amazon EC2 instances. The application writes data to Amazon Elastic Block Store (Amazon EBS) volumes. The company needs to ensure that all data that is written to the EBS volumes is encrypted at rest.</p>
+      <p class="exam-text">Which solution will meet this requirement?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create an IAM role that specifies EBS encryption. Attach the role to the EC2 instances.</li>
+        <li><span class="opt-letter">B.</span> Create the EBS volumes as encrypted volumes. Attach the EBS volumes to the EC2 instances.</li>
+        <li><span class="opt-letter">C.</span> Create an EC2 instance tag that has a key of Encrypt and a value of True. Tag all instances that require encryption at the EBS level.</li>
+        <li><span class="opt-letter">D.</span> Create an AWS Key Management Service (AWS KMS) key policy that enforces EBS encryption in the account. Ensure that the key policy is active.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — an IAM role grants permissions; it can't make a volume encrypted.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — encryption is a property set when the volume is created; everything written to an encrypted volume (and its snapshots) is encrypted at rest.</li>
+          <li><strong>C.</strong> Wrong — tags are just labels and have no effect on encryption.</li>
+          <li><strong>D.</strong> Wrong — a key policy controls who can use a key; it can't force volumes to be encrypted. (The account-level 'EBS encryption by default' setting can, but that isn't a key policy.)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 256 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 256</p>
+      <p class="exam-text">A solutions architect is designing a company's disaster recovery (DR) architecture. The company has a MySQL database that runs on an Amazon EC2 instance in a private subnet with scheduled backup. The DR design needs to include multiple AWS Regions.</p>
+      <p class="exam-text">Which solution will meet these requirements with the LEAST operational overhead?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Migrate the MySQL database to multiple EC2 instances. Configure a standby EC2 instance in the DR Region. Turn on replication.</li>
+        <li><span class="opt-letter">B.</span> Migrate the MySQL database to Amazon RDS. Use a Multi-AZ deployment. Turn on read replication for the primary DB instance in the different Availability Zones.</li>
+        <li><span class="opt-letter">C.</span> Migrate the MySQL database to an Amazon Aurora global database. Host the primary DB cluster in the primary Region. Host the secondary DB cluster in the DR Region.</li>
+        <li><span class="opt-letter">D.</span> Store the scheduled backup of the MySQL database in an Amazon S3 bucket that is configured for S3 Cross-Region Replication (CRR). Use the data backup to restore the database in the DR Region.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — self-managed replication across EC2 instances is the most operational work.</li>
+          <li><strong>B.</strong> Wrong — Multi-AZ and replicas in other AZs stay in one Region, so it isn't a multi-Region DR design.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — an Aurora global database replicates storage to the DR Region (typically under a second of lag) and is fully managed.</li>
+          <li><strong>D.</strong> Wrong — restoring from backups is slow, loses data since the last backup, and needs manual restore steps.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 257 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 257</p>
+      <p class="exam-text">A company's reporting system delivers hundreds of .csv files to an Amazon S3 bucket each day. The company must convert these files to Apache Parquet format and must store the files in a transformed data bucket.</p>
+      <p class="exam-text">Which solution will meet these requirements with the LEAST development effort?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create an Amazon EMR cluster with Apache Spark installed. Write a Spark application to transform the data. Use EMR File System (EMRFS) to write files to the transformed data bucket.</li>
+        <li><span class="opt-letter">B.</span> Create an AWS Glue crawler to discover the data. Create an AWS Glue extract, transform, and load (ETL) job to transform the data. Specify the transformed data bucket in the output step.</li>
+        <li><span class="opt-letter">C.</span> Use AWS Batch to create a job definition with Bash syntax to transform the data and output the data to the transformed data bucket. Use the job definition to submit a job. Specify an array job as the job type.</li>
+        <li><span class="opt-letter">D.</span> Create an AWS Lambda function to transform the data and output the data to the transformed data bucket. Configure an event notification for the S3 bucket. Specify the Lambda function as the destination for the event notification.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — you have to run a cluster and write a Spark application.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the crawler infers the schema, and Glue's visual ETL job converts CSV to Parquet with an S3 output target and essentially no code.</li>
+          <li><strong>C.</strong> Wrong — you'd write and maintain the conversion script yourself.</li>
+          <li><strong>D.</strong> Wrong — you'd write and package the Parquet conversion code (and its libraries) yourself.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 258 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 258</p>
+      <p class="exam-text">A company uses Amazon S3 to store high-resolution pictures in an S3 bucket. To minimize application changes, the company stores the pictures as the latest version of an S3 object. The company needs to retain only the two most recent versions of the pictures.</p>
+      <p class="exam-text">The company wants to reduce costs. The company has identified the S3 bucket as a large expense.</p>
+      <p class="exam-text">Which solution will reduce the S3 costs with the LEAST operational overhead?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use S3 Lifecycle to delete expired object versions and retain the two most recent versions.</li>
+        <li><span class="opt-letter">B.</span> Use an AWS Lambda function to check for older versions and delete all but the two most recent versions.</li>
+        <li><span class="opt-letter">C.</span> Use S3 Batch Operations to delete noncurrent object versions and retain only the two most recent versions.</li>
+        <li><span class="opt-letter">D.</span> Deactivate versioning on the S3 bucket and retain the two most recent versions.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a Lifecycle rule's NoncurrentVersionExpiration with 'number of newer versions to retain' keeps the latest versions and deletes the rest automatically.</li>
+          <li><strong>B.</strong> Wrong — custom code you have to write, schedule, and maintain.</li>
+          <li><strong>C.</strong> Wrong — Batch Operations runs one-off jobs over a manifest; you'd have to build the list of versions and rerun it.</li>
+          <li><strong>D.</strong> Wrong — versioning can only be suspended, not turned off, and suspending it keeps no history at all.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 259 -->
+    <div class="exam-block" data-multi="true">
+      <p class="exam-tag">Question 259</p>
+      <p class="exam-text">A company runs container applications by using Amazon Elastic Kubernetes Service (Amazon EKS). The company's workload is not consistent throughout the day. The company wants Amazon EKS to scale in and out according to the workload.</p>
+      <p class="exam-text">Which combination of steps will meet these requirements with the LEAST operational overhead? (Choose two.)</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use an AWS Lambda function to resize the EKS cluster.</li>
+        <li><span class="opt-letter">B.</span> Use the Kubernetes Metrics Server to activate horizontal pod autoscaling.</li>
+        <li><span class="opt-letter">C.</span> Use the Kubernetes Cluster Autoscaler to manage the number of nodes in the cluster.</li>
+        <li><span class="opt-letter">D.</span> Use Amazon API Gateway and connect it to Amazon EKS.</li>
+        <li><span class="opt-letter">E.</span> Use AWS App Mesh to observe network activity.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B,C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answers: B, C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — custom scaling code is more work than the built-in Kubernetes autoscalers.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — the Horizontal Pod Autoscaler uses Metrics Server CPU/memory data to add and remove pods.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — Cluster Autoscaler adds nodes when pods can't be scheduled and removes idle ones.</li>
+          <li><strong>D.</strong> Wrong — API Gateway is a front door for requests; it doesn't scale the cluster.</li>
+          <li><strong>E.</strong> Wrong — App Mesh is a service mesh for traffic control and observability, not scaling.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 260 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 260</p>
+      <p class="exam-text">A company collects data from a large number of participants who use wearable devices. The company stores the data in an Amazon DynamoDB table and uses applications to analyze the data. The data workload is constant and predictable. The company wants to stay at or below its forecasted budget for DynamoDB.</p>
+      <p class="exam-text">Which solution will meet these requirements MOST cost-effectively?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use provisioned mode and DynamoDB Standard-Infrequent Access (DynamoDB Standard-IA). Reserve capacity for the forecasted workload.</li>
+        <li><span class="opt-letter">B.</span> Use provisioned mode. Specify the read capacity units (RCUs) and write capacity units (WCUs).</li>
+        <li><span class="opt-letter">C.</span> Use on-demand mode. Set the read capacity units (RCUs) and write capacity units (WCUs) high enough to accommodate changes in the workload.</li>
+        <li><span class="opt-letter">D.</span> Use on-demand mode. Specify the read capacity units (RCUs) and write capacity units (WCUs) with reserved capacity.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Standard-IA trades cheaper storage for pricier reads and writes, which doesn't fit data that is actively analyzed, and reserved capacity can't be bought for Standard-IA tables.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — for a constant, predictable workload, provisioned capacity is cheaper than on-demand and gives a fixed, forecastable cost.</li>
+          <li><strong>C.</strong> Wrong — on-demand mode has no RCU/WCU settings, and it costs more for steady traffic.</li>
+          <li><strong>D.</strong> Wrong — on-demand mode has no RCU/WCU settings, and reserved capacity only applies to provisioned mode.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 261 -->
+    <div class="exam-block" data-multi="true">
+      <p class="exam-tag">Question 261</p>
+      <p class="exam-text">A company hosts a three-tier ecommerce application on a fleet of Amazon EC2 instances. The instances run in an Auto Scaling group behind an Application Load Balancer (ALB). All ecommerce data is stored in an Amazon RDS for MariaDB Multi-AZ DB instance.</p>
+      <p class="exam-text">The company wants to optimize customer session management during transactions. The application must store session data durably.</p>
+      <p class="exam-text">Which solutions will meet these requirements? (Choose two.)</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Turn on the sticky sessions feature (session affinity) on the ALB.</li>
+        <li><span class="opt-letter">B.</span> Use an Amazon DynamoDB table to store customer session information.</li>
+        <li><span class="opt-letter">C.</span> Deploy an Amazon Cognito user pool to manage user session information.</li>
+        <li><span class="opt-letter">D.</span> Deploy an Amazon ElastiCache for Redis cluster to store customer session information.</li>
+        <li><span class="opt-letter">E.</span> Use AWS Systems Manager Application Manager in the application to manage user session information.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A,D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answers: A, D</p>
+        <p class="answer-line" style="color:var(--warn); font-size:0.85rem;">⚠️ Disputed key: the source screenshot marks A and D, and this bank keeps that. The case against it: sticky sessions store nothing — they only route a user back to the same instance, so a session is lost if that instance is scaled in — and DynamoDB (B) is the most durable session store on the list. The case for the key: sticky sessions 'optimize session management during transactions', and ElastiCache for Redis with replication and persistence is the classic shared session store. Answer sources split between A,D and B,D.</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — sticky sessions keep each customer on the same instance during a transaction, which avoids session lookups across instances.</li>
+          <li><strong>B.</strong> Wrong — DynamoDB is a durable session store, but the source key prefers ElastiCache for Redis for this question.</li>
+          <li><strong>C.</strong> Wrong — a Cognito user pool handles sign-in and tokens, not application session data such as carts.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — ElastiCache for Redis is a fast, shared session store; with replication and persistence turned on, sessions survive an instance being scaled in.</li>
+          <li><strong>E.</strong> Wrong — Application Manager is an operations console for viewing applications' resources, not a session store.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 262 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 262</p>
+      <p class="exam-text">An ecommerce company wants to launch a one-deal-a-day website on AWS. Each day will feature exactly one product on sale for a period of 24 hours. The company wants to be able to handle millions of requests each hour with millisecond latency during peak hours.</p>
+      <p class="exam-text">Which solution will meet these requirements with the LEAST operational overhead?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use Amazon S3 to host the full website in different S3 buckets. Add Amazon CloudFront distributions. Set the S3 buckets as origins for the distributions. Store the order data in Amazon S3.</li>
+        <li><span class="opt-letter">B.</span> Deploy the full website on Amazon EC2 instances that run in Auto Scaling groups across multiple Availability Zones. Add an Application Load Balancer (ALB) to distribute the website traffic. Add another ALB for the backend APIs. Store the data in Amazon RDS for MySQL.</li>
+        <li><span class="opt-letter">C.</span> Migrate the full application to run in containers. Host the containers on Amazon Elastic Kubernetes Service (Amazon EKS). Use the Kubernetes Cluster Autoscaler to increase and decrease the number of pods to process bursts in traffic. Store the data in Amazon RDS for MySQL.</li>
+        <li><span class="opt-letter">D.</span> Use an Amazon S3 bucket to host the website's static content. Deploy an Amazon CloudFront distribution. Set the S3 bucket as the origin. Use Amazon API Gateway and AWS Lambda functions for the backend APIs. Store the data in Amazon DynamoDB.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — S3 can only host static sites, so there's nothing to process orders, and S3 isn't a database for order data.</li>
+          <li><strong>B.</strong> Wrong — it scales, but you manage instances, scaling, and a relational database.</li>
+          <li><strong>C.</strong> Wrong — EKS has the most operational overhead, and the Cluster Autoscaler scales nodes, not pods.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — every layer is serverless and scales automatically: CloudFront and S3 for static content, API Gateway and Lambda for the APIs, and DynamoDB for millisecond reads and writes.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 263 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 263</p>
+      <p class="exam-text">A company wants to send all AWS Systems Manager Session Manager logs to an Amazon S3 bucket for archival purposes.</p>
+      <p class="exam-text">Which solution will meet this requirement with the MOST operational efficiency?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Enable S3 logging in the Systems Manager console. Choose an S3 bucket to send the session data to.</li>
+        <li><span class="opt-letter">B.</span> Install the Amazon CloudWatch agent. Push all logs to a CloudWatch log group. Export the logs to an S3 bucket from the group for archival purposes.</li>
+        <li><span class="opt-letter">C.</span> Create a Systems Manager document to upload all server logs to a central S3 bucket. Use Amazon EventBridge to run the Systems Manager document against all servers that are in the account daily.</li>
+        <li><span class="opt-letter">D.</span> Install an Amazon CloudWatch agent. Push all logs to a CloudWatch log group. Create a CloudWatch logs subscription that pushes any incoming log events to an Amazon Kinesis Data Firehose delivery stream. Set Amazon S3 as the destination.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Session Manager preferences have a built-in option to write session logs straight to an S3 bucket.</li>
+          <li><strong>B.</strong> Wrong — extra agent and manual exports for something Session Manager does natively.</li>
+          <li><strong>C.</strong> Wrong — custom automation that also collects server logs, not session logs.</li>
+          <li><strong>D.</strong> Wrong — a whole pipeline (agent, subscription, Firehose) to do what one setting does.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 264 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 264</p>
+      <p class="exam-text">A company is storing petabytes of data in Amazon S3 Standard. The data is stored in multiple S3 buckets and is accessed with varying frequency. The company does not know access patterns for all the data. The company needs to implement a solution for each S3 bucket to optimize the cost of S3 usage.</p>
+      <p class="exam-text">Which solution will meet these requirements with the MOST operational efficiency?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create an S3 Lifecycle configuration with a rule to transition the objects in the S3 bucket to S3 Intelligent-Tiering.</li>
+        <li><span class="opt-letter">B.</span> Use the S3 storage class analysis tool to determine the correct tier for each object in the S3 bucket. Move each object to the identified storage tier.</li>
+        <li><span class="opt-letter">C.</span> Create an S3 Lifecycle configuration with a rule to transition the objects in the S3 bucket to S3 Glacier Instant Retrieval.</li>
+        <li><span class="opt-letter">D.</span> Create an S3 Lifecycle configuration with a rule to transition the objects in the S3 bucket to S3 One Zone-Infrequent Access (S3 One Zone-IA).</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Intelligent-Tiering moves each object between access tiers automatically based on its own usage, the standard answer for unknown or changing access patterns.</li>
+          <li><strong>B.</strong> Wrong — analyzing and moving petabytes of objects by hand is a lot of work, and it goes stale as patterns change.</li>
+          <li><strong>C.</strong> Wrong — Glacier Instant Retrieval has high retrieval fees, which is costly for data that is still accessed frequently.</li>
+          <li><strong>D.</strong> Wrong — One Zone-IA has retrieval fees and stores data in a single AZ, risking data loss.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 265 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 265</p>
+      <p class="exam-text">A company offers a food delivery service that is growing rapidly. Because of the growth, the company's order processing system is experiencing scaling problems during peak traffic hours. The current architecture includes the following:</p>
+      <p class="exam-text">• A group of Amazon EC2 instances that run in an Amazon EC2 Auto Scaling group to collect orders from the application</p>
+      <p class="exam-text">• Another group of EC2 instances that run in an Amazon EC2 Auto Scaling group to fulfill orders</p>
+      <p class="exam-text">The order collection process occurs quickly, but the order fulfillment process can take longer. Data must not be lost because of a scaling event.</p>
+      <p class="exam-text">A solutions architect must ensure that the order collection process and the order fulfillment process can both scale properly during peak traffic hours. The solution must optimize utilization of the company's AWS resources.</p>
+      <p class="exam-text">Which solution meets these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use Amazon CloudWatch metrics to monitor the CPU of each instance in the Auto Scaling groups. Configure each Auto Scaling group's minimum capacity according to peak workload values.</li>
+        <li><span class="opt-letter">B.</span> Use Amazon CloudWatch metrics to monitor the CPU of each instance in the Auto Scaling groups. Configure a CloudWatch alarm to invoke an Amazon Simple Notification Service (Amazon SNS) topic that creates additional Auto Scaling groups on demand.</li>
+        <li><span class="opt-letter">C.</span> Provision two Amazon Simple Queue Service (Amazon SQS) queues: one for order collection and another for order fulfillment. Configure the EC2 instances to poll their respective queue. Scale the Auto Scaling groups based on notifications that the queues send.</li>
+        <li><span class="opt-letter">D.</span> Provision two Amazon Simple Queue Service (Amazon SQS) queues: one for order collection and another for order fulfillment. Configure the EC2 instances to poll their respective queue. Create a metric based on a backlog per instance calculation. Scale the Auto Scaling groups based on this metric.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — sizing the minimum for peak wastes resources most of the day, and nothing buffers the orders.</li>
+          <li><strong>B.</strong> Wrong — SNS can't create Auto Scaling groups, and nothing stops orders being lost.</li>
+          <li><strong>C.</strong> Wrong — SQS doesn't send notifications about its depth; you scale on CloudWatch queue metrics instead.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — the queues hold orders durably through scaling events, and backlog per instance (queue depth ÷ running instances) is AWS's recommended metric for scaling SQS workers.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 266 -->
+    <div class="exam-block" data-multi="true">
+      <p class="exam-tag">Question 266</p>
+      <p class="exam-text">A company has a multi-tier application deployed on several Amazon EC2 instances in an Auto Scaling group. An Amazon RDS for Oracle instance is the application's data layer that uses Oracle-specific PL/SQL functions. Traffic to the application has been steadily increasing. This is causing the EC2 instances to become overloaded and the RDS instance to run out of storage. The Auto Scaling group does not have any scaling metrics and defines the minimum healthy instance count only. The company predicts that traffic will continue to increase at a steady but unpredictable rate before leveling off.</p>
+      <p class="exam-text">What should a solutions architect do to ensure the system can automatically scale for the increased traffic? (Choose two.)</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Configure storage Auto Scaling on the RDS for Oracle instance.</li>
+        <li><span class="opt-letter">B.</span> Migrate the database to Amazon Aurora to use Auto Scaling storage.</li>
+        <li><span class="opt-letter">C.</span> Configure an alarm on the RDS for Oracle instance for low free storage space.</li>
+        <li><span class="opt-letter">D.</span> Configure the Auto Scaling group to use the average CPU as the scaling metric.</li>
+        <li><span class="opt-letter">E.</span> Configure the Auto Scaling group to use the average free memory as the scaling metric.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A,D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answers: A, D</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — RDS storage autoscaling grows the allocated storage automatically when free space runs low.</li>
+          <li><strong>B.</strong> Wrong — Aurora has no Oracle engine, so the Oracle-specific PL/SQL would have to be rewritten.</li>
+          <li><strong>C.</strong> Wrong — an alarm only notifies someone; it doesn't scale anything.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — a target tracking policy on average CPU adds instances as the overloaded fleet gets busier.</li>
+          <li><strong>E.</strong> Wrong — memory isn't a default EC2 metric (it needs the CloudWatch agent), and the instances are described as CPU-overloaded.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 267 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 267</p>
+      <p class="exam-text">A company is running a critical business application on Amazon EC2 instances behind an Application Load Balancer. The EC2 instances run in an Auto Scaling group and access an Amazon RDS DB instance.</p>
+      <p class="exam-text">The design did not pass an operational review because the EC2 instances and the DB instance are all located in a single Availability Zone. A solutions architect must update the design to use a second Availability Zone.</p>
+      <p class="exam-text">Which solution will make the application highly available?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Provision a subnet in each Availability Zone. Configure the Auto Scaling group to distribute the EC2 instances across both Availability Zones. Configure the DB instance with connections to each network.</li>
+        <li><span class="opt-letter">B.</span> Provision two subnets that extend across both Availability Zones. Configure the Auto Scaling group to distribute the EC2 instances across both Availability Zones. Configure the DB instance with connections to each network.</li>
+        <li><span class="opt-letter">C.</span> Provision a subnet in each Availability Zone. Configure the Auto Scaling group to distribute the EC2 instances across both Availability Zones. Configure the DB instance for Multi-AZ deployment.</li>
+        <li><span class="opt-letter">D.</span> Provision a subnet that extends across both Availability Zones. Configure the Auto Scaling group to distribute the EC2 instances across both Availability Zones. Configure the DB instance for Multi-AZ deployment.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — connecting the DB instance to more networks doesn't add a standby; it's still one instance in one AZ.</li>
+          <li><strong>B.</strong> Wrong — a subnet can't span Availability Zones, and the database stays a single point of failure.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — one subnet per AZ lets the Auto Scaling group spread instances, and Multi-AZ adds a standby database in the second AZ with automatic failover.</li>
+          <li><strong>D.</strong> Wrong — a subnet always lives in exactly one Availability Zone.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 268 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 268</p>
+      <p class="exam-text">A company is expecting rapid growth in the near future. A solutions architect needs to configure existing users and grant permissions to new users on AWS. The solutions architect has decided to create IAM groups. The solutions architect will add the new users to IAM groups based on department.</p>
+      <p class="exam-text">Which additional action is the MOST secure way to grant permissions to the new users?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Apply service control policies (SCPs) to manage access permissions</li>
+        <li><span class="opt-letter">B.</span> Create IAM roles that have least privilege permission. Attach the roles to the IAM groups</li>
+        <li><span class="opt-letter">C.</span> Create an IAM policy that grants least privilege permission. Attach the policy to the IAM groups</li>
+        <li><span class="opt-letter">D.</span> Create IAM roles. Associate the roles with a permissions boundary that defines the maximum permissions</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — SCPs set the maximum permissions for accounts in an organization; they never grant permissions.</li>
+          <li><strong>B.</strong> Wrong — roles can't be attached to groups; roles are assumed, and only policies attach to groups.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — least-privilege policies attached to department groups give every member exactly what the department needs.</li>
+          <li><strong>D.</strong> Wrong — a permissions boundary limits permissions but grants none, and roles still aren't attached to groups.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 269 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 269</p>
+      <p class="exam-text">A company is using Amazon CloudFront with its website. The company has enabled logging on the CloudFront distribution, and logs are saved in one of the company's Amazon S3 buckets. The company needs to perform advanced analyses on the logs and build visualizations.</p>
+      <p class="exam-text">What should a solutions architect do to meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use standard SQL queries in Amazon Athena to analyze the CloudFront logs in the S3 bucket. Visualize the results with AWS Glue.</li>
+        <li><span class="opt-letter">B.</span> Use standard SQL queries in Amazon Athena to analyze the CloudFront logs in the S3 bucket. Visualize the results with Amazon QuickSight.</li>
+        <li><span class="opt-letter">C.</span> Use standard SQL queries in Amazon DynamoDB to analyze the CloudFront logs in the S3 bucket. Visualize the results with AWS Glue.</li>
+        <li><span class="opt-letter">D.</span> Use standard SQL queries in Amazon DynamoDB to analyze the CloudFront logs in the S3 bucket. Visualize the results with Amazon QuickSight.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Glue is for ETL and cataloging, not visualization.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Athena runs SQL directly on the logs in S3, and QuickSight builds dashboards from Athena results.</li>
+          <li><strong>C.</strong> Wrong — DynamoDB can't query files in S3, and Glue doesn't visualize.</li>
+          <li><strong>D.</strong> Wrong — DynamoDB can't query files sitting in S3.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 270 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 270</p>
+      <p class="exam-text">A law firm needs to share information with the public. The information includes hundreds of files that must be publicly readable. Modifications or deletions of the files by anyone before a designated future date are prohibited.</p>
+      <p class="exam-text">Which solution will meet these requirements in the MOST secure way?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Upload all files to an Amazon S3 bucket that is configured for static website hosting. Grant read-only IAM permissions to any AWS principals that access the S3 bucket until the designated date.</li>
+        <li><span class="opt-letter">B.</span> Create a new Amazon S3 bucket with S3 Versioning enabled. Use S3 Object Lock with a retention period in accordance with the designated date. Configure the S3 bucket for static website hosting. Set an S3 bucket policy to allow read-only access to the objects.</li>
+        <li><span class="opt-letter">C.</span> Create a new Amazon S3 bucket with S3 Versioning enabled. Configure an event trigger to run an AWS Lambda function in case of object modification or deletion. Configure the Lambda function to replace the objects with the original versions from a private S3 bucket.</li>
+        <li><span class="opt-letter">D.</span> Upload all files to an Amazon S3 bucket that is configured for static website hosting. Select the folder that contains the files. Use S3 Object Lock with a retention period in accordance with the designated date. Grant read-only IAM permissions to any AWS principals that access the S3 bucket.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — IAM permissions can't make files readable by the anonymous public, and nothing stops changes by admins.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Object Lock (which needs versioning) blocks changes and deletes until the retention date, and a read-only bucket policy makes the files public.</li>
+          <li><strong>C.</strong> Wrong — it reacts after a change happens instead of preventing it.</li>
+          <li><strong>D.</strong> Wrong — Object Lock applies to object versions, not folders, and IAM permissions don't reach the anonymous public.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 271 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 271</p>
+      <p class="exam-text">A company has a production workload that runs on 1,000 Amazon EC2 Linux instances. The workload is powered by third-party software. The company needs to patch the third-party software on all EC2 instances as quickly as possible to remediate a critical security vulnerability.</p>
+      <p class="exam-text">What should a solutions architect do to meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create an AWS Lambda function to apply the patch to all EC2 instances.</li>
+        <li><span class="opt-letter">B.</span> Configure AWS Systems Manager Patch Manager to apply the patch to all EC2 instances.</li>
+        <li><span class="opt-letter">C.</span> Schedule an AWS Systems Manager maintenance window to apply the patch to all EC2 instances.</li>
+        <li><span class="opt-letter">D.</span> Use AWS Systems Manager Run Command to run a custom command that applies the patch to all EC2 instances.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Lambda can't run commands on instances by itself; you'd end up calling Systems Manager anyway.</li>
+          <li><strong>B.</strong> Wrong — Patch Manager applies patches from the OS package repositories through patch baselines; it isn't built to push an arbitrary third-party vendor fix immediately.</li>
+          <li><strong>C.</strong> Wrong — a maintenance window waits for a scheduled time, which isn't 'as quickly as possible'.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — Run Command runs your patch script on all 1,000 instances right away, with rate controls and per-instance results.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 272 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 272</p>
+      <p class="exam-text">A solutions architect needs to allow team members to access Amazon S3 buckets in two different AWS accounts: a development account and a production account. The team currently has access to S3 buckets in the development account by using unique IAM users that are assigned to an IAM group that has appropriate permissions in the account.</p>
+      <p class="exam-text">The solutions architect has created an IAM role in the production account. The role has a policy that grants access to an S3 bucket in the production account.</p>
+      <p class="exam-text">Which solution will meet these requirements while complying with the principle of least privilege?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Attach the Administrator Access policy to the development account users.</li>
+        <li><span class="opt-letter">B.</span> Add the development account as a principal in the trust policy of the role in the production account.</li>
+        <li><span class="opt-letter">C.</span> Turn off the S3 Block Public Access feature on the S3 bucket in the production account.</li>
+        <li><span class="opt-letter">D.</span> Create a user in the production account with unique credentials for each team member.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — full admin rights are the opposite of least privilege, and they still don't reach another account.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — trusting the development account lets its users (once given sts:AssumeRole permission) assume the production role and get only that role's S3 access.</li>
+          <li><strong>C.</strong> Wrong — making the bucket public exposes it to everyone.</li>
+          <li><strong>D.</strong> Wrong — duplicate users in a second account mean more credentials to manage; cross-account roles are the recommended pattern.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 273 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 273</p>
+      <p class="exam-text">A solutions architect is designing the architecture of a new application being deployed to the AWS Cloud. The application will run on Amazon EC2 On-Demand Instances and will automatically scale across multiple Availability Zones. The EC2 instances will scale up and down frequently throughout the day. An Application Load Balancer (ALB) will handle the load distribution. The architecture needs to support distributed session data management. The company is willing to make changes to code if needed.</p>
+      <p class="exam-text">What should the solutions architect do to ensure that the architecture supports distributed session data management?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use Amazon ElastiCache to manage and store session data.</li>
+        <li><span class="opt-letter">B.</span> Use session affinity (sticky sessions) of the ALB to manage session data.</li>
+        <li><span class="opt-letter">C.</span> Use Session Manager from AWS Systems Manager to manage the session.</li>
+        <li><span class="opt-letter">D.</span> Use the GetSessionToken API operation in AWS Security Token Service (AWS STS) to manage the session.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a shared ElastiCache store lets any instance read any session, so instances can be added or removed freely.</li>
+          <li><strong>B.</strong> Wrong — sticky sessions keep data on one instance, which is lost when that instance scales in.</li>
+          <li><strong>C.</strong> Wrong — Session Manager provides shell access to instances; it has nothing to do with application sessions.</li>
+          <li><strong>D.</strong> Wrong — GetSessionToken issues temporary AWS credentials, not application session storage.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 274 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 274</p>
+      <p class="exam-text">A company hosts a three-tier web application in the AWS Cloud. A Multi-AZ Amazon RDS for MySQL server forms the database layer. Amazon ElastiCache forms the cache layer. The company wants a caching strategy that adds or updates data in the cache when a customer adds an item to the database. The data in the cache must always match the data in the database.</p>
+      <p class="exam-text">Which solution will meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Implement the lazy loading caching strategy</li>
+        <li><span class="opt-letter">B.</span> Implement the write-through caching strategy</li>
+        <li><span class="opt-letter">C.</span> Implement the adding TTL caching strategy</li>
+        <li><span class="opt-letter">D.</span> Implement the AWS AppConfig caching strategy</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — lazy loading only fills the cache on a read miss, so cached data can go stale after writes.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — write-through updates the cache every time data is written to the database, so the two always match.</li>
+          <li><strong>C.</strong> Wrong — a TTL just expires entries after a time; data can be stale until then.</li>
+          <li><strong>D.</strong> Wrong — AppConfig manages application configuration; it isn't a caching strategy.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 275 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 275</p>
+      <p class="exam-text">A company is moving its on-premises Oracle database to Amazon Aurora PostgreSQL. The database has several applications that write to the same tables. The applications need to be migrated one by one with a month in between each migration. Management has expressed concerns that the database has a high number of reads and writes. The data must be kept in sync across both databases throughout the migration.</p>
+      <p class="exam-text">What should a solutions architect recommend?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use AWS DataSync for the initial migration. Use AWS Database Migration Service (AWS DMS) to create a change data capture (CDC) replication task and a table mapping to select all tables.</li>
+        <li><span class="opt-letter">B.</span> Use AWS DataSync for the initial migration. Use AWS Database Migration Service (AWS DMS) to create a full load plus change data capture (CDC) replication task and a table mapping to select all tables.</li>
+        <li><span class="opt-letter">C.</span> Use the AWS Schema Conversion Tool with AWS Database Migration Service (AWS DMS) using a memory optimized replication instance. Create a full load plus change data capture (CDC) replication task and a table mapping to select all tables.</li>
+        <li><span class="opt-letter">D.</span> Use the AWS Schema Conversion Tool with AWS Database Migration Service (AWS DMS) using a compute optimized replication instance. Create a full load plus change data capture (CDC) replication task and a table mapping to select the largest tables.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — DataSync copies files, not database tables, and it can't convert an Oracle schema to PostgreSQL.</li>
+          <li><strong>B.</strong> Wrong — DataSync can't migrate or convert a database schema.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — SCT converts the Oracle schema to PostgreSQL, full load plus CDC keeps both databases in sync for months, and AWS recommends memory-optimized replication instances for heavy ongoing CDC.</li>
+          <li><strong>D.</strong> Wrong — the table mapping selects only the largest tables, so the rest wouldn't stay in sync.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<script src="../assets/exam-quiz.js"></script>
+</body>
+</html>

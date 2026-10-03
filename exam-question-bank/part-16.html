@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Question Bank – Part 16 (Q376–400)</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Exam Question Bank › Part 16 (Q376–400)</div>
+    <div class="module-tag">Official-Style Practice Exam</div>
+    <h1>AWS SAA-C03 Exam Questions &amp; Answers — Part 16</h1>
+    <p class="lesson-meta">Standalone question bank · 25 questions (376–400) · separate from the per-module scenarios.html sets</p>
+    <p class="source-link">Also in this bank: <a href="part-1.html">Part 1 (Q1–25)</a> · <a href="part-2.html">Part 2 (Q26–50)</a> · <a href="part-3.html">Part 3 (Q51–75)</a> · <a href="part-4.html">Part 4 (Q76–100)</a> · <a href="part-5.html">Part 5 (Q101–125)</a> · <a href="part-6.html">Part 6 (Q126–150)</a> · <a href="part-7.html">Part 7 (Q151–175)</a> · <a href="part-8.html">Part 8 (Q176–200)</a> · <a href="part-9.html">Part 9 (Q201–225)</a> · <a href="part-10.html">Part 10 (Q226–250)</a> · <a href="part-11.html">Part 11 (Q251–275)</a> · <a href="part-12.html">Part 12 (Q276–300)</a> · <a href="part-13.html">Part 13 (Q301–325)</a> · <a href="part-14.html">Part 14 (Q326–350)</a> · <a href="part-15.html">Part 15 (Q351–375)</a> · <a href="part-17.html">Part 17 (Q401–420)</a> · <a href="part-18.html">Part 18 (Q421–440)</a> · <a href="part-19.html">Part 19 (Q441–460)</a> · <a href="part-20.html">Part 20 (Q461–480)</a> · <a href="part-21.html">Part 21 (Q481–500)</a></p>
+  </div>
+
+  <p>This is the sixteenth set in the same standalone exam question bank as <a href="part-1.html">Part 1</a>, <a href="part-2.html">Part 2</a>, <a href="part-3.html">Part 3</a>, <a href="part-4.html">Part 4</a>, <a href="part-5.html">Part 5</a>, <a href="part-6.html">Part 6</a>, <a href="part-7.html">Part 7</a>, <a href="part-8.html">Part 8</a>, <a href="part-9.html">Part 9</a>, <a href="part-10.html">Part 10</a>, <a href="part-11.html">Part 11</a>, <a href="part-12.html">Part 12</a>, <a href="part-13.html">Part 13</a>, <a href="part-14.html">Part 14</a>, and <a href="part-15.html">Part 15</a> — transcribed from another batch of official-style AWS SAA-C03 practice questions, kept in <code>exam-question-bank/</code> instead of under <code>lessons/</code>. Most questions have exactly one correct answer; a few are marked <strong>Select N</strong> and require picking multiple options (checkboxes instead of a single pick), just like the real exam. Click option(s) to select your answer, then reveal it: your pick is highlighted in red if wrong, green marks every correct option (including ones you missed). Once you've answered every question, check "Show my results" for your overall score and a breakdown by exam domain.</p>
+
+  <div class="exam-set" data-start-number="376">
+    <p class="exam-count">25 questions · answers hidden until revealed</p>
+
+    <div class="review-list-panel">
+      <p class="review-list-title">📌 Marked for review</p>
+      <p class="review-list-empty">No questions marked yet — use "Mark for review" on any question below.</p>
+      <ul class="review-list-items"></ul>
+    </div>
+
+    <div class="results-panel">
+      <div class="results-header">
+        <p class="results-title">📊 Your results</p>
+        <button class="show-results-btn" type="button">Show my results</button>
+      </div>
+      <div class="results-body" style="display:none;">
+        <p class="results-score">Score: <span class="results-score-value">0 / 0 (0%)</span></p>
+        <p class="results-progress">Answered 0 of 0 questions</p>
+        <p class="results-topics-title">Per-domain breakdown</p>
+        <ul class="results-topics-list"></ul>
+        <p class="results-suggestion">Answer questions and reveal them to build up your results.</p>
+      </div>
+    </div>
+
+    <!-- 376 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 376</p>
+      <p class="exam-text">A data analytics company wants to migrate its batch processing system to AWS. The company receives thousands of small data files periodically during the day through FTP. An on-premises batch job processes the data files overnight. However, the batch job takes hours to finish running.</p>
+      <p class="exam-text">The company wants the AWS solution to process incoming data files as soon as possible with minimal changes to the FTP clients that send the files. The solution must delete the incoming data files after the files have been processed successfully. Processing for each file needs to take 3-8 minutes.</p>
+      <p class="exam-text">Which solution will meet these requirements in the MOST operationally efficient way?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use an Amazon EC2 instance that runs an FTP server to store incoming files as objects in Amazon S3 Glacier Flexible Retrieval. Configure a job queue in AWS Batch. Use Amazon EventBridge rules to invoke the job to process the objects nightly from S3 Glacier Flexible Retrieval. Delete the objects after the job has processed the objects.</li>
+        <li><span class="opt-letter">B.</span> Use an Amazon EC2 instance that runs an FTP server to store incoming files on an Amazon Elastic Block Store (Amazon EBS) volume. Configure a job queue in AWS Batch. Use Amazon EventBridge rules to invoke the job to process the files nightly from the EBS volume. Delete the files after the job has processed the files.</li>
+        <li><span class="opt-letter">C.</span> Use AWS Transfer Family to create an FTP server to store incoming files on an Amazon Elastic Block Store (Amazon EBS) volume. Configure a job queue in AWS Batch. Use an Amazon S3 event notification when each file arrives to invoke the job in AWS Batch. Delete the files after the job has processed the files.</li>
+        <li><span class="opt-letter">D.</span> Use AWS Transfer Family to create an FTP server to store incoming files in Amazon S3 Standard. Create an AWS Lambda function to process the files and to delete the files after they are processed. Use an S3 event notification to invoke the Lambda function when the files arrive.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: D</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a self-managed FTP server, nightly (not immediate) processing, and Glacier retrieval delays.</li>
+          <li><strong>B.</strong> Wrong — a self-managed server and still nightly processing.</li>
+          <li><strong>C.</strong> Wrong — Transfer Family stores files in S3 or EFS, not EBS, and S3 events can't fire for files on EBS.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — managed FTP into S3, and each upload triggers Lambda right away; 3–8 minutes fits within Lambda's 15-minute limit.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 377 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 377</p>
+      <p class="exam-text">A company seeks a storage solution for its application. The solution must be highly available and scalable. The solution also must function as a file system, be mountable by multiple Linux instances in AWS and on premises through native protocols, and have no minimum size requirements. The company has set up a Site-to-Site VPN for access from its on-premises network to its VPC.</p>
+      <p class="exam-text">Which storage solution meets these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Amazon FSx Multi-AZ deployments</li>
+        <li><span class="opt-letter">B.</span> Amazon Elastic Block Store (Amazon EBS) Multi-Attach volumes</li>
+        <li><span class="opt-letter">C.</span> Amazon Elastic File System (Amazon EFS) with multiple mount targets</li>
+        <li><span class="opt-letter">D.</span> Amazon Elastic File System (Amazon EFS) with a single mount target and multiple access points</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — FSx file systems have a minimum storage size you provision up front.</li>
+          <li><strong>B.</strong> Wrong — EBS is block storage limited to one AZ and can't be mounted from on premises.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — EFS has no minimum size, grows automatically, uses NFS, and mount targets in each AZ make it highly available and reachable over the VPN.</li>
+          <li><strong>D.</strong> Wrong — a single mount target means one AZ, so it isn't highly available.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 378 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 378</p>
+      <p class="exam-text">A company runs applications on Amazon EC2 instances in one AWS Region. The company wants to back up the EC2 instances to a second Region. The company also wants to provision EC2 resources in the second Region and manage the EC2 instances centrally from one AWS account.</p>
+      <p class="exam-text">Which solution will meet these requirements MOST cost-effectively?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create a disaster recovery (DR) plan that has a similar number of EC2 instances in the second Region. Configure data replication.</li>
+        <li><span class="opt-letter">B.</span> Create point-in-time Amazon Elastic Block Store (Amazon EBS) snapshots of the EC2 instances. Copy the snapshots to the second Region periodically.</li>
+        <li><span class="opt-letter">C.</span> Create a backup plan by using AWS Backup. Configure cross-Region backup to the second Region for the EC2 instances.</li>
+        <li><span class="opt-letter">D.</span> Deploy a similar number of EC2 instances in the second Region. Use AWS DataSync to transfer the data from the source Region to the second Region.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — running duplicate instances doubles the cost.</li>
+          <li><strong>B.</strong> Wrong — manual snapshot copying needs custom scheduling and isn't centrally managed.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — AWS Backup centrally schedules EC2 backups and copies them to the second Region automatically, with no standby instances to pay for.</li>
+          <li><strong>D.</strong> Wrong — duplicate running instances, and DataSync copies files, not whole instances.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 379 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 379</p>
+      <p class="exam-text">A company containerized a Windows job that runs on .NET 6 Framework under a Windows container. The company wants to run this job in the AWS Cloud. The job runs every 10 minutes. The job's runtime varies between 1 minute and 3 minutes.</p>
+      <p class="exam-text">Which solution will meet these requirements MOST cost-effectively?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create an AWS Lambda function based on the container image of the job. Configure Amazon EventBridge to invoke the function every 10 minutes.</li>
+        <li><span class="opt-letter">B.</span> Use AWS Batch to create a job that uses AWS Fargate resources. Configure the job scheduling to run every 10 minutes.</li>
+        <li><span class="opt-letter">C.</span> Use Amazon Elastic Container Service (Amazon ECS) on AWS Fargate to run the job. Create a scheduled task based on the container image of the job to run every 10 minutes.</li>
+        <li><span class="opt-letter">D.</span> Use Amazon Elastic Container Service (Amazon ECS) on AWS Fargate to run the job. Create a standalone task based on the container image of the job. Use Windows task scheduler to run the job every 10 minutes.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Lambda container images must be Linux-based; Windows containers aren't supported.</li>
+          <li><strong>B.</strong> Wrong — AWS Batch on Fargate doesn't support Windows containers.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — ECS on Fargate runs Windows containers, and a scheduled task runs it every 10 minutes, paying only while it runs.</li>
+          <li><strong>D.</strong> Wrong — a standalone task would have to run all the time to host Task Scheduler, which costs more.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 380 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 380</p>
+      <p class="exam-text">A company experienced a breach that affected several applications in its on-premises data center. The attacker took advantage of vulnerabilities in the custom applications that were running on the servers. The company is now migrating its applications to run on Amazon EC2 instances. The company wants to implement a solution that actively scans for vulnerabilities on the EC2 instances and sends a report that details the findings.</p>
+      <p class="exam-text">Which solution will meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Deploy AWS Shield to scan the EC2 instances for vulnerabilities. Create an AWS Lambda function to log any findings to AWS CloudTrail.</li>
+        <li><span class="opt-letter">B.</span> Deploy Amazon Macie and AWS Lambda functions to scan the EC2 instances for vulnerabilities. Log any findings to AWS CloudTrail.</li>
+        <li><span class="opt-letter">C.</span> Turn on Amazon GuardDuty. Deploy the GuardDuty agents to the EC2 instances. Configure an AWS Lambda function to automate the generation and distribution of reports that detail the findings.</li>
+        <li><span class="opt-letter">D.</span> Turn on Amazon Inspector. Deploy the Amazon Inspector agent to the EC2 instances. Configure an AWS Lambda function to automate the generation and distribution of reports that detail the findings.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="D">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: D</p>
+        <p class="answer-line" style="color:var(--warn); font-size:0.85rem;">ℹ️ Current-state note: Amazon Inspector now uses the SSM Agent (or agentless scanning) instead of its own agent; the idea is the same.</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Shield protects against DDoS attacks; it doesn't scan for vulnerabilities.</li>
+          <li><strong>B.</strong> Wrong — Macie finds sensitive data in S3, not EC2 vulnerabilities.</li>
+          <li><strong>C.</strong> Wrong — GuardDuty detects threats; it doesn't scan software for vulnerabilities.</li>
+          <li class="correct-choice"><strong>D.</strong> Correct — Inspector scans EC2 instances for software vulnerabilities, and Lambda can build and send the reports.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 381 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 381</p>
+      <p class="exam-text">A company needs to ingest and handle large amounts of streaming data that its application generates. The application runs on Amazon EC2 instances and sends data to Amazon Kinesis Data Streams, which is configured with default settings. Every other day, the application consumes the data and writes the data to an Amazon S3 bucket for business intelligence (BI) processing. The company observes that Amazon S3 is not receiving all the data that the application sends to Kinesis Data Streams.</p>
+      <p class="exam-text">What should a solutions architect do to resolve this issue?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Update the Kinesis Data Streams default settings by modifying the data retention period.</li>
+        <li><span class="opt-letter">B.</span> Update the application to use the Kinesis Producer Library (KPL) to send the data to Kinesis Data Streams.</li>
+        <li><span class="opt-letter">C.</span> Update the number of Kinesis shards to handle the throughput of the data that is sent to Kinesis Data Streams.</li>
+        <li><span class="opt-letter">D.</span> Turn on S3 Versioning within the S3 bucket to preserve every version of every object that is ingested in the S3 bucket.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — the default retention is 24 hours, but the data is read every other day (48 hours), so records expire first; raising retention fixes it.</li>
+          <li><strong>B.</strong> Wrong — the KPL improves producer throughput, but the data is already reaching the stream.</li>
+          <li><strong>C.</strong> Wrong — more shards don't help if records expire before they're read.</li>
+          <li><strong>D.</strong> Wrong — versioning only keeps object versions; the data never reaches S3 at all.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 382 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 382</p>
+      <p class="exam-text">An IAM user made several configuration changes to AWS resources in their company's account during a production deployment last week. A solutions architect learned that a couple of security group rules are not configured as desired. The solutions architect wants to confirm which IAM user was responsible for making changes.</p>
+      <p class="exam-text">Which service should the solutions architect use to find the desired information?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Amazon GuardDuty</li>
+        <li><span class="opt-letter">B.</span> Amazon Inspector</li>
+        <li><span class="opt-letter">C.</span> AWS CloudTrail</li>
+        <li><span class="opt-letter">D.</span> AWS Config</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — GuardDuty detects threats, not who made a configuration change.</li>
+          <li><strong>B.</strong> Wrong — Inspector scans for vulnerabilities.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — CloudTrail records each API call along with the identity that made it.</li>
+          <li><strong>D.</strong> Wrong — Config shows what changed and when, but CloudTrail is the source for who made the call.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 383 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 383</p>
+      <p class="exam-text">A company wants to restrict access to the content of one of its main web applications and to protect the content by using authorization techniques available on AWS. The company wants to implement a serverless architecture and an authentication solution for fewer than 100 users. The solution needs to integrate with the main web application and serve web content globally. The solution must also scale as the company's user base grows while providing the lowest login latency possible.</p>
+      <p class="exam-text">Which solution will meet these requirements MOST cost-effectively?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use Amazon Cognito for authentication. Use Lambda@Edge for authorization. Use Amazon CloudFront to serve the web application globally.</li>
+        <li><span class="opt-letter">B.</span> Use AWS Directory Service for Microsoft Active Directory for authentication. Use AWS Lambda for authorization. Use an Application Load Balancer to serve the web application globally.</li>
+        <li><span class="opt-letter">C.</span> Use Amazon Cognito for authentication. Use AWS Lambda for authorization. Use Amazon S3 Transfer Acceleration to serve the web application globally.</li>
+        <li><span class="opt-letter">D.</span> Use AWS Directory Service for Microsoft Active Directory for authentication. Use Lambda@Edge for authorization. Use AWS Elastic Beanstalk to serve the web application globally.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Cognito is serverless and has a free tier for small user bases, Lambda@Edge checks tokens at the edge for low latency, and CloudFront serves content globally.</li>
+          <li><strong>B.</strong> Wrong — Managed AD isn't serverless and costs more, and an ALB is Regional.</li>
+          <li><strong>C.</strong> Wrong — Transfer Acceleration speeds up uploads to S3; it doesn't serve web content.</li>
+          <li><strong>D.</strong> Wrong — Managed AD costs more, and Elastic Beanstalk runs servers in one Region.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 384 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 384</p>
+      <p class="exam-text">A company runs a global web application on Amazon EC2 instances behind an Application Load Balancer. The application stores data in Amazon Aurora. The company needs to create a disaster recovery solution and can tolerate up to 30 minutes of downtime and potential data loss. The solution does not need to handle the load when the primary infrastructure is healthy.</p>
+      <p class="exam-text">What should a solutions architect do to meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Deploy the application with the required infrastructure elements in place. Use Amazon Route 53 to configure active-passive failover. Create an Aurora Replica in a second AWS Region.</li>
+        <li><span class="opt-letter">B.</span> Host a scaled-down deployment of the application in a second AWS Region. Use Amazon Route 53 to configure active-active failover. Create an Aurora Replica in the second Region.</li>
+        <li><span class="opt-letter">C.</span> Replicate the primary infrastructure in a second AWS Region. Use Amazon Route 53 to configure active-active failover. Create an Aurora database that is restored from the latest snapshot.</li>
+        <li><span class="opt-letter">D.</span> Back up data with AWS Backup. Use the backup to create the required infrastructure in a second AWS Region. Use Amazon Route 53 to configure active-passive failover. Create an Aurora second primary instance in the second Region.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — infrastructure ready in the second Region, Route 53 active-passive failover, and a cross-Region Aurora replica meet a 30-minute RTO without serving traffic normally.</li>
+          <li><strong>B.</strong> Wrong — active-active means the second Region serves traffic all the time, which isn't needed.</li>
+          <li><strong>C.</strong> Wrong — active-active again, and a snapshot restore can lose more data and takes time.</li>
+          <li><strong>D.</strong> Wrong — rebuilding from backups during an outage risks missing 30 minutes, and Aurora can't have a 'second primary' this way.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 385 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 385</p>
+      <p class="exam-text">A company runs an application on Amazon EC2 instances. The company needs to implement a disaster recovery (DR) solution for the application. The DR solution needs to have a recovery time objective (RTO) of less than 4 hours. The DR solution also needs to use the fewest possible AWS resources during normal operations.</p>
+      <p class="exam-text">Which solution will meet these requirements in the MOST operationally efficient way?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create Amazon Machine Images (AMIs) to back up the EC2 instances. Copy the AMIs to a secondary AWS Region. Automate infrastructure deployment in the secondary Region by using AWS Lambda and custom scripts.</li>
+        <li><span class="opt-letter">B.</span> Create Amazon Machine Images (AMIs) to back up the EC2 instances. Copy the AMIs to a secondary AWS Region. Automate infrastructure deployment in the secondary Region by using AWS CloudFormation.</li>
+        <li><span class="opt-letter">C.</span> Launch EC2 instances in a secondary AWS Region. Keep the EC2 instances in the secondary Region active at all times.</li>
+        <li><span class="opt-letter">D.</span> Launch EC2 instances in a secondary Availability Zone. Keep the EC2 instances in the secondary Availability Zone active at all times.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — custom Lambda scripts are more work to build and maintain than CloudFormation.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — backup-and-restore with AMIs copied to another Region and CloudFormation to rebuild uses no running resources and meets a 4-hour RTO.</li>
+          <li><strong>C.</strong> Wrong — always-on instances use the most resources.</li>
+          <li><strong>D.</strong> Wrong — always-on instances, and a second AZ doesn't protect against a Regional outage.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 386 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 386</p>
+      <p class="exam-text">A company is migrating a Linux-based web server group to AWS. The web servers must access files in a shared file store for some content. The company must not make any changes to the application.</p>
+      <p class="exam-text">What should a solutions architect do to meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create an Amazon S3 Standard bucket with access to the web servers.</li>
+        <li><span class="opt-letter">B.</span> Configure an Amazon CloudFront distribution with an Amazon S3 bucket as the origin.</li>
+        <li><span class="opt-letter">C.</span> Create an Amazon Elastic File System (Amazon EFS) file system. Mount the EFS file system on all web servers.</li>
+        <li><span class="opt-letter">D.</span> Configure a General Purpose SSD (gp3) Amazon Elastic Block Store (Amazon EBS) volume. Mount the EBS volume to all web servers.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — S3 is object storage accessed through an API, so the application would have to change.</li>
+          <li><strong>B.</strong> Wrong — CloudFront delivers content to users; it isn't a file system the servers mount.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — EFS is a shared NFS file system that all the Linux servers mount like a local folder, with no code changes.</li>
+          <li><strong>D.</strong> Wrong — a gp3 volume attaches to only one instance (Multi-Attach requires io1/io2).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 387 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 387</p>
+      <p class="exam-text">A company uses AWS Organizations with resources tagged by account. The company also uses AWS Backup to back up its AWS infrastructure resources. The company needs to back up all AWS resources.</p>
+      <p class="exam-text">Which solution will meet these requirements with the LEAST operational overhead?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use AWS Config to identify all untagged resources. Tag the identified resources programmatically. Use tags in the backup plan.</li>
+        <li><span class="opt-letter">B.</span> Use AWS Config to identify all resources that are not running. Add those resources to the backup vault.</li>
+        <li><span class="opt-letter">C.</span> Require all AWS account owners to review their resources to identify the resources that need to be backed up.</li>
+        <li><span class="opt-letter">D.</span> Use Amazon Inspector to identify all noncompliant resources.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Config finds untagged resources, tagging them programmatically brings them into a tag-based backup plan, and every tagged resource is then backed up automatically.</li>
+          <li><strong>B.</strong> Wrong — whether a resource is running has nothing to do with whether it needs backing up, and resources aren't 'added to a vault'.</li>
+          <li><strong>C.</strong> Wrong — manual reviews by every account owner are slow and error-prone.</li>
+          <li><strong>D.</strong> Wrong — Inspector scans for vulnerabilities; it doesn't manage backups.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 388 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 388</p>
+      <p class="exam-text">A company wants to deploy a new public web application on AWS. The application includes a web server tier that uses Amazon EC2 instances. The application also includes a database tier that uses an Amazon RDS for MySQL DB instance.</p>
+      <p class="exam-text">The application must be secure and accessible for global customers that have dynamic IP addresses.</p>
+      <p class="exam-text">How should a solutions architect configure the security groups to meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Configure the security group for the web servers to allow inbound traffic on port 443 from 0.0.0.0/0. Configure the security group for the DB instance to allow inbound traffic on port 3306 from the security group of the web servers.</li>
+        <li><span class="opt-letter">B.</span> Configure the security group for the web servers to allow inbound traffic on port 443 from the IP addresses of the customers. Configure the security group for the DB instance to allow inbound traffic on port 3306 from the security group of the web servers.</li>
+        <li><span class="opt-letter">C.</span> Configure the security group for the web servers to allow inbound traffic on port 443 from the IP addresses of the customers. Configure the security group for the DB instance to allow inbound traffic on port 3306 from the IP addresses of the customers.</li>
+        <li><span class="opt-letter">D.</span> Configure the security group for the web servers to allow inbound traffic on port 443 from 0.0.0.0/0. Configure the security group for the DB instance to allow inbound traffic on port 3306 from 0.0.0.0/0.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — HTTPS open to everyone suits a public site with dynamic customer IPs, and the database only accepts traffic from the web servers' security group.</li>
+          <li><strong>B.</strong> Wrong — customers' IP addresses keep changing, so they can't be listed.</li>
+          <li><strong>C.</strong> Wrong — dynamic IPs can't be listed, and customers should never reach the database directly.</li>
+          <li><strong>D.</strong> Wrong — exposing the database to the whole internet is insecure.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 389 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 389</p>
+      <p class="exam-text">A company runs an online marketplace web application on AWS. The application serves hundreds of thousands of users during peak hours. The company needs a scalable, near-real-time solution to share the details of millions of financial transactions with several other internal applications. Transactions also need to be processed to remove sensitive data before being stored in a document database for low-latency retrieval.</p>
+      <p class="exam-text">What should a solutions architect recommend to meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Store the transactions data into Amazon DynamoDB. Set up a rule in DynamoDB to remove sensitive data from every transaction upon write. Use DynamoDB Streams to share the transactions data with other applications.</li>
+        <li><span class="opt-letter">B.</span> Stream the transactions data into Amazon Kinesis Data Firehose to store data in Amazon DynamoDB and Amazon S3. Use AWS Lambda integration with Kinesis Data Firehose to remove sensitive data. Other applications can consume the data stored in Amazon S3.</li>
+        <li><span class="opt-letter">C.</span> Stream the transactions data into Amazon Kinesis Data Streams. Use AWS Lambda integration to remove sensitive data from every transaction and then store the transactions data in Amazon DynamoDB. Other applications can consume the transactions data off the Kinesis data stream.</li>
+        <li><span class="opt-letter">D.</span> Store the batched transactions data in Amazon S3 as files. Use AWS Lambda to process every file and remove sensitive data before updating the files in Amazon S3. The Lambda function then stores the data in Amazon DynamoDB. Other applications can consume transaction files stored in Amazon S3.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — DynamoDB has no rules that modify data on write.</li>
+          <li><strong>B.</strong> Wrong — Firehose can't deliver to DynamoDB, and consumers reading from S3 aren't near-real-time.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — Kinesis Data Streams lets many applications consume the same data in near real time, and Lambda strips sensitive fields before writing to DynamoDB.</li>
+          <li><strong>D.</strong> Wrong — batched files in S3 aren't near-real-time.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 390 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 390</p>
+      <p class="exam-text">A company serves a dynamic website from a fleet of Amazon EC2 instances behind an Application Load Balancer (ALB). The website needs to support multiple languages to serve customers around the world. The website's architecture is running in the us-west-1 Region and is exhibiting high request latency for users that are located in other parts of the world.</p>
+      <p class="exam-text">The website needs to serve requests quickly and efficiently regardless of a user's location. However, the company does not want to recreate the existing architecture across multiple Regions.</p>
+      <p class="exam-text">What should a solutions architect do to meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Replace the existing architecture with a website that is served from an Amazon S3 bucket. Configure an Amazon CloudFront distribution with the S3 bucket as the origin. Set the cache behavior settings to cache based on the Accept-Language request header.</li>
+        <li><span class="opt-letter">B.</span> Configure an Amazon CloudFront distribution with the ALB as the origin. Set the cache behavior settings to cache based on the Accept-Language request header.</li>
+        <li><span class="opt-letter">C.</span> Create an Amazon API Gateway API that is integrated with the ALB. Configure the API to use the HTTP integration type. Set up an API Gateway stage to enable the API cache based on the Accept-Language request header.</li>
+        <li><span class="opt-letter">D.</span> Launch an EC2 instance in each additional Region and configure NGINX to act as a cache server for that Region. Put all the EC2 instances and the ALB behind an Amazon Route 53 record set with a geolocation routing policy.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — S3 can't host a dynamic website.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — CloudFront in front of the ALB speeds up delivery worldwide, and caching on Accept-Language keeps a separate cached copy per language.</li>
+          <li><strong>C.</strong> Wrong — the API Gateway cache lives in one Region, so distant users still see high latency.</li>
+          <li><strong>D.</strong> Wrong — this rebuilds infrastructure in multiple Regions, which the company wants to avoid.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 391 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 391</p>
+      <p class="exam-text">An application uses an Amazon RDS MySQL DB instance. The RDS database is becoming low on disk space. A solutions architect wants to increase the disk space without downtime.</p>
+      <p class="exam-text">Which solution meets these requirements with the LEAST amount of effort?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Enable storage autoscaling in RDS</li>
+        <li><span class="opt-letter">B.</span> Increase the RDS database instance size</li>
+        <li><span class="opt-letter">C.</span> Change the RDS database instance storage type to Provisioned IOPS</li>
+        <li><span class="opt-letter">D.</span> Back up the RDS database, increase the storage capacity, restore the database, and stop the previous instance</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — storage autoscaling grows the storage automatically, with no downtime, when free space runs low.</li>
+          <li><strong>B.</strong> Wrong — the instance class sets CPU and memory, not disk space.</li>
+          <li><strong>C.</strong> Wrong — changing the storage type affects performance, not capacity.</li>
+          <li><strong>D.</strong> Wrong — backing up and restoring takes effort and causes downtime.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 392 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 392</p>
+      <p class="exam-text">A company stores call transcript files on a monthly basis. Users access the files randomly within 1 year of the call, but users access the files infrequently after 1 year. The company wants to optimize its solution by giving users the ability to query and retrieve files that are less than 1-year-old as quickly as possible. A delay in retrieving older files is acceptable.</p>
+      <p class="exam-text">Which solution will meet these requirements MOST cost-effectively?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Store individual files with tags in Amazon S3 Glacier Instant Retrieval. Query the tags to retrieve the files from S3 Glacier Instant Retrieval.</li>
+        <li><span class="opt-letter">B.</span> Store individual files in Amazon S3 Intelligent-Tiering. Use S3 Lifecycle policies to move the files to S3 Glacier Flexible Retrieval after 1 year. Query and retrieve the files that are in Amazon S3 by using Amazon Athena. Query and retrieve the files that are in S3 Glacier by using S3 Glacier Select.</li>
+        <li><span class="opt-letter">C.</span> Store individual files with tags in Amazon S3 Standard storage. Store search metadata for each archive in Amazon S3 Standard storage. Use S3 Lifecycle policies to move the files to S3 Glacier Instant Retrieval after 1 year. Query and retrieve the files by searching for metadata from Amazon S3.</li>
+        <li><span class="opt-letter">D.</span> Store individual files in Amazon S3 Standard storage. Use S3 Lifecycle policies to move the files to S3 Glacier Deep Archive after 1 year. Store search metadata in Amazon RDS. Query the files from Amazon RDS. Retrieve the files from S3 Glacier Deep Archive.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <p class="answer-line" style="color:var(--warn); font-size:0.85rem;">ℹ️ Current-state note: AWS stopped offering S3 Glacier Select to new customers in 2024; restoring the objects and querying them with Athena is the current approach.</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — S3 can't search by tags, and Glacier Instant Retrieval's retrieval fees make randomly accessed new files expensive.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Intelligent-Tiering handles the random access in year one, Glacier Flexible Retrieval is cheap for older files where delay is fine, Athena queries recent files, and Glacier Select queries archived ones.</li>
+          <li><strong>C.</strong> Wrong — a home-grown metadata search, and Instant Retrieval costs more than needed for files where a delay is fine.</li>
+          <li><strong>D.</strong> Wrong — running an RDS database just for metadata adds cost and work.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 393 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 393</p>
+      <p class="exam-text">A company wants to give a customer the ability to use on-premises Microsoft Active Directory to download files that are stored in Amazon S3. The customer's application uses an SFTP client to download the files.</p>
+      <p class="exam-text">Which solution will meet these requirements with the LEAST operational overhead and no changes to the customer's application?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Set up AWS Transfer Family with SFTP for Amazon S3. Configure integrated Active Directory authentication.</li>
+        <li><span class="opt-letter">B.</span> Set up AWS Database Migration Service (AWS DMS) to synchronize the on-premises client with Amazon S3. Configure integrated Active Directory authentication.</li>
+        <li><span class="opt-letter">C.</span> Set up AWS DataSync to synchronize between the on-premises location and the S3 location by using AWS IAM Identity Center (AWS Single Sign-On).</li>
+        <li><span class="opt-letter">D.</span> Set up a Windows Amazon EC2 instance with SFTP to connect the on-premises client with Amazon S3. Integrate AWS Identity and Access Management (IAM).</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Secure Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — Transfer Family is a managed SFTP server backed by S3 that authenticates users against Active Directory.</li>
+          <li><strong>B.</strong> Wrong — DMS migrates databases, not files over SFTP.</li>
+          <li><strong>C.</strong> Wrong — DataSync isn't an SFTP server the client can connect to.</li>
+          <li><strong>D.</strong> Wrong — a self-managed SFTP server is more work, and IAM isn't Active Directory.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 394 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 394</p>
+      <p class="exam-text">A company has a service that reads and writes large amounts of data from an Amazon S3 bucket in the same AWS Region. The service is deployed on Amazon EC2 instances within the private subnet of a VPC. The service communicates with Amazon S3 over a NAT gateway in the public subnet. However, the company wants a solution that will reduce the data output costs.</p>
+      <p class="exam-text">Which solution will meet these requirements MOST cost-effectively?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Provision a dedicated EC2 NAT instance in the public subnet. Configure the route table for the private subnet to use the elastic network interface of this instance as the destination for all S3 traffic.</li>
+        <li><span class="opt-letter">B.</span> Provision a dedicated EC2 NAT instance in the private subnet. Configure the route table for the public subnet to use the elastic network interface of this instance as the destination for all S3 traffic.</li>
+        <li><span class="opt-letter">C.</span> Provision a VPC gateway endpoint. Configure the route table for the private subnet to use the gateway endpoint as the route for all S3 traffic.</li>
+        <li><span class="opt-letter">D.</span> Provision a second NAT gateway. Configure the route table for the private subnet to use this NAT gateway as the destination for all S3 traffic.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a NAT instance still costs money and must be managed.</li>
+          <li><strong>B.</strong> Wrong — a NAT instance in a private subnet can't reach the internet, and the routing is backwards.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — a gateway endpoint for S3 is free and avoids NAT gateway data-processing charges.</li>
+          <li><strong>D.</strong> Wrong — a second NAT gateway doubles the cost.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 395 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 395</p>
+      <p class="exam-text">A company uses a legacy application to produce data in CSV format. The legacy application stores the output data in Amazon S3. The company is deploying a new commercial off-the-shelf (COTS) application that can perform complex SQL queries to analyze data that is stored in Amazon Redshift and Amazon S3 only. However, the COTS application cannot process the .csv files that the legacy application produces.</p>
+      <p class="exam-text">The company cannot update the legacy application to produce data in another format. The company needs to implement a solution so that the COTS application can use the data that the legacy application produces.</p>
+      <p class="exam-text">Which solution will meet these requirements with the LEAST operational overhead?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create an AWS Glue extract, transform, and load (ETL) job that runs on a schedule. Configure the ETL job to process the .csv files and store the processed data in Amazon Redshift.</li>
+        <li><span class="opt-letter">B.</span> Develop a Python script that runs on Amazon EC2 instances to convert the .csv files to .sql files. Invoke the Python script on a cron schedule to store the output files in Amazon S3.</li>
+        <li><span class="opt-letter">C.</span> Create an AWS Lambda function and an Amazon DynamoDB table. Use an S3 event to invoke the Lambda function. Configure the Lambda function to perform an extract, transform, and load (ETL) job to process the .csv files and store the processed data in the DynamoDB table.</li>
+        <li><span class="opt-letter">D.</span> Use Amazon EventBridge to launch an Amazon EMR cluster on a weekly schedule. Configure the EMR cluster to perform an extract, transform, and load (ETL) job to process the .csv files and store the processed data in an Amazon Redshift table.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="A">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: A</p>
+        <ul class="answer-explanations">
+          <li class="correct-choice"><strong>A.</strong> Correct — a scheduled, serverless Glue ETL job loads the CSV data into Redshift, which the COTS application can query.</li>
+          <li><strong>B.</strong> Wrong — custom scripts on servers you manage are more work, and .sql files aren't something the application can query.</li>
+          <li><strong>C.</strong> Wrong — the COTS application can only query Redshift and S3, not DynamoDB.</li>
+          <li><strong>D.</strong> Wrong — managing EMR clusters is more work than a serverless Glue job.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 396 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 396</p>
+      <p class="exam-text">A company is making a prototype of the infrastructure for its new website by manually provisioning the necessary infrastructure. This infrastructure includes an Auto Scaling group, an Application Load Balancer and an Amazon RDS database. After the configuration has been thoroughly validated, the company wants the capability to immediately deploy the infrastructure for development and production use in two Availability Zones in an automated fashion.</p>
+      <p class="exam-text">What should a solutions architect recommend to meet these requirements?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use AWS Systems Manager to replicate and provision the prototype infrastructure in two Availability Zones.</li>
+        <li><span class="opt-letter">B.</span> Define the infrastructure as a template by using the prototype infrastructure as a guide. Deploy the infrastructure with AWS CloudFormation.</li>
+        <li><span class="opt-letter">C.</span> Use AWS Config to record the inventory of resources that are used in the prototype infrastructure. Use AWS Config to deploy the prototype infrastructure into two Availability Zones.</li>
+        <li><span class="opt-letter">D.</span> Use AWS Elastic Beanstalk and configure it to use an automated reference to the prototype infrastructure to automatically deploy new environments in two Availability Zones.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Systems Manager manages instances; it doesn't copy and provision whole environments.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — a CloudFormation template deploys the same validated infrastructure repeatedly and automatically for each environment.</li>
+          <li><strong>C.</strong> Wrong — Config records configurations; it can't deploy resources.</li>
+          <li><strong>D.</strong> Wrong — Elastic Beanstalk can't copy existing manually built infrastructure by 'reference'.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 397 -->
+    <div class="exam-block" data-multi="true">
+      <p class="exam-tag">Question 397</p>
+      <p class="exam-text">A company has a three-tier web application that is in a single server. The company wants to migrate the application to the AWS Cloud. The company also wants the application to align with the AWS Well-Architected Framework and to be consistent with AWS recommended best practices for security, scalability, and resiliency.</p>
+      <p class="exam-text">Which combination of solutions will meet these requirements? (Choose three.)</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Create a VPC across two Availability Zones with the application's existing architecture. Host the application with existing architecture on an Amazon EC2 instance in a private subnet in each Availability Zone with EC2 Auto Scaling groups. Secure the EC2 instance with security groups and network access control lists (network ACLs).</li>
+        <li><span class="opt-letter">B.</span> Set up security groups and network access control lists (network ACLs) to control access to the database layer. Set up a single Amazon RDS database in a private subnet.</li>
+        <li><span class="opt-letter">C.</span> Create a VPC across two Availability Zones. Refactor the application to host the web tier, application tier, and database tier. Host each tier on its own private subnet with Auto Scaling groups for the web tier and application tier.</li>
+        <li><span class="opt-letter">D.</span> Use a single Amazon RDS database. Allow database access only from the application tier security group.</li>
+        <li><span class="opt-letter">E.</span> Use Elastic Load Balancers in front of the web tier. Control access by using security groups containing references to each layer's security groups.</li>
+        <li><span class="opt-letter">F.</span> Use an Amazon RDS database Multi-AZ cluster deployment in private subnets. Allow database access only from application tier security group.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C,E,F">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answers: C, E, F</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — keeping all three tiers on one server means they can't scale or fail separately.</li>
+          <li><strong>B.</strong> Wrong — a single database instance is a single point of failure.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — separate tiers in private subnets across two AZs, with Auto Scaling for the web and app tiers, is scalable and resilient.</li>
+          <li><strong>D.</strong> Wrong — a single database instance isn't resilient.</li>
+          <li class="correct-choice"><strong>E.</strong> Correct — a load balancer spreads traffic across the web tier, and security groups that reference each other lock down every layer.</li>
+          <li class="correct-choice"><strong>F.</strong> Correct — a Multi-AZ RDS deployment in private subnets, reachable only from the app tier, is resilient and secure.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 398 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 398</p>
+      <p class="exam-text">A solutions architect is designing a new API using Amazon API Gateway that will receive requests from users. The volume of requests is highly variable; several hours can pass without receiving a single request. The data processing will take place asynchronously, but should be completed within a few seconds after a request is made.</p>
+      <p class="exam-text">Which compute service should the solutions architect have the API invoke to deliver the requirements at the lowest cost?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> An AWS Glue job</li>
+        <li><span class="opt-letter">B.</span> An AWS Lambda function</li>
+        <li><span class="opt-letter">C.</span> A containerized service hosted in Amazon Elastic Kubernetes Service (Amazon EKS)</li>
+        <li><span class="opt-letter">D.</span> A containerized service hosted in Amazon ECS with Amazon EC2</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="B">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Cost-Optimized Architectures</p>
+        <p class="answer-line">Correct answer: B</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — Glue jobs take time to start and are built for ETL, not a few-second response.</li>
+          <li class="correct-choice"><strong>B.</strong> Correct — Lambda costs nothing while idle, scales instantly with bursts, and finishes in seconds.</li>
+          <li><strong>C.</strong> Wrong — an EKS cluster costs money even with no requests.</li>
+          <li><strong>D.</strong> Wrong — EC2 instances are billed even when no requests arrive.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 399 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 399</p>
+      <p class="exam-text">A company has multiple VPCs across AWS Regions to support and run workloads that are isolated from workloads in other Regions. Because of a recent application launch requirement, the company's VPCs must communicate with all other VPCs across all Regions.</p>
+      <p class="exam-text">Which solution will meet these requirements with the LEAST amount of administrative effort?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Use VPC peering to manage VPC communication in a single Region. Use VPC peering across Regions to manage VPC communications.</li>
+        <li><span class="opt-letter">B.</span> Use AWS Direct Connect gateways across all Regions to connect VPCs across regions and manage VPC communications.</li>
+        <li><span class="opt-letter">C.</span> Use AWS Transit Gateway to manage VPC communication in a single Region and Transit Gateway peering across Regions to manage VPC communications.</li>
+        <li><span class="opt-letter">D.</span> Use AWS PrivateLink across all Regions to connect VPCs across Regions and manage VPC communications.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design Resilient Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — a full mesh of peering connections grows quickly and is hard to manage, because peering isn't transitive.</li>
+          <li><strong>B.</strong> Wrong — Direct Connect gateways connect on-premises networks to VPCs; they don't route traffic between VPCs.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — one transit gateway per Region as a hub, with peering between the hubs, connects every VPC with few connections.</li>
+          <li><strong>D.</strong> Wrong — PrivateLink exposes individual services, not full network connectivity between VPCs.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 400 -->
+    <div class="exam-block">
+      <p class="exam-tag">Question 400</p>
+      <p class="exam-text">A social media company is building a feature for its website. The feature will give users the ability to upload photos. The company expects significant increases in demand during large events and must ensure that the website can handle the upload traffic from users.</p>
+      <p class="exam-text">Which solution meets these requirements with the MOST scalability?</p>
+      <ul class="exam-options">
+        <li><span class="opt-letter">A.</span> Upload files from the user's browser to the application servers. Transfer the files to an Amazon S3 bucket.</li>
+        <li><span class="opt-letter">B.</span> Provision an AWS Storage Gateway file gateway. Upload files directly from the user's browser to the file gateway.</li>
+        <li><span class="opt-letter">C.</span> Generate Amazon S3 presigned URLs in the application. Upload files directly from the user's browser into an S3 bucket.</li>
+        <li><span class="opt-letter">D.</span> Provision an Amazon Elastic File System (Amazon EFS) file system. Upload files directly from the user's browser to the file system.</li>
+      </ul>
+      <div class="exam-actions">
+        <button class="reveal-btn" data-answer="C">Reveal answer</button>
+        <button class="mark-review-btn" type="button">🔖 Mark for review</button>
+      </div>
+      <div class="answer-panel">
+        <p class="answer-topic">Domain: Design High-Performing Architectures</p>
+        <p class="answer-line">Correct answer: C</p>
+        <ul class="answer-explanations">
+          <li><strong>A.</strong> Wrong — every upload passes through the app servers, which become the bottleneck.</li>
+          <li><strong>B.</strong> Wrong — Storage Gateway is for on-premises access, not browsers.</li>
+          <li class="correct-choice"><strong>C.</strong> Correct — presigned URLs let browsers upload straight to S3, which scales almost without limit and takes the load off the servers.</li>
+          <li><strong>D.</strong> Wrong — browsers can't mount or write to EFS directly.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<script src="../assets/exam-quiz.js"></script>
+</body>
+</html>
