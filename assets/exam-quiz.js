@@ -1,43 +1,76 @@
 /* Reusable exam-question-bank engine – supports single- AND multi-select
    questions with per-option explanations. Deliberately separate from
    assets/scenario-quiz.js (different container/class names, different
-   localStorage namespace) so exam-bank practice never mixes with the
-   per-module scenarios.html sets. */
+   storage) so exam-bank practice never mixes with the per-module
+   scenarios.html sets.
+
+   Answers, display order, review flags and comments live in one JSON file
+   per question set (part-1.html -> data/part-1.json), written through
+   server.js (npm start) — that file is the source of truth. */
 (function () {
-  function storageKey(kind) {
-    return 'examQuiz' + kind + ':' + window.location.pathname;
+  // part-1.html -> data/part-1.json, resolved relative to the page.
+  function dataFileUrl() {
+    const page = window.location.pathname.split('/').pop() || 'index.html';
+    return new URL('data/' + page.replace(/\.html?$/, '') + '.json', window.location.href).href;
   }
 
-  function loadSet(kind) {
-    try {
-      return new Set(JSON.parse(localStorage.getItem(storageKey(kind)) || '[]'));
-    } catch (e) {
-      return new Set();
+  function showStoreError(message) {
+    let banner = document.querySelector('.exam-store-error');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.className = 'exam-store-error';
+      const set = document.querySelector('.exam-set');
+      if (set) set.insertAdjacentElement('beforebegin', banner);
+      else document.body.prepend(banner);
     }
+    banner.textContent = message;
   }
 
-  function saveSet(kind, set) {
-    try {
-      localStorage.setItem(storageKey(kind), JSON.stringify(Array.from(set)));
-    } catch (e) {
-      /* localStorage unavailable — state just won't persist across reloads */
+  // Resolves to { data, writable }. A missing file (404) is a fresh set; any
+  // other failure leaves the page usable but read-only so a bad load can
+  // never overwrite the existing file with empty state.
+  function loadStore() {
+    if (window.location.protocol === 'file:') {
+      showStoreError(
+        'Progress is NOT being saved — this page was opened as a file. ' +
+        'Run "npm start" in the workspace root and open it via http://127.0.0.1:8000/ instead.'
+      );
+      return Promise.resolve({ data: {}, writable: false });
     }
+    return fetch(dataFileUrl(), { cache: 'no-store' })
+      .then(function (res) {
+        if (res.status === 404) return {};
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        return { data: data && typeof data === 'object' ? data : {}, writable: true };
+      })
+      .catch(function (err) {
+        showStoreError('Could not load ' + dataFileUrl() + ' (' + err.message + ') — progress is NOT being saved.');
+        return { data: {}, writable: false };
+      });
   }
 
-  function loadMap(kind) {
-    try {
-      return JSON.parse(localStorage.getItem(storageKey(kind)) || '{}');
-    } catch (e) {
-      return {};
-    }
-  }
-
-  function saveMap(kind, map) {
-    try {
-      localStorage.setItem(storageKey(kind), JSON.stringify(map));
-    } catch (e) {
-      /* localStorage unavailable — state just won't persist across reloads */
-    }
+  // PUTs are chained so a slow earlier save can never land after a newer one.
+  let saveChain = Promise.resolve();
+  function saveStore(store) {
+    if (!store.writable) return Promise.resolve(false);
+    const body = JSON.stringify(store.data);
+    saveChain = saveChain.then(function () {
+      return fetch(dataFileUrl(), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: body
+      }).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return true;
+      }).catch(function (err) {
+        showStoreError('Saving to ' + dataFileUrl() + ' failed (' + err.message + '). Is "npm start" running?');
+        return false;
+      });
+    });
+    return saveChain;
   }
 
   function examLabel(block) {
@@ -79,9 +112,9 @@
     return positions;
   }
 
-  // { blockId: { answered: 'A' | 'A,E' | null, displayNumber } }
-  function loadSelections(blocks) {
-    const raw = loadMap('Selections');
+  // { blockId: { answered: 'A' | 'A,E' | null, displayNumber, marked, comment } }
+  function loadSelections(blocks, store) {
+    const raw = store.data;
     let dirty = false;
     let maxDisplay = 0;
     Object.keys(raw).forEach(function (key) {
@@ -92,25 +125,32 @@
     blocks.forEach(function (block) {
       if (!raw[block.id]) {
         maxDisplay++;
-        raw[block.id] = { answered: null, displayNumber: maxDisplay };
+        raw[block.id] = { answered: null, displayNumber: maxDisplay, marked: false, comment: '' };
         dirty = true;
+      } else {
+        if (typeof raw[block.id].marked !== 'boolean') {
+          raw[block.id].marked = false;
+          dirty = true;
+        }
+        if (typeof raw[block.id].comment !== 'string') {
+          raw[block.id].comment = '';
+          dirty = true;
+        }
       }
     });
-    if (dirty) saveMap('Selections', raw);
+    if (dirty) saveStore(store);
     return raw;
   }
 
-  function initExamQuestions(containerSelector) {
+  function initExamQuestions(containerSelector, store) {
     const container = document.querySelector(containerSelector || '.exam-set');
     if (!container) return;
 
     const blocks = Array.from(container.querySelectorAll('.exam-block'));
-    const marks = loadSet('ReviewMarks');
-    const comments = loadMap('Comments');
 
     // A file covering questions 26-50 (e.g. part-2.html) sets
     // data-start-number="26" on .exam-set so block ids, #anchors, and
-    // localStorage keys read exam-26..exam-50 (matching the source images'
+    // JSON keys read exam-26..exam-50 (matching the source images'
     // question numbers) instead of restarting at exam-1. Blocks are always
     // in original document order here (a fresh page load re-parses the
     // static HTML before any shuffle-driven reordering happens), so idx
@@ -121,7 +161,7 @@
       if (!block.id) block.id = 'exam-' + (startNumber + idx);
     });
 
-    const selections = loadSelections(blocks);
+    const selections = loadSelections(blocks, store);
     const pendingPicks = {};
 
     const reviewPanel = container.querySelector('.review-list-panel');
@@ -138,6 +178,11 @@
 
     let completionAnnounced = false;
     const blockPainters = [];
+
+    function isMarked(blockId) {
+      const entry = selections[blockId];
+      return !!(entry && entry.marked);
+    }
 
     function isAnswered(blockId) {
       const entry = selections[blockId];
@@ -158,8 +203,8 @@
 
     // The rendered "Question N" label is read directly from each block's
     // stored displayNumber (not recomputed from its position), so the
-    // number on screen always matches what's actually persisted in
-    // localStorage.
+    // number on screen always matches what's actually persisted in the
+    // JSON file.
     function applyDisplayOrder() {
       const ordered = currentDisplayOrder();
       ordered.forEach(function (block) {
@@ -182,9 +227,15 @@
     function reshuffle() {
       const positions = shuffledPositions(blocks.length);
       blocks.forEach(function (block, i) {
-        selections[block.id] = { answered: null, displayNumber: positions[i] + startNumber - 1 };
+        const prev = selections[block.id];
+        selections[block.id] = {
+          answered: null,
+          displayNumber: positions[i] + startNumber - 1,
+          marked: !!(prev && prev.marked),
+          comment: prev && prev.comment ? prev.comment : ''
+        };
       });
-      saveMap('Selections', selections);
+      saveStore(store);
     }
 
     if (countAnswered() === 0) {
@@ -235,14 +286,14 @@
       if (!reviewList) return;
       reviewList.innerHTML = '';
 
-      if (marks.size === 0) {
+      if (!blocks.some(function (block) { return isMarked(block.id); })) {
         if (reviewEmpty) reviewEmpty.style.display = 'block';
         return;
       }
       if (reviewEmpty) reviewEmpty.style.display = 'none';
 
       currentDisplayOrder().forEach(function (block) {
-        if (!marks.has(block.id)) return;
+        if (!isMarked(block.id)) return;
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.href = '#' + block.id;
@@ -253,7 +304,7 @@
     }
 
     function applyMarkState(block, markBtn) {
-      const marked = marks.has(block.id);
+      const marked = isMarked(block.id);
       block.classList.toggle('marked-for-review', marked);
       if (!markBtn) return;
       markBtn.textContent = marked ? '✕ Unmark' : '🔖 Mark for review';
@@ -381,12 +432,8 @@
 
       if (markBtn) {
         markBtn.addEventListener('click', function () {
-          if (marks.has(block.id)) {
-            marks.delete(block.id);
-          } else {
-            marks.add(block.id);
-          }
-          saveSet('ReviewMarks', marks);
+          selections[block.id].marked = !isMarked(block.id);
+          saveStore(store);
           applyMarkState(block, markBtn);
           renderReviewList();
         });
@@ -427,27 +474,59 @@
         const commentLabel = document.createElement('label');
         commentLabel.className = 'comment-label';
         commentLabel.htmlFor = block.id + '-comment';
-        commentLabel.textContent = '📝 My notes (optional, saved locally)';
+        commentLabel.textContent = '📝 My notes (optional, saved to this set\'s JSON file)';
 
         const commentInput = document.createElement('textarea');
         commentInput.className = 'comment-input';
         commentInput.id = block.id + '-comment';
         commentInput.placeholder = 'Add a note about this question…';
-        commentInput.value = comments[block.id] || '';
+        commentInput.value = selections[block.id].comment || '';
 
+        const commentActions = document.createElement('div');
+        commentActions.className = 'comment-actions';
+
+        const commentAddBtn = document.createElement('button');
+        commentAddBtn.type = 'button';
+        commentAddBtn.className = 'comment-add-btn';
+        commentAddBtn.textContent = 'Add';
+
+        const commentStatus = document.createElement('span');
+        commentStatus.className = 'comment-status';
+
+        // Typing only edits the textarea; nothing is written until "Add",
+        // which overwrites whatever comment the file held before.
         commentInput.addEventListener('input', function () {
-          const val = commentInput.value;
-          if (val) {
-            comments[block.id] = val;
-          } else {
-            delete comments[block.id];
-          }
-          saveMap('Comments', comments);
+          const saved = selections[block.id].comment || '';
+          commentStatus.textContent = commentInput.value === saved ? '' : 'Unsaved changes';
         });
 
+        commentAddBtn.addEventListener('click', function () {
+          selections[block.id].comment = commentInput.value.trim();
+          commentInput.value = selections[block.id].comment;
+          commentStatus.textContent = 'Saving…';
+          saveStore(store).then(function (ok) {
+            commentStatus.textContent = ok ? 'Saved ✓' : 'Not saved';
+          });
+        });
+
+        commentActions.appendChild(commentAddBtn);
+        commentActions.appendChild(commentStatus);
         commentWrap.appendChild(commentLabel);
         commentWrap.appendChild(commentInput);
+        commentWrap.appendChild(commentActions);
         answerPanel.appendChild(commentWrap);
+      }
+
+      // Records the pick and, if it's wrong, flags the question for review in
+      // the same write so a missed question is never left unmarked.
+      function commitAnswer(set) {
+        selections[block.id].answered = Array.from(set).sort().join(',');
+        if (!setsEqual(set, correctSet)) {
+          selections[block.id].marked = true;
+          applyMarkState(block, markBtn);
+          renderReviewList();
+        }
+        saveStore(store);
       }
 
       function paint() {
@@ -508,8 +587,7 @@
 
           if (answerPanel.classList.contains('visible')) {
             // Answer already open: commit immediately, same as scenario-quiz.
-            selections[block.id].answered = Array.from(set).sort().join(',');
-            saveMap('Selections', selections);
+            commitAnswer(set);
             if (resultsPanel && resultsBody.style.display === 'block') renderResults();
             maybeAnnounceCompletion();
           }
@@ -530,8 +608,7 @@
         if (willOpen && !isAnswered(block.id)) {
           const set = pendingPicks[block.id];
           if (set && set.size > 0) {
-            selections[block.id].answered = Array.from(set).sort().join(',');
-            saveMap('Selections', selections);
+            commitAnswer(set);
           }
         }
 
@@ -555,7 +632,9 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    initExamQuestions('.exam-set');
+    loadStore().then(function (store) {
+      initExamQuestions('.exam-set', store);
+    });
   });
 
   window.initExamQuestions = initExamQuestions;
