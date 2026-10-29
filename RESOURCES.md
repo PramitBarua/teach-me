@@ -276,3 +276,8 @@
 | R270 | Updating Stacks Using Change Sets | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html | No-interruption/interruption/replacement preview before executing |
 | R271 | What Is a Custom Resource? | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html | Lambda/SNS-backed logical resources for unsupported functionality |
 | R272 | Custom Resources That Publish to an AWS Lambda Function | https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources-lambda.html | ServiceToken, event data, response URL success/failure signaling |
+| R273 | Disaster Recovery Options in the Cloud (AWS Whitepaper) | https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html | Backup & restore, pilot light, warm standby, multi-site active/active |
+| R274 | What Is IAM Identity Center? | https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html | Workforce SSO across Organizations accounts, permission sets, external IdPs/AD |
+| R275 | What Is AWS Lake Formation? | https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html | Data lake permissions (column/row/tag-based), blueprints, cross-account sharing |
+| R276 | Amazon S3 Event Notifications | https://docs.aws.amazon.com/AmazonS3/latest/userguide/EventNotifications.html | Event types and destinations (Lambda, SQS, SNS, EventBridge) |
+| R277 | What Is AWS DataSync? | https://docs.aws.amazon.com/datasync/latest/userguide/what-is-datasync.html | Online transfer agent, supported locations (NFS/SMB/HDFS/S3/EFS/FSx), task scheduling |
