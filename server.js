@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-/* Local server for the exam question bank.
+/* Local server for the exam and practice question banks.
 
    Serves this workspace over http://127.0.0.1 and accepts PUT requests that
    write each question set's progress file
-   (exam-question-bank/data/part-N.json). The JSON files are the source of
+   (exam-question-bank/data/part-N.json or
+   practice-question-bank/data/part-N.json). The JSON files are the source of
    truth for answers, display order and comments — a browser page opened via
    file:// cannot write to disk, so the pages must be opened through here.
 
@@ -14,8 +15,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = __dirname;
-const DATA_DIR = path.join(ROOT, 'exam-question-bank', 'data');
-const DATA_PATH = /^\/exam-question-bank\/data\/(part-\d+)\.json$/;
+// Each bank keeps its own progress files, so the two never share state.
+const DATA_PATH = /^\/(exam-question-bank|practice-question-bank)\/data\/(part-\d+)\.json$/;
 const MAX_BODY = 5 * 1024 * 1024;
 const PORT = parseInt(process.env.PORT, 10) || 8000;
 
@@ -59,7 +60,7 @@ function serveStatic(req, res, urlPath) {
   });
 }
 
-function saveData(req, res, name) {
+function saveData(req, res, bank, name) {
   const chunks = [];
   let size = 0;
   let aborted = false;
@@ -86,8 +87,9 @@ function saveData(req, res, name) {
     }
 
     try {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-      const target = path.join(DATA_DIR, name + '.json');
+      const dataDir = path.join(ROOT, bank, 'data');
+      fs.mkdirSync(dataDir, { recursive: true });
+      const target = path.join(dataDir, name + '.json');
       const tmp = target + '.tmp';
       fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n');
       fs.renameSync(tmp, target); // atomic: a crash never leaves a half-written file
@@ -109,8 +111,8 @@ const server = http.createServer(function (req, res) {
 
   if (req.method === 'PUT') {
     const match = DATA_PATH.exec(urlPath);
-    if (!match) return sendError(res, 404, 'Only exam-question-bank/data/part-N.json is writable');
-    return saveData(req, res, match[1]);
+    if (!match) return sendError(res, 404, 'Only exam-question-bank/ and practice-question-bank/ data/part-N.json files are writable');
+    return saveData(req, res, match[1], match[2]);
   }
   if (req.method === 'GET' || req.method === 'HEAD') {
     return serveStatic(req, res, urlPath);
@@ -121,4 +123,5 @@ const server = http.createServer(function (req, res) {
 server.listen(PORT, '127.0.0.1', function () {
   console.log('Serving ' + ROOT);
   console.log('Open http://127.0.0.1:' + PORT + '/exam-question-bank/part-1.html');
+  console.log('  or http://127.0.0.1:' + PORT + '/practice-question-bank/part-1.html');
 });
