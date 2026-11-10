@@ -9,7 +9,9 @@
      answer as you go.
 
    Every question also has a Flag button (top-right) that works in both modes
-   and is stored separately from "marked for review".
+   and is stored separately from "marked for review". Both feed one combined
+   .flag-review-panel list; its two toggles filter it (one on = only that kind,
+   both or neither = the union, each question listed once).
 
    Progress lives in one JSON file per set (part-1.html -> data/part-1.json),
    written through server.js (npm start) — that file is
@@ -176,8 +178,12 @@
     const pendingPicks = {};
     const blockApis = [];
 
-    const reviewPanel = container.querySelector('.review-list-panel');
-    const flagPanel = container.querySelector('.flag-list-panel');
+    const flagReviewPanel = container.querySelector('.flag-review-panel');
+    const flagReviewToggles = flagReviewPanel
+      ? Array.from(flagReviewPanel.querySelectorAll('.flag-review-toggle'))
+      : [];
+    // Which toggles are pressed. Only a view filter, so it isn't saved.
+    const listFilter = { flagged: false, marked: false };
     const submitPanel = container.querySelector('.submit-panel');
     const submitBtn = submitPanel ? submitPanel.querySelector('.submit-exam-btn') : null;
     const submitProgressEl = submitPanel ? submitPanel.querySelector('.submit-progress') : null;
@@ -361,27 +367,76 @@
       renderAll();
     }
 
-    // ── Marked-for-review and flagged lists ──
-    function renderList(panel, predicate) {
-      if (!panel) return;
-      const list = panel.querySelector('ul');
-      const empty = panel.querySelector('.review-list-empty, .flag-list-empty');
+    // ── Combined flagged / marked-for-review list ──
+    // Pressing exactly one toggle shows only that kind; both pressed or both
+    // released shows the union. One pass over the blocks, so a question that
+    // is both flagged and marked is listed once.
+    const FLAG_REVIEW_EMPTY = {
+      both: 'No questions flagged or marked yet — use "⚑ Flag" in the corner of any question, ' +
+        'or "Mark for review" (it appears after you submit in exam mode, or straight away in reveal mode).',
+      flagged: 'No questions flagged yet — use "⚑ Flag" in the corner of any question.',
+      marked: 'No questions marked yet — "Mark for review" appears on each question after you ' +
+        'submit (exam mode) or straight away (reveal mode).'
+    };
+
+    function activeListFilter() {
+      if (listFilter.flagged === listFilter.marked) return 'both';
+      return listFilter.flagged ? 'flagged' : 'marked';
+    }
+
+    function renderFlagReviewList() {
+      if (!flagReviewPanel) return;
+      const list = flagReviewPanel.querySelector('.flag-review-items');
+      const empty = flagReviewPanel.querySelector('.flag-review-empty');
       if (!list) return;
+      const filter = activeListFilter();
+      const ordered = currentDisplayOrder();
+
+      flagReviewToggles.forEach(function (btn) {
+        const key = btn.dataset.filter;
+        btn.setAttribute('aria-pressed', listFilter[key] ? 'true' : 'false');
+        const countEl = btn.querySelector('.flag-review-count');
+        if (countEl) {
+          const test = key === 'flagged' ? isFlagged : isMarked;
+          countEl.textContent = ordered.filter(function (block) { return test(block.id); }).length;
+        }
+      });
+
+      const hits = ordered.filter(function (block) {
+        const flagged = isFlagged(block.id);
+        const marked = isMarked(block.id);
+        if (filter === 'flagged') return flagged;
+        if (filter === 'marked') return marked;
+        return flagged || marked;
+      });
+
       list.innerHTML = '';
-      const hits = currentDisplayOrder().filter(function (block) { return predicate(block.id); });
-      if (empty) empty.style.display = hits.length ? 'none' : 'block';
+      if (empty) {
+        empty.textContent = FLAG_REVIEW_EMPTY[filter];
+        empty.style.display = hits.length ? 'none' : 'block';
+      }
       hits.forEach(function (block) {
+        const flagged = isFlagged(block.id);
+        const marked = isMarked(block.id);
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.href = '#' + block.id;
-        a.textContent = examLabel(block);
+        a.classList.toggle('is-flagged', flagged);
+        a.classList.toggle('is-marked', marked);
+        a.textContent = (flagged ? '🚩' : '') + (marked ? '📌' : '') + ' ' + examLabel(block);
+        a.title = flagged && marked ? 'Flagged and marked for review' : flagged ? 'Flagged' : 'Marked for review';
         li.appendChild(a);
         list.appendChild(li);
       });
     }
 
-    function renderReviewList() { renderList(reviewPanel, isMarked); }
-    function renderFlagList() { renderList(flagPanel, isFlagged); }
+    flagReviewToggles.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const key = btn.dataset.filter;
+        listFilter[key] = !listFilter[key];
+        renderFlagReviewList();
+      });
+    });
 
     // ── Results ──
     // Reveal mode scores only answered questions; a submitted exam scores the
@@ -514,8 +569,7 @@
     function renderAll() {
       renderModeSwitch();
       blockApis.forEach(function (api) { api.paint(); });
-      renderReviewList();
-      renderFlagList();
+      renderFlagReviewList();
       renderResultsPanel();
       renderSubmitPanel();
     }
@@ -556,7 +610,7 @@
           selections[block.id].marked = !isMarked(block.id);
           saveStore(store);
           applyMarkState();
-          renderReviewList();
+          renderFlagReviewList();
         });
       }
 
@@ -565,7 +619,7 @@
           selections[block.id].flagged = !isFlagged(block.id);
           saveStore(store);
           applyFlagState();
-          renderFlagList();
+          renderFlagReviewList();
         });
       }
 
@@ -669,7 +723,7 @@
         if (!setsEqual(set, correctSet)) {
           selections[block.id].marked = true;
           applyMarkState();
-          renderReviewList();
+          renderFlagReviewList();
         }
         saveStore(store);
       }
