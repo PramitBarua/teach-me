@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 – Security Hub and Detective</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 14
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Security Hub and Amazon Detective</h1>
+    <p class="lesson-meta">Lesson 14 of 23 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html" target="_blank">What is Security Hub CSPM?</a> · <a href="https://aws.amazon.com/blogs/aws/aws-security-hub-now-generally-available-with-near-real-time-analytics-and-risk-prioritization" target="_blank">New Security Hub GA (Dec 2025)</a> · <a href="https://docs.aws.amazon.com/detective/latest/userguide/what-is-detective.html" target="_blank">What is Amazon Detective?</a></p>
+  </div>
+
+  <p>The Security module gave you a set of specialist detectors: <a href="../19-security-deployment-and-operations/0009-amazon-guardduty.html">GuardDuty</a> (threats), <a href="../19-security-deployment-and-operations/0008-amazon-inspector.html">Inspector</a> (vulnerabilities), <a href="../19-security-deployment-and-operations/0007-amazon-macie.html">Macie</a> (sensitive data in S3) and <a href="../19-security-deployment-and-operations/0006-aws-config.html">Config</a> (resource compliance). Two questions remain. <em>Where do you see all of their findings in one place?</em> And <em>once something looks wrong, how do you investigate what actually happened?</em> Those are <strong>Security Hub</strong> and <strong>Detective</strong>.</p>
+
+  <h2>Security Hub: One Pane, Plus Posture Checks</h2>
+  <div class="callout warn">
+    <div class="callout-title">Naming update (December 2025)</div>
+    The original service is now called <strong>AWS Security Hub CSPM</strong> (cloud security posture management). A new, broader <strong>AWS Security Hub</strong> reached general availability on 2 December 2025. It correlates signals from GuardDuty, Inspector, Macie and Security Hub CSPM into prioritized exposures. For the exam, think of it all as "Security Hub": the central aggregation and posture service.
+  </div>
+  <dl>
+    <dt>Aggregate findings</dt>
+    <dd>Collects findings from GuardDuty, Inspector, Macie, Firewall Manager and other AWS services, plus third-party partner tools. They're normalized into a standard format (the AWS Security Finding Format, ASFF).</dd>
+    <dt>Posture checks against standards</dt>
+    <dd>Runs automated checks against security standards: <strong>AWS Foundational Security Best Practices</strong>, <strong>CIS AWS Foundations</strong>, <strong>PCI DSS</strong> and NIST. The checks are built on <strong>AWS Config rules</strong>, so <strong>Config must be enabled</strong>.</dd>
+    <dt>Multi-account and multi-Region</dt>
+    <dd>A delegated administrator account in AWS Organizations sees every member account. Cross-Region aggregation brings everything into one Region.</dd>
+    <dt>Response</dt>
+    <dd>Automation rules update findings. Findings go to <strong>EventBridge</strong>, which can trigger Lambda, Systems Manager Automation or a ticketing system for remediation.</dd>
+  </dl>
+
+  <h2>Detective: Root-Cause Investigation</h2>
+  <p>Detective <strong>automatically collects</strong> log data and builds a <strong>behavior graph</strong> showing how resources, IP addresses and identities interacted over time. It uses up to a year of history. Its sources are <strong>CloudTrail</strong>, <strong>VPC Flow Logs</strong> and <strong>GuardDuty findings</strong> (plus EKS audit logs). You don't need to set up those log pipelines yourself. Analysts pivot through visualizations to answer "<em>what did this role do, from where, and what else did it touch?</em>". Related findings are grouped together.</p>
+
+  <table>
+    <thead><tr><th>Service</th><th>Job</th></tr></thead>
+    <tbody>
+      <tr><td><strong>GuardDuty</strong></td><td><strong>Detects</strong> threats</td></tr>
+      <tr><td><strong>Security Hub</strong></td><td><strong>Aggregates</strong> findings and <strong>checks posture</strong> against standards</td></tr>
+      <tr><td><strong>Detective</strong></td><td><strong>Investigates</strong> root cause after a finding</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The three-word rule</div>
+    <strong>Detect, aggregate, investigate.</strong> "A single dashboard of security findings across accounts, plus CIS or PCI compliance checks": <strong>Security Hub</strong>. "Analyze the root cause of a GuardDuty finding, visualize what happened, with no log pipelines to build": <strong>Detective</strong>. Detective doesn't detect new threats itself; that's GuardDuty's job.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A security team wants one place to view findings from GuardDuty, Inspector and Macie across 30 accounts, plus continuous checks against the CIS AWS Foundations Benchmark. What should they enable?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Security Hub aggregates findings across accounts using a delegated administrator, and runs standards checks such as CIS, built on Config rules."> Security Hub with a delegated administrator account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Detective investigates findings. It isn't the aggregation dashboard or the standards checker."> Amazon Detective with a behavior graph for each account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="GuardDuty detects threats only. It doesn't aggregate Inspector or Macie findings or run CIS checks."> GuardDuty with multi-account management from one account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudTrail records API activity. It doesn't aggregate security findings or check compliance standards."> CloudTrail organization trail sent to a central bucket</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. GuardDuty reports unusual API calls from an IAM role. The team needs to see quickly what that role did over the past weeks, which IPs it used and which resources it touched, without building log pipelines. What should they use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Athena works, but the team would have to build the tables, queries and visualizations. Detective already does this."> Athena queries over CloudTrail logs they set up in S3</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Security Hub would show the finding, but it doesn't build a behavior graph for investigating root cause."> Security Hub's list of findings for the affected account</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Detective ingests CloudTrail, VPC Flow Logs and GuardDuty automatically and builds a behavior graph for this kind of investigation."> Amazon Detective, pivoting from the GuardDuty finding</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Inspector scans for software vulnerabilities and network exposure. It doesn't investigate IAM activity."> Amazon Inspector scans of the role's attached resources</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team enables the AWS Foundational Security Best Practices standard in Security Hub CSPM, but the controls show no results. What's the most likely missing prerequisite?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Macie is one of many integrations. It isn't needed to run the standards checks."> Amazon Macie isn't enabled for the account's S3 buckets</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Detective is for investigation. Security Hub's standards checks don't depend on it."> Amazon Detective hasn't built a behavior graph yet</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Security Hub doesn't need VPC Flow Logs to evaluate its posture controls."> VPC Flow Logs aren't being published to CloudWatch Logs</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Security Hub CSPM controls are evaluated using AWS Config rules, so Config must be enabled and recording resources."> AWS Config isn't enabled to record the resources</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0013-amazon-msk.html">← Previous: Amazon MSK</a>
+      <a href="0015-network-firewall-and-firewall-manager.html">Next: Network Firewall and Firewall Manager →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

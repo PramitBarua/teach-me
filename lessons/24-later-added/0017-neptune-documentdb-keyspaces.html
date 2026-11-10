@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>17 – Neptune, DocumentDB and Keyspaces</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 17
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Purpose-Built Databases: Neptune, DocumentDB, Keyspaces</h1>
+    <p class="lesson-meta">Lesson 17 of 23 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/neptune/latest/userguide/intro.html" target="_blank">What is Amazon Neptune?</a> · <a href="https://docs.aws.amazon.com/documentdb/latest/developerguide/what-is.html" target="_blank">What is Amazon DocumentDB?</a> · <a href="https://docs.aws.amazon.com/keyspaces/latest/devguide/what-is-keyspaces.html" target="_blank">What is Amazon Keyspaces?</a></p>
+  </div>
+
+  <p>The course went deep on RDS, Aurora, DynamoDB, ElastiCache and Redshift. The exam also expects you to recognize three more <strong>purpose-built databases</strong>. Each is a managed, AWS-compatible home for a specific open-source data model. You almost never need their internals. You need the <strong>trigger word</strong> that points to each one.</p>
+
+  <h2>Amazon Neptune: Graph</h2>
+  <p>A fully managed <strong>graph database</strong> that stores <em>relationships</em> as first-class data and queries them with <strong>Gremlin</strong>, <strong>openCypher</strong> or <strong>SPARQL</strong>. Use it for <strong>social networks</strong>, <strong>recommendation engines</strong>, <strong>fraud detection</strong> (rings of linked accounts) and knowledge graphs. These are queries like "friends of friends who bought X" that would need many expensive joins in SQL. Like Aurora, it has a primary instance and up to 15 read replicas over a cluster volume replicated across AZs. <strong>Neptune Analytics</strong> adds in-memory graph analytics.</p>
+
+  <h2>Amazon DocumentDB: MongoDB-Compatible Documents</h2>
+  <p>A fully managed <strong>JSON document database</strong> that is <strong>MongoDB-compatible</strong>, so existing MongoDB drivers, applications and tools work with little or no change. Its architecture also looks like Aurora: storage is kept as <strong>six copies across three AZs</strong>, with up to 15 read replicas and point-in-time recovery. <strong>Elastic clusters</strong> shard for very large workloads.</p>
+
+  <h2>Amazon Keyspaces: Cassandra-Compatible Wide-Column</h2>
+  <p>A <strong>serverless</strong>, <strong>Apache Cassandra-compatible</strong> database. Existing Cassandra applications and drivers use <strong>CQL</strong> (Cassandra Query Language) as before, but there are no clusters or nodes to manage. Tables scale up and down automatically, with on-demand or provisioned capacity.</p>
+
+  <table>
+    <thead><tr><th>Trigger in the question</th><th>Database</th></tr></thead>
+    <tbody>
+      <tr><td>Graph, relationships, social network, fraud rings, Gremlin or SPARQL</td><td><strong>Neptune</strong></td></tr>
+      <tr><td>MongoDB, JSON documents, migrate a MongoDB app</td><td><strong>DocumentDB</strong></td></tr>
+      <tr><td>Apache Cassandra, CQL, wide-column, serverless Cassandra</td><td><strong>Keyspaces</strong></td></tr>
+      <tr><td>Key-value at any scale, single-digit-ms latency, serverless</td><td>DynamoDB</td></tr>
+      <tr><td>Relational, SQL, joins, transactions</td><td>RDS or Aurora</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Compatibility questions are the most common</div>
+    "Migrate an on-premises <strong>MongoDB</strong> database to a managed service with minimal code changes": <strong>DocumentDB</strong>. "Migrate <strong>Cassandra</strong> and stop managing nodes": <strong>Keyspaces</strong>. DynamoDB is the usual distractor in both. It's managed and NoSQL, but it would mean rewriting the data-access code.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A bank wants to spot fraud rings: groups of accounts linked through shared devices, addresses and payees, often several hops apart. Queries must traverse these connections in real time. Which database fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Relational databases can model this, but multi-hop traversals become many self-joins that slow down as the hops increase."> Aurora PostgreSQL with self-joins on a links table</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="DynamoDB is optimized for key-based access. Multi-hop relationship traversal isn't what it's built for."> DynamoDB with a GSI for each relationship type</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Redshift is for analytical SQL over large datasets, not real-time multi-hop traversal of relationships."> Redshift with nightly batch analytics on account links</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Neptune stores relationships natively and traverses them efficiently with Gremlin or openCypher. Fraud rings are a classic graph use case."> Amazon Neptune queried with Gremlin or openCypher</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company runs a self-managed MongoDB cluster for its content platform. It wants a fully managed AWS database that is highly available across AZs, without rewriting its data-access layer. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. DocumentDB is MongoDB-compatible, so existing drivers and code keep working, and storage is replicated six ways across three AZs."> Amazon DocumentDB</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="DynamoDB is managed NoSQL, but its API is different. The data-access layer would need rewriting."> Amazon DynamoDB</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Keyspaces is compatible with Cassandra, not MongoDB."> Amazon Keyspaces</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Running MongoDB on EC2 keeps compatibility but isn't fully managed, which breaks the requirement."> MongoDB on EC2</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An IoT platform runs on an Apache Cassandra cluster and uses CQL. The team is tired of managing nodes, compaction and scaling, and wants a serverless option without changing its queries. What should they choose?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Neptune is a graph database. It doesn't support CQL or the Cassandra data model."> Amazon Neptune</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DocumentDB is MongoDB-compatible. CQL queries wouldn't work."> Amazon DocumentDB</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Keyspaces is serverless and Cassandra-compatible, so existing CQL and drivers work with no nodes to manage."> Amazon Keyspaces</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DynamoDB is serverless, but moving from CQL to the DynamoDB API means changing queries."> Amazon DynamoDB</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0016-aws-on-premises-outposts-and-anywhere.html">← Previous: AWS On-Premises</a>
+      <a href="0018-amplify-and-device-farm.html">Next: Amplify and Device Farm →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

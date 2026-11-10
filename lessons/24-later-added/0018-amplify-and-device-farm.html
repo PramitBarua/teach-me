@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>18 – Amplify and Device Farm</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 18
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Amplify and AWS Device Farm</h1>
+    <p class="lesson-meta">Lesson 18 of 23 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/amplify/latest/userguide/welcome.html" target="_blank">What is AWS Amplify Hosting?</a> · <a href="https://docs.aws.amazon.com/devicefarm/latest/developerguide/welcome.html" target="_blank">What is AWS Device Farm?</a></p>
+  </div>
+
+  <p>The exam's "front-end web and mobile" category has two services. Both are aimed at application developers rather than infrastructure teams. You only need to recognize what each one does.</p>
+
+  <h2>AWS Amplify: Full-Stack Web Apps, Git-Driven</h2>
+  <dl>
+    <dt>Amplify Hosting</dt>
+    <dd>Connect a Git repository (GitHub, GitLab, Bitbucket, CodeCommit). Every push triggers a <strong>managed CI/CD</strong> build and deploys to a global <strong>CDN</strong>. It hosts static sites, single-page apps (React, Vue, Angular) and <strong>server-side rendered</strong> apps (Next.js, Nuxt).</dd>
+    <dt>Branch and preview environments</dt>
+    <dd>Each Git branch can become its own environment (dev, staging, prod). Pull requests can get temporary <strong>preview URLs</strong>.</dd>
+    <dt>Backends</dt>
+    <dd>Amplify (Gen 2) defines backend features in code, such as authentication with Cognito, data APIs with AppSync and DynamoDB, and storage with S3, and provisions them for you.</dd>
+  </dl>
+  <p>You'd get similar results from S3, CloudFront and CodePipeline, but you'd have to wire them up yourself. Amplify packages it all.</p>
+
+  <h2>AWS Device Farm: Test on Real Devices</h2>
+  <p>Device Farm is an app <strong>testing</strong> service. You run your <strong>Android, iOS and web apps</strong> on <strong>real phones and tablets</strong> (and desktop browsers) hosted by AWS, so you don't buy a device lab. You can:</p>
+  <ul>
+    <li>run <strong>automated tests</strong> (Appium, Espresso, XCTest and others) <strong>in parallel</strong> across many devices, with logs, video and screenshots;</li>
+    <li>start a <strong>remote access</strong> session to tap and swipe a real device from your browser and reproduce a bug.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Keywords</div>
+    "Front-end developers want to deploy a React or Next.js app from Git with <strong>CI/CD, hosting and a CDN, without managing infrastructure</strong>": <strong>Amplify Hosting</strong>. "Test a mobile app on <strong>many real devices</strong> without buying them": <strong>Device Farm</strong>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A front-end team has a Next.js app in GitHub. Each push to <code>main</code> should build and deploy it to a global CDN, and each pull request should get a temporary preview URL, with minimal infrastructure work. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This can be made to work, but the team would build and maintain the pipeline, SSR hosting and PR previews themselves."> S3 and CloudFront with a hand-built CodePipeline</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Amplify Hosting connects to Git, runs managed CI/CD, hosts SSR apps on a CDN, and creates PR preview environments."> AWS Amplify Hosting connected to the GitHub repo</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Beanstalk deploys to EC2 behind a load balancer. It doesn't give a CDN-hosted front end with PR previews."> Elastic Beanstalk with a Node.js platform environment</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Device Farm tests apps on real devices. It doesn't build or host them."> AWS Device Farm with a web app testing project set up</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A mobile team must run its automated Appium test suite in parallel on 40 different real Android and iOS phones before each release, without buying the devices. What should they use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Emulators on EC2 aren't real devices, and the team would manage the whole test infrastructure."> Android emulators run on EC2 Spot Instances</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Amplify builds and hosts apps. It doesn't run tests on a fleet of real phones."> AWS Amplify Hosting preview environments</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Device Farm runs Appium and other frameworks in parallel on real hosted phones and tablets, with logs and video."> AWS Device Farm with automated Appium tests</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudWatch Synthetics canaries check web endpoints. They don't run mobile apps on real devices."> CloudWatch Synthetics canaries per device</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0017-neptune-documentdb-keyspaces.html">← Previous: Neptune, DocumentDB, Keyspaces</a>
+      <a href="0019-observability-xray-prometheus-grafana.html">Next: X-Ray, Prometheus, Grafana →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

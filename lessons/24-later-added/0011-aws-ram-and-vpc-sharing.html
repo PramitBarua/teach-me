@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 – AWS RAM and VPC Sharing</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 11
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Resource Access Manager and VPC Sharing</h1>
+    <p class="lesson-meta">Lesson 11 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/ram/latest/userguide/what-is.html" target="_blank">What is AWS RAM?</a> · <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html" target="_blank">Share your VPC with other accounts</a></p>
+  </div>
+
+  <p>Multi-account setups solve isolation, billing and blast-radius problems, but they raise a new question: what if <em>several accounts need the same resource</em>? Duplicating a Transit Gateway, a set of subnets or a Route 53 Resolver rule in every account is wasteful and hard to keep consistent. <strong>AWS Resource Access Manager (RAM)</strong> lets one account <strong>share</strong> a resource with others instead.</p>
+
+  <h2>How RAM Works</h2>
+  <dl>
+    <dt>Resource share</dt>
+    <dd>The owner creates a resource share that lists the resources, the <strong>principals</strong> to share with, and the <strong>managed permissions</strong> that define what those principals can do.</dd>
+    <dt>Principals</dt>
+    <dd>Specific AWS accounts, <strong>organizational units</strong>, the <strong>entire Organization</strong>, or certain IAM roles and users. Once sharing with AWS Organizations is enabled, shares within the Organization need no invitation and take effect immediately.</dd>
+    <dt>Consumers</dt>
+    <dd>Shared resources appear in the consumer's account as if they were native. The owner still owns, manages and pays for the resource.</dd>
+    <dt>Cost</dt>
+    <dd>RAM itself is free.</dd>
+  </dl>
+  <p>Commonly shared resources include <strong>VPC subnets</strong>, <strong>Transit Gateways</strong>, Route 53 Resolver rules, License Manager configurations, prefix lists and more.</p>
+
+  <h2>VPC Sharing: The Exam Favourite</h2>
+  <p>With VPC sharing, a central <strong>owner</strong> account (often a networking account) creates the VPC and shares <strong>subnets</strong> with <strong>participant</strong> accounts in the same Organization.</p>
+  <ul>
+    <li>Participants launch <strong>their own</strong> resources (EC2, RDS, Lambda in a VPC, load balancers) directly into the shared subnets.</li>
+    <li>Participants <strong>can't view, change or delete</strong> resources that belong to other participants or to the owner.</li>
+    <li>The owner keeps control of the network: route tables, NACLs, gateways. Participants control their own resources and security groups.</li>
+    <li>Everything sits in one VPC, so there's <strong>no peering</strong> to set up and no duplicated NAT gateways. That means fewer VPCs and fewer IP-range conflicts.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Spotting RAM</div>
+    "Multiple accounts in an Organization must deploy into a <strong>centrally managed network</strong>, with the network team owning routing and each team owning its own instances": the answer is <strong>VPC sharing through AWS RAM</strong>. "Share one Transit Gateway with every account": also RAM. The usual distractors are VPC peering for each account (more VPCs and more connections) or giving teams IAM access to the networking account (they'd be able to touch each other's resources).
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A networking team manages one VPC. Ten application accounts in the same Organization must launch their EC2 and RDS resources into it. The network team must keep control of routing, and teams must not affect each other's resources. What should be used?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="That means ten extra VPCs and ten peering links. It doesn't put the teams' resources into the central VPC."> A separate VPC per account peered to the network VPC</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Giving teams access to the networking account lets them see and change each other's resources. Isolation fails."> Cross-account IAM roles into the networking account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. The owner shares subnets through RAM. Participants launch their own resources there but can't see or modify others' resources, and the owner keeps control of routing."> Share the VPC's subnets with the accounts using AWS RAM</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SCPs limit what accounts may do. They can't let one account launch resources into another account's subnets."> An SCP allowing the accounts to use the network VPC</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. In a shared VPC, account B (a participant) launches an EC2 instance into a shared subnet. What can account C, another participant, do with that instance?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Participants can't view or manage each other's resources. Sharing a subnet doesn't share what's inside it."> Stop and modify it, since it's in the same subnet</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Participants can't view, modify or delete resources that belong to other participants, even in the same shared subnet."> Nothing; it can't view or modify the instance</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="There's no such read-only visibility. Other participants' resources aren't visible at all."> View it read-only but not stop or modify it</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Even the VPC owner can't manage participants' resources. Account C certainly can't take ownership of one."> Take ownership of it through a RAM transfer</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company has one Transit Gateway in a networking account. Every new account created in the Organization must be able to attach its VPCs to it, without anyone accepting invitations manually. What's the best approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="That means many gateways to peer and manage. It's the duplication RAM exists to avoid."> Create a separate Transit Gateway in every account</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Sharing account by account works, but each new account has to be added and invitations accepted. That isn't automatic."> Share the Transit Gateway with each account ID individually</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="VPC peering is a different connectivity model. It doesn't give accounts access to the Transit Gateway."> Peer each new VPC directly to the networking account VPC</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Sharing with the Organization (with RAM's Organizations sharing enabled) covers every current and future account, with no invitations."> Share the Transit Gateway with the whole Organization</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0010-fsx-ontap-and-openzfs.html">← Previous: FSx for ONTAP and OpenZFS</a>
+      <a href="0012-service-catalog-proton-and-sar.html">Next: Service Catalog, Proton and SAR →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

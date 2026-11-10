@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>22 – Governance and Operations Round-up</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 22
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Governance and Operations Round-up</h1>
+    <p class="lesson-meta">Lesson 22 of 23 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/health/latest/ug/what-is-aws-health.html" target="_blank">AWS Health</a> · <a href="https://docs.aws.amazon.com/license-manager/latest/userguide/license-manager.html" target="_blank">License Manager</a> · <a href="https://docs.aws.amazon.com/artifact/latest/ug/what-is-aws-artifact.html" target="_blank">AWS Artifact</a> · <a href="https://aws.amazon.com/well-architected-tool/" target="_blank">Well-Architected Tool</a> · <a href="https://docs.aws.amazon.com/wellarchitected/latest/framework/the-pillars-of-the-framework.html" target="_blank">The six pillars</a> · <a href="https://docs.aws.amazon.com/autoscaling/plans/userguide/what-is-a-scaling-plan.html" target="_blank">AWS Auto Scaling plans</a></p>
+  </div>
+
+  <p>Five in-scope services that each fit in one paragraph. They rarely appear as the main topic of a question, but they often show up as the <strong>correct option</strong> for a narrowly worded requirement. Learn the one-line purpose and the trigger phrase for each.</p>
+
+  <h2>AWS Health Dashboard</h2>
+  <p>Shows <strong>account-specific</strong> AWS events: service issues affecting <em>your</em> resources, <strong>scheduled maintenance</strong> (for example, an EC2 instance retirement), and account notifications. The public service health page shows only general status. Health events can be sent to <strong>EventBridge</strong> (free) to automate responses. Organization-wide views and the AWS Health API need a Business-level Support plan or higher.</p>
+
+  <h2>AWS License Manager</h2>
+  <p>Manages <strong>software licenses</strong> (Microsoft, Oracle, SAP and others) for BYOL. You define <strong>license configurations</strong> with counting rules (vCPUs, cores, sockets or instances) and attach them to AMIs or launch templates. <strong>Hard limits</strong> block launches that would exceed your entitlement. Soft limits just alert. It works across accounts with Organizations and helps manage <strong>Dedicated Hosts</strong> for licenses tied to physical cores.</p>
+
+  <h2>AWS Artifact</h2>
+  <p>A self-service portal for AWS's own <strong>compliance reports</strong> (SOC 1/2/3, PCI DSS, ISO certifications and more) and for reviewing and accepting <strong>agreements</strong> such as the <strong>Business Associate Addendum (BAA)</strong> for HIPAA. Auditors ask "prove AWS is compliant"; Artifact is where you download the evidence. It's free.</p>
+
+  <h2>AWS Well-Architected Tool</h2>
+  <p>A console tool that reviews a <strong>workload</strong> against the Well-Architected Framework's <strong>six pillars</strong>: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization and Sustainability. You answer questions, it flags <strong>high-risk issues (HRIs)</strong> and produces an <strong>improvement plan</strong>. You save <strong>milestones</strong> to track progress, and you can apply <strong>lenses</strong> (for example Serverless, or your own custom lens).</p>
+
+  <h2>AWS Auto Scaling (Scaling Plans)</h2>
+  <p>"AWS Auto Scaling" is a separate service from EC2 Auto Scaling. It creates <strong>scaling plans</strong> that configure scaling for <strong>several resource types together</strong>: EC2 Auto Scaling groups, ECS services, DynamoDB tables and indexes, Aurora replicas and Spot Fleets. You pick a strategy that optimizes for availability, cost or a balance. It can use dynamic and predictive scaling. AWS now recommends configuring <strong>predictive scaling policies directly on Auto Scaling groups</strong> for EC2, but the scaling-plans service remains in scope.</p>
+
+  <table>
+    <thead><tr><th>Trigger phrase</th><th>Service</th></tr></thead>
+    <tbody>
+      <tr><td>"Notify us automatically about scheduled maintenance affecting our instances"</td><td>Health Dashboard + EventBridge</td></tr>
+      <tr><td>"Prevent launching more Oracle licenses than we own"</td><td>License Manager</td></tr>
+      <tr><td>"Auditor needs AWS's SOC 2 or PCI report", "sign a BAA"</td><td>Artifact</td></tr>
+      <tr><td>"Review a workload against AWS best practices and track improvements"</td><td>Well-Architected Tool</td></tr>
+      <tr><td>"One plan to scale an ASG, its DynamoDB table and Aurora replicas"</td><td>AWS Auto Scaling plans</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Common traps</div>
+    Artifact holds <strong>AWS's</strong> compliance evidence, not yours. Your own resource compliance is AWS Config or Security Hub. The Health Dashboard is about <strong>AWS events affecting you</strong>, not your application's health metrics, which belong to CloudWatch.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An external auditor asks for AWS's latest SOC 2 report to confirm that the underlying cloud infrastructure meets the standard. Where does the company get it?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Config evaluates your own resources' compliance. It doesn't hold AWS's third-party audit reports."> AWS Config conformance pack reports for the account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Security Hub checks your own posture against standards. It doesn't supply AWS's SOC reports."> Security Hub's compliance summary for its standards</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. AWS Artifact is the self-service portal for AWS's own compliance reports, such as SOC and PCI, and for agreements like the BAA."> AWS Artifact, downloading the SOC 2 report directly</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Artifact makes this a self-service download. A Support case is unnecessary."> A Support case requesting the report from AWS staff</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company owns 64 core licenses for a commercial database. It must make it <em>impossible</em> for teams to launch EC2 instances that would push usage past 64 cores. What should be used?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An alarm only tells you after the fact. It doesn't stop a non-compliant launch."> A CloudWatch alarm on the total vCPU count in use</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A License Manager configuration that counts cores, with a hard limit, blocks launches that would exceed 64 cores."> A License Manager configuration with a hard limit</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A budget tracks money, not licenses or cores, and an alert alone doesn't block launches."> An AWS Budgets usage budget on database instance hours</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An SCP can restrict instance types, but it can't count cores in use against an entitlement."> An SCP that restricts which instance types can launch</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Operations wants an automatic ticket whenever AWS schedules maintenance (such as an instance retirement) that affects one of the company's own EC2 instances. What's the best approach?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. AWS Health publishes account-specific events, including scheduled maintenance, to EventBridge, which can create the ticket automatically."> An EventBridge rule on AWS Health events for EC2</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Someone would have to read the public status page every day, and it doesn't show events specific to your account."> A daily manual check of the public AWS status page</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Status checks detect failures that have already happened. They don't show maintenance that AWS has scheduled ahead of time."> A CloudWatch alarm on each instance's status checks</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudTrail records API calls made in the account. Scheduled AWS maintenance isn't one of them."> A CloudTrail trail filtered for EC2 retirement API calls</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">4. A team wants to review its production workload against AWS best practices across all six pillars, get a prioritized list of high-risk issues, and track progress at each quarterly review. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q4" data-correct="false" data-explanation="Trusted Advisor runs automated checks, but it doesn't run a pillar-by-pillar workload review with improvement plans and milestones."> AWS Trusted Advisor checks reviewed every quarter</label></li>
+        <li><label><input type="radio" name="q4" data-correct="false" data-explanation="Security Hub covers security posture only. It doesn't cover all six Well-Architected pillars."> Security Hub with the Foundational standard enabled</label></li>
+        <li><label><input type="radio" name="q4" data-correct="false" data-explanation="Compute Optimizer only rightsizes compute. It's nowhere near a full best-practices review."> Compute Optimizer recommendations for the workload</label></li>
+        <li><label><input type="radio" name="q4" data-correct="true" data-explanation="Correct. The Well-Architected Tool reviews a workload across the six pillars, flags high-risk issues with an improvement plan, and saves milestones to track progress."> The Well-Architected Tool with saved milestones</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0021-migration-mgn-and-discovery.html">← Previous: Migration: MGN and Discovery</a>
+      <a href="0023-data-exchange-and-data-pipeline.html">Next: Data Exchange and Data Pipeline →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

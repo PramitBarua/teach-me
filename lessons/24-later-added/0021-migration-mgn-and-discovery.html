@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>21 – Migration: MGN and Discovery</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 21
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Application Migration Service and Application Discovery Service</h1>
+    <p class="lesson-meta">Lesson 21 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html" target="_blank">What is AWS Application Migration Service?</a> · <a href="https://docs.aws.amazon.com/application-discovery/latest/userguide/application-discovery-service-availability-change.html" target="_blank">Application Discovery Service availability change</a></p>
+  </div>
+
+  <p>The hybrid module covered moving <em>data</em>: DataSync, Snowball, Storage Gateway and Transfer Family. Moving whole <em>servers</em> needs different tools. A large migration usually goes <strong>discover</strong> (what do we have, and what talks to what?), then <strong>plan</strong>, then <strong>migrate</strong>. The exam names a service for the first and last of those steps.</p>
+
+  <h2>AWS Application Migration Service (MGN): Lift and Shift</h2>
+  <p>MGN is AWS's primary service for <strong>rehosting</strong> ("lift and shift") physical, virtual or other-cloud servers to <strong>EC2</strong>, without changing the applications. The documentation now brands it as part of the <em>AWS Transform</em> family, and you'll see it as "MGN" either way.</p>
+  <ol>
+    <li><strong>Install the replication agent</strong> on each source server.</li>
+    <li>MGN performs <strong>continuous, block-level replication</strong> of the disks into a low-cost <strong>staging area subnet</strong> in your AWS account. The source keeps running normally.</li>
+    <li>Launch <strong>test instances</strong> from the replicated data to validate, as often as you like, with no impact on the source.</li>
+    <li>At <strong>cutover</strong>, launch the production instances. Because replication is continuous, the cutover window is <strong>minutes</strong>. Servers can be grouped into <strong>waves</strong> for large migrations.</li>
+  </ol>
+
+  <h2>AWS Application Discovery Service: Inventory and Dependencies</h2>
+  <p>Discovery Service collected data about on-premises servers before a migration: configuration, utilization (for rightsizing) and <strong>network dependencies</strong> between servers. It used either an <strong>agentless collector</strong> (for VMware VMs) or an <strong>agent</strong> on each server (for deeper process and network data).</p>
+  <div class="callout warn">
+    <div class="callout-title">Closed to new customers</div>
+    As of <strong>7 November 2025</strong>, Application Discovery Service is <strong>no longer open to new customers</strong>. Existing customers can continue to use it, and AWS directs new discovery work to <strong>AWS Transform</strong>. It's still named in the exam guide, so know its purpose: <em>discover servers and their dependencies to plan a migration</em>.
+  </div>
+
+  <table>
+    <thead><tr><th>Need</th><th>Service</th></tr></thead>
+    <tbody>
+      <tr><td>Inventory on-premises servers and map dependencies</td><td>Application Discovery Service (or AWS Transform)</td></tr>
+      <tr><td>Rehost servers to EC2 with minimal downtime</td><td><strong>Application Migration Service (MGN)</strong></td></tr>
+      <tr><td>Migrate a database engine, or between engines</td><td>Database Migration Service (DMS)</td></tr>
+      <tr><td>Move files and objects</td><td>DataSync, Snow Family, Transfer Family</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Keywords</div>
+    "<strong>Lift and shift</strong>", "rehost", "migrate servers with <strong>minimal downtime</strong> and no application changes", "continuous replication then cutover": <strong>MGN</strong>. "Identify <strong>dependencies</strong> and utilization of on-premises servers before migrating": <strong>Application Discovery Service</strong>. If the question is about a <em>database</em> engine, the answer is DMS, not MGN.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company must move 200 on-premises Windows and Linux application servers to EC2 with no application changes. Each server's downtime must be minutes, not hours. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Exporting and importing VM images is a one-off copy. Downtime covers the whole export and upload, often hours."> VM Import/Export of a snapshot taken from each server</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="DMS migrates databases, not entire servers with their operating systems and applications."> AWS Database Migration Service, one task per server</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Rebuilding every server is re-platforming work, which goes against the no-changes, lift-and-shift requirement."> Rebuild each server on EC2 and copy data via DataSync</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. MGN continuously replicates at block level, supports non-disruptive test launches, and cuts over in minutes with no application changes."> AWS Application Migration Service with agent replication</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. During an MGN migration, where does the replicated server data land before cutover?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. MGN replicates into lightweight replication servers and volumes in a staging area subnet, and launches test or cutover instances from there."> A staging area subnet in the target AWS account</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="MGN replicates block data into EBS-backed staging resources, not files into S3."> An S3 bucket holding a nightly copy of each disk</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Storage Gateway is a separate hybrid storage service. MGN doesn't use it."> A Storage Gateway volume in the source data center</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The production instances are created only at cutover. Before that, data sits in the staging area."> The production EC2 instances, created on day one</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Before planning migration waves, an architect needs to know which on-premises servers talk to each other and how heavily each is used. Which purpose is the exam's Application Discovery Service associated with?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Replicating and cutting over servers is MGN's job, not Discovery Service's."> Replicating server disks into AWS for the cutover</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Moving files is DataSync or the Snow Family. Discovery Service only inventories servers."> Copying the servers' files into S3 before cutover</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Discovery Service gathers server configuration, utilization and network dependencies to plan the migration. It's closed to new customers since November 2025, with AWS Transform as the successor."> Mapping server dependencies and utilization data</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Database schema conversion belongs to DMS Schema Conversion, not Discovery Service."> Converting database schemas to the target engine</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0020-aws-client-vpn.html">← Previous: AWS Client VPN</a>
+      <a href="0022-governance-and-operations-roundup.html">Next: Governance and Operations Round-up →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

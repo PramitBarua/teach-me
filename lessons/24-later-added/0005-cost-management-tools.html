@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 – Cost Management Tools</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 5
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Cost Explorer, Budgets, CUR and Compute Optimizer</h1>
+    <p class="lesson-meta">Lesson 5 of 23 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html" target="_blank">Cost Explorer</a> · <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" target="_blank">AWS Budgets</a> · <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-controls.html" target="_blank">Budget actions</a> · <a href="https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html" target="_blank">Cost and Usage Reports</a> · <a href="https://docs.aws.amazon.com/compute-optimizer/latest/ug/what-is-compute-optimizer.html" target="_blank">Compute Optimizer</a></p>
+  </div>
+
+  <p>Domain 4 of the exam, <em>Design Cost-Optimized Architectures</em>, expects you to choose the right <strong>cost management tool</strong> for a scenario. The four tools below overlap just enough to confuse. The way to keep them apart is the verb each one owns: <strong>explore</strong>, <strong>alert or act</strong>, <strong>export</strong>, <strong>rightsize</strong>.</p>
+
+  <table>
+    <thead><tr><th>Tool</th><th>Owns the verb</th><th>Key facts</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Cost Explorer</strong></td><td>Explore and visualize</td><td>Interactive graphs of cost and usage: <strong>13 months</strong> of history and an <strong>18-month forecast</strong>, refreshed at least every 24 hours. Filter and group by service, account, tag and more. Also gives Reserved Instance and Savings Plans recommendations. Free in the console; the API is charged per request.</td></tr>
+      <tr><td><strong>AWS Budgets</strong></td><td>Alert and act</td><td>Set a threshold, then get alerted on <strong>actual or forecasted</strong> spend by email or SNS. Budget types: cost, usage, RI utilization and coverage, Savings Plans utilization and coverage. Data updates up to three times a day.</td></tr>
+      <tr><td><strong>Cost and Usage Reports (CUR)</strong></td><td>Export raw detail</td><td>The <strong>most granular</strong> billing data: line items with resource IDs and tags, delivered to an <strong>S3 bucket</strong> at hourly, daily or monthly granularity. Query it with <strong>Athena</strong>, or load it into Redshift or Quick. The newer Data Exports feature delivers the same kind of data.</td></tr>
+      <tr><td><strong>Compute Optimizer</strong></td><td>Rightsize</td><td>An opt-in service that uses CloudWatch metrics (the last <strong>14 days</strong> by default, up to 93 days with paid enhanced metrics) and machine learning to recommend better-sized or idle-resource changes for EC2, Auto Scaling groups, EBS, Lambda, ECS on Fargate, RDS and more.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Budget Actions: Budgets That Do Something</h2>
+  <p>A budget can do more than send an email. A <strong>budget action</strong> runs when a threshold is crossed, either automatically or after manual approval. It can:</p>
+  <ul>
+    <li><strong>apply an IAM policy</strong> to a user, group or role, for example to deny launching new instances;</li>
+    <li><strong>apply a service control policy</strong> to an account or OU (from the management account);</li>
+    <li><strong>stop specific EC2 or RDS instances</strong> in the same account.</li>
+  </ul>
+
+  <h2>Supporting Features Worth Recognizing</h2>
+  <dl>
+    <dt>Cost allocation tags</dt>
+    <dd>Activate a tag (for example <code>CostCenter</code>) in the Billing console so you can group costs by it in Cost Explorer and the CUR.</dd>
+    <dt>Cost Anomaly Detection</dt>
+    <dd>Machine-learning monitors that alert on <em>unusual</em> spend. Unlike a budget, you don't set a fixed threshold.</dd>
+    <dt>Consolidated billing</dt>
+    <dd>In AWS Organizations, one bill for all member accounts. Usage is combined for volume discounts, and RI and Savings Plans discounts are shared.</dd>
+  </dl>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Map the requirement to the tool</div>
+    "Visualize spend trends" or "forecast next quarter": <strong>Cost Explorer</strong>. "Notify when spend <em>will</em> exceed $X" or "automatically block launches past a limit": <strong>Budgets</strong> (with actions). "Most detailed, hourly, per-resource data for custom analysis": <strong>CUR to S3, queried with Athena</strong>. "Instances are over-provisioned. Which size should they be?": <strong>Compute Optimizer</strong>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Finance wants an email and an SNS notification as soon as this month's spend is <em>forecasted</em> to go above $20,000, before the money is actually spent. What should be configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="The forecast in Cost Explorer is a graph someone has to open and read. It doesn't send threshold alerts."> A Cost Explorer forecast checked manually each week</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Anomaly Detection alerts on unusual patterns, not a fixed $20,000 forecast threshold."> A Cost Anomaly Detection monitor for the account</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. AWS Budgets supports alerts on forecasted spend, delivered by email and SNS."> An AWS Budgets cost budget with a forecasted alert</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This alerts only on spend that has already happened. It also needs a custom pipeline when Budgets does it natively."> A CloudWatch alarm on actual billing in a custom metric</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A FinOps team needs the most detailed billing data available, at hourly granularity with resource IDs and tags, to run custom SQL queries. What's the right source?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The CUR is the most granular billing data. It lands in S3 with line items, resource IDs and tags, ready for Athena."> Cost and Usage Reports delivered to S3, queried in Athena</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Cost Explorer works at a summarized level for interactive exploration. It isn't the raw, line-item dataset for custom SQL."> Cost Explorer filtered by service and grouped by tag</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Budgets reports summarize spend against budgets. They don't contain hourly, per-resource line items."> AWS Budgets reports emailed to the team every day</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Compute Optimizer gives rightsizing recommendations from utilization. It doesn't provide billing line items."> Compute Optimizer recommendations exported to S3</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Many EC2 instances look over-provisioned. The team wants data-driven recommendations for which instance types and sizes to switch to, based on actual utilization. Which service fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="These recommendations are about purchase commitments. They don't tell you how to size each instance."> Cost Explorer Savings Plans purchase recommendations</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A usage budget warns when usage crosses a threshold. It doesn't recommend instance types or sizes."> An AWS Budgets usage budget on EC2 running hours</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="The CUR has the raw usage data, but you'd have to build the analysis yourself. A managed recommender already does this."> A CUR query that ranks instances by monthly cost</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Compute Optimizer analyzes CloudWatch utilization metrics and recommends better-sized instance types, or flags idle resources."> AWS Compute Optimizer rightsizing recommendations</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">4. In a sandbox account, when spend reaches 100% of its budget, new EC2 launches must be blocked automatically with no human involved. What achieves this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q4" data-correct="false" data-explanation="An email relies on a person reacting. The requirement is automatic enforcement."> A budget alert that emails the account owner at 100%</label></li>
+        <li><label><input type="radio" name="q4" data-correct="true" data-explanation="Correct. A budget action can automatically apply an IAM policy or SCP that denies EC2 launches once the threshold is crossed."> A budget action applying a deny policy automatically</label></li>
+        <li><label><input type="radio" name="q4" data-correct="false" data-explanation="Cost Explorer only visualizes and forecasts. It can't take any action."> A Cost Explorer report that is scheduled to run hourly</label></li>
+        <li><label><input type="radio" name="q4" data-correct="false" data-explanation="Compute Optimizer gives sizing recommendations. It doesn't enforce spend limits."> A Compute Optimizer opt-in for the sandbox account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0004-amazon-quick-sight.html">← Previous: Amazon Quick (QuickSight)</a>
+      <a href="0006-aws-elastic-beanstalk.html">Next: AWS Elastic Beanstalk →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

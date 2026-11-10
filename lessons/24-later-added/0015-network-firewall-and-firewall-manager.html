@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15 – Network Firewall and Firewall Manager</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 15
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Network Firewall and AWS Firewall Manager</h1>
+    <p class="lesson-meta">Lesson 15 of 23 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/network-firewall/latest/developerguide/what-is-aws-network-firewall.html" target="_blank">What is AWS Network Firewall?</a> · <a href="https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html" target="_blank">AWS Firewall Manager</a></p>
+  </div>
+
+  <p>You already have four layers of network protection: security groups (stateful, per ENI), NACLs (stateless, per subnet), <a href="../19-security-deployment-and-operations/0003-web-application-firewall-waf.html">WAF</a> (HTTP layer 7, on ALB, CloudFront or API Gateway) and <a href="../19-security-deployment-and-operations/0004-aws-shield.html">Shield</a> (DDoS). Something is still missing: <em>a real firewall for a whole VPC's traffic</em>, one that inspects every protocol and filters by domain name. That's <strong>Network Firewall</strong>. And once you have dozens of accounts, you need <em>one place to roll all of these out</em>. That's <strong>Firewall Manager</strong>.</p>
+
+  <h2>AWS Network Firewall</h2>
+  <dl>
+    <dt>What it is</dt>
+    <dd>A managed, highly available, <strong>stateful</strong> network firewall and <strong>intrusion detection and prevention (IDS/IPS)</strong> service for your VPCs. It scales automatically with traffic.</dd>
+    <dt>How traffic reaches it</dt>
+    <dd>You deploy <strong>firewall endpoints</strong> into dedicated <strong>firewall subnets</strong>, one per AZ, then change <strong>route tables</strong> so traffic passes through the endpoint. It can sit in front of internet gateway, NAT gateway, Transit Gateway, VPN and Direct Connect traffic.</dd>
+    <dt>What it can filter</dt>
+    <dd>Stateless and stateful rules: 5-tuple rules, <strong>domain lists</strong> (allow or deny <code>*.example.com</code>, including by TLS SNI), and Suricata-compatible IPS signatures that inspect packet contents.</dd>
+    <dt>Central inspection pattern</dt>
+    <dd>Put Network Firewall in an <strong>inspection VPC</strong> attached to a Transit Gateway, so all east-west and egress traffic from many VPCs is inspected in one place.</dd>
+  </dl>
+
+  <h2>AWS Firewall Manager</h2>
+  <p>Firewall Manager is a <strong>central policy service</strong> for AWS Organizations. You define a policy once, and it is applied to every in-scope account and resource. Accounts and resources added later are covered <strong>automatically</strong>. It manages:</p>
+  <ul>
+    <li><strong>AWS WAF</strong> rules on ALBs, API Gateway and CloudFront</li>
+    <li><strong>Shield Advanced</strong> protections</li>
+    <li><strong>Security groups</strong>, including audits for overly permissive rules, and <strong>NACLs</strong></li>
+    <li><strong>Network Firewall</strong> deployments</li>
+    <li><strong>Route 53 Resolver DNS Firewall</strong> rules</li>
+  </ul>
+  <p>Prerequisites: the account must be in <strong>AWS Organizations</strong>, a Firewall Manager administrator account must be designated, and <strong>AWS Config</strong> must be enabled.</p>
+
+  <table>
+    <thead><tr><th>Need</th><th>Service</th></tr></thead>
+    <tbody>
+      <tr><td>Block SQL injection or XSS on an ALB</td><td>WAF</td></tr>
+      <tr><td>Filter all VPC egress by domain, or deep packet inspection and IPS</td><td><strong>Network Firewall</strong></td></tr>
+      <tr><td>Apply WAF, security group or firewall rules across every account automatically</td><td><strong>Firewall Manager</strong></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Keywords</div>
+    "Inspect all traffic leaving the VPC", "<strong>allow-list outbound domains</strong>", "intrusion prevention", "stateful inspection between VPCs through a Transit Gateway": <strong>Network Firewall</strong>. "<strong>Centrally</strong> enforce WAF and security group rules in <strong>all accounts</strong>, including <strong>new</strong> ones": <strong>Firewall Manager</strong>. Firewall Manager doesn't inspect traffic itself. It deploys and audits the services that do.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. EC2 instances in private subnets reach the internet through a NAT gateway. Security requires that outbound HTTPS be allowed only to an approved list of domain names, and that all other egress be blocked. What should be added?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Security groups filter by IP, port and protocol. They can't allow traffic by domain name."> Security group outbound rules listing the approved domains</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="WAF protects inbound HTTP to ALB, CloudFront or API Gateway. It doesn't filter instances' outbound traffic."> An AWS WAF web ACL attached to the NAT gateway for egress</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="NACLs are stateless IP and port rules. They have no idea what domain a connection is going to."> A network ACL on the private subnets that blocks unknown IPs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Network Firewall's stateful domain-list rules can allow approved domains and drop everything else, with routing sending egress traffic through the firewall endpoints."> AWS Network Firewall with a stateful domain allow list</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A company with 120 accounts in AWS Organizations must make sure every internet-facing ALB, including those in accounts created next year, has the same AWS WAF rules applied automatically. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Firewall Manager WAF policies apply across the Organization, and new accounts and ALBs are covered automatically."> A Firewall Manager WAF policy scoped to the Organization</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This works once, but someone must keep deploying to every new account and ALB. It isn't automatic."> A CloudFormation stack deployed into each account by hand</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SCPs limit permissions. They can't attach WAF web ACLs to load balancers."> An SCP that requires every ALB to have a web ACL attached</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Shield Advanced is DDoS protection. It doesn't deploy WAF rule sets across accounts by itself."> Shield Advanced subscriptions enabled in each account</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. After creating a Network Firewall in a VPC, the team finds that no traffic is being inspected. What did they most likely forget?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Firewall Manager is optional, for central management. A standalone Network Firewall works without it."> To enable Firewall Manager for the account's Organization</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Network Firewall only inspects traffic routed to its endpoints. Route tables must send traffic through the firewall subnets."> To update route tables to send traffic to the endpoints</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Network Firewall doesn't attach to ENIs the way security groups do. Routing is how traffic reaches it."> To attach the firewall policy to every instance's ENI</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Flow Logs record traffic metadata. They don't send traffic through the firewall."> To turn on VPC Flow Logs for the firewall subnets</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0014-security-hub-and-detective.html">← Previous: Security Hub and Detective</a>
+      <a href="0016-aws-on-premises-outposts-and-anywhere.html">Next: AWS On-Premises →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 – AWS Batch</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 7
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Batch</h1>
+    <p class="lesson-meta">Lesson 7 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/batch/latest/userguide/what-is-batch.html" target="_blank">What is AWS Batch?</a> · <a href="https://docs.aws.amazon.com/batch/latest/userguide/batch_components.html" target="_blank">Components of AWS Batch</a></p>
+  </div>
+
+  <p>Some workloads aren't requests, they're <strong>jobs</strong>: render 10,000 video frames, run a genomics pipeline, reprocess last year's financial data. Each job runs for minutes or hours, starts, finishes and exits. Lambda's 15-minute limit rules it out, and building your own scheduler on EC2 is a lot of undifferentiated work. <strong>AWS Batch</strong> is a fully managed batch computing service. You submit containerized jobs, and Batch provisions the right amount of compute, queues the work, runs it and scales back down.</p>
+
+  <h2>Four Components</h2>
+  <dl>
+    <dt>Compute environment</dt>
+    <dd>The capacity that jobs run on: EC2 On-Demand, <strong>EC2 Spot</strong> or <strong>Fargate</strong>, orchestrated through ECS (or EKS). In a <strong>managed</strong> environment you set min, desired and max vCPUs, instance types, subnets and a Spot price threshold, and Batch scales the instances. In an <strong>unmanaged</strong> environment you run the instances yourself.</dd>
+    <dt>Job queue</dt>
+    <dd>Where submitted jobs wait. A queue has a <strong>priority</strong> and maps to one or more compute environments, for example a Spot environment first and On-Demand as a fallback.</dd>
+    <dt>Job definition</dt>
+    <dd>The blueprint for a job: container image, vCPU and memory, IAM role, environment variables, retry strategy.</dd>
+    <dt>Job</dt>
+    <dd>A unit of work submitted to a queue. Jobs can <strong>depend on other jobs</strong>, and can be array jobs that fan out into many parallel copies.</dd>
+  </dl>
+
+  <p>By default a queue schedules first in, first out. A <strong>fair-share scheduling</strong> policy can instead share capacity between users or workloads.</p>
+
+  <table>
+    <thead><tr><th>Need</th><th>Best fit</th></tr></thead>
+    <tbody>
+      <tr><td>Short, event-driven code (15 min or less)</td><td>Lambda</td></tr>
+      <tr><td>Long-running or heavy containerized jobs, queued at scale</td><td><strong>AWS Batch</strong></td></tr>
+      <tr><td>Hadoop or Spark big data frameworks</td><td>EMR (Lesson 2)</td></tr>
+      <tr><td>Orchestrating a workflow of many services</td><td>Step Functions (which can submit Batch jobs as a step)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Spotting Batch</div>
+    "<strong>Batch jobs</strong>", "jobs that run for hours", "hundreds of thousands of compute jobs", "scientific, financial or rendering workloads", or "the jobs can tolerate interruption, so minimize cost" all point to <strong>AWS Batch</strong> with a <strong>Spot</strong> managed compute environment. If a question insists on serverless batch with no instances at all, choose Batch on <strong>Fargate</strong>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A research lab submits thousands of containerized simulation jobs each night. Each runs for one to three hours and can be retried if interrupted. The lab wants the lowest cost and no scheduler to maintain. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Lambda can't run longer than 15 minutes, so a one- to three-hour job can't run there."> Lambda functions triggered by messages in an SQS queue</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This works, but the lab must build and maintain the scheduling and queueing, and On-Demand isn't the lowest cost."> A self-built scheduler on an On-Demand EC2 Auto Scaling group</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EMR is for Hadoop and Spark frameworks, not arbitrary containerized simulation jobs."> An EMR cluster running each simulation as a Spark step</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Batch queues and schedules the containers, and a managed Spot compute environment gives the lowest cost for jobs that can be retried."> AWS Batch with a managed Spot compute environment</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. In AWS Batch, which component specifies the container image, vCPU and memory, and IAM role that a job uses?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. The job definition is the blueprint: image, resources, role, environment variables and retry strategy."> The job definition</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The job queue holds submitted jobs and maps them by priority to compute environments. It doesn't describe the container."> The job queue</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The compute environment defines the instances or Fargate capacity jobs run on, not each job's image and role."> The compute environment</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A scheduling policy controls how capacity is shared, for example fair share. It doesn't define what a job runs."> The scheduling policy</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A Batch job queue should use cheap Spot capacity first, but jobs must still run if Spot capacity isn't available. How is this configured?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This removes the fallback entirely. If no Spot capacity is available, jobs just wait."> Map the queue to a single Spot compute environment</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A job definition describes what the job runs. It doesn't choose purchase options or define a fallback order."> Set a Spot price in every job definition the queue uses</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A job queue maps to compute environments in order. Put the Spot environment first and On-Demand second as the fallback."> Map the queue to a Spot then On-Demand environment</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Two queues need a separate resubmission process. A single queue with an ordered list of environments handles this natively."> Create two queues and resubmit failed jobs to the other</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0006-aws-elastic-beanstalk.html">← Previous: AWS Elastic Beanstalk</a>
+      <a href="0008-aws-lake-formation.html">Next: AWS Lake Formation →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

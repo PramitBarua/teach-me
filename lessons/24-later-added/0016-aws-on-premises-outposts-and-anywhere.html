@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16 – AWS On-Premises: Outposts and Anywhere</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 16
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Running AWS On-Premises: Outposts, ECS/EKS Anywhere, VMware Cloud on AWS</h1>
+    <p class="lesson-meta">Lesson 16 of 23 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/outposts/latest/userguide/what-is-outposts.html" target="_blank">What is AWS Outposts?</a> · <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-anywhere.html" target="_blank">ECS Anywhere</a> · <a href="https://docs.aws.amazon.com/eks/latest/userguide/eks-deployment-options.html" target="_blank">EKS deployment options</a> · <a href="https://channelfutures.com/channel-business/broadcom-ceo-vmware-cloud-on-aws-alive-available" target="_blank">VMware Cloud on AWS (Broadcom)</a></p>
+  </div>
+
+  <p>The <a href="../23-other-services-and-features/0001-aws-local-zones.html">Local Zones</a> lesson introduced AWS's edge family: Local Zones (a Region extended near a city) and Wavelength (inside telecom 5G networks). This lesson covers the rest of that family. These are the ways to run AWS infrastructure, or AWS-managed orchestration, <strong>in your own data center</strong>. You'd do that for <strong>low latency</strong> to on-premises systems, <strong>local data processing</strong>, or <strong>data residency</strong> rules.</p>
+
+  <h2>AWS Outposts: AWS Hardware in Your Building</h2>
+  <dl>
+    <dt>Form factors</dt>
+    <dd><strong>Outposts racks</strong> (full 42U racks) and <strong>Outposts servers</strong> (1U or 2U servers for space-limited sites). AWS delivers, installs, monitors, patches and maintains them.</dd>
+    <dt>How it connects</dt>
+    <dd>Each Outpost is anchored to an Availability Zone in a <strong>parent Region</strong> through a <strong>service link</strong>. It's an extension of that Region, and your VPC subnets can extend onto it. It needs reliable connectivity back to the Region for its control plane.</dd>
+    <dt>What runs on it</dt>
+    <dd>EC2, EBS, S3 on Outposts, ECS, EKS, RDS, EMR, ElastiCache and ALB. Support varies by form factor. You use the same APIs and console as in the Region.</dd>
+  </dl>
+
+  <h2>ECS Anywhere and the EKS Family: Your Hardware, AWS Orchestration</h2>
+  <table>
+    <thead><tr><th>Option</th><th>Control plane</th><th>Nodes</th><th>Key point</th></tr></thead>
+    <tbody>
+      <tr><td><strong>ECS Anywhere</strong></td><td>AWS (Region)</td><td>Your servers or VMs</td><td>Registers on-premises machines as the <code>EXTERNAL</code> launch type using the SSM Agent. No load balancer integration or <code>awsvpc</code> networking.</td></tr>
+      <tr><td><strong>EKS Hybrid Nodes</strong></td><td>AWS-managed (Region)</td><td>Your servers</td><td>Managed EKS control plane, with worker nodes on premises.</td></tr>
+      <tr><td><strong>EKS on Outposts</strong></td><td>AWS (Region or Outpost)</td><td>Outposts hardware</td><td>Kubernetes on AWS-owned on-premises racks.</td></tr>
+      <tr><td><strong>EKS Anywhere</strong></td><td><strong>You</strong>, on premises</td><td>Your servers</td><td>Customer-managed, and can run fully <strong>disconnected (air-gapped)</strong>.</td></tr>
+      <tr><td><strong>EKS Distro</strong></td><td>You</td><td>Anywhere</td><td>Just the Kubernetes distribution that EKS uses. Self-managed, with no AWS support.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>VMware Cloud on AWS</h2>
+  <p>VMware Cloud on AWS runs the VMware software-defined data center stack (vSphere, vSAN, NSX) on dedicated bare-metal AWS infrastructure. Companies with large VMware estates can migrate or extend into AWS, or use it for disaster recovery, <strong>without re-platforming VMs</strong>, while still reaching native AWS services. Since 2024 it has been sold by <strong>Broadcom</strong> (VMware's owner), not resold by AWS.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Pick the on-premises option</div>
+    "<strong>AWS-managed</strong> infrastructure on premises using the same APIs, for low latency or data residency": <strong>Outposts</strong>. "Run ECS tasks on <strong>existing</strong> on-premises servers, managed from the ECS console": <strong>ECS Anywhere</strong>. "Kubernetes on premises with <strong>no connection</strong> to AWS": <strong>EKS Anywhere</strong>. "Move hundreds of <strong>VMware</strong> VMs with no changes, keeping VMware tools": <strong>VMware Cloud on AWS</strong>. "Single-digit-ms latency for mobile users on 5G": <strong>Wavelength</strong>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A manufacturer must process factory-floor data on premises with very low latency, using the same EC2, EBS and RDS APIs and tools it uses in its AWS Region. It wants AWS to maintain the hardware. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Local Zone is AWS-owned and sits near a metro area, not inside the factory. Latency to the factory floor wouldn't match."> An AWS Local Zone in the nearest metropolitan area</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="ECS Anywhere uses the customer's own servers and only covers containers. It doesn't bring EBS or RDS."> ECS Anywhere installed on the factory's existing servers</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Outposts puts AWS-managed hardware on site, running EC2, EBS and RDS with the same APIs, connected to the parent Region."> An AWS Outposts rack installed in the factory</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Snowball Edge is portable edge compute for transfer or disconnected sites. It doesn't extend your Region's EC2, EBS and RDS APIs."> Snowball Edge devices shipped to the factory each month</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A defense contractor must run Kubernetes clusters in a facility with <strong>no network connection to AWS</strong> at all, using an AWS-supported Kubernetes distribution and tooling. Which option fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. EKS Anywhere runs a customer-managed control plane on premises and supports fully disconnected (air-gapped) environments."> EKS Anywhere</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Hybrid Nodes rely on the EKS control plane in an AWS Region, so they need connectivity to AWS."> EKS Hybrid Nodes</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Outposts need a service link to the parent Region and aren't designed to run disconnected."> EKS on Outposts</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="ECS Anywhere is ECS, not Kubernetes, and it's managed from an AWS Region, which needs connectivity."> ECS Anywhere</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company runs 600 VMs on vSphere and wants to move them into AWS quickly for a data center exit. They must keep their VMware tools and processes and must not convert any VMs. What fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="MGN rehosts servers as native EC2 instances. That's a conversion, and VMware tooling isn't kept."> AWS Application Migration Service rehosting them to EC2</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. VMware Cloud on AWS runs the vSphere, vSAN and NSX stack on AWS bare metal, so VMs move without conversion and VMware tools still work."> VMware Cloud on AWS running the existing vSphere stack</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Outposts brings AWS into your data center. It's the opposite direction from a data center exit."> AWS Outposts racks installed in the current data center</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Re-platforming 600 VMs into containers is slow and is exactly the conversion the company wants to avoid."> Containerize each VM's workload and run it on ECS</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0015-network-firewall-and-firewall-manager.html">← Previous: Network Firewall and Firewall Manager</a>
+      <a href="0017-neptune-documentdb-keyspaces.html">Next: Neptune, DocumentDB, Keyspaces →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 – AWS Elastic Beanstalk</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 6
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Elastic Beanstalk</h1>
+    <p class="lesson-meta">Lesson 6 of 23 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html" target="_blank">What is Elastic Beanstalk?</a> · <a href="https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/concepts.html" target="_blank">Elastic Beanstalk concepts</a> · <a href="https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deploy-existing-version.html" target="_blank">Deployment policies</a></p>
+  </div>
+
+  <p>You've built an EC2 web tier by hand: launch template, Auto Scaling group, ALB, health checks, CloudWatch alarms. <strong>Elastic Beanstalk</strong> builds all of that for you. You upload your <strong>application code</strong>, and Beanstalk provisions and manages the capacity, load balancing, scaling and health monitoring. Beanstalk itself costs nothing; you pay only for the resources it creates. You can still see and tune every one of those resources.</p>
+
+  <p>It supports common <strong>platforms</strong> out of the box, including Java, .NET, Node.js, PHP, Python, Ruby, Go and <strong>Docker</strong>.</p>
+
+  <h2>Vocabulary</h2>
+  <dl>
+    <dt>Application</dt>
+    <dd>The logical container, like a folder, for versions, environments and saved configurations.</dd>
+    <dt>Application version</dt>
+    <dd>A labeled iteration of deployable code, stored as an object in <strong>S3</strong>.</dd>
+    <dt>Environment</dt>
+    <dd>A running set of AWS resources that runs <strong>one</strong> application version at a time. "Prod" and "test" would be two environments.</dd>
+    <dt>Environment tier</dt>
+    <dd><strong>Web server</strong> tier: serves HTTP requests behind a load balancer. <strong>Worker</strong> tier: pulls background jobs from an <strong>SQS queue</strong>, which offloads long-running work from the web tier.</dd>
+    <dt>Saved configuration</dt>
+    <dd>A reusable template of environment settings.</dd>
+  </dl>
+
+  <h2>Deployment Policies</h2>
+  <table>
+    <thead><tr><th>Policy</th><th>How it works</th><th>Trade-off</th></tr></thead>
+    <tbody>
+      <tr><td><strong>All at once</strong></td><td>Deploy to every instance at the same time</td><td>Fastest, but <strong>causes downtime</strong></td></tr>
+      <tr><td><strong>Rolling</strong></td><td>Deploy one batch at a time</td><td>No downtime, but <strong>reduced capacity</strong> while a batch is out of service</td></tr>
+      <tr><td><strong>Rolling with additional batch</strong></td><td>Launch an extra batch first, then roll</td><td>Keeps <strong>full capacity</strong> throughout</td></tr>
+      <tr><td><strong>Immutable</strong></td><td>Launch a full set of new instances in a <strong>temporary ASG</strong>, then swap</td><td>Slowest, but the safest rollback: just terminate the new instances</td></tr>
+      <tr><td><strong>Traffic splitting</strong></td><td>Send a percentage of traffic to new instances (canary)</td><td>Tests on live traffic; needs an ALB</td></tr>
+      <tr><td><strong>Blue/green</strong></td><td>Deploy to a separate environment, then <strong>swap environment URLs</strong> (a CNAME swap)</td><td>Instant switch and rollback, but it's a DNS change</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Spotting Beanstalk</div>
+    "Developers want to deploy a web app <strong>without managing infrastructure</strong> but keep control of the underlying EC2 resources", or "upload code and AWS handles provisioning, load balancing and scaling": that's <strong>Elastic Beanstalk</strong>. For deployments: <strong>no downtime and full capacity</strong> means rolling with additional batch or immutable. <strong>Fastest rollback with no impact on the old version</strong> means immutable or blue/green. <strong>Background job processing</strong> means the worker tier with SQS.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A small team wants to deploy a Python web application quickly. AWS should handle provisioning, load balancing, Auto Scaling and health monitoring, but the team wants to keep access to the underlying EC2 instances. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Building it by hand meets the control requirement, but the team then provisions and maintains everything. Beanstalk automates exactly this."> CloudFormation templates the team writes and maintains</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Lambda is serverless, so there are no EC2 instances to access, which breaks a stated requirement. A full web app may also need significant refactoring."> Lambda functions behind an API Gateway HTTP API</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Beanstalk takes your code and manages provisioning, load balancing, scaling and health. The EC2 resources stay visible and configurable."> Elastic Beanstalk with the Python platform</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Lightsail is simplified VPS hosting. It isn't the service that auto-provisions an ASG and ALB around uploaded code."> Lightsail instances with a manually built load balancer</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A production Beanstalk environment must be updated with <strong>no downtime and no loss of capacity</strong>, and the cheapest possible rollback is to discard the new instances. Which policy fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="All at once updates every instance at the same time, which causes downtime."> All at once</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Plain rolling takes a batch out of service, so capacity drops during the deployment."> Rolling</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This keeps capacity, but rollback means rolling the old version back over the same instances. It isn't simply discarding new ones."> Rolling with batch</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Immutable deploys to a full new set of instances in a temporary ASG. Rollback is just terminating them, and the original instances are never touched."> Immutable</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A Beanstalk web application generates PDF reports, which takes several minutes per request and makes the web tier time out. How should the architecture change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. The worker tier exists for this. The web tier enqueues a job in SQS, and worker instances process it in the background."> Add a worker environment that pulls jobs from SQS</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="A longer timeout keeps users waiting and holds web instances busy. It hides the problem rather than decoupling it."> Raise the load balancer idle timeout to 30 minutes</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Larger instances may speed things up a little, but long work still blocks web requests. The design flaw remains."> Change the web tier to larger compute-optimized types</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="All at once is a deployment policy. It has nothing to do with how requests are processed at run time."> Switch the environment to the all-at-once deployment</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0005-cost-management-tools.html">← Previous: Cost Management Tools</a>
+      <a href="0007-aws-batch.html">Next: AWS Batch →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

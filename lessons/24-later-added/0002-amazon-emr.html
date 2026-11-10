@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 – Amazon EMR</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 2
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Amazon EMR</h1>
+    <p class="lesson-meta">Lesson 2 of 23 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-overview.html" target="_blank">Overview of Amazon EMR</a> · <a href="https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-instances-guidelines.html" target="_blank">Instance configuration best practices</a></p>
+  </div>
+
+  <p>Whenever an exam question mentions <strong>Hadoop, Spark, Hive, HBase or Presto</strong>, or "petabyte-scale processing with open-source big data frameworks", the service is <strong>Amazon EMR</strong>. EMR is a managed cluster platform. It launches and configures a fleet of EC2 instances that run these frameworks, so you don't build the Hadoop cluster yourself.</p>
+
+  <h2>Three Node Types</h2>
+  <dl>
+    <dt>Primary node</dt>
+    <dd>Manages the cluster: it coordinates how data and tasks are distributed and tracks their status. Every cluster has one. If it terminates, the <strong>cluster ends</strong>.</dd>
+    <dt>Core node</dt>
+    <dd>Runs tasks <strong>and stores data in HDFS</strong> on its local disks. Losing core nodes can mean losing HDFS data.</dd>
+    <dt>Task node</dt>
+    <dd>Runs tasks only and <strong>stores no HDFS data</strong>. That makes it safe to add and remove, and ideal for Spot Instances.</dd>
+  </dl>
+
+  <h2>Where the Data Lives</h2>
+  <p>HDFS on core nodes is fast but <strong>ephemeral</strong>: it disappears with the cluster. Most designs keep input and output in <strong>Amazon S3</strong> (through EMRFS) instead. Separating storage from compute lets you terminate clusters freely without losing anything.</p>
+
+  <h2>Long-running vs Transient Clusters</h2>
+  <p>Work is submitted as <strong>steps</strong>, which run in sequence. By default, if a step fails, the remaining steps are cancelled. A <strong>long-running</strong> cluster stays up for interactive or continuous work. A <strong>transient</strong> cluster runs its steps and then <strong>auto-terminates</strong>, so you pay only while the job runs. <strong>Termination protection</strong> guards a long-running cluster against accidental shutdown.</p>
+
+  <h2>Buying Capacity: the Standard Pattern</h2>
+  <table>
+    <thead><tr><th>Scenario</th><th>Primary</th><th>Core</th><th>Task</th></tr></thead>
+    <tbody>
+      <tr><td>Long-running or data-critical cluster</td><td>On-Demand</td><td>On-Demand</td><td>Spot</td></tr>
+      <tr><td>Cost-driven, short or test workloads</td><td>Spot</td><td>Spot</td><td>Spot</td></tr>
+    </tbody>
+  </table>
+  <p>You also choose once, at creation, between <strong>instance groups</strong> (one instance type per node type) and <strong>instance fleets</strong> (up to several instance types and purchase options per node type, which suits Spot diversification). The choice can't be changed later.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">EMR vs Glue vs Athena</div>
+    <strong>EMR</strong> fits existing Hadoop or Spark jobs, full control over frameworks, and very large or long-running processing. <strong>Glue</strong> fits serverless, managed ETL with no cluster to size. <strong>Athena</strong> fits ad-hoc SQL on S3 with no infrastructure at all. If a question says "minimize cost" for EMR, look for <strong>Spot task nodes</strong>, a <strong>transient cluster</strong>, and <strong>data in S3</strong>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. An EMR cluster must keep running reliably, but the team wants to add cheap extra processing capacity when demand spikes, with no risk to data stored in HDFS. Which approach fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Core nodes store HDFS data. If Spot reclaims them, HDFS data can be lost, which is the risk the question rules out."> Add Spot Instances to the core instance group</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Task nodes only run tasks and hold no HDFS data. Losing them to a Spot interruption costs compute, not data."> Add Spot Instances as additional task nodes</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="If the primary node is interrupted, the whole cluster ends. That's the opposite of reliable."> Run the primary node on a Spot Instance</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This works, but On-Demand capacity isn't the cheap option. Spot task nodes give the same safety for much less."> Add On-Demand Instances to the core group</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A Spark job runs once a night for two hours. The rest of the day the EMR cluster sits idle. How should the architect cut cost without losing the job's input or output data?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Keeping the cluster running 24/7 doesn't remove the idle cost. Termination protection only stops accidental shutdowns."> Keep the cluster running with termination protection on</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="HDFS is ephemeral. When the cluster terminates, HDFS data goes with it, so the output would be lost."> Use a transient cluster and keep its results in HDFS</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. A transient cluster runs the steps and auto-terminates, so you pay only for two hours. Keeping data in S3 means nothing is lost when the cluster disappears."> Use a transient cluster that reads and writes to S3</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Shrinking core nodes still leaves a cluster running all day, and shrinking HDFS capacity puts data at risk."> Shrink the long-running cluster's core nodes at night</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company is moving hundreds of existing on-premises Hadoop and Hive jobs to AWS and wants to change as little code as possible. Which service fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Athena runs SQL on S3, but it doesn't run existing Hadoop jobs or the wider ecosystem unchanged."> Amazon Athena queries over data copied into S3</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Glue is serverless Spark ETL, but rewriting hundreds of Hadoop and Hive jobs as Glue jobs is a lot of code change."> AWS Glue jobs rewritten for each existing Hive script</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Redshift is a data warehouse. It doesn't run Hadoop or Hive jobs."> Amazon Redshift with the jobs converted to SQL views</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. EMR runs Hadoop, Hive, Spark and related frameworks as a managed cluster, so existing jobs move with minimal change."> Amazon EMR running the same open-source frameworks</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0001-iam-identity-center.html">← Previous: IAM Identity Center</a>
+      <a href="0003-amazon-opensearch-service.html">Next: Amazon OpenSearch Service →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 – Systems Manager Operations</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 9
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Systems Manager: Session Manager, Run Command, Patch Manager, Automation</h1>
+    <p class="lesson-meta">Lesson 9 of 23 · ~8 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/what-is-systems-manager.html" target="_blank">What is AWS Systems Manager?</a> · <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html" target="_blank">Session Manager</a> · <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html" target="_blank">Run Command</a> · <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager.html" target="_blank">Patch Manager</a> · <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation.html" target="_blank">Automation</a></p>
+  </div>
+
+  <p>The course used Systems Manager mostly for <strong>Parameter Store</strong>. But the exam leans on four other Systems Manager tools for <em>operating fleets of servers securely</em>. They all share one prerequisite. A machine becomes a <strong>managed node</strong> when it runs the <strong>SSM Agent</strong> and has permission to talk to Systems Manager (on EC2, through an instance profile role). Managed nodes can be EC2 instances, on-premises servers or VMs in other clouds.</p>
+
+  <h2>Session Manager: Shell Access Without SSH</h2>
+  <p>Session Manager gives an interactive shell (or PowerShell) on a managed node through the console or CLI. It needs <strong>no inbound ports, no bastion host and no SSH keys</strong>:</p>
+  <ul>
+    <li>Who may start a session is controlled by <strong>IAM policies</strong>.</li>
+    <li>Session activity can be logged to <strong>S3 and CloudWatch Logs</strong>, and the API calls appear in CloudTrail.</li>
+    <li>Instances in <strong>private subnets with no internet access</strong> work too, using <strong>interface VPC endpoints</strong> (PrivateLink) for Systems Manager.</li>
+    <li>It also supports port forwarding, for example to reach a private database from a laptop.</li>
+  </ul>
+
+  <h2>Run Command: One Command, Thousands of Nodes</h2>
+  <p>Run Command executes a <strong>Systems Manager document</strong> (a shell script, a PowerShell script, or an AWS-provided action) across many managed nodes at once. Nodes can be selected by tag. You control concurrency and error thresholds, again with no SSH. Output can go to S3 or CloudWatch Logs.</p>
+
+  <h2>Patch Manager: Patching at Scale</h2>
+  <dl>
+    <dt>Patch baseline</dt>
+    <dd>The rules for which patches are approved: auto-approval rules (for example, critical security patches 7 days after release), plus explicit approved and rejected lists.</dd>
+    <dt>Scan vs Scan and install</dt>
+    <dd>Report compliance only, or report and then apply the missing patches.</dd>
+    <dt>When it runs</dt>
+    <dd><strong>Patch policies</strong> set up through Quick Setup, across accounts and Regions in an Organization (AWS's recommended approach). Or a <strong>maintenance window</strong> that you schedule, or an on-demand <strong>Patch now</strong>.</dd>
+  </dl>
+  <p>Patch Manager handles OS and application patches. It does <strong>not</strong> do major OS version upgrades.</p>
+
+  <h2>Automation: Runbooks</h2>
+  <p>Automation runs <strong>runbooks</strong>: multi-step documents for common maintenance and remediation tasks. Examples are restarting instances, creating a patched "golden" AMI, or remediating a non-compliant resource. A runbook can be triggered by an <strong>EventBridge</strong> rule or an AWS Config remediation, and can run across accounts and Regions with rate controls.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Pick the Systems Manager tool</div>
+    "Secure shell access with <strong>no open port 22</strong>, no bastion, and every session logged": <strong>Session Manager</strong>. "Run a script on 500 instances by tag": <strong>Run Command</strong>. "Keep the fleet patched on a schedule and report compliance": <strong>Patch Manager</strong> (with maintenance windows or patch policies). "Automatically remediate or perform a multi-step operational task": <strong>Automation runbooks</strong>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Security requires that no EC2 instance has port 22 open and that no SSH keys are distributed. Administrators still need interactive shell access, and every session must be logged. What should the architect use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A bastion still needs port 22 and SSH keys. It breaks both requirements."> A bastion host in a public subnet using SSH key pairs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Session Manager needs no inbound ports or keys, uses IAM for access, and logs sessions to S3 and CloudWatch Logs."> Systems Manager Session Manager with session logging</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EC2 Instance Connect still uses SSH over port 22. It just pushes short-lived keys."> EC2 Instance Connect with port 22 open to admin IPs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Run Command executes documents, not interactive shells, so administrators can't work interactively."> Systems Manager Run Command with an interactive script</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. EC2 instances in private subnets have no NAT gateway and no internet access. Session Manager can't reach them, although the SSM Agent and instance role are correct. What's missing?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Session Manager never needs inbound rules. The agent makes outbound connections only."> An inbound security group rule that allows port 443</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="An internet gateway alone does nothing for instances in private subnets, and the question wants them kept private."> An internet gateway attached to the instances' VPC</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Without internet access, the agent reaches Systems Manager privately through interface VPC endpoints (PrivateLink)."> Interface VPC endpoints for the Systems Manager APIs</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Elastic IPs are for public reachability. They don't help a private instance reach Systems Manager."> An Elastic IP address associated with each instance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A company must apply critical OS security patches to 2,000 instances across all accounts in its Organization within 7 days of release, and report compliance. Which approach fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Patch Manager uses a baseline to auto-approve critical patches after 7 days, and patch policies apply it across the Organization with compliance reporting."> Patch Manager patch policies with an auto-approval baseline</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This is a custom script with no baseline and no compliance reporting. Patch Manager is the purpose-built tool."> A Run Command script calling yum update in every account</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Inspector finds vulnerabilities but doesn't install patches. It's detection, not remediation."> Amazon Inspector findings fixed by each account's team</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Rebuilding every instance weekly is heavy and disruptive. Patch Manager patches in place with compliance reporting."> A new AMI built every week and all instances replaced</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0008-aws-lake-formation.html">← Previous: AWS Lake Formation</a>
+      <a href="0010-fsx-ontap-and-openzfs.html">Next: FSx for ONTAP and OpenZFS →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

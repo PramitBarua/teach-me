@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 – Amazon Quick (QuickSight)</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 4
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Amazon Quick (formerly QuickSight)</h1>
+    <p class="lesson-meta">Lesson 4 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/quicksight/latest/user/welcome.html" target="_blank">What is Quick?</a> · <a href="https://docs.aws.amazon.com/quicksight/latest/user/spice.html" target="_blank">Importing data into SPICE</a> · <a href="https://aws.amazon.com/blogs/business-intelligence/reimagine-business-intelligence-amazon-quicksight-evolves-to-amazon-quick-suite" target="_blank">QuickSight evolves to Quick Suite</a></p>
+  </div>
+
+  <p>Analytics pipelines in this course end in S3, Athena, Redshift or a database. Someone still has to turn those tables into charts that business users can read. That's <strong>business intelligence (BI)</strong>, and AWS's serverless BI service was <strong>Amazon QuickSight</strong>.</p>
+
+  <div class="callout warn">
+    <div class="callout-title">The name changed</div>
+    In October 2025, QuickSight was folded into a broader product, <strong>Amazon Quick Suite</strong>, which has since been shortened to <strong>Amazon Quick</strong>. That's how the current SAA-C03 in-scope list names it. The classic BI dashboards are now the <strong>Quick Sight</strong> capability inside it. Quick also adds AI agent features (chat, research, flows and automation), but for this exam, think "QuickSight dashboards". Questions may use either name.
+  </div>
+
+  <h2>What Quick Sight Does</h2>
+  <dl>
+    <dt>Serverless BI</dt>
+    <dd>You don't run servers or BI software. You connect data sources, build analyses, and publish interactive <strong>dashboards</strong> for business users.</dd>
+    <dt>Data sources</dt>
+    <dd>AWS sources such as Athena, Redshift, RDS and Aurora, and S3, plus uploaded files and third-party SaaS and databases.</dd>
+    <dt>Embedded analytics</dt>
+    <dd>Dashboards can be embedded in your own web applications for your customers.</dd>
+    <dt>Users</dt>
+    <dd>Provisioned through <strong>IAM Identity Center</strong> or IAM federation (see Lesson 1).</dd>
+  </dl>
+
+  <h2>SPICE: Why Dashboards Get Fast and Cheap</h2>
+  <p>For each dataset you choose between a <strong>direct query</strong> against the source and importing the data into <strong>SPICE</strong> (Super-fast, Parallel, In-memory Calculation Engine). With SPICE:</p>
+  <ul>
+    <li>Queries run faster because the data is held in memory. You don't wait on the source system.</li>
+    <li>The source isn't hit on every dashboard view. If the source charges per query (Athena, for example), you pay only when the dataset is created and when it's <strong>refreshed</strong>.</li>
+    <li>SPICE capacity is allocated <strong>per AWS Region</strong>. In Enterprise edition, SPICE data is encrypted at rest.</li>
+  </ul>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Which dashboard service?</div>
+    <strong>Business users, sales or finance dashboards, BI, embedded analytics</strong>: Quick (QuickSight). <strong>Operational metrics</strong> from Prometheus, CloudWatch or X-Ray: Managed Grafana (Lesson 19). <strong>Log search and exploration</strong>: OpenSearch Dashboards (Lesson 3). A classic serverless pipeline is S3, then the Glue Data Catalog, then Athena, then Quick Sight.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Sales data sits in S3 and is queried through Athena. Business analysts with no technical background want interactive dashboards, and the company doesn't want to run any BI servers. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This means installing, patching and scaling BI software yourself. That breaks the no-servers requirement."> A BI tool installed on EC2 behind a load balancer</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Quick Sight is serverless BI that connects to Athena and publishes interactive dashboards for business users."> Amazon Quick Sight dashboards using Athena as source</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="OpenSearch Dashboards is built for exploring logs and search data, not for business BI over Athena tables."> OpenSearch Dashboards reading the same S3 objects</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudWatch dashboards show operational metrics and alarms. They're not a BI tool for sales data in S3."> CloudWatch dashboards built from Athena query metrics</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A popular Quick Sight dashboard runs direct queries against Athena. It's slow, and the Athena bill grows with every page view. The data only changes nightly. What's the best fix?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Workgroups help control and track Athena usage, but every dashboard view still runs a query. Neither slowness nor per-query cost goes away."> Move all the dashboards into a separate Athena workgroup</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Re-pointing at the raw S3 files doesn't add caching, and it loses Athena's SQL layer. It solves nothing."> Point the dataset directly at the raw S3 objects instead</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Redshift would speed up queries, but it adds a cluster to run. In-memory SPICE solves both problems directly."> Replace Athena with a provisioned Redshift data warehouse</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. In SPICE, dashboards query memory rather than Athena. A nightly refresh matches how often the data changes, and Athena is charged only on refresh."> Import the dataset into SPICE and refresh it nightly</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. The platform team needs dashboards over Prometheus container metrics and CloudWatch. Finance needs interactive revenue dashboards built on Redshift. Which pairing fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Managed Grafana is built for operational metrics such as Prometheus and CloudWatch. Quick Sight is built for business BI over warehouses such as Redshift."> Managed Grafana for platform, Quick Sight for finance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This is backwards. Grafana is the operational metrics tool, and Quick Sight is the BI tool."> Quick Sight for platform, Managed Grafana for finance</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="OpenSearch Dashboards suits log and search exploration. It's neither the Prometheus metrics tool nor a business BI tool."> OpenSearch Dashboards for both teams' requirements</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudWatch dashboards could cover some metrics, but they aren't a BI tool for interactive revenue analysis on Redshift."> CloudWatch dashboards for both teams' requirements</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0003-amazon-opensearch-service.html">← Previous: Amazon OpenSearch Service</a>
+      <a href="0005-cost-management-tools.html">Next: Cost Management Tools →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

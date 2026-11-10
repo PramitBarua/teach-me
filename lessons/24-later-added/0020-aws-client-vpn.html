@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>20 – AWS Client VPN</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 20
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Client VPN</h1>
+    <p class="lesson-meta">Lesson 20 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/what-is.html" target="_blank">What is AWS Client VPN?</a></p>
+  </div>
+
+  <p>The hybrid module covered <a href="../18-hybrid-environments-and-migration/0003-aws-site-to-site-vpn.html">Site-to-Site VPN</a>, which connects a whole <em>network</em> (an office or data center) to a VPC through IPsec tunnels between routers. A different problem: <em>individual employees on laptops</em>, at home or traveling, need secure access to private resources in a VPC. That's <strong>AWS Client VPN</strong>, a managed, OpenVPN-based <strong>remote-access</strong> VPN service.</p>
+
+  <h2>How It Fits Together</h2>
+  <dl>
+    <dt>Client VPN endpoint</dt>
+    <dd>The managed resource that users connect to. It's highly available and scales automatically.</dd>
+    <dt>Target network associations</dt>
+    <dd>Associate the endpoint with <strong>subnets</strong> in a VPC (one per AZ for HA), or with a Transit Gateway. Once connected, users can reach that VPC, peered VPCs, on-premises networks over Direct Connect or VPN, and the internet, depending on routes.</dd>
+    <dt>Client CIDR</dt>
+    <dd>An IP range that connected users get addresses from. It must not overlap the VPC's CIDR.</dd>
+    <dt>Authentication</dt>
+    <dd><strong>Active Directory</strong> (through Directory Service), <strong>federated SAML 2.0</strong> (for example Okta or Entra ID), or <strong>mutual certificate</strong> authentication. These can be combined.</dd>
+    <dt>Authorization rules</dt>
+    <dd>Network access is <strong>denied by default</strong>. Rules grant groups access to specific destination CIDRs: engineering gets the app subnets, finance gets the ERP subnet.</dd>
+    <dt>Connection logging</dt>
+    <dd>Connection attempts and sessions can be logged to CloudWatch Logs.</dd>
+  </dl>
+
+  <p>Users connect with the AWS-provided client or any OpenVPN-compatible client. Billing is per subnet association hour plus per active connection hour.</p>
+
+  <table>
+    <thead><tr><th></th><th>Site-to-Site VPN</th><th>Client VPN</th></tr></thead>
+    <tbody>
+      <tr><td>Connects</td><td>A <strong>network</strong> (customer gateway router) to AWS</td><td>Individual <strong>users and devices</strong> to AWS</td></tr>
+      <tr><td>Protocol</td><td>IPsec</td><td>TLS (OpenVPN)</td></tr>
+      <tr><td>Who authenticates</td><td>The device, with pre-shared keys or certificates</td><td>Each person: AD, SAML or certificate</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Keywords</div>
+    "<strong>Remote employees</strong>", "work from home", "laptops must securely reach private resources in the VPC", "authenticate with corporate SAML or AD": <strong>Client VPN</strong>. "Connect the <strong>office network</strong> or data center": <strong>Site-to-Site VPN</strong> or Direct Connect. A public bastion host is the classic distractor that breaks "secure, private access".
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. 300 employees now work from home. From their laptops they need secure access to internal web apps in private VPC subnets, signing in with the company's Okta SAML identity provider. What should the architect deploy?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Site-to-Site VPN connects a network's router to AWS. It doesn't give individual laptops access."> A Site-to-Site VPN from each employee's home router</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Client VPN gives managed remote access for individual users, authenticated with federated SAML, to private VPC subnets."> AWS Client VPN with federated SAML authentication</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Making the apps public breaks the private-access requirement and exposes internal apps to the internet."> Public ALBs for the apps with IP allow-lists on them</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A bastion is a jump box for shell access, not secure network access to web apps for 300 users. It also adds exposure."> A bastion host in a public subnet that users SSH into</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. Users connect to a Client VPN endpoint successfully but can't reach anything in the VPC. Routes and security groups look correct. What's the most likely cause?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Client VPN doesn't use a customer gateway. That's a Site-to-Site VPN concept."> The endpoint has no customer gateway configured</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Client VPN doesn't need a NAT gateway to reach private resources inside the VPC."> The VPC is missing a NAT gateway in every AZ</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Client VPN denies access by default. An authorization rule must grant the users' group access to the destination CIDR."> No authorization rule allows the destination CIDR</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="The client CIDR must not overlap the VPC CIDR, so making them match would be wrong."> The client CIDR doesn't match the VPC's own CIDR</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0019-observability-xray-prometheus-grafana.html">← Previous: X-Ray, Prometheus, Grafana</a>
+      <a href="0021-migration-mgn-and-discovery.html">Next: Migration: MGN and Discovery →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

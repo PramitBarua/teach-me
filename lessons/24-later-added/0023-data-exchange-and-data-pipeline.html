@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>23 – Data Exchange and Data Pipeline</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 23
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Data Exchange and AWS Data Pipeline</h1>
+    <p class="lesson-meta">Lesson 23 of 23 · ~5 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/data-exchange/latest/userguide/what-is.html" target="_blank">What is AWS Data Exchange?</a> · <a href="https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/what-is-datapipeline.html" target="_blank">What is AWS Data Pipeline?</a></p>
+  </div>
+
+  <p>Two analytics services finish this module. Their names sound alike, but they do completely different jobs. One <strong>brings in other organizations' data</strong>. The other <strong>moves and transforms your own data on a schedule</strong>, and it's now closed to new customers.</p>
+
+  <h2>AWS Data Exchange: Third-Party Data, Delivered</h2>
+  <p>Data Exchange helps you find, subscribe to and use <strong>data from other organizations</strong>, for example financial market feeds, weather, demographics or healthcare reference data. Commercial data products are listed in the <strong>AWS Marketplace</strong> catalog. Organizations can also send each other <strong>data grants</strong> directly. The provider maintains the delivery and entitlement infrastructure; as a subscriber you just accept and use the data.</p>
+  <p>Data sets come in five types:</p>
+  <ul>
+    <li><strong>Files</strong>, exported into your S3 bucket;</li>
+    <li><strong>APIs</strong>, called through API Gateway-backed endpoints;</li>
+    <li><strong>Amazon Redshift</strong> datashares, queried read-only with no ETL;</li>
+    <li><strong>Amazon S3</strong> data access, used directly in the provider's bucket;</li>
+    <li><strong>AWS Lake Formation</strong> permissions (in preview).</li>
+  </ul>
+  <p>Open Data on AWS public data sets are also discoverable through it.</p>
+
+  <h2>AWS Data Pipeline: Legacy, Closed to New Customers</h2>
+  <div class="callout warn">
+    <div class="callout-title">Maintenance mode</div>
+    AWS Data Pipeline is <strong>no longer available to new customers</strong> and is in <strong>maintenance mode</strong>. No new features or Region expansions are planned. Existing customers can keep using it, and AWS publishes migration guidance toward services such as AWS Glue, Step Functions and Amazon MWAA.
+  </div>
+  <p>Data Pipeline <strong>automated the movement and transformation of data</strong> on a schedule, as a data-driven workflow in which each task can depend on earlier ones succeeding. A <strong>pipeline definition</strong> describes the business logic. The pipeline launches <strong>EC2 instances or EMR clusters</strong> to do the work, and a <strong>Task Runner</strong> polls for tasks and runs them. The classic example: copy web server logs to S3 every day, then run a weekly EMR job over them.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Keywords</div>
+    "Subscribe to <strong>third-party</strong> data sets", "license commercial data and load it into S3 or Redshift": <strong>Data Exchange</strong>. "Scheduled, dependency-driven movement and ETL of your own data between AWS services": historically <strong>Data Pipeline</strong>. For a new design, prefer <strong>Glue</strong> (ETL) or <strong>Step Functions</strong> or <strong>MWAA</strong> (orchestration), unless the question explicitly names Data Pipeline.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A hedge fund wants to subscribe to a commercial provider's daily equity-pricing data set and query it in its own Redshift cluster without building any ETL or file-transfer process. What fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This means building and running a custom transfer pipeline, which is what the fund wants to avoid."> An SFTP server on Transfer Family for the provider</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="AppFlow connects SaaS applications. It isn't a marketplace for licensed third-party data products."> An Amazon AppFlow flow from the provider's website</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Data Pipeline moves your own data, and it's closed to new customers. It doesn't license third-party data."> An AWS Data Pipeline that copies the files each day</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Data Exchange lets you subscribe to third-party data products. A Redshift data set gives read-only query access with no ETL."> An AWS Data Exchange product with a Redshift data set</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A new AWS customer in 2026 wants managed, scheduled ETL that transforms data from S3 and loads it into Redshift, with job dependencies. Why is AWS Data Pipeline not the right recommendation?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Data Pipeline is in maintenance mode and isn't available to new customers. Glue, with Step Functions or MWAA for orchestration, is the modern choice."> It is closed to new customers and is in maintenance mode</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Data Pipeline did support task dependencies. That was a core feature, not the reason to avoid it."> It can't express dependencies between scheduled tasks</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Data Pipeline supports many sources, including S3 and EMR. That isn't why it's the wrong choice now."> It works only with on-premises databases as sources</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Data Pipeline launched EC2 or EMR resources to do the work. It wasn't limited to Lambda."> It runs activities only on Lambda functions' runtimes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0022-governance-and-operations-roundup.html">← Previous: Governance and Operations Round-up</a>
+      <span></span>
+    </div>
+    <p style="margin-top:1.5rem">You've completed the Later Added module! Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code>. Type <strong>/teach</strong> to continue learning.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

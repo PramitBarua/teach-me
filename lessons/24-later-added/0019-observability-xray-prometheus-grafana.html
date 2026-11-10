@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>19 – X-Ray, Prometheus and Grafana</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 19
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Observability: X-Ray, Managed Prometheus, Managed Grafana</h1>
+    <p class="lesson-meta">Lesson 19 of 23 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html" target="_blank">What is AWS X-Ray?</a> · <a href="https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-Prometheus.html" target="_blank">What is Amazon Managed Service for Prometheus?</a> · <a href="https://docs.aws.amazon.com/grafana/latest/userguide/what-is-Amazon-Managed-Service-Grafana.html" target="_blank">What is Amazon Managed Grafana?</a></p>
+  </div>
+
+  <p>CloudWatch gives you metrics, logs and alarms. Observability has three classic signals: <strong>metrics</strong>, <strong>logs</strong> and <strong>traces</strong>. And many teams already standardize on open-source tools rather than CloudWatch. These three services fill the gaps: <strong>traces</strong> (X-Ray), <strong>open-source metrics</strong> (Prometheus), and <strong>open-source dashboards</strong> (Grafana).</p>
+
+  <h2>AWS X-Ray: Distributed Tracing</h2>
+  <p>In a microservice or serverless app, one user request might pass through API Gateway, three Lambda functions, SQS and DynamoDB. When it's slow or fails, <em>which hop</em> caused it? X-Ray follows each request end to end:</p>
+  <dl>
+    <dt>Trace and segments</dt>
+    <dd>A <strong>trace</strong> is one request's whole journey. Each service it passes through adds a <strong>segment</strong> (and subsegments, for example a downstream DynamoDB call) with timing and errors.</dd>
+    <dt>Trace map</dt>
+    <dd>A visual map of services showing latency and error rates, so bottlenecks are obvious at a glance.</dd>
+    <dt>Instrumentation</dt>
+    <dd>Use the X-Ray SDK or OpenTelemetry in your code. Enable tracing with a checkbox on Lambda, API Gateway and Elastic Beanstalk. On EC2 and ECS, a <strong>daemon or agent</strong> forwards trace data.</dd>
+  </dl>
+
+  <h2>Amazon Managed Service for Prometheus</h2>
+  <p>A <strong>serverless, Prometheus-compatible</strong> metrics service. You query with <strong>PromQL</strong> just as you would against self-hosted Prometheus, but AWS handles scaling, availability and storage. Data is replicated across three AZs, with a default retention of 150 days. It's typically used for <strong>container metrics</strong> from EKS, ECS or self-managed Kubernetes. Use it when a team already uses Prometheus and doesn't want to run Prometheus servers anymore.</p>
+
+  <h2>Amazon Managed Grafana</h2>
+  <p>Fully managed <strong>Grafana</strong> workspaces for <strong>dashboards and alerts</strong> over many data sources: CloudWatch, Managed Prometheus, X-Ray, OpenSearch, Timestream, Athena, Redshift and third-party tools. Users sign in through <strong>IAM Identity Center</strong> or <strong>SAML</strong>. Pricing is per active user, with no servers to patch.</p>
+
+  <table>
+    <thead><tr><th>Question</th><th>Service</th></tr></thead>
+    <tbody>
+      <tr><td>Which microservice is making requests slow?</td><td><strong>X-Ray</strong></td></tr>
+      <tr><td>Managed, PromQL-compatible storage for container metrics</td><td><strong>Managed Prometheus</strong></td></tr>
+      <tr><td>Managed open-source dashboards across many metric sources</td><td><strong>Managed Grafana</strong></td></tr>
+      <tr><td>AWS-native metrics, logs and alarms</td><td>CloudWatch</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Keywords</div>
+    "<strong>Trace</strong> requests", "identify <strong>latency bottlenecks</strong> across microservices", "service map": <strong>X-Ray</strong>. "Already uses <strong>Prometheus</strong> or <strong>PromQL</strong>; wants it managed": <strong>Managed Prometheus</strong>. "Already uses <strong>Grafana</strong> dashboards; wants it managed, with SSO": <strong>Managed Grafana</strong>.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A serverless checkout flow (API Gateway, four Lambda functions, DynamoDB) sometimes takes eight seconds. The team needs to see which component adds the latency on individual requests. What should they enable?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Access logs show overall request timing at the API. They don't break latency down across the downstream Lambdas and DynamoDB."> API Gateway access logging into CloudWatch Logs</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Flow Logs record IP traffic metadata. They can't trace one request through managed services."> VPC Flow Logs on the subnets used by the Lambdas</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="CloudTrail records control-plane API calls, not per-request latency inside your application."> CloudTrail data events for the Lambda functions</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. X-Ray traces each request across API Gateway, Lambda and DynamoDB, with per-segment timing and a trace map that shows the bottleneck."> AWS X-Ray tracing on API Gateway and the Lambdas</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A platform team runs self-hosted Prometheus servers for EKS metrics and struggles with scaling and long-term storage. They want to keep PromQL and their existing exporters. What fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Managed Prometheus is serverless and PromQL-compatible. Existing exporters keep sending metrics while AWS handles scale, replication and storage."> Amazon Managed Service for Prometheus</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CloudWatch Container Insights is AWS-native. Moving to it means giving up PromQL and the existing Prometheus setup."> CloudWatch Container Insights only</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Managed Grafana visualizes metrics. It doesn't replace Prometheus as the metrics store."> Amazon Managed Grafana by itself</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="OpenSearch is for search and log analytics. It isn't a PromQL-compatible metrics backend."> Amazon OpenSearch Service domain</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Engineers want shared dashboards combining CloudWatch metrics, Managed Prometheus data and X-Ray traces, with sign-in through the company's IAM Identity Center and no dashboard servers to run. What should they use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Self-hosting Grafana means running and patching servers, which the requirement rules out."> Self-hosted Grafana on EC2</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Quick Sight is business BI. It's not built for operational dashboards over Prometheus and X-Ray."> Amazon Quick Sight</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Managed Grafana supports CloudWatch, Managed Prometheus and X-Ray data sources, and IAM Identity Center sign-in, with no servers."> Amazon Managed Grafana</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="CloudWatch dashboards don't natively query Managed Prometheus with PromQL alongside other sources the way Grafana does."> CloudWatch dashboards</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0018-amplify-and-device-farm.html">← Previous: Amplify and Device Farm</a>
+      <a href="0020-aws-client-vpn.html">Next: AWS Client VPN →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

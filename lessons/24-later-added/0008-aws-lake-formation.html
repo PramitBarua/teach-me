@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 – AWS Lake Formation</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 8
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS Lake Formation</h1>
+    <p class="lesson-meta">Lesson 8 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html" target="_blank">What is AWS Lake Formation?</a></p>
+  </div>
+
+  <p>A <strong>data lake</strong> is a pile of data in S3, described by tables in the <strong>Glue Data Catalog</strong> and queried with Athena, Redshift Spectrum, EMR or Quick. Securing that pile with S3 bucket policies alone becomes painful fast. Bucket policies understand <em>objects and prefixes</em>, but your analysts think in <em>databases, tables and columns</em>. <strong>AWS Lake Formation</strong> closes that gap. It centrally governs, secures and shares data in a data lake.</p>
+
+  <h2>How It Works</h2>
+  <dl>
+    <dt>Register S3 locations</dt>
+    <dd>You register S3 paths with Lake Formation. Its metadata lives in the Glue Data Catalog, and Glue crawlers can populate that catalog.</dd>
+    <dt>Database-style permissions</dt>
+    <dd>Lake Formation has its own permission model that works like a relational database: you <strong>grant and revoke</strong> SELECT, INSERT and so on, on databases and tables.</dd>
+    <dt>Fine-grained access</dt>
+    <dd>Permissions go down to the <strong>column, row and cell level</strong>, using <strong>data filters</strong>. For example, analysts in the EU see only EU rows and no <code>ssn</code> column.</dd>
+    <dt>LF-Tags (tag-based access control)</dt>
+    <dd>Attach tags such as <code>classification=confidential</code> to databases, tables or columns, then grant on tags instead of on hundreds of individual tables. This scales far better.</dd>
+    <dt>Cross-account sharing</dt>
+    <dd>Share catalog tables with other accounts or with the whole Organization, without copying any data.</dd>
+  </dl>
+
+  <p>These permissions are <strong>enforced by the integrated engines</strong>: Athena, Redshift Spectrum, EMR, Glue and Quick. Access is auditable through CloudTrail.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Spotting Lake Formation</div>
+    "Data lake" together with "<strong>column-level</strong> or <strong>row-level</strong> access", "centrally manage permissions for Athena and Redshift Spectrum users", or "share data lake tables across accounts" points to <strong>Lake Formation</strong>. Bucket policies or IAM policies per prefix are the distractor that "works but doesn't scale". They also can't hide a single column inside a Parquet file.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Analysts query a customers table in an S3 data lake through Athena. Marketing analysts must not see the <code>email</code> and <code>phone</code> columns, but finance analysts must. What's the simplest way to enforce this?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This duplicates data and adds a pipeline to keep two copies in sync. It works, but it's far from the simplest approach."> Write a second, redacted copy of the table to S3</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Bucket policies work on objects and prefixes. They can't hide individual columns inside a file."> An S3 bucket policy that denies access to the columns</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Lake Formation grants table access with column-level permissions, and Athena enforces them at query time."> Lake Formation column-level grants on the table</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Athena workgroups separate query settings and costs. They don't control which columns a user can read."> Separate Athena workgroups for marketing and finance</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A data lake has 900 tables, and new ones arrive weekly. Access rules depend on data sensitivity (public, internal, confidential). How should permissions be managed so they scale?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. LF-Tags let you grant once on a tag value. Tagging a new table puts it under the existing rules automatically."> Lake Formation LF-Tags with grants on each tag value</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="This works at first, but someone has to grant on each of 900 tables and every new one. It doesn't scale."> Individual Lake Formation grants on each table by name</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A role per table means hundreds of roles to manage, and IAM still can't do column- or row-level control."> One IAM role per table with a matching S3 prefix policy</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A crawler discovers schemas. It doesn't grant or enforce any access permissions."> A Glue crawler configured to classify sensitive tables</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A central data account owns the data lake. Three business-unit accounts need to query certain tables with their own Athena, without copying data. Which approach fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Replication makes copies of the data, which the requirement rules out. It also gives no table-level governance."> S3 Cross-Region Replication into each account's bucket</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Nightly CTAS exports are copies of the data. The requirement is to query in place."> Nightly Athena CTAS exports into each consumer account</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Sharing the whole bucket gives access at the object level, not table-level grants. That's too broad and hard to govern."> A bucket policy granting the three accounts full access</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Lake Formation shares catalog tables across accounts. Consumers query in place and the grants stay governed centrally."> Lake Formation cross-account sharing of those tables</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0007-aws-batch.html">← Previous: AWS Batch</a>
+      <a href="0009-systems-manager-operations.html">Next: Systems Manager Operations →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

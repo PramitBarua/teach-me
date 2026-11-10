@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 – FSx for NetApp ONTAP and OpenZFS</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 10
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>FSx for NetApp ONTAP and FSx for OpenZFS</h1>
+    <p class="lesson-meta">Lesson 10 of 23 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/what-is-fsx-ontap.html" target="_blank">What is FSx for ONTAP?</a> · <a href="https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/what-is-fsx.html" target="_blank">What is FSx for OpenZFS?</a></p>
+  </div>
+
+  <p>The course covered two of the four FSx file systems: <a href="../18-hybrid-environments-and-migration/0014-fsx-for-windows-file-server.html">FSx for Windows File Server</a> and <a href="../18-hybrid-environments-and-migration/0015-fsx-for-lustre.html">FSx for Lustre</a>. Both are in scope, and so are the other two. All four follow one idea: <strong>a fully managed version of a file system you already know</strong>. That lets you move workloads to AWS without changing how applications access their files.</p>
+
+  <h2>FSx for NetApp ONTAP: The Multi-Protocol Option</h2>
+  <dl>
+    <dt>Protocols</dt>
+    <dd><strong>NFS, SMB and iSCSI</strong> (plus NVMe over TCP). Linux, Windows and macOS clients can all use the same data. Block access through iSCSI is the distinctive feature.</dd>
+    <dt>NetApp features</dt>
+    <dd>Snapshots, instant zero-copy <strong>clones</strong>, <strong>SnapMirror</strong> replication (including from on-premises NetApp), FlexCache, compression and deduplication, and SnapLock for WORM compliance.</dd>
+    <dt>Cost and tiering</dt>
+    <dd>Data <strong>automatically tiers</strong> from SSD to a lower-cost capacity pool as it cools.</dd>
+    <dt>Resilience and identity</dt>
+    <dd>Single-AZ or <strong>Multi-AZ</strong> deployment, with Active Directory integration for SMB.</dd>
+  </dl>
+
+  <h2>FSx for OpenZFS: The Linux NFS Option</h2>
+  <dl>
+    <dt>Protocols</dt>
+    <dd><strong>NFS</strong> (v3 and v4.x). Built for Linux workloads.</dd>
+    <dt>Performance</dt>
+    <dd>Up to about 2 million IOPS with latencies of a few hundred microseconds.</dd>
+    <dt>ZFS features</dt>
+    <dd>Snapshots, instant clones and compression.</dd>
+    <dt>Deployment types</dt>
+    <dd>Multi-AZ (HA), Single-AZ (HA) and Single-AZ (non-HA). Its main purpose is migrating <strong>ZFS or Linux NFS file servers</strong> without changing anything.</dd>
+  </dl>
+
+  <h2>All Four FSx Options at a Glance</h2>
+  <table>
+    <thead><tr><th>FSx for…</th><th>Protocol(s)</th><th>The scenario keyword</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Windows File Server</strong></td><td>SMB</td><td>Windows shares, Active Directory, DFS</td></tr>
+      <tr><td><strong>Lustre</strong></td><td>Lustre client</td><td>HPC and ML, hundreds of GB/s, linked to S3</td></tr>
+      <tr><td><strong>NetApp ONTAP</strong></td><td>NFS + SMB + iSCSI</td><td>Migrate NetApp, multi-protocol, SnapMirror</td></tr>
+      <tr><td><strong>OpenZFS</strong></td><td>NFS</td><td>Migrate ZFS or Linux file servers, very low latency</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">How to choose between ONTAP and OpenZFS</div>
+    If the scenario mentions an existing <strong>NetApp</strong> appliance, <strong>both Windows and Linux</strong> clients sharing data, or <strong>iSCSI block storage</strong>, the answer is <strong>ONTAP</strong>. If it mentions <strong>ZFS</strong>, or a Linux NFS server that needs very high IOPS and point-in-time clones, the answer is <strong>OpenZFS</strong>. For a plain, elastic Linux NFS share with no particular file-system features, EFS is still usually the answer.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company is migrating an on-premises NetApp storage array. Linux servers access it over NFS, Windows servers over SMB, and a database uses iSCSI LUNs. They want a managed AWS service with no protocol changes. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="EFS supports NFS only. It can't serve SMB or iSCSI."> Amazon EFS with a mount target in each Availability Zone</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="FSx for Windows File Server supports SMB only. It would break the NFS and iSCSI clients."> FSx for Windows File Server joined to Active Directory</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="OpenZFS supports NFS only. It covers the Linux clients but not SMB or iSCSI."> FSx for OpenZFS with a Multi-AZ (HA) deployment type</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. ONTAP serves NFS, SMB and iSCSI from one file system, and SnapMirror can replicate directly from the on-premises NetApp array."> FSx for NetApp ONTAP, replicating data via SnapMirror</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A Linux analytics app runs on an on-premises ZFS file server over NFS. It needs latency well under a millisecond and instant snapshot clones for testing. Which managed service is the closest match?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. FSx for OpenZFS is the managed ZFS option: NFS access, latency of a few hundred microseconds, and ZFS snapshots and clones."> FSx for OpenZFS</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="FSx for Lustre is a parallel file system for HPC throughput. It isn't a drop-in ZFS replacement over NFS."> FSx for Lustre</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="S3 File Gateway presents S3 over NFS. It isn't a sub-millisecond file system with ZFS clones."> S3 File Gateway</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="EBS is block storage attached to one instance. It isn't a shared NFS file system with ZFS features."> EBS io2 volumes</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An FSx for ONTAP file system holds 50 TB, but only about 10% of it is accessed in any given month. How does ONTAP keep storage cost down without moving data manually?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="S3 lifecycle rules apply to S3 objects, not to data inside an FSx file system."> An S3 lifecycle rule that moves files to Glacier</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="DataSync could copy data out, but that's manual movement and breaks access. ONTAP tiers data natively."> A scheduled DataSync task that moves files to S3</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. ONTAP tiers cold data automatically from the SSD tier to a lower-cost capacity pool, and it stays transparently accessible."> Automatic tiering from SSD to the capacity pool tier</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Switching to Single-AZ trades away resilience. It doesn't address the cost of cold data."> Converting the Multi-AZ file system to Single-AZ</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0009-systems-manager-operations.html">← Previous: Systems Manager Operations</a>
+      <a href="0011-aws-ram-and-vpc-sharing.html">Next: AWS RAM and VPC Sharing →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

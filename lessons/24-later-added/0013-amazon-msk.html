@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 – Amazon MSK</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 13
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Amazon Managed Streaming for Apache Kafka (MSK)</h1>
+    <p class="lesson-meta">Lesson 13 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/msk/latest/developerguide/what-is-msk.html" target="_blank">What is Amazon MSK?</a> · <a href="https://aws.amazon.com/msk" target="_blank">Amazon MSK product page</a></p>
+  </div>
+
+  <p>Kinesis Data Streams is AWS's own streaming service. But many companies already run <strong>Apache Kafka</strong>, the open-source event streaming platform, with producers, consumers, connectors and tooling all built for Kafka APIs. Moving them to Kinesis would mean rewriting code. <strong>Amazon MSK</strong> runs Kafka as a managed service instead. It uses <strong>open-source Kafka versions</strong>, so existing applications and tools work <strong>without code changes</strong>.</p>
+
+  <h2>What AWS Manages</h2>
+  <ul>
+    <li>Provisioning <strong>broker</strong> nodes spread across <strong>multiple Availability Zones</strong> in your VPC, at least one broker per AZ you choose.</li>
+    <li>Running the cluster metadata layer (ZooKeeper or, in newer versions, KRaft).</li>
+    <li>Detecting and <strong>automatically replacing failed brokers</strong>, plus patching and version upgrades.</li>
+    <li>Encryption in transit and at rest, IAM access control, and integration with CloudWatch.</li>
+  </ul>
+
+  <h2>Flavours</h2>
+  <dl>
+    <dt>MSK Provisioned</dt>
+    <dd>You choose the broker count, instance size and storage. <strong>Standard</strong> brokers give the most control. <strong>Express</strong> brokers trade some of that control for higher throughput, faster scaling and less storage to manage.</dd>
+    <dt>MSK Serverless</dt>
+    <dd>No brokers to size. Capacity scales automatically and you pay for what you use.</dd>
+    <dt>MSK Connect</dt>
+    <dd>Runs Kafka Connect connectors as a managed service, for example to stream data into S3 or from a database.</dd>
+    <dt>MSK Replicator</dt>
+    <dd>Replicates data between MSK clusters, including across Regions.</dd>
+  </dl>
+
+  <table>
+    <thead><tr><th></th><th>Kinesis Data Streams</th><th>Amazon MSK</th></tr></thead>
+    <tbody>
+      <tr><td>API</td><td>AWS-proprietary Kinesis API</td><td>Open-source <strong>Apache Kafka</strong> APIs</td></tr>
+      <tr><td>Unit of scale</td><td>Shards (or on-demand mode)</td><td>Brokers, partitions (or Serverless)</td></tr>
+      <tr><td>Best when</td><td>Building new, AWS-native streaming</td><td>Migrating existing Kafka, or needing Kafka tooling</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The deciding word is "Kafka"</div>
+    If a scenario mentions an existing <strong>Kafka</strong> cluster, Kafka clients, or "migrate a streaming platform with minimal code changes", the answer is <strong>MSK</strong>. If it says "reduce operational overhead" as well, prefer <strong>MSK Serverless</strong>. If nothing mentions Kafka, Kinesis Data Streams or Amazon Data Firehose is usually the expected answer.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company runs a self-managed Apache Kafka cluster on premises, with dozens of producer and consumer applications. They want to move to AWS, reduce operational burden, and avoid rewriting the applications. What fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Kinesis uses a different API. Every producer and consumer would have to be rewritten, which is what the company wants to avoid."> Kinesis Data Streams with the apps rewritten for it</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Running Kafka yourself on EC2 avoids code changes but keeps all the operational burden."> Self-managed Kafka on EC2 in an Auto Scaling group</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. MSK runs open-source Kafka, so existing clients work unchanged, and AWS handles brokers, failures and patching."> Amazon MSK running a compatible Kafka version</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SQS is a message queue, not a Kafka-compatible event streaming platform. The apps would need significant changes."> Amazon SQS FIFO queues with the apps adapted to SQS</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A new team wants Kafka-compatible streaming for a workload with unpredictable traffic. They don't want to choose broker sizes or manage cluster capacity at all. Which option fits best?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Standard brokers mean choosing and managing broker count, size and storage, which the team wants to avoid."> MSK Provisioned (Standard)</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. MSK Serverless removes broker sizing entirely and scales capacity automatically for unpredictable workloads."> MSK Serverless cluster</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="MSK Connect runs connectors that move data in and out of Kafka. It isn't the cluster itself."> MSK Connect connectors</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Firehose delivers data to destinations. It isn't Kafka-compatible and doesn't give clients Kafka APIs."> Amazon Data Firehose</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. An MSK cluster in a production VPC loses one broker because of a hardware failure. What happens?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Recovery isn't manual. MSK monitors brokers and replaces failed ones itself."> The team must restore the broker from a backup by hand</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Brokers are spread across AZs with replicated partitions. One broker failure doesn't take down the whole cluster."> The whole cluster stops until a new cluster is created</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="MSK doesn't fail over to Kinesis. They're separate services with different APIs."> Producers automatically fail over to Kinesis Data Streams</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. MSK detects the failure and automatically replaces the broker, while replicas on brokers in other AZs keep serving."> MSK automatically detects and replaces the failed broker</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0012-service-catalog-proton-and-sar.html">← Previous: Service Catalog, Proton and SAR</a>
+      <a href="0014-security-hub-and-detective.html">Next: Security Hub and Detective →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

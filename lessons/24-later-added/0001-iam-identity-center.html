@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 – AWS IAM Identity Center</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 1
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>AWS IAM Identity Center</h1>
+    <p class="lesson-meta">Lesson 1 of 23 · ~7 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html" target="_blank">What is IAM Identity Center?</a> · <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/permissionsetsconcept.html" target="_blank">Permission sets</a></p>
+  </div>
+
+  <p>In the IAM & Organizations module you built a multi-account setup and switched between accounts with role assumption. That works, but it doesn't scale to hundreds of employees across dozens of accounts. <strong>IAM Identity Center</strong> is AWS's answer: one place to manage <em>workforce</em> access to every account in an Organization and to business applications. It was called <strong>AWS Single Sign-On (AWS SSO)</strong> until July 2022, so older questions and blog posts still use that name.</p>
+
+  <h2>Two Kinds of Instance</h2>
+  <dl>
+    <dt>Organization instance</dt>
+    <dd>Enabled in the Organizations <strong>management account</strong>. This is the recommended setup, and it's the <strong>only</strong> kind that can manage access to AWS accounts.</dd>
+    <dt>Account instance</dt>
+    <dd>Bound to a single AWS account. It's for isolated deployments of supported AWS-managed applications, and it can't grant access to AWS accounts.</dd>
+  </dl>
+
+  <h2>Where the Identities Come From</h2>
+  <p>Identity Center needs one <strong>identity source</strong>, the directory that holds your users and groups:</p>
+  <table>
+    <thead><tr><th>Identity source</th><th>When to pick it</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Identity Center directory</strong></td><td>The default. Users and groups are created directly in Identity Center. Fine for small teams with no existing directory.</td></tr>
+      <tr><td><strong>Active Directory</strong></td><td>The company already runs AD, either AWS Managed Microsoft AD or self-managed AD connected through AD Connector. Staff sign in with their existing corporate credentials.</td></tr>
+      <tr><td><strong>External IdP</strong></td><td>Okta, Microsoft Entra ID and similar providers, federated over <strong>SAML 2.0</strong>, with SCIM for automatic user provisioning.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Permission Sets: the Core Idea</h2>
+  <p>A <strong>permission set</strong> is a template made of IAM policies: AWS managed, customer managed, inline, or job-function policies, plus an optional permissions boundary. You <em>assign</em> a permission set to a user or group <em>for one or more accounts</em>. Identity Center then creates and maintains an <strong>IAM role in each target account</strong> that matches the template. When users sign in, they assume that role and get temporary credentials. Long-term access keys are never involved.</p>
+
+  <table>
+    <thead><tr><th>Setting</th><th>Default</th><th>Maximum</th></tr></thead>
+    <tbody>
+      <tr><td>Permission set session (role credentials)</td><td>1 hour</td><td>12 hours</td></tr>
+      <tr><td>AWS access portal session</td><td>8 hours</td><td>90 days</td></tr>
+    </tbody>
+  </table>
+
+  <p>Users sign in once at the <strong>AWS access portal</strong>. It lists every account and role they've been assigned, and from there they can open the console or copy CLI credentials.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Identity Center vs Cognito vs IAM users</div>
+    When the people are <strong>employees</strong> who need single sign-on to <strong>many AWS accounts</strong>, often with an existing corporate directory, the answer is <strong>IAM Identity Center</strong> with permission sets. When the users are <strong>customers of a web or mobile app</strong>, the answer is <strong>Cognito</strong>. Creating IAM users in every account is almost always the distractor that "violates the requirement": it means long-term credentials and no central management.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A company has 40 AWS accounts in AWS Organizations. Employees already sign in to an on-premises Active Directory. Each team must get single sign-on to its own set of accounts, with no new passwords to manage. What should the architect use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="This creates long-term credentials in 40 accounts and a sync script to maintain. That's exactly the central, single sign-on requirement it fails."> IAM users in every account, kept in sync by a script</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Cognito user pools are for customers of your own web and mobile apps. They don't map workforce users to roles in AWS accounts."> A Cognito user pool federated to Active Directory</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. An organization instance with Active Directory as the identity source gives employees single sign-on with their existing credentials. Permission sets assigned per team create the right role in each account."> IAM Identity Center with AD as the identity source</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SCPs only set the maximum permissions an account can have. They don't authenticate anyone or give single sign-on."> Service control policies that map AD groups to accounts</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An administrator assigns the "DataEngineer" permission set to the Analytics group for three accounts. What does IAM Identity Center create in each of those accounts?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. Identity Center provisions and maintains an IAM role in every target account that matches the permission set. Users assume it through the access portal and get temporary credentials."> An IAM role it manages, matching the permission set</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="No IAM users are created. Identity Center relies on roles and temporary credentials, which is the whole point."> An IAM user for each member of the Analytics group</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="SCPs are Organizations guardrails attached to OUs and accounts. Identity Center doesn't create them when you assign a permission set."> A service control policy attached to each account</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="A resource policy is attached to a resource such as an S3 bucket. Permission sets work by creating identity-side roles."> A resource-based policy on each account's buckets</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. A team enables IAM Identity Center inside a single member account. They then find they can't assign anyone access to the other AWS accounts. Why not?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Account access works with all three identity sources. The issue is the kind of instance, not the directory."> The Identity Center directory can't be used for accounts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Permission sets don't need SAML. They're policy templates whatever identity source you use."> Permission sets need an external SAML 2.0 identity provider</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Session duration is unrelated. It only limits how long the role credentials last once access exists."> The session duration exceeds the 12-hour hard maximum</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Only an organization instance, enabled from the management account, can manage access to AWS accounts. An account instance only serves applications in that one account."> An account instance can't manage access to AWS accounts</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <span></span>
+      <a href="0002-amazon-emr.html">Next: Amazon EMR →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

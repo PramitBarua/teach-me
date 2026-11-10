@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 – Amazon OpenSearch Service</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 3
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Amazon OpenSearch Service</h1>
+    <p class="lesson-meta">Lesson 3 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html" target="_blank">What is Amazon OpenSearch Service?</a></p>
+  </div>
+
+  <p>DynamoDB answers "fetch this item by key" very quickly. RDS answers relational SQL. Neither is good at "find every product whose description <em>roughly</em> mentions waterproof hiking boots", or at slicing a terabyte of logs by any field in real time. That's a <strong>search and analytics engine</strong>, and on AWS it's <strong>Amazon OpenSearch Service</strong>. It was called Amazon Elasticsearch Service before 2021, and it still runs legacy Elasticsearch versions up to 7.10.</p>
+
+  <h2>What You Get</h2>
+  <dl>
+    <dt>Domain</dt>
+    <dd>OpenSearch's word for a cluster: a set of data nodes, with optional <strong>dedicated master nodes</strong> for cluster stability, that you size by instance type and count.</dd>
+    <dt>High availability</dt>
+    <dd>Nodes spread across <strong>two or three Availability Zones</strong>, with replica shards in different AZs.</dd>
+    <dt>OpenSearch Dashboards</dt>
+    <dd>The built-in visualization UI (the successor to Kibana). Access can be controlled with IAM, Amazon Cognito or SAML.</dd>
+    <dt>Serverless option</dt>
+    <dd>OpenSearch Serverless removes domain sizing entirely. Capacity is measured in OpenSearch Compute Units (OCUs).</dd>
+  </dl>
+
+  <h2>Storage Tiers</h2>
+  <table>
+    <thead><tr><th>Tier</th><th>Backed by</th><th>Use it for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Hot</strong></td><td>Data node storage (EBS or instance store)</td><td>Recent, frequently written and queried data</td></tr>
+      <tr><td><strong>UltraWarm</strong></td><td>Amazon S3 plus caching nodes</td><td>Older, <strong>read-only</strong> data that must stay interactive at a much lower cost</td></tr>
+      <tr><td><strong>Cold</strong></td><td>Amazon S3</td><td>Rarely queried data you attach on demand. The cheapest tier</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Typical Ingestion Paths</h2>
+  <ul>
+    <li><strong>Streaming logs or clickstream:</strong> Kinesis Data Streams or Amazon Data Firehose, with an OpenSearch destination.</li>
+    <li><strong>Application logs:</strong> a CloudWatch Logs subscription that streams into OpenSearch.</li>
+    <li><strong>Searchable DynamoDB data:</strong> DynamoDB Streams, then Lambda, then OpenSearch (or the managed zero-ETL integration).</li>
+    <li><strong>Managed pipelines:</strong> OpenSearch Ingestion filters, transforms and routes data without servers.</li>
+  </ul>
+  <p>For security, a domain can be deployed <strong>inside a VPC</strong>. Fine-grained access control adds index-level, document-level and field-level security.</p>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">Trigger phrases for OpenSearch</div>
+    "<strong>Full-text search</strong>", "search by any attribute", "<strong>log analytics</strong> with dashboards", "near-real-time application monitoring", or "add search to data stored in DynamoDB" all point to OpenSearch. Querying logs in S3 occasionally with SQL is Athena. Metric dashboards for operations are CloudWatch or Managed Grafana.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. A product catalog lives in DynamoDB. Shoppers must be able to search product descriptions with free text and partial matches, and the results must stay current as items change. What should the architect add?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A Scan reads the entire table for every search. It's slow and expensive, and it still isn't real full-text relevance search."> A DynamoDB Scan with a FilterExpression per search</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="A GSI indexes exact key values. It can't do free-text or partial matches inside a description."> A global secondary index on the description attribute</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Streaming item changes into OpenSearch keeps a full-text index current, and OpenSearch handles relevance and partial matching."> DynamoDB Streams and Lambda indexing into OpenSearch</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Athena on nightly exports is batch SQL. Results would be stale and it isn't a full-text search engine."> Nightly S3 exports of the table queried with Athena</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. An OpenSearch domain holds two years of logs. Only the last 30 days get new writes, but older logs must stay searchable interactively. Storage cost is climbing. What's the best change?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. UltraWarm stores read-only indexes on S3 behind caching nodes, so older logs stay interactively searchable at much lower cost than hot storage."> Move indexes older than 30 days to UltraWarm</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Deleting old indexes breaks the requirement that older logs stay searchable."> Delete indexes older than 30 days from the domain</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="More dedicated master nodes improve cluster stability. They don't hold data and don't reduce storage cost."> Add more dedicated master nodes to the domain</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Larger hot volumes add capacity at the most expensive tier. The cost problem gets worse."> Increase the EBS volume size on every data node</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. Clickstream events must land in OpenSearch within about a minute of being produced, with no servers to manage and no custom consumer code. Which delivery option fits?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="This works, but it means building and running consumer code on EC2. The question rules that out."> A fleet of EC2 consumers reading a Kinesis stream</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Hourly batches from S3 miss the roughly one-minute freshness target, and the Lambda is custom code."> Hourly S3 batches loaded by a scheduled Lambda job</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="AWS DataSync copies files between storage systems. It isn't a streaming delivery service into OpenSearch."> AWS DataSync tasks copying event files to the domain</label></li>
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. Firehose is fully managed, buffers for seconds to minutes, and delivers directly to an OpenSearch destination with no consumer code."> Amazon Data Firehose with an OpenSearch destination</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0002-amazon-emr.html">← Previous: Amazon EMR</a>
+      <a href="0004-amazon-quick-sight.html">Next: Amazon Quick (QuickSight) →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML Services 2026 Update</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <style>
+    @page { size: letter; margin: 0.4in 0.42in; }
+    html { font-size: 11.8px; }
+    body { font-family: var(--sans); line-height: 1.38; padding: 0; margin: 0; }
+    .container { max-width: 7.66in; margin: 0 auto; padding: 0.4in 0; }
+    @media print { .container { padding: 0; max-width: none; } a { color: inherit; text-decoration: none; } }
+
+    .lesson-header { margin-bottom: 0.55rem; padding-bottom: 0.45rem; border-bottom-width: 2px; }
+    .lesson-header .breadcrumb { margin-bottom: 0.15rem; }
+    .module-tag { margin-bottom: 0.25rem; font-size: 0.68rem; }
+    h1 { font-family: var(--sans); font-size: 1.75rem; margin: 0; }
+    .lesson-meta { margin: 0.15rem 0 0; font-size: 0.78rem; }
+
+    h2 { font-family: var(--sans); font-size: 1.06rem; margin: 0.7rem 0 0.25rem; padding-bottom: 0.12rem; border-bottom-width: 1px; }
+    h2 .sub { font-weight: 400; color: var(--muted); font-size: 0.82rem; }
+
+    .callout { margin: 0.5rem 0; padding: 0.4rem 0.7rem; font-size: 0.86rem; }
+    .callout-title { font-size: 0.7rem; margin-bottom: 0.1rem; }
+
+    table { font-size: 0.82rem; margin: 0.2rem 0 0; }
+    th { padding: 0.22rem 0.4rem; font-size: 0.76rem; }
+    td { padding: 0.24rem 0.4rem; }
+    tbody tr:nth-child(even) { background: rgba(0,0,0,0.025); }
+    td:first-child { font-weight: 700; white-space: nowrap; }
+    table.main td:nth-child(2) { color: var(--accent); }
+    table.main col.c1 { width: 11%; } table.main col.c2 { width: 21%; }
+    table.main col.c3 { width: 36%; } table.main col.c4 { width: 32%; }
+
+    .pill { display: inline-block; font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+            border-radius: 3px; padding: 0.02em 0.4em; margin-right: 0.25em; border: 1px solid; vertical-align: 0.05em; }
+    .pill.ok   { color: var(--success); background: var(--success-light); }
+    .pill.cut  { color: var(--warn); background: var(--warn-light); }
+    .pill.gone { color: var(--danger); background: var(--danger-light); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    .two-col h2 { margin-top: 0.6rem; }
+    ul.tight { margin: 0.2rem 0 0; padding-left: 1rem; font-size: 0.82rem; }
+    ul.tight li { margin: 0.12rem 0; }
+    table.pairs td:nth-child(2) { color: var(--success); font-weight: 700; }
+    table.pairs td:nth-child(3) { color: var(--danger); }
+    table.pairs td:first-child { font-weight: 400; white-space: normal; }
+
+    .sources { margin-top: 0.55rem; padding-top: 0.3rem; border-top: 1px solid var(--border); font-size: 0.68rem; color: var(--muted); line-height: 1.35; }
+    .sources a { color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">Reference &middot; companion to Module 22 &middot; Machine Learning 101</div>
+    <div class="module-tag">SAA-C03 &middot; ML Services &middot; 2026 status</div>
+    <h1>ML Services: What's Current for the Exam</h1>
+    <p class="lesson-meta">Checked against the SAA-C03 exam guide v1.1 (published Oct 29, 2026) and AWS lifecycle pages &middot; built 2026-11-07</p>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Bottom line</div>
+    The exam's ML list went from <strong>11 services to 8</strong>. <strong>Forecast, Fraud Detector and Kendra were removed.</strong> The other 8 are still live; only some of their <em>features</em> changed. Study these 8 at "keyword &rarr; service" depth. <strong>Bedrock</strong> was not added: it appears on neither the in-scope nor the out-of-scope list.
+  </div>
+
+  <h2>In scope: the 8 to know <span class="sub">(exam guide v1.1, Machine Learning category)</span></h2>
+  <table class="main">
+    <colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
+    <thead><tr><th>Service</th><th>Scenario keywords</th><th>What it does today</th><th>Changed since the course</th></tr></thead>
+    <tbody>
+      <tr><td>Comprehend</td><td>sentiment of reviews, entities, PII in text</td><td>NLP on text: sentiment, entities, key phrases, language detection, PII detection</td><td><span class="pill cut">Feature cut</span>Topic modeling, event detection, prompt-safety classification closed to new customers (2026) &rarr; Bedrock LLMs / Bedrock Guardrails</td></tr>
+      <tr><td>Lex</td><td>chatbot, voice bot, conversational interface</td><td>Conversational bots: ASR + NLU; intents, utterances, slots; Lambda fulfilment</td><td><span class="pill cut">V1 retired</span>Lex V1 support ended Sep 15, 2025. Only Lex V2 exists; same concepts</td></tr>
+      <tr><td>Polly</td><td>read text aloud, lifelike speech</td><td>Text &rarr; speech; SSML controls delivery</td><td><span class="pill ok">Active</span>Now 4 voice engines: Standard, Neural, Long-form, Generative</td></tr>
+      <tr><td>Rekognition</td><td>objects/faces in images, moderate uploads</td><td>Image + stored-video analysis: labels, faces (compare, search collections), scene text, moderation, celebrities, PPE, Custom Labels</td><td><span class="pill cut">Feature cut</span>Streaming Video (Kinesis Video Streams) &amp; Bulk Image Analysis closed to new customers Apr 30, 2026. People Pathing ended Oct 31, 2025</td></tr>
+      <tr><td>SageMaker AI</td><td>custom model, data scientists, own algorithm</td><td>Build/train/deploy your own models. Studio (IDE), Canvas (no-code), JumpStart (pre-trained models); endpoints: real-time, serverless, async (&le;1 GB, &le;1 h)</td><td><span class="pill cut">Renamed</span>"SageMaker AI" since Dec 2024. Canvas replaces Forecast. Several add-on features in maintenance (see below)</td></tr>
+      <tr><td>Textract</td><td>scanned forms, invoices, IDs, PDFs</td><td>Document OCR + structure: forms (key-value), tables, queries, signatures, layout; invoice/receipt, ID and lending APIs</td><td><span class="pill ok">Active</span>No lifecycle change. Queries, Layout, Signatures and Analyze Lending are newer features</td></tr>
+      <tr><td>Transcribe</td><td>transcribe calls, captions, searchable audio</td><td>Speech &rarr; text, batch + streaming; speaker diarization, custom vocabulary, PII redaction, toxicity detection</td><td><span class="pill ok">Active</span>No lifecycle change. Call Analytics (sentiment, summaries, categories) and Medical variants</td></tr>
+      <tr><td>Translate</td><td>localize site, multilingual chat</td><td>Neural text &rarr; text translation, real-time or for document sets in S3</td><td><span class="pill ok">Active</span>No lifecycle change</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Dropped from the in-scope list <span class="sub">(all three were in the 2023 exam guide)</span></h2>
+  <table>
+    <thead><tr><th>Service</th><th>Lifecycle status</th><th>AWS's suggested replacement</th><th>If an older practice question asks</th></tr></thead>
+    <tbody>
+      <tr><td>Kendra</td><td><span class="pill gone">Maintenance</span>since Jun 30, 2026; closed to new customers Jul 30, 2026</td><td>Bedrock Knowledge Bases (managed RAG)</td><td>"intelligent enterprise search" &rarr; Kendra</td></tr>
+      <tr><td>Forecast</td><td><span class="pill gone">Closed</span>to new customers since Jul 29, 2024</td><td>SageMaker Canvas</td><td>"time-series demand forecast" &rarr; Forecast</td></tr>
+      <tr><td>Fraud Detector</td><td><span class="pill gone">Closed</span>to new customers since Nov 7, 2025</td><td>SageMaker AI, AutoGluon, AWS WAF Fraud Control</td><td>"fraudulent payments/sign-ups" &rarr; Fraud Detector</td></tr>
+    </tbody>
+  </table>
+
+  <div class="two-col">
+    <div>
+      <h2>Look-alike pairs the exam tests</h2>
+      <table class="pairs">
+        <thead><tr><th>Scenario needs</th><th>Pick</th><th>Trap</th></tr></thead>
+        <tbody>
+          <tr><td>Speech &rarr; text</td><td>Transcribe</td><td>Polly (the reverse)</td></tr>
+          <tr><td>Text &rarr; speech</td><td>Polly</td><td>Transcribe</td></tr>
+          <tr><td>Fields from forms, invoices, IDs</td><td>Textract</td><td>Rekognition (scene text)</td></tr>
+          <tr><td>Faces, objects, unsafe images</td><td>Rekognition</td><td>Textract</td></tr>
+          <tr><td>Meaning of text (sentiment, PII)</td><td>Comprehend</td><td>Translate</td></tr>
+          <tr><td>A bot that holds a conversation</td><td>Lex</td><td>Polly (voice only)</td></tr>
+          <tr><td>No pre-built API fits the task</td><td>SageMaker AI</td><td>Any pre-built API</td></tr>
+        </tbody>
+      </table>
+      <ul class="tight">
+        <li><strong>Pipelines:</strong> Transcribe &rarr; Translate &rarr; Polly (spoken translation); Transcribe &rarr; Comprehend (call sentiment).</li>
+      </ul>
+    </div>
+    <div>
+      <h2>SageMaker AI: what's still current</h2>
+      <ul class="tight">
+        <li><span class="pill ok">Current</span>Studio, Canvas, JumpStart, training jobs, inference endpoints.</li>
+        <li><span class="pill cut">Maintenance</span>Closed to new customers Jul 30, 2026: A2I (human review), Clarify, Debugger, GeoSpatial, Ground Truth (labeling), Model Monitor, Role Manager, Studio Lab.</li>
+        <li><span class="pill gone">Ended</span>Ground Truth Plus (Jun 30, 2026). Profiler is in sunset.</li>
+      </ul>
+      <h2>Not worth study time</h2>
+      <ul class="tight">
+        <li><strong>Officially out of scope:</strong> Personalize, HealthLake, Inferentia, Deep Learning AMIs/Containers, PyTorch/TensorFlow/MXNet on AWS.</li>
+        <li><strong>On neither list:</strong> Bedrock (generative AI foundation models via API). Recognize the name as a distractor; don't study it. Amazon Q Business also moved to maintenance on Jul 30, 2026.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sources">
+    <strong>Sources:</strong>
+    SAA-C03 exam guide: <a href="https://docs.aws.amazon.com/aws-certification/latest/solutions-architect-associate-03/saa-03-in-scope-services.html">in-scope</a>,
+    <a href="https://docs.aws.amazon.com/aws-certification/latest/solutions-architect-associate-03/saa-03-out-of-scope-services.html">out-of-scope</a>,
+    <a href="https://docs.aws.amazon.com/aws-certification/latest/solutions-architect-associate-03/saa-03-revisions.html">revisions</a>
+    (docs.aws.amazon.com/aws-certification/&hellip;/solutions-architect-associate-03); 2023 PDF guide (d1.awsstatic.com, v1.1, 11 ML services) &middot;
+    <a href="https://docs.aws.amazon.com/general/latest/gr/maintenance_services.html">AWS Services in Maintenance</a> &middot;
+    <a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-service-availability/">AWS service availability update, Jun 30, 2026</a> &middot;
+    availability-change pages for <a href="https://docs.aws.amazon.com/comprehend/latest/dg/comprehend-availability-change.html">Comprehend</a>,
+    <a href="https://docs.aws.amazon.com/rekognition/latest/dg/rekognition-availability-changes.html">Rekognition</a>,
+    <a href="https://docs.aws.amazon.com/kendra/latest/dg/kendra-availability-change.html">Kendra</a>,
+    <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/a2i-use-augmented-ai-a2i-human-review-loops.html">SageMaker A2I</a> &middot;
+    <a href="https://docs.aws.amazon.com/lex/latest/dg/migrate.html">Lex V1 migration</a> &middot;
+    <a href="https://docs.aws.amazon.com/polly/latest/dg/voice-engines-polly.html">Polly voice engines</a> &middot;
+    <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/deploy-model.html">SageMaker AI inference</a> &middot;
+    <a href="https://aws.amazon.com/textract/features/">Textract</a> /
+    <a href="https://aws.amazon.com/transcribe/features/">Transcribe</a> feature pages &middot;
+    <a href="https://aws.amazon.com/rekognition/faqs/">Rekognition FAQ</a> &middot;
+    <a href="https://docs.aws.amazon.com/translate/latest/dg/what-is.html">Translate guide</a>.
+    Forecast and Fraud Detector closure dates are from this workspace's Module 22 lessons and match the maintenance table.
+  </div>
+
+</div>
+</body>
+</html>

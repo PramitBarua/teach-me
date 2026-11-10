@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 – Service Catalog, Proton and SAR</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <div class="lesson-header">
+    <div class="breadcrumb">
+      <a href="index.html">Later Added</a> › Lesson 12
+    </div>
+    <div class="module-tag">Later Added</div>
+    <h1>Service Catalog, Proton and the Serverless Application Repository</h1>
+    <p class="lesson-meta">Lesson 12 of 23 · ~6 min</p>
+    <p class="source-link">Source: <a href="https://docs.aws.amazon.com/servicecatalog/latest/adminguide/introduction.html" target="_blank">What is Service Catalog?</a> · <a href="https://docs.aws.amazon.com/proton/latest/userguide/Welcome.html" target="_blank">What is AWS Proton?</a> · <a href="https://docs.aws.amazon.com/serverlessrepo/latest/devguide/what-is-serverlessrepo.html" target="_blank">What is the Serverless Application Repository?</a></p>
+  </div>
+
+  <p>The CloudFormation module showed how to describe infrastructure as templates. These three services answer the next question: <em>how do you hand approved templates to other people</em>, so they can deploy them safely without becoming CloudFormation experts or getting broad IAM permissions?</p>
+
+  <h2>AWS Service Catalog: Approved Self-Service</h2>
+  <dl>
+    <dt>Product</dt>
+    <dd>An IT service you want to offer, defined as a CloudFormation (or Terraform) template. For example, "a compliant S3 bucket" or "a standard three-tier web stack".</dd>
+    <dt>Portfolio</dt>
+    <dd>A collection of products, shared with IAM users, groups or roles, and with other accounts or the Organization.</dd>
+    <dt>Constraints</dt>
+    <dd>Rules on how a product can be launched. A <strong>launch constraint</strong> names an IAM role that Service Catalog uses to deploy the product. End users can launch the stack <strong>without having permissions</strong> to create the underlying resources themselves. Template constraints can limit choices such as instance types.</dd>
+  </dl>
+  <p>The result: administrators curate what's allowed, and end users get a self-service portal to launch it. That gives governance and consistency without anyone having to open a ticket.</p>
+
+  <h2>AWS Proton: Retired</h2>
+  <div class="callout warn">
+    <div class="callout-title">End of support: 7 October 2026</div>
+    Proton let platform teams publish <strong>environment and service templates</strong>, so developers could deploy containerized and serverless apps with standard CI/CD. AWS ended support on <strong>7 October 2026</strong>. The console and Proton resources are no longer accessible, but infrastructure it already deployed keeps running. It's still listed in the exam guide, so recognize it as "platform team templates for developers". Expect Service Catalog to be the safer answer.
+  </div>
+
+  <h2>Serverless Application Repository (SAR)</h2>
+  <p>SAR is a managed repository for <strong>serverless applications</strong> packaged as AWS SAM templates. Publishers share applications <strong>privately</strong> (with specific accounts or an Organization) or <strong>publicly</strong>. Consumers find and deploy them from the Lambda console in a few clicks, configuring parameters and getting the Lambda functions, API Gateway APIs and other resources the template defines.</p>
+
+  <table>
+    <thead><tr><th>Service</th><th>Shares</th><th>Typical phrase</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Service Catalog</strong></td><td>Approved CloudFormation or Terraform products</td><td>"Users launch only approved resources, without broad IAM permissions"</td></tr>
+      <tr><td><strong>Proton</strong> (retired)</td><td>Platform-team environment and service templates</td><td>"Platform team standardizes how developers deploy services"</td></tr>
+      <tr><td><strong>SAR</strong></td><td>Packaged SAM serverless apps</td><td>"Share or reuse a serverless application across teams or publicly"</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout exam-tip">
+    <div class="callout-title">The launch constraint is the key</div>
+    The most-tested idea here: "<strong>Users must deploy approved infrastructure but must not have permissions to create those resources directly</strong>." That's <strong>Service Catalog</strong> with a <strong>launch constraint</strong> role. Granting users broad CloudFormation and EC2 permissions breaks the requirement.
+  </div>
+
+  <!-- ── Quiz ── -->
+  <div class="quiz-section">
+    <h2>Retrieval Practice</h2>
+    <p>Answer from memory. Explanations appear after each answer.</p>
+    <p class="quiz-progress"></p>
+
+    <div class="question-block">
+      <p class="question-text">1. Developers must be able to launch only a security-approved set of EC2 and RDS stacks. They must not get IAM permissions to create EC2 or RDS resources directly. What should the architect use?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="Launching CloudFormation stacks directly needs permissions on the underlying resources, which breaks the rule against direct access."> CloudFormation StackSets with developer IAM access</label></li>
+        <li><label><input type="radio" name="q1" data-correct="true" data-explanation="Correct. Service Catalog products launched through a launch constraint role deploy the approved stacks. Developers never need direct EC2 or RDS permissions."> Service Catalog products with a launch constraint role</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="An SCP can limit actions, but developers would still create the resources directly and there's no catalog of approved stacks."> An SCP that limits developers to approved instance types</label></li>
+        <li><label><input type="radio" name="q1" data-correct="false" data-explanation="SAR distributes SAM serverless applications, not governed EC2 and RDS stacks with launch roles."> The Serverless Application Repository, shared privately</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">2. A team built a reusable Lambda-based image-thumbnail application with a SAM template. Other teams in the Organization should deploy it from the Lambda console with their own parameters. Where should it be published?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Mailing ZIP files has no versioning, no discovery and no one-click deployment. It's the problem SAR solves."> As a ZIP file emailed to each consuming team's leads</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="CodeArtifact stores software packages such as npm or Maven libraries, not deployable SAM applications."> As a package in AWS CodeArtifact for each consumer team</label></li>
+        <li><label><input type="radio" name="q2" data-correct="false" data-explanation="Proton reached end of support in October 2026, and it was for platform templates rather than sharing a packaged app."> As an AWS Proton service template for the whole org</label></li>
+        <li><label><input type="radio" name="q2" data-correct="true" data-explanation="Correct. SAR is built for publishing SAM applications privately to accounts or the Organization, and they can be deployed from the Lambda console."> In the Serverless Application Repository, shared privately</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="question-block">
+      <p class="question-text">3. In AWS Service Catalog, what is a portfolio?</p>
+      <ul class="options">
+        <li><label><input type="radio" name="q3" data-correct="true" data-explanation="Correct. A portfolio groups products and is shared with IAM principals or accounts, which controls who can launch what."> A collection of products shared with users or accounts</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="That describes a product, which is one template. A portfolio is the collection of products."> A single CloudFormation template for one IT service</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="That describes a launch constraint, not a portfolio."> The IAM role used to deploy a product on a user's behalf</label></li>
+        <li><label><input type="radio" name="q3" data-correct="false" data-explanation="Provisioned products are what users have launched. A portfolio is what's available to launch."> The list of stacks a user has launched from the catalog</label></li>
+      </ul>
+      <button class="check-btn">Check answer</button>
+      <div class="feedback"></div>
+    </div>
+
+    <div class="score-banner"></div>
+  </div>
+
+  <div class="lesson-footer">
+    <div class="nav-links">
+      <a href="0011-aws-ram-and-vpc-sharing.html">← Previous: AWS RAM and VPC Sharing</a>
+      <a href="0013-amazon-msk.html">Next: Amazon MSK →</a>
+    </div>
+    <p style="margin-top:1.5rem">Got a follow-up question? Ask it in your Claude session. Answers go into this module's <code>qanda.html</code> rather than a new lesson.</p>
+  </div>
+
+</div>
+<script src="../../assets/quiz.js"></script>
+</body>
+</html>
