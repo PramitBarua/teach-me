@@ -4,7 +4,8 @@
 
    - "exam" (the default): pick answers freely, then one "Submit exam" button
      at the end of the set grades everything at once. "Reveal answer" and
-     "Mark for review" only appear on each question after submitting.
+     "Mark for review" only appear on each question after submitting, and
+     every explanation opens automatically once the set is graded.
    - "reveal": the exam-question-bank behaviour — reveal each question's
      answer as you go.
 
@@ -264,6 +265,12 @@
       blockApis.forEach(function (api) { api.setOpen(false); });
     }
 
+    // A graded exam shows every explanation by default; "Hide answer" still
+    // collapses one.
+    function openAllAnswers() {
+      blockApis.forEach(function (api) { api.setOpen(true); });
+    }
+
     function setResultsOpen(open) {
       if (!resultsBody) return;
       if (open) renderResults();
@@ -338,8 +345,8 @@
       } else if (isGraded()) {
         modeHint.textContent =
           'Exam submitted — answers are locked. Green = correct answer, blue outline = your correct pick, ' +
-          'red = your wrong pick. Use "Reveal answer" on any question for the explanations, or ' +
-          '"Reset My Answer" to retake the set.';
+          'red = your wrong pick. Each question\'s explanation is shown below it ("Hide answer" collapses one). ' +
+          'Use "Reset My Answer" to retake the set.';
       } else {
         modeHint.textContent =
           'Reveal mode: pick an answer, then press "Reveal answer" to check it straight away. ' +
@@ -559,6 +566,7 @@
         if (!isAnsweredCorrectly(block)) selections[block.id].marked = true;
       });
       saveStore(store);
+      openAllAnswers();
       renderAll();
       setResultsOpen(true);
       if (resultsPanel) resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -879,6 +887,8 @@
       completionAnnounced = true;
       setResultsOpen(true);
     }
+    // A submitted exam reopens with every explanation showing.
+    if (isGraded()) openAllAnswers();
     renderAll();
   }
 
