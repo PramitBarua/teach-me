@@ -179,7 +179,9 @@
     const pendingPicks = {};
     const blockApis = [];
 
-    const flagReviewPanel = container.querySelector('.flag-review-panel');
+    // The panel lives in the page's .practice-side column, outside the set.
+    const flagReviewPanel = container.querySelector('.flag-review-panel') ||
+      document.querySelector('.flag-review-panel');
     const flagReviewToggles = flagReviewPanel
       ? Array.from(flagReviewPanel.querySelectorAll('.flag-review-toggle'))
       : [];
