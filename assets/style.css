@@ -1281,6 +1281,26 @@ dd { margin: 0.2rem 0 0.5rem 1.25rem; }
   background: var(--danger);
 }
 
+/* Wide screens: pin the list in the empty margin right of the question column
+   so it stays in view while scrolling. Below 1200px there is no room beside
+   the 680px column, so it stays inline above the questions. */
+@media (min-width: 1200px) {
+  .flag-review-panel {
+    position: fixed;
+    top: 2rem;
+    left: calc(50% + var(--max-width) / 2 + 1.5rem);
+    right: 1.5rem;
+    max-width: 20rem;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    margin: 0;
+    z-index: 10;
+  }
+
+  .flag-review-header { flex-direction: column; align-items: stretch; }
+  .flag-review-toggle { flex: 1 1 auto; justify-content: center; white-space: nowrap; }
+}
+
 .result-flag {
   display: inline-block;
   padding: 0.1rem 0.5rem;
